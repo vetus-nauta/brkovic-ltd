@@ -1,110 +1,364 @@
 # BRKOVIC.LTD Handoff - 2026-05-19
 
-## Short Context
-
-This handoff is for continuing work on the main `brkovic.ltd` website from another computer/chat.
-
-Important distinction:
-
-- `brkovic.ltd` is the main production website project.
-- `Revoyacht` / `yacht-flex-demo` is an experimental branch/area and is not part of the main `brkovic.ltd` production project.
-
-## GitHub Repository
-
-Main repo:
-
-```text
-git@github.com:vetus-nauta/brkovic-ltd.git
-```
-
-Branch:
-
-```text
-main
-```
-
-Current pushed commits:
-
-```text
-0ea741e Document management roadmap
-448a7f4 Initial brkovic.ltd site
-```
-
-Clone on a new computer:
-
-```bash
-git clone git@github.com:vetus-nauta/brkovic-ltd.git
-cd brkovic-ltd
-php -S 127.0.0.1:18090 -t .
-```
-
-Open locally:
-
-```text
-http://127.0.0.1:18090/
-http://127.0.0.1:18090/services/yacht-management.html
-http://127.0.0.1:18090/admin-mnr.html
-```
-
-## Local Source Paths On Current Machine
-
-Clean standalone project:
+Date: 2026-05-19
+Project: `brkovic.ltd`
+Repository: `git@github.com:vetus-nauta/brkovic-ltd.git`
+Branch in local checkout: `main`
+Current local path:
 
 ```text
 /home/alexey/GitHub/Revoyacht/brkovic-ltd
 ```
 
-Apache local site currently served by `brkovic-local.local`:
+## Critical Project Boundary
+
+This is the main production website project for `brkovic.ltd`.
+
+Do not mix it with:
 
 ```text
-/home/alexey/Sites/brkovic-local
+/home/alexey/GitHub/Revoyacht
+Revoyacht/yacht-flex-demo
 ```
 
-Previous staging/source folder used during the split:
+Those areas are experimental and are not part of the main production `brkovic.ltd` project.
 
-```text
-/home/alexey/GitHub/Revoyacht/brkovic-stage
-```
+## Current Local State
 
-## What Was Done Today
+The local working tree contains substantial uncommitted work from 2026-05-19.
 
-1. Separated the main `brkovic.ltd` website into a clean standalone Git project.
-2. Excluded experimental folders from the main project:
-   - `/revoyacht`
-   - `/yacht-flex-demo`
-   - `/public_html_nested`
-3. Excluded old backups and local artifacts:
-   - `.listing`
-   - `*.bak*`
-   - `*.bad*`
-   - `*.broken*`
-   - logs
-4. Removed secrets from Git:
-   - real `forms/config.php` is ignored
-   - committed `forms/config.example.php` instead
-5. Initialized Git and pushed the clean project to GitHub.
-6. Synced fresh yacht management changes into the local Apache folder.
-7. Fixed local Apache write permissions for management pricing:
+Do not run:
 
 ```bash
-setfacl -m u:www-data:rwx /home/alexey/Sites/brkovic-local/data
-setfacl -m u:www-data:rw /home/alexey/Sites/brkovic-local/data/management-pricing.json
+git reset --hard
+git checkout -- .
 ```
 
-Diagnostics after fix showed:
+unless the owner explicitly asks to discard the local work.
+
+Current changed areas include:
+
+- public pages and language integration
+- main homepage pilot layout and mobile/tablet styling
+- yacht management public calculator, print template, modals and disclaimer
+- yacht management admin pricing/project/document work
+- shared management pricing data
+- i18n dictionaries
+- local diagnostic and preview tools
+
+Important current status command:
+
+```bash
+git status --short
+```
+
+## Local Run
+
+For computer-only local access:
+
+```bash
+cd /home/alexey/GitHub/Revoyacht/brkovic-ltd
+php -S 127.0.0.1:18090 -t .
+```
+
+For access from a phone on the same local network:
+
+```bash
+cd /home/alexey/GitHub/Revoyacht/brkovic-ltd
+php -S 0.0.0.0:18090 -t .
+```
+
+Current LAN address during this handoff:
 
 ```text
-pricingFile.writable: true
-dataDir.writable: true
+http://192.168.1.229:18090/
 ```
 
-## Current Yacht Management State
+The address may change after router/computer reconnect. The machine hostname is:
 
-Public page:
+```text
+Vetus-Home
+```
+
+If local mDNS works from the phone, this may also work:
+
+```text
+http://Vetus-Home.local:18090/
+```
+
+## Main URLs To Check
+
+```text
+http://127.0.0.1:18090/
+http://127.0.0.1:18090/index.html
+http://127.0.0.1:18090/services/yacht-management.html
+http://127.0.0.1:18090/admin-mnr.html
+http://127.0.0.1:18090/journal.html
+http://127.0.0.1:18090/navdesk.html
+```
+
+## Backup Created Today
+
+Fresh full backup:
+
+```text
+/home/alexey/GitHub/Revoyacht/backups/brkovic-ltd-full-backup-20260519-231440.tar.gz
+/home/alexey/GitHub/Revoyacht/backups/brkovic-ltd-full-backup-20260519-231440.tar.gz.sha256
+```
+
+Previous same-day backup also exists:
+
+```text
+/home/alexey/GitHub/Revoyacht/backups/brkovic-ltd-full-backup-20260519-221724.tar.gz
+```
+
+## Verification Passed On 2026-05-19
+
+JavaScript syntax:
+
+```bash
+node --check js/language.js
+node --check js/main.js
+node --check js/management.js
+node --check js/admin-management.js
+node --check js/journal.js
+node --check js/navdesk.js
+node --check js/form.js
+node --check js/weather.js
+```
+
+PHP syntax:
+
+```bash
+php -l index.php
+php -l management-admin-api.php
+php -l forms/send.php
+php -l admin-api-proxy.php
+```
+
+JSON and i18n:
+
+```bash
+node tools/i18n-diagnostics.mjs
+```
+
+Result:
+
+- public pages have no-translate protection
+- RU/EN key sets match
+- no missing RU keys
+- no missing EN keys
+
+HTTP smoke test returned `200` for:
+
+```text
+/
+/index.html
+/journal.html
+/navdesk.html
+/services/yacht-management.html
+/services/skipper-service.html
+/services/iyt-training.html
+/services/sailing-tours.html
+/services/yacht-acceptance-delivery.html
+/services/yacht-registration.html
+/admin-mnr.html
+/tools/device-preview.html?device=phone
+/tools/device-preview.html?device=tablet
+```
+
+Browser smoke test via headless Chrome passed with no console errors for:
+
+```text
+home desktop
+home tablet
+home mobile
+yacht management desktop
+yacht management mobile
+admin desktop
+```
+
+Screenshots generated during verification:
+
+```text
+/tmp/brkovic-home-desktop-20260519.png
+/tmp/brkovic-home-tablet-20260519.png
+/tmp/brkovic-home-mobile-20260519.png
+/tmp/brkovic-management-desktop-20260519.png
+/tmp/brkovic-management-mobile-20260519.png
+/tmp/brkovic-admin-desktop-20260519.png
+```
+
+## Language Integration
+
+Implemented on public pages:
+
+- system language detection
+- Russian if system language starts with `ru`
+- English for other system languages
+- manual language selection through the site menu
+- `?lang=ru` and `?lang=en` support
+- persisted manual choice in `localStorage`
+- browser translation blocking with:
+  - `translate="no"`
+  - `notranslate`
+  - `<meta name="google" content="notranslate">`
+- one-time hint explaining that language can be changed in the menu
+
+Current active languages:
+
+```text
+ru
+en
+```
+
+Future planned languages:
+
+```text
+de
+it
+fr
+sr
+zh
+```
+
+Admin/posts/comments/marketing language workflow is intentionally not solved yet. This was planned as a second stage.
+
+Main files:
+
+```text
+js/language.js
+js/main.js
+lang/ru.json
+lang/en.json
+tools/i18n-diagnostics.mjs
+```
+
+## General Site Menu
+
+Public pages now use a single menu button pattern inspired by the yacht management page.
+
+The menu modal contains:
+
+- Home
+- Services
+- Deck Log
+- Nav Desk
+- Contact
+- language switcher
+- Instagram link
+- placeholder for future user settings
+
+Main files:
+
+```text
+js/main.js
+css/main.css
+css/responsive.css
+```
+
+## Homepage Pilot
+
+The homepage is the pilot for the next visual style pass.
+
+Implemented:
+
+- `body.home-page`
+- compact liquid-glass / iOS-like treatment only for the homepage
+- topbar aligned with yacht management mobile style
+- mobile dock restored for homepage
+- phone/tablet responsive checks
+- desktop hero reorganized so the right side under the photo is not empty
+- old owner-approved hero title restored
+- old owner-approved deck-log photo note restored
+
+Important owner preference:
+
+Keep this hero/title tone unless the owner asks to change it again:
+
+```text
+Практический опыт в яхтинге
+Морские путешествия, работа, свобода
+```
+
+And keep the photo note:
+
+```text
+Личный бренд, построенный на многолетнем морском опыте, знании и доверии.
+```
+
+Main files:
+
+```text
+index.html
+css/main.css
+css/responsive.css
+lang/ru.json
+lang/en.json
+```
+
+## Phone And Tablet Local Preview Tools
+
+Created local device preview page:
+
+```text
+tools/device-preview.html
+```
+
+Created launchers:
+
+```text
+tools/open-mobile-preview.sh
+tools/open-tablet-preview.sh
+```
+
+Desktop icons created:
+
+```text
+/home/alexey/Рабочий стол/мобила.desktop
+/home/alexey/Рабочий стол/планшет.desktop
+```
+
+They open Chrome app windows with local preview frames:
+
+```text
+http://127.0.0.1:18090/tools/device-preview.html?device=phone
+http://127.0.0.1:18090/tools/device-preview.html?device=tablet
+```
+
+## Yacht Management Public Page
+
+Current public page:
 
 ```text
 services/yacht-management.html
 ```
+
+Implemented/changed today:
+
+- final price card made more complete
+- calculator settings moved into modal
+- documents/print/proforma actions moved into modal
+- explanatory logic moved into info modal
+- mandatory disclaimer appears at first entry before other management windows
+- disclaimer also exists as a small bottom card for page context
+- print template improved
+- print header has company/logo/requisites in one horizontal card
+- right print boundary tightened so table fits better
+- public print style uses monochrome logo treatment
+
+Main files:
+
+```text
+services/yacht-management.html
+js/management.js
+css/main.css
+css/responsive.css
+lang/ru.json
+lang/en.json
+```
+
+## Yacht Management Admin
 
 Admin page:
 
@@ -112,132 +366,152 @@ Admin page:
 admin-mnr.html
 ```
 
-Shared pricing/source-of-truth file:
+Shared pricing/catalog file:
 
 ```text
 data/management-pricing.json
 ```
 
-Main scripts:
+API:
 
 ```text
-js/management.js
-js/admin-management.js
 management-admin-api.php
-css/admin-management.css
 ```
 
-Admin build marker:
+Implemented/admin work in progress:
 
-```text
-ADMIN_BUILD = 20260519-04
-```
+- pricing catalog remains shared between admin and public page
+- monthly add-ons and one-time services supported
+- adding/removing non-core services
+- public visibility flags
+- projects, counterparties, commitments and documents workspace started
+- monthly proforma, one-time proforma and contract preparation actions started
+- one-time service settings moved into wider popup/card
+- admin remains Russian-first for now
 
-Public management pricing cache marker:
+Important permission note:
 
-```text
-management-pricing.json?v=20260519-01
-management.js?v=20260519-01
-```
-
-Implemented in the management module:
-
-- Public management page and admin now read from the same pricing catalog.
-- Admin supports monthly add-on services and one-time services.
-- Admin can add and remove non-core services.
-- Core monthly base services cannot be deleted.
-- Service records support RU/EN titles and descriptions.
-- Service records support public visibility flags.
-- API diagnostics endpoint exists:
-
-```text
-management-admin-api.php?diagnostics=1
-```
-
-## Important Product Rules
-
-Keep this service model:
-
-- Monthly base remains one combined line:
-  yacht control alongside + technical control + owner representation.
-- Base pricing depends on:
-  yacht length, yacht type, crew state.
-- Monthly add-ons are separate checkbox services above/around the base calculation.
-- One-time services are separate quantity-based services.
-- Admin is Russian.
-- Public page is RU/EN.
-- Public page content must reflect saved admin/catalog state.
-- Do not hardcode a second conflicting service/pricing list in the public page.
-
-## Next Work Requested By User
-
-Continue step by step from the plan.
-
-Near-term tasks:
-
-1. Add project saving in admin:
-   - client/contact data
-   - yacht data
-   - selected monthly services
-   - selected one-time services
-   - discounts/notes
-   - generated document numbers
-
-2. Add commitments and issued documents:
-   - saved commitments
-   - issued proformas
-   - prepared contracts
-
-3. Public page demo documents:
-   - printable/saveable monthly services proforma
-   - printable/saveable one-time services proforma
-   - these should be saved/fixed as draft projects in admin to make later client offers easier.
-
-4. Admin commercial documents:
-   - full offer or service agreement
-   - two final proformas tied by numbers to the service agreement/contract.
-
-Roadmap file already exists in repo:
-
-```text
-docs/management-roadmap-2026-05-19.md
-```
-
-## Security / Config Notes
-
-Do not commit:
-
-```text
-forms/config.php
-forms/smtp-error.log
-```
-
-Use:
-
-```text
-forms/config.example.php
-```
-
-On a new server/computer, create `forms/config.php` manually from the example.
-
-## Suggested First Checks For Next Chat
-
-Run:
+If admin cannot save pricing, check write permissions:
 
 ```bash
-cd brkovic-ltd
-git status --short
-git log --oneline -3
-php -l management-admin-api.php
-node --check js/admin-management.js
-node --check js/management.js
-php -S 127.0.0.1:18090 -t .
+ls -ld data
+ls -l data/management-pricing.json
 ```
 
-Then open:
+For Apache/PHP local install:
+
+```bash
+setfacl -m u:www-data:rwx data
+setfacl -m u:www-data:rw data/management-pricing.json
+```
+
+## Management Product Rules
+
+Keep this model:
+
+- monthly base is one combined line:
+  - yacht control alongside
+  - technical control
+  - owner representation
+- base pricing depends on yacht type, yacht length and crew state
+- monthly add-ons are separate recurring services
+- one-time services are separate event-based/quantity services
+- public calculator and admin must use the same catalog
+- do not duplicate the pricing model in hardcoded public HTML
+
+## GitHub Repository State
+
+Remote:
 
 ```text
-http://127.0.0.1:18090/admin-mnr.html
-http://127.0.0.1:18090/services/yacht-management.html
+origin git@github.com:vetus-nauta/brkovic-ltd.git
 ```
 
+Known earlier pushed commits from first project setup:
+
+```text
+0ea741e Document management roadmap
+448a7f4 Initial brkovic.ltd site
+```
+
+At the time of this handoff, the local tree has many uncommitted changes. If continuing on another computer, either:
+
+1. use the backup archive above, or
+2. first commit/push this local state from the current computer, or
+3. use the GitHub issue/record created for this handoff as the work log and checklist.
+
+## Suggested Next Chat Start Prompt
+
+Use this prompt in a new chat:
+
+```text
+Open the BRKOVIC handoff dated 2026-05-19:
+docs/brkovic_ltd_github_handoff_2026-05-19.md
+
+This is the main brkovic.ltd project, not Revoyacht/yacht-flex-demo.
+Local project path on the original computer:
+/home/alexey/GitHub/Revoyacht/brkovic-ltd
+
+Before changing anything:
+1. Check git status.
+2. Do not reset or discard uncommitted changes.
+3. Run php -S 127.0.0.1:18090 -t .
+4. Open /, /services/yacht-management.html and /admin-mnr.html.
+5. Run node tools/i18n-diagnostics.mjs.
+
+Continue yacht management work:
+- projects
+- counterparties/commitents
+- commitments
+- monthly and one-time proformas
+- contract preparation
+- document persistence
+- later admin language/post/comment/marketing workflow
+```
+
+## Next Work Recommended
+
+1. Decide whether to commit the full current local state or split it into focused commits.
+2. Finish admin persistence for:
+   - projects
+   - counterparties
+   - commitments
+   - issued documents
+3. Finish document generation flow:
+   - monthly proforma
+   - one-time proforma
+   - service agreement/contract
+4. Re-test admin save/delete services after final document persistence.
+5. Once homepage mobile style is approved, apply the same style system to the other public pages.
+6. Second-stage i18n planning:
+   - admin language model
+   - posts
+   - comments
+   - marketing text
+   - translation automation based on Russian authoring source.
+
+## Commands For A Careful Next Verification
+
+```bash
+cd /home/alexey/GitHub/Revoyacht/brkovic-ltd
+
+git status --short
+
+node --check js/language.js
+node --check js/main.js
+node --check js/management.js
+node --check js/admin-management.js
+node --check js/journal.js
+node --check js/navdesk.js
+node --check js/form.js
+node --check js/weather.js
+
+php -l index.php
+php -l management-admin-api.php
+php -l forms/send.php
+php -l admin-api-proxy.php
+
+node tools/i18n-diagnostics.mjs
+
+php -S 127.0.0.1:18090 -t .
+```
