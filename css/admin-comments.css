@@ -1,0 +1,164 @@
+.admin-comments-page {
+  padding-top: 32px;
+  padding-bottom: 48px;
+}
+
+.admin-comments-card {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 28px;
+}
+
+.admin-section-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 20px 0 22px;
+}
+
+.admin-section-nav a {
+  border: 1px solid rgba(16,36,58,.12);
+  border-radius: 999px;
+  padding: 10px 16px;
+  background: #fff;
+  color: var(--color-brand);
+  font-weight: 700;
+}
+
+.admin-section-nav a.is-active {
+  background: var(--color-brand);
+  color: #fff;
+}
+
+.admin-login-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 14px;
+  align-items: end;
+  margin: 24px 0 16px;
+}
+
+.admin-login-form label span {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--color-brand);
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.admin-login-form input {
+  width: 100%;
+  border: 1px solid rgba(16,36,58,.14);
+  background: #fff;
+  color: var(--color-ink);
+  border-radius: 14px;
+  padding: 14px 16px;
+  outline: none;
+}
+
+.admin-status {
+  min-height: 24px;
+  margin-bottom: 16px;
+  color: var(--color-muted);
+}
+
+.admin-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin: 18px 0 22px;
+  flex-wrap: wrap;
+}
+
+.admin-filters {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-filter {
+  border: 1px solid rgba(16,36,58,.12);
+  background: #fff;
+  color: var(--color-ink);
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-filter.is-active {
+  background: var(--color-brand);
+  color: #fff;
+}
+
+.admin-comments-list {
+  display: grid;
+  gap: 16px;
+}
+
+.admin-comment-card {
+  border: 1px solid rgba(16,36,58,.10);
+  border-radius: 18px;
+  padding: 20px;
+  background: #fff;
+}
+
+.admin-comment-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-comment-meta {
+  color: var(--color-muted);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.admin-comment-status-pill {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  border: 1px solid rgba(16,36,58,.12);
+}
+
+.admin-comment-status-pill.status-PENDING {
+  background: rgba(191,109,78,.10);
+}
+
+.admin-comment-status-pill.status-APPROVED {
+  background: rgba(40,167,69,.12);
+}
+
+.admin-comment-status-pill.status-REJECTED {
+  background: rgba(220,53,69,.10);
+}
+
+.admin-comment-content {
+  font-size: 1rem;
+  line-height: 1.7;
+  margin: 14px 0;
+}
+
+.admin-comment-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.admin-empty {
+  color: var(--color-muted);
+  padding: 18px 0;
+}
+
+@media (max-width: 900px) {
+  .admin-login-form {
+    grid-template-columns: 1fr;
+  }
+}

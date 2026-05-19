@@ -1,0 +1,1267 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VETUS NAUTA — Brkovic | Штурманский стол</title>
+  <meta name="description" content="VETUS NAUTA — Brkovic. Штурманский стол with practical tools for passage planning, fuel, ETA and tides." />
+  <meta name="theme-color" content="#10243a" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cormorant+Garamond:wght@500;600;700&family=Marck+Script&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/variables.css" />
+  <link rel="stylesheet" href="css/main.css?v=20260424-04" />
+  <link rel="stylesheet" href="css/responsive.css?v=20260424-04" />
+  <link rel="stylesheet" href="css/navdesk.css?v=20260425-54" />
+  <link rel="icon" type="image/png" href="favicons/favicon-clean.png?v=2" />
+  <link rel="apple-touch-icon" href="favicons/apple-touch-icon-clean.png?v=2" />
+</head>
+<body>
+  <div class="site-shell">
+    <header class="topbar">
+      <a href="index.html#hero" class="brand brand--image" aria-label="VETUS NAUTA - Brkovic home">
+        <img src="brand/logo-header-inline-light.png" alt="VETUS NAUTA - Brkovic" class="brand__logo-image navdesk-logo" />
+      </a>
+      <div class="topbar__actions">
+        <a class="instagram-link" href="#" id="instagramTopLink" target="_blank" rel="noopener" aria-label="Instagram">
+          <img src="images/icons/instagram.svg" alt="" />
+        </a>
+        <div class="lang-switch" aria-label="Language switcher">
+          <button class="lang-switch__btn is-active" data-lang="en">EN</button>
+          <button class="lang-switch__btn" data-lang="ru">RU</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="navdesk-page">
+      <section class="section navdesk-hero section--paper">
+        <div class="navdesk-hero__grid">
+          <div class="navdesk-hero__copy">
+            <div class="section-heading section-heading--editorial navdesk-hero__heading">
+              <h1 data-i18n="navdesk_title">Штурманский стол</h1>
+              <p data-i18n="navdesk_intro">Инструменты для первичной обработки данных во время перехода и при его планировании.</p>
+              <p class="navdesk-hero__description" data-i18n="navdesk_intro_description">Простые функциональные приёмы для решения навигационных задач и обеспечения моряков подсказками для комфортного плавания и коммуникации.</p>
+            </div>
+
+            <div class="navdesk-hero__actions">
+              <a href="index.html#hero" class="btn btn--secondary" data-i18n="navdesk_back_home">Назад на главную</a>
+              <a href="journal.html" class="btn btn--secondary" data-i18n="navdesk_back_journal">Назад в судовой журнал</a>
+            </div>
+          </div>
+
+          <div class="navdesk-hero__side">
+            <div class="navdesk-time-stack" aria-live="polite">
+              <div class="navdesk-time-card navdesk-time-card--local">
+                <p class="navdesk-time-card__label" data-i18n="navdesk_local_time_label">Local time</p>
+                <p class="navdesk-time-card__value" id="navdeskLocalTime">--:--</p>
+              </div>
+              <div class="navdesk-time-card navdesk-time-card--utc">
+                <p class="navdesk-time-card__label" data-i18n="navdesk_utc_time_label">UTC</p>
+                <p class="navdesk-time-card__value" id="navdeskUtcTime">--:--</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+            <section class="navdesk-watch-section">
+        <div class="section--paper navdesk-card navdesk-watch-card">
+          <div class="navdesk-card-shell is-collapsed" id="navdesk-watch-card">
+            <div class="navdesk-card-toolbar navdesk-watch-toolbar">
+              <button type="button" class="navdesk-card-pin" id="navdesk_watch_pin" aria-pressed="false">
+                <span class="navdesk-card-pin__label navdesk-card-pin__label--off">Закрепить</span>
+                <span class="navdesk-card-pin__label navdesk-card-pin__label--on">Закреплено</span>
+              </button>
+            </div>
+
+            <div class="section-heading section-heading--editorial navdesk-watch-heading">
+              <p class="section-heading__eyebrow">Вахтенный журнал</p>
+              <h2>Текущая вахта и записи перехода</h2>
+              <p>Рабочий журнал обстановки, счисления, смены вахт и событий на переходе. От 1 суток до месяца.</p>
+            </div>
+
+            <div class="navdesk-watch-actions navdesk-watch-actions--closed">
+              <button type="button" class="btn btn--primary" id="navdesk_watch_open">Открыть</button>
+              <button type="button" class="btn btn--secondary" id="navdesk_watch_save_closed">Сохранить</button>
+            </div>
+
+            <div class="navdesk-card-body navdesk-watch-body" id="navdesk_watch_body" hidden>
+              <div class="navdesk-watch-actions navdesk-watch-actions--open">
+                <button type="button" class="btn btn--secondary" id="navdesk_watch_close">Закрыть</button>
+                <button type="button" class="btn btn--primary" id="navdesk_watch_save">Сохранить</button>
+                <button type="button" class="btn btn--secondary" id="navdesk_watch_print">Печать</button>
+                <button type="button" class="btn btn--secondary" id="navdesk_watch_pdf">PDF</button>
+                <button type="button" class="btn btn--secondary" id="navdesk_watch_share">Поделиться</button>
+              </div>
+
+              <section class="navdesk-watch-panel navdesk-watch-panel--setup" id="watchSetupPanel">
+                  <div class="navdesk-watch-panel__top">
+                    <div>
+                      <p class="navdesk-watch-panel__eyebrow">Настройка вахт</p>
+                      <h3>Переход, экипаж и вахты</h3>
+                    </div>
+                    <button type="button" class="btn btn--primary" id="watchSetupApply" tabindex="12">Сформировать</button>
+                  </div>
+
+                  <div class="navdesk-watch-setup">
+                    <label><span>Дата начала</span><input type="date" id="watchStartDate" tabindex="1" /></label>
+                    <label><span>Дней</span><input type="number" id="watchDays" tabindex="2" min="1" max="30" value="1" /></label>
+                    <label><span>UTC offset</span><input type="text" id="watchUtcOffset" tabindex="3" value="+02:00" placeholder="+02:00" /></label>
+                    <label><span>Капитан</span><input type="text" id="watchCaptain" tabindex="6" placeholder="Имя / фамилия" /></label>
+                    <label><span>Первый помощник</span><input type="text" id="watchFirstMate" tabindex="7" placeholder="Имя / фамилия" /></label>
+
+                    <label><span>Режим</span>
+                      <select id="watchScheduleMode" tabindex="4">
+                        <option value="auto">Авто</option>
+                        <option value="manual">Ручной</option>
+                      </select>
+                    </label>
+
+                    <label><span>Подвахтенный</span>
+                      <select id="watchKeeperMode" tabindex="9">
+                        <option value="yes">Всегда</option>
+                        <option value="no">Нет</option>
+                        <option value="period">По времени</option>
+                      </select>
+                    </label>
+                    <label><span>Подвахта с</span><input type="time" id="watchKeeperFrom" tabindex="10" value="00:01" /></label>
+                    <label><span>Подвахта до</span><input type="time" id="watchKeeperTo" tabindex="11" value="06:00" /></label>
+
+                    <label><span>Тип вахты</span>
+                      <select id="watchType" tabindex="5">
+                        <option value="recommended">Рекомендовать</option>
+                        <option value="3x3">3 / 3</option>
+                        <option value="4x4">4 / 4</option>
+                        <option value="4x8">4 / 8</option>
+                        <option value="6x6">6 / 6</option>
+                        <option value="2x2">2 / 2</option>
+                      </select>
+                    </label>
+
+                    <label class="navdesk-watch-setup__wide"><span>Основной экипаж</span><input type="text" id="watchCrewInput" tabindex="8" placeholder="Через запятую: Иванов, Петров, Alex" /></label>
+                  </div>
+
+                  <div class="navdesk-watch-setup-note" id="watchSetupSummary">
+                    Задайте дату, состав экипажа, режим и тип вахты. Все участвуют в расписании.
+                  </div>
+
+                  <div class="navdesk-watch-manual" id="watchManualEditor" hidden>
+                    <div class="navdesk-watch-manual__head">
+                      <h4>Ручное расписание</h4>
+                      <p>Добавьте смены вручную. Отдых и live watch будут считаться по этим сменам.</p>
+                    </div>
+
+                    <div class="navdesk-watch-manual__form">
+                      <label><span>Начало</span><input type="datetime-local" id="watchManualFrom" /></label>
+                      <label><span>Конец</span><input type="datetime-local" id="watchManualTo" /></label>
+                      <label><span>Старший</span><select id="watchManualLeader"></select></label>
+                      <label><span>Подвахтенный</span><select id="watchManualKeeper"></select></label>
+                      <button type="button" class="btn btn--primary" id="watchManualAdd">Добавить смену</button>
+                    </div>
+
+                    <div class="navdesk-watch-manual__list" id="watchManualList"></div>
+                  </div>
+
+                  <div class="navdesk-watch-schedule" id="watchSchedulePreview" hidden></div>
+                  <div class="navdesk-watch-rest" id="watchRestReport" hidden></div>
+                </section>
+
+                <div class="navdesk-watch-grid">
+                <section class="navdesk-watch-panel navdesk-watch-panel--current">
+                  <p class="navdesk-watch-panel__eyebrow">Сейчас</p>
+                  <h3>Текущая вахта</h3>
+                  <div class="navdesk-watch-current">
+                    <p><strong>Время:</strong> <span id="watchCurrentTime">—</span></p>
+                    <p><strong>Старший:</strong> <span id="watchLeader">Не назначен</span></p>
+                    <p><strong>Состав:</strong> <span id="watchCrew">Не задан</span></p>
+                  </div>
+                  <button type="button" class="btn btn--primary" id="watchQuickEntry">Сделать запись</button>
+                </section>
+
+                <section class="navdesk-watch-panel">
+                  <p class="navdesk-watch-panel__eyebrow">Быстрая запись</p>
+                  <h3>Обстановка и счисление</h3>
+                  <div class="navdesk-watch-form">
+                    <label><span>Курс</span><input type="text" placeholder="135°" /></label>
+                    <label><span>Скорость</span><input type="text" placeholder="6.2 kn" /></label>
+                    <label><span>Позиция</span><input type="text" placeholder="42°25.4'N 018°41.2'E" /></label>
+                    <label><span>Ветер / море</span><input type="text" placeholder="NW 12 kn, sea slight" /></label>
+                    <label class="navdesk-watch-form__wide"><span>Запись</span><textarea rows="3" placeholder="Обстановка, трафик, действия, замечания..."></textarea></label>
+                  </div>
+                  <button type="button" class="btn btn--primary" id="watchEntrySave">Записать</button>
+                </section>
+
+                <section class="navdesk-watch-panel navdesk-watch-panel--timeline">
+                  <p class="navdesk-watch-panel__eyebrow">Лента</p>
+                  <h3>Последние записи</h3>
+                  <div class="navdesk-watch-timeline" id="watchTimeline">
+                    <article><time>—</time><p>Журнал готов к первой записи.</p></article>
+                  </div>
+                </section>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+<section class="navdesk-layout">
+        <aside class="navdesk-side">
+          <div class="section--paper navdesk-card">
+            <div class="navdesk-card-shell navdesk-theme-card" id="navdesk-theme-card">
+              <div class="section-heading section-heading--editorial">
+                <p class="section-heading__eyebrow">Режим экрана</p>
+                <h2>День / Ночь</h2>
+                <p>Приглушает свет интерфейса для ночной вахты и работы у штурманского стола.</p>
+              </div>
+
+              <div class="navdesk-theme-switch" role="group" aria-label="Screen mode">
+                <button type="button" class="navdesk-theme-switch__btn is-active" data-navdesk-theme="day">День</button>
+                <button type="button" class="navdesk-theme-switch__btn" data-navdesk-theme="night">Ночь</button>
+              </div>
+
+              <p class="navdesk-theme-card__note">Ночной режим снижает яркость фона и оставляет акценты в красном, зелёном и янтарном диапазоне.</p>
+            </div>
+          </div>
+          <div class="section--paper navdesk-card">
+            <div class="navdesk-card-shell is-collapsed" id="navdesk-passages-card">
+              <div class="navdesk-card-toolbar">
+                <button type="button" class="navdesk-card-pin" id="navdesk_passage_pin" aria-pressed="false">
+                  <span class="navdesk-card-pin__label navdesk-card-pin__label--off" data-i18n="navdesk_pin">Закрепить</span>
+                  <span class="navdesk-card-pin__label navdesk-card-pin__label--on" data-i18n="navdesk_pinned">Закреплено</span>
+                </button>
+              </div>
+            
+              <div class="section-heading section-heading--editorial">
+              <p class="section-heading__eyebrow" data-i18n="navdesk_passage_eyebrow">План перехода</p>
+              <h2 data-i18n="navdesk_passage_title">Рабочий расчёт</h2>
+              <p data-i18n="navdesk_passage_intro">Штурманский инструмент для расчётов и записи основных данных перехода.</p>
+            </div>
+
+              <button type="button" class="navdesk-card-toggle navdesk-card-toggle--bottom" id="navdesk_passage_toggle" aria-expanded="false" aria-controls="navdesk_passage_body">
+                <span class="navdesk-card-toggle__label navdesk-card-toggle__label--open" data-i18n="navdesk_open">Открыть</span>
+                <span class="navdesk-card-toggle__label navdesk-card-toggle__label--close" data-i18n="navdesk_close">Скрыть</span>
+                <span class="navdesk-card-toggle__chevron" aria-hidden="true">⌄</span>
+              </button>
+
+            
+              <div class="navdesk-card-body" id="navdesk_passage_body" hidden>
+<div class="navdesk-calc" id="navdeskCalc">
+              <div class="navdesk-calc__grid">
+                <label class="navdesk-calc__field">
+                  <span data-i18n="journal_calc_speed">Скорость, kn</span>
+                  <input type="number" step="0.1" min="0" id="calcSpeed" inputmode="decimal" />
+                </label>
+
+                <label class="navdesk-calc__field">
+                  <span data-i18n="journal_calc_distance">Дистанция, nm</span>
+                  <input type="number" step="0.1" min="0" id="calcDistance" inputmode="decimal" />
+                </label>
+
+                <label class="navdesk-calc__field">
+                  <span data-i18n="journal_calc_days">Время, сут</span>
+                  <input type="number" step="1" min="0" id="calcDays" inputmode="numeric" />
+                </label>
+
+                <label class="navdesk-calc__field">
+                  <span data-i18n="journal_calc_hours">Время, ч</span>
+                  <input type="number" step="1" min="0" id="calcHours" inputmode="numeric" />
+                </label>
+
+                <label class="navdesk-calc__field">
+                  <span data-i18n="journal_calc_minutes">Время, мин</span>
+                  <input type="number" step="1" min="0" id="calcMinutes" inputmode="numeric" />
+                </label>
+
+                <label class="navdesk-calc__field">
+                  <span data-i18n="journal_calc_fuel_hour">Расход топлива, л/ч</span>
+                  <input type="number" step="0.1" min="0" id="calcFuelHour" inputmode="decimal" />
+                </label>
+
+                <label class="navdesk-calc__field">
+                  <span data-i18n="journal_calc_fuel_total">Потрачено топлива, л</span>
+                  <input type="number" step="0.1" min="0" id="calcFuelTotal" inputmode="decimal" />
+                </label>
+
+                <label class="navdesk-calc__field">
+                  <span data-i18n="journal_calc_reserve">Резерв, %</span>
+                  <input type="number" step="1" min="0" id="calcReserve" inputmode="numeric" />
+                </label>
+
+                <label class="navdesk-calc__field navdesk-calc__field--full">
+                  <span data-i18n="journal_calc_fuel_total_reserve">Итого с резервом, л</span>
+                  <input type="number" step="0.1" min="0" id="calcFuelTotalReserve" inputmode="decimal" />
+                </label>
+              </div>
+
+              <p class="navdesk-tides__time-note" data-i18n="navdesk_tides_time_note">Время указано в local time искомого места.</p>
+
+              <div class="navdesk-calc__actions">
+                <button type="button" class="btn btn--primary" id="calcRun" data-i18n="journal_calc_run">Рассчитать</button>
+                <button type="button" class="btn btn--secondary" id="calcReset" data-i18n="journal_calc_reset">Сбросить</button>
+                <button type="button" class="btn btn--secondary" id="calcCopy" data-i18n="journal_calc_copy">Копировать итог</button>
+              </div>
+
+              <p class="navdesk-calc__status" id="calcStatus" data-i18n="journal_calc_status_idle">Введите любые известные значения.</p>
+              <p class="navdesk-calc__summary" id="calcSummary"></p>
+            </div>
+              </div>
+            </div>
+          </div>
+
+          
+
+          <div class="section--paper navdesk-card">
+            <div class="navdesk-card-shell is-collapsed" id="navdesk-abbrev-card">
+              <div class="navdesk-card-toolbar">
+                <button type="button" class="navdesk-card-pin" id="navdesk_abbrev_pin" aria-pressed="false">
+                  <span class="navdesk-card-pin__label navdesk-card-pin__label--off">Закрепить</span>
+                  <span class="navdesk-card-pin__label navdesk-card-pin__label--on">Закреплено</span>
+                </button>
+              </div>
+
+              <div class="section-heading section-heading--editorial">
+                <p class="section-heading__eyebrow">Nav Abbrev</p>
+                <h2>Навигационные сокращения</h2>
+                <p>Введите сокращение с плоттера или радара — получите расшифровку и короткое объяснение.</p>
+              </div>
+
+              <button type="button" class="navdesk-card-toggle navdesk-card-toggle--bottom" id="navdesk_abbrev_toggle" aria-expanded="false" aria-controls="navdesk_abbrev_body">
+                <span class="navdesk-card-toggle__label navdesk-card-toggle__label--open">Открыть</span>
+                <span class="navdesk-card-toggle__label navdesk-card-toggle__label--close">Скрыть</span>
+                <span class="navdesk-card-toggle__chevron" aria-hidden="true">⌄</span>
+              </button>
+
+              <div class="navdesk-card-body" id="navdesk_abbrev_body" hidden>
+                <div class="navdesk-abbrev" id="navdeskAbbrev">
+                  <div class="navdesk-abbrev__tabs" role="tablist" aria-label="Navigation abbreviation scope">
+                    <button type="button" class="navdesk-abbrev__tab is-active" data-abbrev-scope="chart">Чарт-плоттер</button>
+                    <button type="button" class="navdesk-abbrev__tab" data-abbrev-scope="radar">Радар</button>
+                  </div>
+
+                  <label class="navdesk-calc__field navdesk-calc__field--full">
+                    <span>Сокращение, среда или явление</span>
+                  <small class="navdesk-abbrev__field-hint">Например: ветер, течение, вода, радар, курс, опасность</small>
+                    <input type="text" id="navdeskAbbrevInput" placeholder="CPA, TCPA, EBL, VRM..." autocomplete="off" />
+                  </label>
+
+                  <div class="navdesk-abbrev__quick" id="navdeskAbbrevQuick">
+                    <div class="navdesk-abbrev__quick-row">
+                      <button type="button" data-abbrev-example="COG">COG</button>
+                      <button type="button" data-abbrev-example="SOG">SOG</button>
+                      <button type="button" data-abbrev-example="XTE">XTE</button>
+                      <button type="button" data-abbrev-example="WPT">WPT</button>
+                      <button type="button" data-abbrev-example="DTW">DTW</button>
+                      <button type="button" data-abbrev-example="BTW">BTW</button>
+                    </div>
+                    <div class="navdesk-abbrev__quick-row">
+                      <button type="button" data-abbrev-example="CPA">CPA</button>
+                      <button type="button" data-abbrev-example="TCPA">TCPA</button>
+                      <button type="button" data-abbrev-example="EBL">EBL</button>
+                      <button type="button" data-abbrev-example="VRM">VRM</button>
+                      <button type="button" data-abbrev-example="ARPA">ARPA</button>
+                      <button type="button" data-abbrev-example="GAIN">GAIN</button>
+                    </div>
+                  </div>
+
+                  <div class="navdesk-abbrev__results" id="navdeskAbbrevResults" aria-live="polite"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </aside>
+
+        <section class="navdesk-main">
+          <div class="section--paper navdesk-card">
+            <div class="navdesk-card-shell is-collapsed" id="navdesk-tides-card">
+              <div class="navdesk-card-toolbar">
+                <button type="button" class="navdesk-card-pin" id="navdesk_tides_pin" aria-pressed="false">
+                  <span class="navdesk-card-pin__label navdesk-card-pin__label--off" data-i18n="navdesk_pin">Закрепить</span>
+                  <span class="navdesk-card-pin__label navdesk-card-pin__label--on" data-i18n="navdesk_pinned">Закреплено</span>
+                </button>
+              </div>
+            
+              <div class="section-heading section-heading--editorial">
+              <p class="section-heading__eyebrow" data-i18n="navdesk_tides_eyebrow">Приливы и отливы</p>
+              <h2 data-i18n="navdesk_tides_title">Расчёт окна безопасного прохода</h2>
+              <p data-i18n="navdesk_tides_intro">Инструмент для предварительной подготовки перехода в районах с заметными изменениями уровня воды и ограничениями по глубине.</p>
+            </div>
+
+              <button type="button" class="navdesk-card-toggle navdesk-card-toggle--bottom" id="navdesk_tides_toggle" aria-expanded="false" aria-controls="navdesk_tides_body">
+                <span class="navdesk-card-toggle__label navdesk-card-toggle__label--open" data-i18n="navdesk_open">Открыть</span>
+                <span class="navdesk-card-toggle__label navdesk-card-toggle__label--close" data-i18n="navdesk_close">Скрыть</span>
+                <span class="navdesk-card-toggle__chevron" aria-hidden="true">⌄</span>
+              </button>
+
+            
+              <div class="navdesk-card-body" id="navdesk_tides_body" hidden>
+<div class="navdesk-tides">
+              <div class="navdesk-tides__grid">
+                <label class="navdesk-calc__field navdesk-calc__field--full navdesk-place-field">
+                  <span data-i18n="navdesk_tides_place">Место / порт / марина</span>
+                  <input type="text" id="tidePlace" placeholder="Kotor, Tivat, Split" autocomplete="off" />
+                  <div class="navdesk-suggestions" id="tideSuggestions" hidden></div>
+                </label>
+
+                <label class="navdesk-calc__field">
+                  <span data-i18n="navdesk_tides_date">Дата</span>
+                  <input type="date" id="tideDate" />
+                </label>
+
+                <label class="navdesk-calc__field">
+                  <span data-i18n="navdesk_tides_units">Единицы</span>
+                  <select id="tideUnits">
+                    <option value="m">m</option>
+                    <option value="ft">ft</option>
+                  </select>
+                </label>
+
+                <label class="navdesk-calc__field">
+                  <span data-i18n="navdesk_tides_draft">Осадка</span>
+                  <input type="number" step="0.1" min="0" id="tideDraft" inputmode="decimal" />
+                </label>
+
+                <label class="navdesk-calc__field">
+                  <span data-i18n="navdesk_tides_ukc">Запас под килем</span>
+                  <input type="number" step="0.1" min="0" id="tideUkc" inputmode="decimal" />
+                </label>
+
+                <label class="navdesk-calc__field navdesk-calc__field--full">
+                  <span data-i18n="navdesk_tides_charted">Глубина на карте / в проходе</span>
+                  <input type="number" step="0.1" min="0" id="tideChartedDepth" inputmode="decimal" />
+                </label>
+
+                <div class="navdesk-tides__mode navdesk-calc__field navdesk-calc__field--full" id="tideModeWrap">
+                  <span data-i18n="navdesk_tides_mode">Режим данных</span>
+                  <div class="navdesk-tides__mode-switch" role="radiogroup" aria-label="Tide mode">
+                    <label class="navdesk-tides__mode-option">
+                      <input type="radio" name="tideMode" id="tideModeAuto" value="auto" checked />
+                      <span data-i18n="navdesk_tides_mode_auto">Авто</span>
+                    </label>
+                    <label class="navdesk-tides__mode-option">
+                      <input type="radio" name="tideMode" id="tideModeManual" value="manual" />
+                      <span data-i18n="navdesk_tides_mode_manual">Ручной ввод</span>
+                    </label>
+                  </div>
+
+                  </div>
+
+                <div class="navdesk-tides__manual navdesk-calc__field navdesk-calc__field--full" id="tideManualFields" hidden>
+                  <div class="navdesk-tides__manual-grid">
+                    <label class="navdesk-calc__field">
+                      <span data-i18n="navdesk_tides_lw_time">Время LW</span>
+                      <input type="time" id="tideManualLwTime" />
+                    </label>
+
+                    <label class="navdesk-calc__field">
+                      <span data-i18n="navdesk_tides_lw_level">Уровень LW</span>
+                      <input type="number" step="0.1" id="tideManualLwLevel" inputmode="decimal" />
+                    </label>
+
+                    <label class="navdesk-calc__field">
+                      <span data-i18n="navdesk_tides_hw_time">Время HW</span>
+                      <input type="time" id="tideManualHwTime" />
+                    </label>
+
+                    <label class="navdesk-calc__field">
+                      <span data-i18n="navdesk_tides_hw_level">Уровень HW</span>
+                      <input type="number" step="0.1" id="tideManualHwLevel" inputmode="decimal" />
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="navdesk-calc__actions">
+                <button type="button" class="btn btn--primary" id="tideRun" data-i18n="navdesk_tides_run">Рассчитать окно</button>
+              </div>
+
+              <div class="navdesk-results">
+                <div class="navdesk-results__meta">
+                  <p><strong data-i18n="navdesk_tides_next_high_label">Следующий прилив</strong>: <span id="tideNextHigh">—</span></p>
+                  <p><strong data-i18n="navdesk_tides_next_low_label">Следующий отлив</strong>: <span id="tideNextLow">—</span></p>
+                  <p><strong data-i18n="navdesk_tides_now_label">Сейчас</strong>: <span id="tideTrend">—</span></p>
+                  <p><strong data-i18n="navdesk_tides_station_label">Станция</strong>: <span id="tideStation">—</span></p>
+                </div>
+
+                <div class="navdesk-window-card is-idle" id="tideWindowCard">
+                  <p class="navdesk-window-card__eyebrow" data-i18n="navdesk_window_eyebrow">Проход</p>
+                  <h3 class="navdesk-window-card__title" data-i18n="navdesk_window_title">Окно безопасного прохода</h3>
+                  <p class="navdesk-window-card__status" id="tideWindowStatus" data-i18n="navdesk_window_status_idle">Ожидает расчёта.</p>
+                  <p class="navdesk-window-card__text" id="tideSafeWindow" data-i18n="navdesk_window_intro">Введите глубину, осадку и запас под килем.</p>
+
+                  <p class="navdesk-window-card__formula" data-i18n="navdesk_window_formula">Глубина на карте + прилив = доступная глубина.</p>
+                  <div class="navdesk-window-card__meta" id="tideWindowMeta">
+                    <p><strong data-i18n="navdesk_window_required_label">Требуемая глубина</strong>: <span id="tideRequiredDepth">—</span></p>
+                    <p><strong data-i18n="navdesk_window_min_label">Минимальная доступная глубина</strong>: <span id="tideMinDepth">—</span></p>
+                    <p><strong data-i18n="navdesk_window_max_label">Максимальная доступная глубина</strong>: <span id="tideMaxDepth">—</span></p>
+                  </div>
+                </div>
+
+                <div class="navdesk-table-section">
+                  <div class="section-heading section-heading--editorial navdesk-table-section__heading">
+                    <p class="section-heading__eyebrow" data-i18n="navdesk_table_eyebrow">События прилива</p>
+                    <h3 data-i18n="navdesk_table_title">События прилива за день</h3>
+                  </div>
+
+                  <div class="navdesk-tides-placeholder" id="tidePlaceholder" data-i18n="navdesk_tides_placeholder">
+                    Выберите место и дату, чтобы загрузить события прилива.
+                  </div>
+
+                  <p class="navdesk-tides-disclaimer" data-i18n="navdesk_tides_disclaimer">
+                    Справочная информация и предварительные расчёты. Перед навигационными решениями сверяйте данные с официальными источниками и фактической обстановкой.
+                  </p>
+
+                  <div class="navdesk-table-wrap">
+                    <table class="navdesk-table">
+                      <thead>
+                        <tr>
+                          <th data-i18n="navdesk_table_time">Время</th>
+                          <th data-i18n="navdesk_table_event">Фаза</th>
+                          <th data-i18n="navdesk_table_height">Уровень, м</th>
+                        </tr>
+                      </thead>
+                      <tbody id="tideTableBody">
+                        <tr>
+                          <td colspan="3" data-i18n="navdesk_table_empty">Данные прилива пока не загружены.</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+              </div>
+            </div>
+          </div>
+
+              <div class="section--paper navdesk-card navdesk-card--route">
+            <div class="navdesk-card-shell is-collapsed" id="navdesk-route-card">
+              <div class="navdesk-card-toolbar">
+                <button type="button" class="navdesk-card-pin" id="navdesk_route_pin" aria-pressed="false">
+                  <span class="navdesk-card-pin__label navdesk-card-pin__label--off" data-i18n="navdesk_pin">Закрепить</span>
+                  <span class="navdesk-card-pin__label navdesk-card-pin__label--on" data-i18n="navdesk_pinned">Закреплено</span>
+                </button>
+              </div>
+                          
+              <div class="section-heading section-heading--editorial">
+                            <p class="section-heading__eyebrow" data-i18n="navdesk_route_eyebrow">В океан</p>
+                            <h2 data-i18n="navdesk_route_title">Ортодромия и локсодромия</h2>
+                            <p data-i18n="navdesk_route_intro">Расчёт истинных курсов, расстояний и промежуточных координат между точками отхода и прихода для морских и океанских переходов.</p>
+                          </div>
+
+              <button type="button" class="navdesk-card-toggle navdesk-card-toggle--bottom" id="navdesk_route_toggle" aria-expanded="false" aria-controls="navdesk_route_body">
+                <span class="navdesk-card-toggle__label navdesk-card-toggle__label--open" data-i18n="navdesk_open">Открыть</span>
+                <span class="navdesk-card-toggle__label navdesk-card-toggle__label--close" data-i18n="navdesk_close">Скрыть</span>
+                <span class="navdesk-card-toggle__chevron" aria-hidden="true">⌄</span>
+              </button>
+              
+                          
+              <div class="navdesk-card-body" id="navdesk_route_body" hidden>
+<div class="navdesk-route" id="routeCalc">
+                            <div class="navdesk-route__mode">
+                              <label class="navdesk-calc__field navdesk-calc__field--full">
+                                <span data-i18n="navdesk_route_format">Формат координат</span>
+                                <select id="routeCoordFormat">
+                                  <option value="marine" data-i18n="navdesk_route_format_marine">Marine (DD° MM.mmm')</option>
+                                  <option value="decimal" data-i18n="navdesk_route_format_decimal">Decimal degrees</option>
+                                </select>
+                              </label>
+                            </div>
+              
+                            <div class="navdesk-route__preset">
+                              <button type="button" class="btn btn--secondary" id="routeLoadAtlantic" data-i18n="navdesk_route_preset_atlantic">Las Palmas → St Lucia</button>
+                              <button type="button" class="btn btn--secondary" id="routeLoadPacific" data-i18n="navdesk_route_preset_pacific">Panama → Nuku Hiva</button>
+                            </div>
+              
+                            <div class="navdesk-route__section">
+                              <p class="navdesk-route__section-title" data-i18n="navdesk_route_from">Откуда</p>
+
+                              <div class="navdesk-route-inline-search">
+                                <div class="navdesk-route-inline-search__searchbox">
+                                  <input type="text" id="routeFromPlaceSearch" class="navdesk-route-inline-search__input" data-i18n-placeholder="navdesk_route_search_placeholder_empty" placeholder="" autocomplete="off" />
+                                  <div class="navdesk-route-inline-search__dropdown" id="routeFromPlaceDropdown" hidden></div>
+                                </div>
+                                <button type="button" class="btn btn--secondary navdesk-route-inline-search__btn" id="routeFromPlaceSearchBtn" data-i18n="navdesk_route_search_btn">Найти</button>
+                                <div class="navdesk-route-inline-search__result" id="routeFromPlaceResult"></div>
+                              </div>
+              
+                              <div class="navdesk-route__marine" id="routeFromMarine">
+                                <div class="navdesk-route__coord-grid">
+                                  <label class="navdesk-calc__field">
+                                    <span data-i18n="navdesk_route_lat_deg">Широта, градусы</span>
+                                    <input type="number" id="routeFromLatDeg" min="0" max="90" step="1" placeholder="28" />
+                                  </label>
+                                  <label class="navdesk-calc__field">
+                                    <span data-i18n="navdesk_route_lat_min">Широта, минуты</span>
+                                    <input type="number" id="routeFromLatMin" min="0" max="59.999" step="0.1" placeholder="35.7" />
+                                  </label>
+                                  <label class="navdesk-calc__field">
+                                    <span data-i18n="navdesk_route_lat_hem">N / S</span>
+                                    <select id="routeFromLatHem">
+                                      <option value="N">N</option>
+                                      <option value="S">S</option>
+                                    </select>
+                                  </label>
+                                  <label class="navdesk-calc__field">
+                                    <span data-i18n="navdesk_route_lon_deg">Долгота, градусы</span>
+                                    <input type="number" id="routeFromLonDeg" min="0" max="180" step="1" placeholder="015" />
+                                  </label>
+                                  <label class="navdesk-calc__field">
+                                    <span data-i18n="navdesk_route_lon_min">Долгота, минуты</span>
+                                    <input type="number" id="routeFromLonMin" min="0" max="59.999" step="0.1" placeholder="45.9" />
+                                  </label>
+                                  <label class="navdesk-calc__field">
+                                    <span data-i18n="navdesk_route_lon_hem">E / W</span>
+                                    <select id="routeFromLonHem">
+                                      <option value="E">E</option>
+                                      <option value="W">W</option>
+                                    </select>
+                                  </label>
+                                </div>
+                              </div>
+              
+                              <div class="navdesk-route__decimal" id="routeFromDecimal" hidden>
+                                <div class="navdesk-route__coord-grid navdesk-route__coord-grid--decimal">
+                                  <label class="navdesk-calc__field">
+                                    <span data-i18n="navdesk_route_lat_decimal">Широта</span>
+                                    <input type="number" id="routeFromLatDecimal" min="-90" max="90" step="0.000001" placeholder="28.1280" />
+                                  </label>
+                                  <label class="navdesk-calc__field">
+                                    <span data-i18n="navdesk_route_lon_decimal">Долгота</span>
+                                    <input type="number" id="routeFromLonDecimal" min="-180" max="180" step="0.000001" placeholder="-15.4300" />
+                                  </label>
+                                </div>
+                              </div>
+                            </div>
+              
+                            <div class="navdesk-route__section">
+                              <p class="navdesk-route__section-title" data-i18n="navdesk_route_to">Куда</p>
+
+                              <div class="navdesk-route-inline-search">
+                                <div class="navdesk-route-inline-search__searchbox">
+                                  <input type="text" id="routeToPlaceSearch" class="navdesk-route-inline-search__input" data-i18n-placeholder="navdesk_route_search_placeholder_empty" placeholder="" autocomplete="off" />
+                                  <div class="navdesk-route-inline-search__dropdown" id="routeToPlaceDropdown" hidden></div>
+                                </div>
+                                <button type="button" class="btn btn--secondary navdesk-route-inline-search__btn" id="routeToPlaceSearchBtn" data-i18n="navdesk_route_search_btn">Найти</button>
+                                <div class="navdesk-route-inline-search__result" id="routeToPlaceResult"></div>
+                              </div>
+              
+                              <div class="navdesk-route__marine" id="routeToMarine">
+                                <div class="navdesk-route__coord-grid">
+                                  <label class="navdesk-calc__field">
+                                    <span data-i18n="navdesk_route_lat_deg">Широта, градусы</span>
+                                    <input type="number" id="routeToLatDeg" min="0" max="90" step="1" placeholder="14" />
+                                  </label>
+                                  <label class="navdesk-calc__field">
+                                    <span data-i18n="navdesk_route_lat_min">Широта, минуты</span>
+                                    <input type="number" id="routeToLatMin" min="0" max="59.999" step="0.1" placeholder="14.0" />
+                                  </label>
+                                  <label class="navdesk-calc__field">
+                                    <span data-i18n="navdesk_route_lat_hem">N / S</span>
+                                    <select id="routeToLatHem">
+                                      <option value="N">N</option>
+                                      <option value="S">S</option>
+                                    </select>
+                                  </label>
+                                  <label class="navdesk-calc__field">
+                                    <span data-i18n="navdesk_route_lon_deg">Долгота, градусы</span>
+                                    <input type="number" id="routeToLonDeg" min="0" max="180" step="1" placeholder="060" />
+                                  </label>
+                                  <label class="navdesk-calc__field">
+                                    <span data-i18n="navdesk_route_lon_min">Долгота, минуты</span>
+                                    <input type="number" id="routeToLonMin" min="0" max="59.999" step="0.1" placeholder="57.0" />
+                                  </label>
+                                  <label class="navdesk-calc__field">
+                                    <span data-i18n="navdesk_route_lon_hem">E / W</span>
+                                    <select id="routeToLonHem">
+                                      <option value="E">E</option>
+                                      <option value="W" selected>W</option>
+                                    </select>
+                                  </label>
+                                </div>
+                              </div>
+              
+                              <div class="navdesk-route__decimal" id="routeToDecimal" hidden>
+                                <div class="navdesk-route__coord-grid navdesk-route__coord-grid--decimal">
+                                  <label class="navdesk-calc__field">
+                                    <span data-i18n="navdesk_route_lat_decimal">Широта</span>
+                                    <input type="number" id="routeToLatDecimal" min="-90" max="90" step="0.000001" placeholder="14.0670" />
+                                  </label>
+                                  <label class="navdesk-calc__field">
+                                    <span data-i18n="navdesk_route_lon_decimal">Долгота</span>
+                                    <input type="number" id="routeToLonDecimal" min="-180" max="180" step="0.000001" placeholder="-60.9500" />
+                                  </label>
+                                </div>
+                              </div>
+                            </div>
+              
+                            <label class="navdesk-calc__field navdesk-calc__field--full">
+                              <span data-i18n="navdesk_route_step">Шаг точек маршрута, nm</span>
+                              <input type="number" id="routeStepNm" min="10" step="10" value="120" />
+                            </label>
+              
+                            <div class="navdesk-calc__actions">
+                              <button type="button" class="btn btn--primary" id="routeCalcRun" data-i18n="navdesk_route_run">Рассчитать маршрут</button>
+                              <button type="button" class="btn btn--secondary" id="routeCalcReset" data-i18n="navdesk_route_reset">Сбросить</button>
+                            </div>
+              
+                            <p class="navdesk-calc__status" id="routeStatus" data-i18n="navdesk_route_status_idle">Введите координаты и рассчитайте маршрут.</p>
+              
+                            <div class="navdesk-route__results" id="routeResults" hidden>
+                              <div class="navdesk-route__summary">
+                                <div class="navdesk-route__summary-card">
+                                  <p class="navdesk-route__summary-label" data-i18n="navdesk_route_ortho">Ортодромия</p>
+                                  <p><strong data-i18n="navdesk_route_distance">Расстояние</strong>: <span id="routeOrthoDistance">—</span></p>
+                                  <p><strong data-i18n="navdesk_route_initial_course">Начальный истинный курс</strong>: <span id="routeOrthoInitial">—</span></p>
+                                  <p><strong data-i18n="navdesk_route_final_course">Конечный истинный курс</strong>: <span id="routeOrthoFinal">—</span></p>
+                                </div>
+              
+                                <div class="navdesk-route__summary-card">
+                                  <p class="navdesk-route__summary-label" data-i18n="navdesk_route_rhumb">Локсодромия</p>
+                                  <p><strong data-i18n="navdesk_route_distance">Расстояние</strong>: <span id="routeRhumbDistance">—</span></p>
+                                  <p><strong data-i18n="navdesk_route_constant_course">Постоянный истинный курс</strong>: <span id="routeRhumbCourse">—</span></p>
+                                </div>
+                              </div>
+              
+                              <div class="navdesk-table-section">
+                                <div class="section-heading section-heading--editorial navdesk-table-section__heading">
+                                  <p class="section-heading__eyebrow" data-i18n="navdesk_route_points_eyebrow">Точки маршрута</p>
+                                  <h3 data-i18n="navdesk_route_points_title">Точки ортодромии</h3>
+                                </div>
+                                <div class="navdesk-table-wrap">
+                                  <table class="navdesk-table">
+                                    <thead>
+                                      <tr>
+                                        <th data-i18n="navdesk_route_table_point">Точка</th>
+                                        <th data-i18n="navdesk_route_table_lat">Широта</th>
+                                        <th data-i18n="navdesk_route_table_lon">Долгота</th>
+                                        <th data-i18n="navdesk_route_table_course">Истинный курс</th>
+                                        <th data-i18n="navdesk_route_table_distance">От старта, nm</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody id="routeTableBody">
+                                      <tr>
+                                        <td colspan="5" data-i18n="navdesk_route_points_empty">Точки маршрута ещё не рассчитаны.</td>
+                                      </tr>
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+
+                          </div>
+          </div>
+
+<div class="section--paper navdesk-card navdesk-card--ukv">
+            <div class="navdesk-card-shell is-collapsed" id="navdesk-ukv-card">
+              <div class="navdesk-card-toolbar">
+                <button type="button" class="navdesk-card-pin" id="navdesk_ukv_pin" aria-pressed="false">
+                  <span class="navdesk-card-pin__label navdesk-card-pin__label--off" data-i18n="navdesk_pin">Закрепить</span>
+                  <span class="navdesk-card-pin__label navdesk-card-pin__label--on" data-i18n="navdesk_pinned">Закреплено</span>
+                </button>
+              </div>
+
+              <div class="section-heading section-heading--editorial">
+                  <p class="section-heading__eyebrow" data-i18n="navdesk_ukv_eyebrow">УКВ-связь</p>
+                  <h2 data-i18n="navdesk_ukv_title">Рабочий радиообмен и стандартные форматы сообщений</h2>
+                  <p data-i18n="navdesk_ukv_intro">Помощь в подготовке коротких сообщений для УКВ-радиообмена: вызовов марин, служб движения судов (VTS), береговых служб, а также форматов сообщений бедствия, срочности и безопасности.</p>
+                </div>
+
+              <button type="button" class="navdesk-card-toggle navdesk-card-toggle--bottom" id="navdesk_ukv_toggle" aria-expanded="false" aria-controls="navdesk_ukv_body">
+                <span class="navdesk-card-toggle__label navdesk-card-toggle__label--open" data-i18n="navdesk_open">Открыть</span>
+                <span class="navdesk-card-toggle__label navdesk-card-toggle__label--close" data-i18n="navdesk_close">Скрыть</span>
+                <span class="navdesk-card-toggle__chevron" aria-hidden="true">⌄</span>
+              </button>
+
+              <div class="navdesk-card-body" id="navdesk_ukv_body" hidden>
+                <div class="navdesk-ukv">
+                  <div class="navdesk-ukv-module navdesk-ukv-module--spelling">
+                    <div class="section-heading section-heading--editorial navdesk-ukv-module__heading">
+                      <p class="section-heading__eyebrow" data-i18n="navdesk_ukv_spelling_eyebrow">Для связи</p>
+                      <h3 data-i18n="navdesk_ukv_spelling_title">Радио-спеллинг</h3>
+                      <p data-i18n="navdesk_ukv_spelling_intro">Преобразует слова, имена, позывные и номера в форму чтения по буквам и цифрам для радиообмена на английском.</p>
+                    </div>
+
+                    <div class="navdesk-ukv-spelling">
+                      <label class="navdesk-calc__field navdesk-calc__field--full">
+                        <span data-i18n="navdesk_ukv_spelling_input_label">Слово, имя, позывной или номер</span>
+                        <input type="text" id="ukvSpellingInput" data-i18n-placeholder="navdesk_ukv_spelling_input_placeholder" placeholder="testboat 17" value="testboat 17" autocomplete="off" />
+                      </label>
+
+                      <div class="navdesk-calc__actions">
+                        <button type="button" class="btn btn--primary" id="ukvSpellingRun" data-i18n="navdesk_ukv_spelling_run">Преобразовать</button>
+                        <button type="button" class="btn btn--secondary" id="ukvSpellingCopy" data-i18n="navdesk_ukv_spelling_copy">Копировать</button>
+                      </div>
+
+                      <p class="navdesk-calc__status" id="ukvSpellingStatus" data-i18n="navdesk_ukv_spelling_status_idle">Введите слово или группу слов латиницей.</p>
+                      <div class="navdesk-ukv-spelling__result" id="ukvSpellingResult" aria-live="polite"></div>
+                    </div>
+                  </div>
+
+                  <div class="navdesk-ukv-module navdesk-ukv-module--comms">
+                    <div class="section-heading section-heading--editorial navdesk-ukv-module__heading">
+                      <p class="section-heading__eyebrow" data-i18n="navdesk_ukv_comms_eyebrow">Переговоры</p>
+                      <h3 data-i18n="navdesk_ukv_comms_title">Профиль судна и рабочие шаблоны связи</h3>
+                      <p data-i18n="navdesk_ukv_comms_intro">Подготовка данных судна, базовый порядок радиообмена и шаблоны рабочих вызовов с подстановкой основных сведений.</p>
+                      <div class="navdesk-ukv-module__actions">
+                        <button type="button" class="btn btn--secondary navdesk-ukv-print-btn" id="ukvPrintSheet" data-i18n="navdesk_ukv_print_sheet">Печать radio sheet</button>
+                      </div>
+                    </div>
+
+                    <div class="navdesk-ukv-comms">
+                      <div class="navdesk-ukv-vessel">
+                        <div class="section-heading section-heading--editorial navdesk-ukv-subheading">
+                          <p class="section-heading__eyebrow" data-i18n="navdesk_ukv_profile_eyebrow">Профиль судна</p>
+                          <h4 data-i18n="navdesk_ukv_profile_title">Данные для подстановки</h4>
+                          <p data-i18n="navdesk_ukv_profile_intro">Все поля необязательные. Если данные не заполнены, используются учебные значения по умолчанию.</p>
+                        </div>
+
+                        <div class="navdesk-ukv-form-grid">
+                          <label class="navdesk-calc__field">
+                            <span data-i18n="navdesk_ukv_vessel_type">Тип яхты</span>
+                            <input type="text" id="ukvVesselType" data-i18n-placeholder="navdesk_ukv_vessel_type_ph" placeholder="sailing yacht" />
+                          </label>
+
+                          <label class="navdesk-calc__field">
+                            <span data-i18n="navdesk_ukv_vessel_name">Название яхты</span>
+                            <input type="text" id="ukvVesselName" data-i18n-placeholder="navdesk_ukv_vessel_name_ph" placeholder="Aurora" />
+                            <small class="navdesk-ukv-spellline" id="ukvSpellVesselName">—</small>
+                          </label>
+
+                          <label class="navdesk-calc__field">
+                            <span data-i18n="navdesk_ukv_registration">Регистрационный номер</span>
+                            <input type="text" id="ukvRegistration" data-i18n-placeholder="navdesk_ukv_registration_ph" placeholder="4O-AX-27" />
+                          </label>
+
+                          <label class="navdesk-calc__field">
+                            <span data-i18n="navdesk_ukv_call_sign">Call sign</span>
+                            <input type="text" id="ukvCallSign" data-i18n-placeholder="navdesk_ukv_call_sign_ph" placeholder="4OAX27" />
+                            <small class="navdesk-ukv-spellline" id="ukvSpellCallSign">—</small>
+                          </label>
+
+                          <label class="navdesk-calc__field">
+                            <span data-i18n="navdesk_ukv_mmsi">MMSI</span>
+                            <input type="text" id="ukvMmsi" data-i18n-placeholder="navdesk_ukv_mmsi_ph" placeholder="278000123" />
+                          </label>
+
+                          <label class="navdesk-calc__field">
+                            <span data-i18n="navdesk_ukv_imo">IMO</span>
+                            <input type="text" id="ukvImo" data-i18n-placeholder="navdesk_ukv_imo_ph" placeholder="—" />
+                          </label>
+
+                          <label class="navdesk-calc__field">
+                            <span data-i18n="navdesk_ukv_departure_port">Порт выхода</span>
+                            <input type="text" id="ukvDeparturePort" data-i18n-placeholder="navdesk_ukv_departure_port_ph" placeholder="Kotor" />
+                            <small class="navdesk-ukv-spellline" id="ukvSpellDeparturePort">—</small>
+                          </label>
+
+                          <label class="navdesk-calc__field">
+                            <span data-i18n="navdesk_ukv_arrival_port">Порт захода</span>
+                            <input type="text" id="ukvArrivalPort" data-i18n-placeholder="navdesk_ukv_arrival_port_ph" placeholder="Dubrovnik" />
+                            <small class="navdesk-ukv-spellline" id="ukvSpellArrivalPort">—</small>
+                          </label>
+
+                          <label class="navdesk-calc__field">
+                            <span data-i18n="navdesk_ukv_length">Длина, m</span>
+                            <input type="number" step="0.1" id="ukvLength" inputmode="decimal" />
+                          </label>
+
+                          <label class="navdesk-calc__field">
+                            <span data-i18n="navdesk_ukv_beam">Ширина, m</span>
+                            <input type="number" step="0.1" id="ukvBeam" inputmode="decimal" />
+                          </label>
+
+                          <label class="navdesk-calc__field">
+                            <span data-i18n="navdesk_ukv_passengers">Пассажиры</span>
+                            <input type="number" step="1" id="ukvPassengers" inputmode="numeric" />
+                          </label>
+
+                          <label class="navdesk-calc__field">
+                            <span data-i18n="navdesk_ukv_crew">Экипаж</span>
+                            <input type="number" step="1" id="ukvCrew" inputmode="numeric" />
+                          </label>
+
+                          <label class="navdesk-calc__field">
+                            <span data-i18n="navdesk_ukv_lat_deg">Широта, градусы</span>
+                            <input type="number" id="ukvLatDeg" min="0" max="90" step="1" placeholder="42" />
+                          </label>
+
+                          <label class="navdesk-calc__field">
+                            <span data-i18n="navdesk_ukv_lat_min">Широта, минуты</span>
+                            <input type="number" id="ukvLatMin" min="0" max="59.9" step="0.1" placeholder="25.4" />
+                          </label>
+
+                          <label class="navdesk-calc__field">
+                            <span data-i18n="navdesk_ukv_lat_hem">N / S</span>
+                            <select id="ukvLatHem">
+                              <option value="N">N</option>
+                              <option value="S">S</option>
+                            </select>
+                          </label>
+
+                          <label class="navdesk-calc__field">
+                            <span data-i18n="navdesk_ukv_lon_deg">Долгота, градусы</span>
+                            <input type="number" id="ukvLonDeg" min="0" max="180" step="1" placeholder="018" />
+                          </label>
+
+                          <label class="navdesk-calc__field">
+                            <span data-i18n="navdesk_ukv_lon_min">Долгота, минуты</span>
+                            <input type="number" id="ukvLonMin" min="0" max="59.9" step="0.1" placeholder="41.2" />
+                          </label>
+
+                          <label class="navdesk-calc__field">
+                            <span data-i18n="navdesk_ukv_lon_hem">E / W</span>
+                            <select id="ukvLonHem">
+                              <option value="E">E</option>
+                              <option value="W">W</option>
+                            </select>
+                          </label>
+
+                          <label class="navdesk-calc__field">
+                            <span data-i18n="navdesk_ukv_course">Курс, °T</span>
+                            <input type="number" id="ukvCourse" min="0" max="359" step="1" placeholder="135" />
+                          </label>
+
+                          <label class="navdesk-calc__field">
+                            <span data-i18n="navdesk_ukv_speed">Скорость, kn</span>
+                            <input type="number" id="ukvSpeed" min="0" step="0.1" placeholder="6.2" />
+                          </label>
+
+                          <label class="navdesk-calc__field navdesk-calc__field--full">
+                            <span data-i18n="navdesk_ukv_intention">Намерение</span>
+                            <div class="navdesk-smart-pick" data-pick-field="intention">
+                              <div class="navdesk-smart-pick__inputwrap">
+                                <input type="text" id="ukvIntention" data-i18n-placeholder="navdesk_ukv_intention_ph" placeholder="Entering traffic area and proceeding to pilot station" autocomplete="off" />
+                                <button type="button" class="navdesk-smart-pick__toggle" data-pick-toggle="intention" aria-label="Open suggestions">⌄</button>
+                              </div>
+                              <div class="navdesk-smart-pick__menu" id="ukvIntentionMenu" hidden></div>
+                            </div>
+                          </label>
+
+                          <label class="navdesk-calc__field navdesk-calc__field--full">
+                            <span data-i18n="navdesk_ukv_distress_nature">Характер бедствия</span>
+                            <div class="navdesk-smart-pick" data-pick-field="distressNature">
+                              <div class="navdesk-smart-pick__inputwrap">
+                                <input type="text" id="ukvDistressNature" data-i18n-placeholder="navdesk_ukv_distress_nature_ph" placeholder="Taking on water after collision" autocomplete="off" />
+                                <button type="button" class="navdesk-smart-pick__toggle" data-pick-toggle="distressNature" aria-label="Open suggestions">⌄</button>
+                              </div>
+                              <div class="navdesk-smart-pick__menu" id="ukvDistressNatureMenu" hidden></div>
+                            </div>
+                          </label>
+
+                          <label class="navdesk-calc__field navdesk-calc__field--full">
+                            <span data-i18n="navdesk_ukv_assistance_required">Требуемая помощь</span>
+                            <div class="navdesk-smart-pick" data-pick-field="assistanceRequired">
+                              <div class="navdesk-smart-pick__inputwrap">
+                                <input type="text" id="ukvAssistanceRequired" data-i18n-placeholder="navdesk_ukv_assistance_required_ph" placeholder="Immediate assistance and possible evacuation" autocomplete="off" />
+                                <button type="button" class="navdesk-smart-pick__toggle" data-pick-toggle="assistanceRequired" aria-label="Open suggestions">⌄</button>
+                              </div>
+                              <div class="navdesk-smart-pick__menu" id="ukvAssistanceRequiredMenu" hidden></div>
+                            </div>
+                          </label>
+
+                          <label class="navdesk-calc__field navdesk-calc__field--full">
+                            <span data-i18n="navdesk_ukv_additional_info">Дополнительная информация</span>
+                            <div class="navdesk-smart-pick" data-pick-field="additionalInfo">
+                              <div class="navdesk-smart-pick__inputwrap">
+                                <input type="text" id="ukvAdditionalInfo" data-i18n-placeholder="navdesk_ukv_additional_info_ph" placeholder="Vessel drifting to the south-east" autocomplete="off" />
+                                <button type="button" class="navdesk-smart-pick__toggle" data-pick-toggle="additionalInfo" aria-label="Open suggestions">⌄</button>
+                              </div>
+                              <div class="navdesk-smart-pick__menu" id="ukvAdditionalInfoMenu" hidden></div>
+                            </div>
+                          </label>
+                        </div>
+
+                        <div class="navdesk-ukv-profile-summary" id="ukvProfileSummary" hidden>
+                          <div class="navdesk-ukv-profile-summary__top">
+                            <p class="navdesk-ukv-profile-summary__line" id="ukvProfileSummaryLine">—</p>
+                            <button type="button" class="btn btn--secondary" id="ukvProfileEdit" data-i18n="navdesk_ukv_profile_edit">Редактировать</button>
+                          </div>
+                          <div class="navdesk-ukv-profile-summary__spell">
+                            <p><strong data-i18n="navdesk_ukv_vessel_name">Название яхты</strong>: <span id="ukvProfileSummaryName">—</span></p>
+                            <p class="navdesk-ukv-template-spelling" id="ukvProfileSummaryNameSpell">—</p>
+                            <p><strong data-i18n="navdesk_ukv_call_sign">Call sign</strong>: <span id="ukvProfileSummaryCall">—</span></p>
+                            <p class="navdesk-ukv-template-spelling" id="ukvProfileSummaryCallSpell">—</p>
+                          </div>
+                        </div>
+
+                        <div class="navdesk-calc__actions">
+                          <button type="button" class="btn btn--primary" id="ukvProfileApply" data-i18n="navdesk_ukv_apply">Применить</button>
+                          <button type="button" class="btn btn--primary" id="ukvProfileSave" data-i18n="navdesk_ukv_save">Запомнить</button>
+                          <button type="button" class="btn btn--secondary" id="ukvProfileReset" data-i18n="navdesk_ukv_reset_demo">Сбросить к учебному судну</button>
+                        </div>
+
+                        <p class="navdesk-calc__status" id="ukvProfileStatus" data-i18n="navdesk_ukv_profile_status_idle">Заполните поля или используйте учебное судно по умолчанию.</p>
+                      </div>
+
+                      <div class="navdesk-ukv-order">
+                        <div class="section-heading section-heading--editorial navdesk-ukv-subheading">
+                          <p class="section-heading__eyebrow" data-i18n="navdesk_ukv_order_eyebrow">Порядок радиообмена</p>
+                          <h4 data-i18n="navdesk_ukv_order_title">Стандартная компоновка вызова</h4>
+                          <p data-i18n="navdesk_ukv_order_intro">Рабочий порядок построения сообщения для повседневного радиообмена.</p>
+                        </div>
+
+                        <div class="navdesk-ukv-order-list">
+                          <div class="navdesk-ukv-order-item"><strong>1.</strong> <span data-i18n="navdesk_ukv_order_1">Кого вызываете</span></div>
+                          <div class="navdesk-ukv-order-item"><strong>2.</strong> <span data-i18n="navdesk_ukv_order_2">Кто вызывает</span></div>
+                          <div class="navdesk-ukv-order-item"><strong>3.</strong> <span data-i18n="navdesk_ukv_order_3">Позиция или контекст</span></div>
+                          <div class="navdesk-ukv-order-item"><strong>4.</strong> <span data-i18n="navdesk_ukv_order_4">Запрос или намерение</span></div>
+                          <div class="navdesk-ukv-order-item"><strong>5.</strong> <span data-i18n="navdesk_ukv_order_5">Дополнительные сведения</span></div>
+                          <div class="navdesk-ukv-order-item"><strong>6.</strong> <span data-i18n="navdesk_ukv_order_6">Завершение передачи: over / standing by</span></div>
+                        </div>
+                      </div>
+
+                      <div class="navdesk-ukv-scenarios">
+                        <div class="navdesk-ukv-scenario">
+                          <button type="button" class="navdesk-ukv-scenario__toggle" data-target="ukvScenarioMarina"><span data-i18n="navdesk_ukv_scenario_marina">Марина</span></button>
+                          <div class="navdesk-ukv-scenario__body" id="ukvScenarioMarina" hidden>
+                            <div class="navdesk-ukv-template-list">
+                              <div class="navdesk-ukv-template-card">
+                                <p class="navdesk-ukv-template-card__eyebrow" data-i18n="navdesk_ukv_marina_call_eyebrow">Вызов</p>
+                                <h5 data-i18n="navdesk_ukv_marina_call_title">Запрос входа в марину</h5>
+                                <p class="navdesk-ukv-template-card__intro" data-i18n="navdesk_ukv_marina_call_intro">Первичный вызов марины перед входом и запрос дальнейших инструкций.</p>
+                                <div class="navdesk-ukv-template-card__output" id="ukvMarinaCallOutput"></div>
+                                <button type="button" class="btn btn--secondary" id="ukvMarinaCallCopy" data-i18n="navdesk_ukv_copy_template">Копировать текст</button>
+                              </div>
+
+                              <div class="navdesk-ukv-template-card">
+                                <p class="navdesk-ukv-template-card__eyebrow" data-i18n="navdesk_ukv_marina_berth_eyebrow">Стоянка</p>
+                                <h5 data-i18n="navdesk_ukv_marina_berth_title">Запрос места</h5>
+                                <p class="navdesk-ukv-template-card__intro" data-i18n="navdesk_ukv_marina_berth_intro">Запрос свободного места с краткими данными судна.</p>
+                                <div class="navdesk-ukv-template-card__output" id="ukvMarinaBerthOutput"></div>
+                                <button type="button" class="btn btn--secondary" id="ukvMarinaBerthCopy" data-i18n="navdesk_ukv_copy_template">Копировать текст</button>
+                              </div>
+
+                              <div class="navdesk-ukv-template-card">
+                                <p class="navdesk-ukv-template-card__eyebrow" data-i18n="navdesk_ukv_marina_reservation_eyebrow">Бронирование</p>
+                                <h5 data-i18n="navdesk_ukv_marina_reservation_title">Подтверждение брони</h5>
+                                <p class="navdesk-ukv-template-card__intro" data-i18n="navdesk_ukv_marina_reservation_intro">Короткое подтверждение бронирования и запроса места по прибытии.</p>
+                                <div class="navdesk-ukv-template-card__output" id="ukvMarinaReservationOutput"></div>
+                                <button type="button" class="btn btn--secondary" id="ukvMarinaReservationCopy" data-i18n="navdesk_ukv_copy_template">Копировать текст</button>
+                              </div>
+
+                              <div class="navdesk-ukv-template-card">
+                                <p class="navdesk-ukv-template-card__eyebrow" data-i18n="navdesk_ukv_marina_service_eyebrow">Сервис</p>
+                                <h5 data-i18n="navdesk_ukv_marina_service_title">Топливо, вода, электричество</h5>
+                                <p class="navdesk-ukv-template-card__intro" data-i18n="navdesk_ukv_marina_service_intro">Запрос базовых сервисов после швартовки или перед заходом.</p>
+                                <div class="navdesk-ukv-template-card__output" id="ukvMarinaServiceOutput"></div>
+                                <button type="button" class="btn btn--secondary" id="ukvMarinaServiceCopy" data-i18n="navdesk_ukv_copy_template">Копировать текст</button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="navdesk-ukv-scenario">
+                          <button type="button" class="navdesk-ukv-scenario__toggle" data-target="ukvScenarioVts"><span data-i18n="navdesk_ukv_scenario_vts">VTS</span></button>
+                          <div class="navdesk-ukv-scenario__body" id="ukvScenarioVts" hidden>
+                            <div class="navdesk-ukv-template-list">
+                              <div class="navdesk-ukv-template-card">
+                                <p class="navdesk-ukv-template-card__eyebrow" data-i18n="navdesk_ukv_vts_initial_eyebrow">Первичный вызов</p>
+                                <h5 data-i18n="navdesk_ukv_vts_initial_title">Первичный вызов VTS</h5>
+                                <p class="navdesk-ukv-template-card__intro" data-i18n="navdesk_ukv_vts_initial_intro">Начальный вызов службы движения судов с краткой идентификацией судна.</p>
+                                <div class="navdesk-ukv-template-card__output" id="ukvVtsInitialOutput"></div>
+                                <button type="button" class="btn btn--secondary" id="ukvVtsInitialCopy" data-i18n="navdesk_ukv_copy_template">Копировать текст</button>
+                              </div>
+
+                              <div class="navdesk-ukv-template-card">
+                                <p class="navdesk-ukv-template-card__eyebrow" data-i18n="navdesk_ukv_vts_position_eyebrow">Позиция</p>
+                                <h5 data-i18n="navdesk_ukv_vts_position_title">Доклад позиции</h5>
+                                <p class="navdesk-ukv-template-card__intro" data-i18n="navdesk_ukv_vts_position_intro">Передача текущей позиции, курса и скорости.</p>
+                                <div class="navdesk-ukv-template-card__output" id="ukvVtsPositionOutput"></div>
+                                <button type="button" class="btn btn--secondary" id="ukvVtsPositionCopy" data-i18n="navdesk_ukv_copy_template">Копировать текст</button>
+                              </div>
+
+                              <div class="navdesk-ukv-template-card">
+                                <p class="navdesk-ukv-template-card__eyebrow" data-i18n="navdesk_ukv_vts_entry_eyebrow">Вход</p>
+                                <h5 data-i18n="navdesk_ukv_vts_entry_title">Вход в район контроля</h5>
+                                <p class="navdesk-ukv-template-card__intro" data-i18n="navdesk_ukv_vts_entry_intro">Сообщение о входе в район контроля и дальнейших намерениях.</p>
+                                <div class="navdesk-ukv-template-card__output" id="ukvVtsEntryOutput"></div>
+                                <button type="button" class="btn btn--secondary" id="ukvVtsEntryCopy" data-i18n="navdesk_ukv_copy_template">Копировать текст</button>
+                              </div>
+
+                              <div class="navdesk-ukv-template-card">
+                                <p class="navdesk-ukv-template-card__eyebrow" data-i18n="navdesk_ukv_vts_traffic_eyebrow">Информация</p>
+                                <h5 data-i18n="navdesk_ukv_vts_traffic_title">Запрос traffic information</h5>
+                                <p class="navdesk-ukv-template-card__intro" data-i18n="navdesk_ukv_vts_traffic_intro">Запрос информации о движении и рекомендаций по проходу.</p>
+                                <div class="navdesk-ukv-template-card__output" id="ukvVtsTrafficOutput"></div>
+                                <button type="button" class="btn btn--secondary" id="ukvVtsTrafficCopy" data-i18n="navdesk_ukv_copy_template">Копировать текст</button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="navdesk-ukv-scenario">
+                          <button type="button" class="navdesk-ukv-scenario__toggle" data-target="ukvScenarioCoast"><span data-i18n="navdesk_ukv_scenario_coast">Береговая станция</span></button>
+                          <div class="navdesk-ukv-scenario__body" id="ukvScenarioCoast" hidden>
+                            <div class="navdesk-ukv-template-list">
+                              <div class="navdesk-ukv-template-card">
+                                <p class="navdesk-ukv-template-card__eyebrow" data-i18n="navdesk_ukv_coast_general_eyebrow">Вызов</p>
+                                <h5 data-i18n="navdesk_ukv_coast_general_title">Общий вызов береговой станции</h5>
+                                <p class="navdesk-ukv-template-card__intro" data-i18n="navdesk_ukv_coast_general_intro">Базовый вызов береговой станции с идентификацией судна и целью обращения.</p>
+                                <div class="navdesk-ukv-template-card__output" id="ukvCoastGeneralOutput"></div>
+                                <button type="button" class="btn btn--secondary" id="ukvCoastGeneralCopy" data-i18n="navdesk_ukv_copy_template">Копировать текст</button>
+                              </div>
+
+                              <div class="navdesk-ukv-template-card">
+                                <p class="navdesk-ukv-template-card__eyebrow" data-i18n="navdesk_ukv_coast_portinfo_eyebrow">Информация</p>
+                                <h5 data-i18n="navdesk_ukv_coast_portinfo_title">Запрос портовой информации</h5>
+                                <p class="navdesk-ukv-template-card__intro" data-i18n="navdesk_ukv_coast_portinfo_intro">Запрос актуальной информации по входу, погоде или портовым условиям.</p>
+                                <div class="navdesk-ukv-template-card__output" id="ukvCoastPortInfoOutput"></div>
+                                <button type="button" class="btn btn--secondary" id="ukvCoastPortInfoCopy" data-i18n="navdesk_ukv_copy_template">Копировать текст</button>
+                              </div>
+
+                              <div class="navdesk-ukv-template-card">
+                                <p class="navdesk-ukv-template-card__eyebrow" data-i18n="navdesk_ukv_coast_assist_eyebrow">Помощь</p>
+                                <h5 data-i18n="navdesk_ukv_coast_assist_title">Запрос практической помощи</h5>
+                                <p class="navdesk-ukv-template-card__intro" data-i18n="navdesk_ukv_coast_assist_intro">Запрос локальной помощи без объявления distress или urgency traffic.</p>
+                                <div class="navdesk-ukv-template-card__output" id="ukvCoastAssistOutput"></div>
+                                <button type="button" class="btn btn--secondary" id="ukvCoastAssistCopy" data-i18n="navdesk_ukv_copy_template">Копировать текст</button>
+                              </div>
+
+                              <div class="navdesk-ukv-template-card">
+                                <p class="navdesk-ukv-template-card__eyebrow" data-i18n="navdesk_ukv_coast_relay_eyebrow">Связь</p>
+                                <h5 data-i18n="navdesk_ukv_coast_relay_title">Relay / соединение</h5>
+                                <p class="navdesk-ukv-template-card__intro" data-i18n="navdesk_ukv_coast_relay_intro">Запрос соединения с нужной службой или передачи сообщения через береговую станцию.</p>
+                                <div class="navdesk-ukv-template-card__output" id="ukvCoastRelayOutput"></div>
+                                <button type="button" class="btn btn--secondary" id="ukvCoastRelayCopy" data-i18n="navdesk_ukv_copy_template">Копировать текст</button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="navdesk-ukv-scenario">
+                          <button type="button" class="navdesk-ukv-scenario__toggle" data-target="ukvScenarioDistress"><span data-i18n="navdesk_ukv_scenario_distress">Бедствие</span></button>
+                          <div class="navdesk-ukv-scenario__body" id="ukvScenarioDistress" hidden>
+                            <div class="navdesk-ukv-template-list">
+                              <div class="navdesk-ukv-template-card">
+                                <p class="navdesk-ukv-template-card__eyebrow">Mayday</p>
+                                <h5 data-i18n="navdesk_ukv_distress_call_title">Distress call</h5>
+                                <p class="navdesk-ukv-template-card__intro" data-i18n="navdesk_ukv_distress_call_intro">Полный базовый шаблон сигнала бедствия.</p>
+                                <div class="navdesk-ukv-template-card__meta">
+                                  <p><strong data-i18n="navdesk_ukv_vessel_name">Название яхты</strong>: <span id="ukvDistressVesselName">—</span></p>
+                                  <p class="navdesk-ukv-template-spelling" id="ukvDistressVesselNameSpell">—</p>
+                                  <p><strong data-i18n="navdesk_ukv_call_sign">Call sign</strong>: <span id="ukvDistressCallSign">—</span></p>
+                                  <p class="navdesk-ukv-template-spelling" id="ukvDistressCallSignSpell">—</p>
+                                </div>
+                                <div class="navdesk-ukv-template-card__output" id="ukvDistressCallOutput"></div>
+                                <button type="button" class="btn btn--secondary" id="ukvDistressCallCopy" data-i18n="navdesk_ukv_copy_template">Копировать текст</button>
+                              </div>
+
+                              <div class="navdesk-ukv-template-card">
+                                <p class="navdesk-ukv-template-card__eyebrow">Mayday Relay</p>
+                                <h5 data-i18n="navdesk_ukv_distress_relay_title">Mayday relay</h5>
+                                <p data-i18n="navdesk_ukv_distress_relay_intro" class="navdesk-ukv-template-card__intro">Передача сигнала бедствия за другое судно.</p>
+                                <label class="navdesk-calc__field navdesk-calc__field--full">
+                                  <span data-i18n="navdesk_ukv_relay_vessel_name">Судно в бедствии</span>
+                                  <input type="text" id="ukvRelayVesselName" data-i18n-placeholder="navdesk_ukv_relay_vessel_name_ph" placeholder="Sea Breeze" />
+                                </label>
+                                <label class="navdesk-calc__field navdesk-calc__field--full">
+                                  <span data-i18n="navdesk_ukv_relay_call_sign">Call sign судна в бедствии</span>
+                                  <input type="text" id="ukvRelayCallSign" data-i18n-placeholder="navdesk_ukv_relay_call_sign_ph" placeholder="9HA1234" />
+                                </label>
+                                <label class="navdesk-calc__field navdesk-calc__field--full">
+                                  <span data-i18n="navdesk_ukv_relay_position">Позиция судна в бедствии</span>
+                                  <input type="text" id="ukvRelayPosition" data-i18n-placeholder="navdesk_ukv_relay_position_ph" placeholder="lat 42° 25.4' N, lon 018° 41.2' E" />
+                                </label>
+                                <div class="navdesk-ukv-template-card__meta">
+                                  <p><strong data-i18n="navdesk_ukv_relay_vessel_name">Судно в бедствии</strong>: <span id="ukvRelayVesselNameView">—</span></p>
+                                  <p class="navdesk-ukv-template-spelling" id="ukvRelayVesselNameSpell">—</p>
+                                  <p><strong data-i18n="navdesk_ukv_relay_call_sign">Call sign судна в бедствии</strong>: <span id="ukvRelayCallSignView">—</span></p>
+                                  <p class="navdesk-ukv-template-spelling" id="ukvRelayCallSignSpell">—</p>
+                                </div>
+                                <div class="navdesk-ukv-template-card__output" id="ukvDistressRelayOutput"></div>
+                                <button type="button" class="btn btn--secondary" id="ukvDistressRelayCopy" data-i18n="navdesk_ukv_copy_template">Копировать текст</button>
+                              </div>
+
+                              <div class="navdesk-ukv-template-card">
+                                <p class="navdesk-ukv-template-card__eyebrow">Mayday</p>
+                                <h5 data-i18n="navdesk_ukv_distress_assist_title">Position and assistance required</h5>
+                                <p class="navdesk-ukv-template-card__intro" data-i18n="navdesk_ukv_distress_assist_intro">Координаты, люди на борту и требуемая помощь.</p>
+                                <div class="navdesk-ukv-template-card__output" id="ukvDistressAssistOutput"></div>
+                                <button type="button" class="btn btn--secondary" id="ukvDistressAssistCopy" data-i18n="navdesk_ukv_copy_template">Копировать текст</button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="navdesk-ukv-scenario">
+                          <button type="button" class="navdesk-ukv-scenario__toggle" data-target="ukvScenarioUrgency"><span data-i18n="navdesk_ukv_scenario_urgency">Срочность</span></button>
+                          <div class="navdesk-ukv-scenario__body" id="ukvScenarioUrgency" hidden>
+                            <div class="navdesk-ukv-template-list">
+                              <div class="navdesk-ukv-template-card">
+                                <p class="navdesk-ukv-template-card__eyebrow">Pan-Pan</p>
+                                <h5 data-i18n="navdesk_ukv_urgency_medical_title">Medical / urgent assistance</h5>
+                                <p class="navdesk-ukv-template-card__intro" data-i18n="navdesk_ukv_urgency_medical_intro">Шаблон срочного вызова без непосредственной угрозы гибели судна.</p>
+                                <div class="navdesk-ukv-template-card__output" id="ukvUrgencyMedicalOutput"></div>
+                                <button type="button" class="btn btn--secondary" id="ukvUrgencyMedicalCopy" data-i18n="navdesk_ukv_copy_template">Копировать текст</button>
+                              </div>
+
+                              <div class="navdesk-ukv-template-card">
+                                <p class="navdesk-ukv-template-card__eyebrow">Pan-Pan</p>
+                                <h5 data-i18n="navdesk_ukv_urgency_propulsion_title">Loss of propulsion / urgent situation</h5>
+                                <p class="navdesk-ukv-template-card__intro" data-i18n="navdesk_ukv_urgency_propulsion_intro">Срочное сообщение при потере хода, управляемости или иной серьёзной проблеме.</p>
+                                <div class="navdesk-ukv-template-card__output" id="ukvUrgencyPropulsionOutput"></div>
+                                <button type="button" class="btn btn--secondary" id="ukvUrgencyPropulsionCopy" data-i18n="navdesk_ukv_copy_template">Копировать текст</button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="navdesk-ukv-scenario">
+                          <button type="button" class="navdesk-ukv-scenario__toggle" data-target="ukvScenarioSafety"><span data-i18n="navdesk_ukv_scenario_safety">Безопасность</span></button>
+                          <div class="navdesk-ukv-scenario__body" id="ukvScenarioSafety" hidden>
+                            <div class="navdesk-ukv-template-list">
+                              <div class="navdesk-ukv-template-card">
+                                <p class="navdesk-ukv-template-card__eyebrow">Sécurité</p>
+                                <h5 data-i18n="navdesk_ukv_safety_navwarn_title">Navigational warning</h5>
+                                <p class="navdesk-ukv-template-card__intro" data-i18n="navdesk_ukv_safety_navwarn_intro">Предупреждение о навигационной опасности.</p>
+                                <div class="navdesk-ukv-template-card__output" id="ukvSafetyNavWarnOutput"></div>
+                                <button type="button" class="btn btn--secondary" id="ukvSafetyNavWarnCopy" data-i18n="navdesk_ukv_copy_template">Копировать текст</button>
+                              </div>
+
+                              <div class="navdesk-ukv-template-card">
+                                <p class="navdesk-ukv-template-card__eyebrow">Sécurité</p>
+                                <h5 data-i18n="navdesk_ukv_safety_weather_title">Weather / local hazard</h5>
+                                <p class="navdesk-ukv-template-card__intro" data-i18n="navdesk_ukv_safety_weather_intro">Сообщение о погодной или локальной опасности для других судов.</p>
+                                <div class="navdesk-ukv-template-card__output" id="ukvSafetyWeatherOutput"></div>
+                                <button type="button" class="btn btn--secondary" id="ukvSafetyWeatherCopy" data-i18n="navdesk_ukv_copy_template">Копировать текст</button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </section>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div><strong>VETUS NAUTA</strong><p>Brkovic</p><p data-i18n="footer_text">Практический опыт в яхтинге и морских путешествиях</p></div>
+      <p class="footer__copy">© <span id="currentYear"></span> VETUS NAUTA — Brkovic</p>
+    </footer>
+
+  <script src="js/config.js"></script>
+  <script src="js/language.js?v=20260424-04"></script>
+  <script src="js/main.js?v=20260424-04"></script>
+  <script src="js/navdesk.js?v=20260425-54"></script>
+
+  <div class="navdesk-modal" id="navdeskModal" aria-hidden="true">
+    <div class="navdesk-modal__backdrop"></div>
+    <div class="navdesk-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="navdeskModalTitle">
+      <h2 class="navdesk-modal__title" id="navdeskModalTitle" data-i18n="navdesk_modal_title">Условия использования</h2>
+      <p class="navdesk-modal__text" data-i18n="navdesk_modal_text">Инструмент Nav Desk предоставляет справочную информацию и предварительные расчёты. Данные по приливам и отливам и расчёты окна прохода не должны использоваться как единственное основание для навигационных решений, обеспечения безопасности плавания или предотвращения ущерба людям, судну и имуществу. Продолжая использование, вы принимаете эти условия.</p>
+      <button type="button" class="navdesk-modal__accept" id="navdeskModalAccept" data-i18n="navdesk_modal_accept">Принимаю</button>
+    </div>
+  </div>
+
+
+
+
+  <div class="navdesk-print-root" id="navdeskPrintRoot" hidden></div>
+
+</body>
+</html>

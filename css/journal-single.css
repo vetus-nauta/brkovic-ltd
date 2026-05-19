@@ -1,0 +1,76 @@
+.journal-single-back {
+  margin-top: 12px;
+}
+
+.journal-layout--single {
+  display: block;
+}
+
+.journal-layout--single .journal-feed-wrap {
+  width: 100%;
+}
+
+body.journal-page--single .journal-feed-wrap {
+  width: 100%;
+}
+
+body.journal-page--single .journal-card--feed {
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+body.journal-page--single #journalFeed {
+  max-width: 100%;
+}
+
+.journal-post--single {
+  max-width: 100%;
+  padding: 8px 0;
+}
+
+.journal-post--single .journal-post__title {
+  font-size: clamp(28px, 4vw, 42px);
+  line-height: 1.08;
+}
+
+.journal-post--single .journal-post__text {
+  font-size: 1.05rem;
+  line-height: 1.8;
+}
+
+.journal-post--single .journal-post__meta {
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.journal-post--single .journal-post__date {
+  white-space: nowrap;
+}
+
+.journal-post--single .journal-post__media {
+  margin-top: 20px;
+}
+
+.journal-post--single .journal-comments {
+  margin-top: 20px;
+}
+
+body.journal-page--single .journal-hero__actions a[href="#journalComposer"] {
+  display: none;
+}
+
+.journal-card--readonly p {
+  color: var(--color-muted);
+  line-height: 1.7;
+}
+
+.journal-card--readonly .journal-checklist {
+  margin-top: 14px;
+}
+
+.journal-comment-status {
+  margin-top: 10px;
+  color: var(--color-muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}

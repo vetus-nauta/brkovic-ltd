@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta name="robots" content="noindex,nofollow,noarchive" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BRKOVIC — Админка менеджмента</title>
+  <meta name="theme-color" content="#10243a" />
+  <link rel="icon" href="images/icons/favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/variables.css" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+  <link rel="stylesheet" href="css/admin-management.css?v=20260519-04" />
+</head>
+<body>
+  <div class="site-shell">
+    <header class="topbar">
+      <a href="index.html#hero" class="brand" aria-label="BRKOVIC home">
+        <span class="brand__word">BRKO<span class="brand__sail">V</span>IC</span>
+        <span class="brand__tag">Админка менеджмента</span>
+      </a>
+    </header>
+
+    <main class="section admin-management-page">
+      <section class="section--paper admin-management-card">
+        <div class="section-heading">
+          <p class="section-heading__eyebrow">Админка</p>
+          <h1>Яхт-менеджмент</h1>
+          <p>Редактор формулы цены, услуг калькулятора и конструктора договора. Поля разложены по исходной логике расчета.</p>
+        </div>
+
+        <nav class="admin-section-nav" aria-label="Разделы админки">
+          <a href="admin-posts.html">Посты</a>
+          <a href="admin-comments.html">Комментарии</a>
+          <a href="admin-management.html" class="is-active">Менеджмент</a>
+        </nav>
+
+        <form id="adminManagementLoginForm" class="admin-management-login">
+          <label>
+            <span>Email</span>
+            <input type="email" id="adminManagementEmail" value="vetus.nauta@gmail.com" required />
+          </label>
+          <label>
+            <span>Пароль</span>
+            <input type="password" id="adminManagementPassword" autocomplete="current-password" required />
+          </label>
+          <button type="submit" class="btn btn--primary">Войти</button>
+        </form>
+
+        <div id="adminManagementStatus" class="admin-management-status"></div>
+        <div id="adminManagementDiagnostics" class="admin-management-diagnostics" hidden></div>
+
+        <section class="management-admin-panel">
+            <div class="management-admin-panel__head">
+              <div>
+                <h2>Формула и договор</h2>
+                <p>Публичный калькулятор читает эти значения из файла цен. Меняйте только цифры и активность услуг.</p>
+              </div>
+              <div class="management-admin-actions">
+                <button id="reloadPricingBtn" class="btn btn--secondary" type="button">Перезагрузить</button>
+                <button id="savePricingBtn" class="btn btn--primary" type="button">Сохранить цены</button>
+                <button id="saveServiceModelBtn" class="btn btn--secondary" type="button">Сохранить модель услуг</button>
+                <a class="btn btn--secondary" href="services/yacht-management.html#management-calculator" target="_blank" rel="noopener">Открыть калькулятор</a>
+              </div>
+            </div>
+
+            <div class="service-catalog-toolbar" id="serviceCatalogToolbar">
+              <div>
+                <strong>Каталог услуг</strong>
+                <span>Добавление и удаление дополнительных месячных и разовых услуг. База месяца остается одной строкой.</span>
+              </div>
+              <div class="management-admin-actions">
+                <button class="btn btn--primary" type="button" data-add-service="monthlyServices" data-open-after-add="monthlyAddOnPricingPopup">+ Месячная услуга</button>
+                <button class="btn btn--primary" type="button" data-add-service="oneTimeServices">+ Разовая услуга</button>
+              </div>
+            </div>
+
+            <p class="formula-note">База месяца — начальный минимум по длине: Boat Watch, Technical Watch и Представление владельца одной строкой. К базе применяются коэффициенты типа и экипажа, а выбранные допы добавляются сверху отдельными строками.</p>
+
+            <div class="admin-management-layout" aria-label="Основные блоки админки менеджмента">
+              <article class="pricing-card pricing-card--type">
+                <div class="pricing-card__head">
+                  <span class="pricing-card__index">1</span>
+                  <div>
+                    <h3>Тип яхты</h3>
+                    <p>Фиксированные позиции коэффициента типа.</p>
+                  </div>
+                </div>
+                <div class="pricing-card__tools">
+                  <p id="typePricingSummary" class="pricing-popup-summary">Коэффициенты типа вынесены в карточку настроек.</p>
+                  <button class="btn btn--secondary" type="button" data-popup-open="typePricingPopup">Открыть типы</button>
+                </div>
+              </article>
+
+              <article class="pricing-card pricing-card--length">
+                <div class="pricing-card__head">
+                  <span class="pricing-card__index">2</span>
+                  <div>
+                    <h3>Длина</h3>
+                    <p>База месяца и коэффициент длины по диапазонам.</p>
+                  </div>
+                </div>
+                <div class="pricing-card__tools">
+                  <p id="lengthPricingSummary" class="pricing-popup-summary">Базы и коэффициенты длины вынесены в карточку настроек.</p>
+                  <button class="btn btn--secondary" type="button" data-popup-open="lengthPricingPopup">Открыть длину</button>
+                </div>
+              </article>
+
+              <article class="pricing-card pricing-card--monthly-addons">
+                <div class="pricing-card__head">
+                  <span class="pricing-card__index">3</span>
+                  <div>
+                    <h3>Доп. месячные</h3>
+                    <p>Цены дополнительных ежемесячных услуг поверх базы.</p>
+                  </div>
+                </div>
+              <div class="pricing-card__tools">
+                <p id="monthlyAddOnPricingSummary" class="pricing-popup-summary">Дополнительные месячные вынесены в отдельную карточку.</p>
+                <button class="btn btn--secondary" type="button" data-popup-open="monthlyAddOnPricingPopup">Открыть допы</button>
+                <button class="btn btn--secondary" type="button" data-add-service="monthlyServices">Добавить месячную</button>
+              </div>
+              </article>
+
+              <article class="pricing-card pricing-card--monthly-total">
+                <div class="pricing-card__head">
+                  <span class="pricing-card__index">Σ</span>
+                  <div>
+                    <h3>Итог месяца</h3>
+                    <p>Сводка двух наборов: база + доп. месячные услуги.</p>
+                  </div>
+                </div>
+                <p id="monthlyTotalSummary" class="pricing-popup-summary">Итог месяца появится после загрузки модели.</p>
+              </article>
+
+              <article class="pricing-card pricing-card--contract">
+                <div class="pricing-card__head">
+                  <span class="pricing-card__index">4</span>
+                  <div>
+                    <h3>Конструктор договора</h3>
+                    <p>Профактура формируется из выбранных услуг, периода, нетто-сумм, дисконта и НДС.</p>
+                  </div>
+                </div>
+
+                <div class="contract-toggle-row">
+                  <p id="contractBuilderSummary" class="pricing-popup-summary">Договор скрыт. Откройте блок, чтобы выбрать яхту, услуги, период и править юридический текст.</p>
+                  <button class="btn btn--secondary" id="toggleContractBuilderBtn" type="button" aria-expanded="false" aria-controls="contractBuilderShell">Открыть договор</button>
+                </div>
+
+                <div class="contract-builder-shell" id="contractBuilderShell" hidden>
+                <form id="contractBuilderForm" class="contract-builder-form">
+                  <div class="contract-builder-grid">
+                    <label><span>Номер профактуры</span><input type="text" id="proformaNumber" placeholder="VN-PF-20260515-001" /></label>
+                    <label><span>Дата профактуры</span><input type="date" id="proformaDate" /></label>
+                  </div>
+                  <label><span>Клиент</span><input type="text" id="contractClient" placeholder="Имя клиента или компания" /></label>
+                  <label><span>Яхта</span><input type="text" id="contractYacht" placeholder="Название, тип и длина яхты" /></label>
+                  <div class="contract-builder-grid">
+                    <label><span>Тип для расчета</span><select id="contractTypeSelect"></select></label>
+                    <label><span>Длина для расчета</span><select id="contractLengthSelect"></select></label>
+                    <label><span>Экипаж для расчета</span><select id="contractCrewSelect"></select></label>
+                  </div>
+                  <label class="contract-auto-price-toggle contract-base-toggle">
+                    <input type="checkbox" id="contractBaseToggle" checked />
+                    <span>Включить базу месяца: Boat Watch, Technical Watch и Представление владельца</span>
+                  </label>
+                  <label><span>Марина / локация</span><input type="text" id="contractLocation" placeholder="Porto Montenegro, Tivat..." /></label>
+                  <div class="contract-builder-grid">
+                    <label><span>Начало</span><input type="date" id="contractStart" /></label>
+                    <label><span>Окончание</span><input type="date" id="contractEnd" /></label>
+                  </div>
+                  <div class="contract-builder-grid">
+                    <label><span>База месяца, EUR</span><input type="number" id="contractMonthlyPrice" min="0" step="10" /></label>
+                    <label><span>Разово итог, EUR</span><input type="number" id="contractOneTimePrice" min="0" step="10" /></label>
+                  </div>
+                  <label class="contract-auto-price-toggle">
+                    <input type="checkbox" id="contractAutoPriceToggle" checked />
+                    <span>Автоматически считать базу месяца по выбранному типу, длине и экипажу</span>
+                  </label>
+                  <p class="contract-auto-price-note" id="contractAutoPriceNote"></p>
+                  <label class="contract-auto-price-toggle">
+                    <input type="checkbox" id="contractAutoOneTimeToggle" checked />
+                    <span>Автоматически считать разовые услуги по списку ниже</span>
+                  </label>
+                  <div class="contract-builder-grid">
+                    <label><span>Дисконт, %</span><input type="number" id="contractDiscountPercent" min="0" max="100" step="0.1" /></label>
+                    <label><span>НДС, %</span><input type="number" id="contractVatPercent" min="0" max="100" step="0.1" /></label>
+                  </div>
+                  <label><span>Дополнительные месячные услуги</span><div id="contractScopeFields" class="contract-scope-fields"></div></label>
+                  <div class="contract-builder-subsection">
+                    <div>
+                      <h4>Разовые сервисы</h4>
+                      <p>Отметьте нужные позиции, задайте базу услуги. Итог считается через коэффициенты выбранного типа и длины яхты.</p>
+                    </div>
+                    <p id="contractOneTimeSummary" class="pricing-popup-summary">Разовые позиции вынесены в широкую карточку настроек.</p>
+                    <button class="btn btn--secondary" type="button" data-popup-open="oneTimePricingPopup">Открыть разовые сервисы</button>
+                  </div>
+                  <label><span>Особые условия</span><textarea id="contractNotes" rows="4" placeholder="Периодичность, исключения, доступ на борт, требования владельца"></textarea></label>
+                  <div class="management-admin-actions">
+                    <button class="btn btn--primary" type="submit">Собрать профактуру</button>
+                    <button class="btn btn--secondary" id="printContractBtn" type="button">Печать / PDF</button>
+                  </div>
+                </form>
+
+                <div class="contract-defaults-block">
+                  <h4>Шаблонные условия</h4>
+                  <div id="contractDefaultFields" class="contract-default-fields"></div>
+                  <h4>Данные профактуры</h4>
+                  <div id="invoiceDefaultFields" class="contract-default-fields"></div>
+                  <h4>Юридический текст договора</h4>
+                  <div id="contractLegalFields" class="contract-legal-fields"></div>
+                </div>
+
+                <article class="contract-preview contract-print-area" id="contractPreview">
+                  <h2>Профактура</h2>
+                  <p>Заполните поля и нажмите «Собрать профактуру».</p>
+                </article>
+                </div>
+              </article>
+            </div>
+
+            <div class="pricing-popup" id="typePricingPopup" role="dialog" aria-modal="true" aria-labelledby="typePricingPopupTitle" hidden>
+              <button class="pricing-popup__shade" type="button" data-popup-close aria-label="Закрыть"></button>
+              <article class="pricing-popup__card">
+                <header class="pricing-popup__head">
+                  <div>
+                    <p>Коэффициенты</p>
+                    <h3 id="typePricingPopupTitle">Тип яхты</h3>
+                  </div>
+                  <button class="pricing-popup__close" type="button" data-popup-close aria-label="Закрыть">&times;</button>
+                </header>
+                <div id="typePricingFields" class="pricing-fields"></div>
+              </article>
+            </div>
+
+            <div class="pricing-popup" id="lengthPricingPopup" role="dialog" aria-modal="true" aria-labelledby="lengthPricingPopupTitle" hidden>
+              <button class="pricing-popup__shade" type="button" data-popup-close aria-label="Закрыть"></button>
+              <article class="pricing-popup__card pricing-popup__card--wide">
+                <header class="pricing-popup__head">
+                  <div>
+                    <p>Формула длины</p>
+                    <h3 id="lengthPricingPopupTitle">Длина и база месяца</h3>
+                  </div>
+                  <button class="pricing-popup__close" type="button" data-popup-close aria-label="Закрыть">&times;</button>
+                </header>
+                <div id="lengthPricingFields" class="pricing-fields pricing-fields--wide"></div>
+              </article>
+            </div>
+
+            <div class="pricing-popup" id="monthlyAddOnPricingPopup" role="dialog" aria-modal="true" aria-labelledby="monthlyAddOnPricingPopupTitle" hidden>
+              <button class="pricing-popup__shade" type="button" data-popup-close aria-label="Закрыть"></button>
+              <article class="pricing-popup__card pricing-popup__card--wide">
+                <header class="pricing-popup__head">
+                  <div>
+                    <p>Цена допов</p>
+                    <h3 id="monthlyAddOnPricingPopupTitle">Дополнительные месячные услуги</h3>
+                  </div>
+                  <button class="btn btn--secondary" type="button" data-add-service="monthlyServices">Добавить месячную</button>
+                  <button class="pricing-popup__close" type="button" data-popup-close aria-label="Закрыть">&times;</button>
+                </header>
+                <div id="monthlyAddOnPricingFields" class="pricing-fields pricing-fields--wide"></div>
+              </article>
+            </div>
+
+            <div class="pricing-popup" id="oneTimePricingPopup" role="dialog" aria-modal="true" aria-labelledby="oneTimePricingPopupTitle" hidden>
+              <button class="pricing-popup__shade" type="button" data-popup-close aria-label="Закрыть"></button>
+              <article class="pricing-popup__card pricing-popup__card--wide">
+                <header class="pricing-popup__head">
+                  <div>
+                    <p>Конструктор профактуры</p>
+                    <h3 id="oneTimePricingPopupTitle">Разовые сервисы</h3>
+                  </div>
+                  <button class="pricing-popup__close" type="button" data-popup-close aria-label="Закрыть">&times;</button>
+                </header>
+                <div id="contractOneTimeFields" class="contract-one-time-fields"></div>
+              </article>
+            </div>
+
+            <div class="pricing-support-grid">
+              <article class="pricing-card">
+                <div class="pricing-card__head">
+                  <span class="pricing-card__index">+</span>
+                  <div>
+                    <h3>Экипаж</h3>
+                    <p>Коэффициенты снижения при наличии экипажа.</p>
+                  </div>
+                </div>
+                <div id="crewPricingFields" class="pricing-fields"></div>
+              </article>
+              <article class="pricing-card">
+                <div class="pricing-card__head">
+                  <span class="pricing-card__index">±</span>
+                  <div>
+                    <h3>Диапазон результата</h3>
+                    <p>Нижняя и верхняя граница суммы в калькуляторе.</p>
+                  </div>
+                </div>
+                <div id="rangePricingFields" class="pricing-fields"></div>
+              </article>
+            </div>
+
+            <article class="pricing-card pricing-card--full pricing-card--services">
+              <div class="pricing-card__head">
+                <span class="pricing-card__index">€</span>
+                <div>
+                  <h3>Разовые услуги</h3>
+                  <p>Цена разовой услуги вводится как базовая ставка. В калькуляторе и профактуре она умножается на тип, длину и количество.</p>
+                </div>
+              </div>
+              <div class="service-price-tabs" role="tablist" aria-label="Группы услуг">
+                <button class="service-price-tab is-active" type="button" data-price-tab="oneTimeServices">Разовые</button>
+              </div>
+              <div class="management-admin-actions">
+                <button class="btn btn--secondary" type="button" data-add-service="oneTimeServices">Добавить разовую</button>
+              </div>
+              <div id="servicePricingFields" class="service-pricing-fields"></div>
+            </article>
+          </section>
+      </section>
+    </main>
+  </div>
+
+  <script src="js/admin-management.js?v=20260519-04"></script>
+</body>
+</html>

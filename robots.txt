@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://brkovic.ltd/sitemap.xml
+Disallow: /admin-posts.html
+Disallow: /admin-comments.html
+Disallow: /admin-management.html
+Disallow: /admin-mnr.html
+Disallow: /management-admin-api.php
+Disallow: /docs/proforma/

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta name="robots" content="noindex,nofollow,noarchive" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BRKOVIC — Модерация комментариев</title>
+  <meta name="theme-color" content="#10243a" />
+  <link rel="icon" href="images/icons/favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/variables.css" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+  <link rel="stylesheet" href="css/admin-comments.css?v=20260515-management-01" />
+</head>
+<body>
+  <div class="site-shell">
+    <header class="topbar">
+      <a href="index.html#hero" class="brand" aria-label="BRKOVIC home">
+        <span class="brand__word">BRKO<span class="brand__sail">V</span>IC</span>
+        <span class="brand__tag">Модерация комментариев</span>
+      </a>
+    </header>
+
+    <main class="section admin-comments-page">
+      <section class="section--paper admin-comments-card">
+        <div class="section-heading">
+          <p class="section-heading__eyebrow">Админка</p>
+          <h1>Модерация комментариев</h1>
+          <p>Войдите, проверьте комментарии, одобрите или отклоните их.</p>
+        </div>
+
+        <nav class="admin-section-nav" aria-label="Разделы админки">
+          <a href="admin-posts.html">Посты</a>
+          <a href="admin-comments.html" class="is-active">Комментарии</a>
+          <a href="admin-management.html">Менеджмент</a>
+        </nav>
+
+        <form id="adminLoginForm" class="admin-login-form">
+          <label>
+            <span>Email</span>
+            <input type="email" id="adminEmail" value="vetus.nauta@gmail.com" required />
+          </label>
+          <label>
+            <span>Пароль</span>
+            <input type="password" id="adminPassword" required />
+          </label>
+          <button type="submit" class="btn btn--primary">Войти</button>
+        </form>
+
+        <div id="adminStatus" class="admin-status"></div>
+
+        <div class="admin-toolbar">
+          <div class="admin-filters" role="tablist" aria-label="Фильтры комментариев">
+            <button class="admin-filter" data-status="">Все</button>
+            <button class="admin-filter is-active" data-status="PENDING">На модерации</button>
+            <button class="admin-filter" data-status="APPROVED">Одобренные</button>
+            <button class="admin-filter" data-status="REJECTED">Отклонённые</button>
+          </div>
+          <button id="adminRefreshBtn" class="btn btn--secondary" type="button">Обновить</button>
+        </div>
+
+        <div id="adminCommentsList" class="admin-comments-list"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="js/admin-comments.js?v=20260515-management-01"></script>
+</body>
+</html>

@@ -1,0 +1,238 @@
+.site-shell--navdesk {
+  min-height: 100vh;
+}
+
+.navdesk-hero__content {
+  display: grid;
+  gap: 18px;
+}
+
+.navdesk-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.navdesk-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.navdesk-side {
+  display: grid;
+  gap: 22px;
+  position: sticky;
+  top: 24px;
+}
+
+.navdesk-main {
+  min-width: 0;
+}
+
+.navdesk-card {
+  display: grid;
+  gap: 18px;
+}
+
+.navdesk-quicklist {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 8px;
+}
+
+.navdesk-block-head,
+.navdesk-block-heading {
+  display: block;
+}
+
+.journal-calc {
+  display: grid;
+  gap: 14px;
+}
+
+.journal-calc__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.journal-calc__field,
+.navdesk-field {
+  display: grid;
+  gap: 6px;
+}
+
+.journal-calc__field span,
+.navdesk-field span {
+  font-size: 0.9rem;
+  color: var(--color-muted);
+}
+
+.journal-calc__field input,
+.navdesk-field input,
+.navdesk-field select {
+  width: 100%;
+  min-height: 46px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--color-line);
+  background: #fff;
+  color: var(--color-brand);
+  font: inherit;
+}
+
+.journal-calc__field input:focus,
+.navdesk-field input:focus,
+.navdesk-field select:focus {
+  outline: none;
+  border-color: rgba(27, 55, 88, 0.35);
+  box-shadow: 0 0 0 3px rgba(27, 55, 88, 0.08);
+}
+
+.journal-calc__actions,
+.navdesk-tides-form__actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.journal-calc__status,
+.navdesk-status {
+  margin: 0;
+  color: var(--color-muted);
+  line-height: 1.5;
+  min-height: 24px;
+}
+
+.journal-calc__summary {
+  margin: 2px 0 0;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(27, 55, 88, 0.05);
+  color: var(--color-brand);
+  line-height: 1.5;
+  font-size: 0.95rem;
+}
+
+.journal-calc__summary:empty {
+  display: none;
+}
+
+.journal-calc__field input.is-calculated {
+  background: #f5f7fa;
+  color: #6c7380;
+  cursor: not-allowed;
+}
+
+.journal-calc__field input[readonly] {
+  pointer-events: none;
+}
+
+.journal-calc__field input#calcFuelTotal.is-calculated,
+.journal-calc__field input#calcFuelTotalReserve.is-calculated {
+  background: rgba(27, 55, 88, 0.08);
+  border-color: rgba(27, 55, 88, 0.22);
+  color: var(--color-brand);
+  font-weight: 700;
+}
+
+.navdesk-tides-form {
+  display: grid;
+  gap: 16px;
+}
+
+.navdesk-tides-form__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.navdesk-field--wide {
+  grid-column: 1 / -1;
+}
+
+.navdesk-tides-results {
+  display: grid;
+  gap: 18px;
+}
+
+.navdesk-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.navdesk-metric {
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(27, 55, 88, 0.04);
+  border: 1px solid rgba(27, 55, 88, 0.08);
+  display: grid;
+  gap: 6px;
+}
+
+.navdesk-metric__label {
+  font-size: 0.86rem;
+  color: var(--color-muted);
+}
+
+.navdesk-metric__value {
+  font-size: 1rem;
+  color: var(--color-brand);
+}
+
+.navdesk-window {
+  gap: 12px;
+}
+
+.navdesk-window__result {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.navdesk-table-wrap {
+  overflow-x: auto;
+}
+
+.navdesk-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.navdesk-table th,
+.navdesk-table td {
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--color-line);
+  text-align: left;
+}
+
+.navdesk-table th {
+  color: var(--color-muted);
+  font-weight: 700;
+}
+
+@media (max-width: 1100px) {
+  .navdesk-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .navdesk-side {
+    position: static;
+  }
+
+  .navdesk-metrics {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .journal-calc__grid,
+  .navdesk-tides-form__grid,
+  .navdesk-metrics {
+    grid-template-columns: 1fr;
+  }
+}

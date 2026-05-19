@@ -1,0 +1,41 @@
+
+<IfModule mod_headers.c>
+  <FilesMatch "\.(html|json)$">
+    Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+  </FilesMatch>
+
+  <FilesMatch "\.(js|css)$">
+    Header set Cache-Control "no-cache, must-revalidate, max-age=0"
+    Header unset Pragma
+    Header unset Expires
+  </FilesMatch>
+
+  <FilesMatch "\.(jpg|jpeg|png|webp|svg|gif|ico)$">
+    Header set Cache-Control "public, max-age=604800"
+    Header unset Pragma
+    Header unset Expires
+  </FilesMatch>
+</IfModule>
+
+<IfModule mod_headers.c>
+  <FilesMatch "^(admin-posts|admin-comments)\.html$">
+    Header set X-Robots-Tag "noindex, nofollow, noarchive"
+  </FilesMatch>
+</IfModule>
+
+# === OPS MIGRATION REDIRECTS ===
+RewriteEngine On
+
+RewriteRule ^ops/?$ https://brkovic.app/ [R=301,L]
+RewriteRule ^admin/ops/?$ https://brkovic.app/ [R=301,L]
+RewriteRule ^ops-login\.html$ https://brkovic.app/ [R=301,L]
+
+
+# === OPS MIGRATION REDIRECTS ===
+RewriteEngine On
+
+RewriteRule ^ops/?$ https://brkovic.app/ [R=301,L]
+RewriteRule ^admin/ops/?$ https://brkovic.app/ [R=301,L]
+RewriteRule ^ops-login\.html$ https://brkovic.app/ [R=301,L]

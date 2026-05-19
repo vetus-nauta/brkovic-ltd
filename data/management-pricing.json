@@ -1,0 +1,329 @@
+{
+    "version": 1,
+    "updatedAt": "2026-05-16T16:52:58+00:00",
+    "currency": "EUR",
+    "typeData": {
+        "motor": {
+            "label": "ym_type_motor",
+            "factor": 1
+        },
+        "sailing": {
+            "label": "ym_type_sailing",
+            "factor": 1.1
+        },
+        "motorCat": {
+            "label": "ym_type_motor_cat",
+            "factor": 1.25
+        },
+        "sailingCat": {
+            "label": "ym_type_sailing_cat",
+            "factor": 1.35
+        }
+    },
+    "lengthData": {
+        "under15": {
+            "label": "<15m",
+            "base": 300,
+            "factor": 0.85
+        },
+        "15-20": {
+            "label": "15-20m",
+            "base": 350,
+            "factor": 1
+        },
+        "20-25": {
+            "label": "20-25m",
+            "base": 410,
+            "factor": 1.18
+        },
+        "25-30": {
+            "label": "25-30m",
+            "base": 480,
+            "factor": 1.38
+        },
+        "30-35": {
+            "label": "30-35m",
+            "base": 570,
+            "factor": 1.62
+        },
+        "35-40": {
+            "label": "35-40m",
+            "base": 670,
+            "factor": 1.9
+        },
+        "40plus": {
+            "label": "40m+",
+            "base": 0,
+            "factor": 0,
+            "individual": true
+        }
+    },
+    "crewData": {
+        "none": {
+            "label": "ym_crew_none",
+            "factor": 1,
+            "note": "ym_crew_note_none"
+        },
+        "skeleton": {
+            "label": "ym_crew_skeleton",
+            "factor": 0.8,
+            "note": "ym_crew_note_skeleton"
+        },
+        "fullNoCaptain": {
+            "label": "ym_crew_full_no_captain",
+            "factor": 0.55,
+            "note": "ym_crew_note_full_no_captain"
+        },
+        "fullCaptain": {
+            "label": "ym_crew_full_captain",
+            "factor": 0.35,
+            "note": "ym_crew_note_full_captain"
+        }
+    },
+    "monthlyServices": {
+        "boatWatch": {
+            "label": "ym_card_boat_title",
+            "price": 520,
+            "reduction": "physical",
+            "enabled": true
+        },
+        "technicalWatch": {
+            "label": "ym_card_technical_title",
+            "price": 680,
+            "reduction": "partial",
+            "enabled": true
+        },
+        "ownerRep": {
+            "label": "ym_card_owner_title",
+            "price": 760,
+            "reduction": "management",
+            "enabled": true
+        },
+        "batteryPower": {
+            "label": "ym_monthly_battery_title",
+            "description": "ym_monthly_battery_desc",
+            "price": 0,
+            "reduction": "management",
+            "enabled": true,
+            "sailingOnly": false
+        },
+        "machineryStart": {
+            "label": "ym_monthly_machinery_title",
+            "description": "ym_monthly_machinery_desc",
+            "price": 0,
+            "reduction": "management",
+            "enabled": true,
+            "sailingOnly": false
+        },
+        "ventilationHumidity": {
+            "label": "ym_monthly_ventilation_title",
+            "description": "ym_monthly_ventilation_desc",
+            "price": 0,
+            "reduction": "management",
+            "enabled": true,
+            "sailingOnly": false
+        },
+        "sailingRigSupervision": {
+            "label": "ym_monthly_rig_title",
+            "description": "ym_monthly_rig_desc",
+            "price": 0,
+            "reduction": "partial",
+            "enabled": true,
+            "sailingOnly": true
+        }
+    },
+    "sailingServices": [],
+    "oneTimeServices": {
+        "guestArrival": {
+            "label": "ym_one_guest",
+            "description": "ym_one_guest_desc",
+            "price": 0,
+            "enabled": true,
+            "allowQuantity": true,
+            "quantityDefault": 1
+        },
+        "deepInteriorCleaning": {
+            "label": "ym_one_deep_interior",
+            "description": "ym_one_deep_interior_desc",
+            "price": 0,
+            "enabled": true,
+            "allowQuantity": true,
+            "quantityDefault": 1
+        },
+        "exteriorDetailing": {
+            "label": "ym_one_detailing",
+            "description": "ym_one_detailing_desc",
+            "price": 0,
+            "enabled": true,
+            "allowQuantity": true,
+            "quantityDefault": 1
+        },
+        "seasonLaunch": {
+            "label": "ym_one_launch",
+            "description": "ym_one_launch_desc",
+            "price": 0,
+            "enabled": true,
+            "allowQuantity": true,
+            "quantityDefault": 1
+        },
+        "winterization": {
+            "label": "ym_one_winter",
+            "description": "ym_one_winter_desc",
+            "price": 0,
+            "enabled": true,
+            "allowQuantity": true,
+            "quantityDefault": 1
+        },
+        "emergencyVisit": {
+            "label": "ym_one_emergency",
+            "description": "ym_one_emergency_desc",
+            "price": 0,
+            "enabled": true,
+            "allowQuantity": true,
+            "quantityDefault": 1
+        },
+        "yardPeriod": {
+            "label": "ym_one_yard",
+            "description": "ym_one_yard_desc",
+            "price": 0,
+            "enabled": true,
+            "allowQuantity": true,
+            "quantityDefault": 1
+        },
+        "safetyReview": {
+            "label": "ym_one_safety_review",
+            "description": "ym_one_safety_review_desc",
+            "price": 0,
+            "enabled": true,
+            "allowQuantity": true,
+            "quantityDefault": 1
+        },
+        "tenderToys": {
+            "label": "ym_one_tender_toys",
+            "description": "ym_one_tender_toys_desc",
+            "price": 0,
+            "enabled": true,
+            "allowQuantity": true,
+            "quantityDefault": 1
+        },
+        "provisioningConcierge": {
+            "label": "ym_one_provisioning",
+            "description": "ym_one_provisioning_desc",
+            "price": 0,
+            "enabled": true,
+            "allowQuantity": true,
+            "quantityDefault": 1
+        }
+    },
+    "range": {
+        "monthlyLow": 0.86,
+        "monthlyHigh": 1.18,
+        "oneTimeLow": 0.85,
+        "oneTimeHigh": 1.2
+    },
+    "contractDefaults": {
+        "provider": "VETUS NAUTA / BRKOVIC",
+        "jurisdiction": "Черногория",
+        "paymentTerms": "Условия оплаты подтверждаются индивидуально в подписанном договоре.",
+        "estimateClause": "Условия подписанного договора имеют приоритет над любым предварительным расчетом, сформированным на сайте. Расчет на сайте используется только как ориентир бюджета и не обязывает исполнителя оказывать услуги на предварительно показанных условиях.",
+        "exclusions": "Топливо, сборы марин, запасные части, счета подрядчиков, таможенные платежи, налоги и экстренные расходы не включены, если прямо не указано иное в договоре."
+    },
+    "invoiceDefaults": {
+        "companyName": "VETUS NAUTA / BRKOVIC",
+        "address": "85320, Obala BB, Tivat, Porto Montenegro",
+        "email": "vetus.nauta@gmail.com",
+        "phone": "+38268255550",
+        "logoUrl": "brand/logo-vetus-nauta-night-clean.png",
+        "electronicBaseUrl": "https://brkovic.ltd/docs/proforma",
+        "discountPercent": 0,
+        "vatPercent": 21,
+        "paymentNote": "Все суммы указаны как нетто. НДС добавляется по ставке, указанной в профактуре."
+    },
+    "contractLegalSections": [
+        {
+            "title": "1. Стороны, предмет и статус документа",
+            "articles": [
+                {
+                    "title": "1.1. Стороны договора",
+                    "body": "Исполнитель: {provider}. Клиент: {client}. Договор относится к яхте {yacht}, находящейся/обслуживаемой в локации {location}, если стороны письменно не согласовали иную локацию."
+                },
+                {
+                    "title": "1.2. Предмет услуг",
+                    "body": "Исполнитель организует и/или выполняет услуги яхт-менеджмента, технического сопровождения, координации подрядчиков, подготовки яхты и сопутствующей операционной поддержки в пределах выбранного перечня услуг: {services}."
+                },
+                {
+                    "title": "1.3. Предварительный расчет",
+                    "body": "{estimateClause} Настоящая профактура и договорный черновик отражают выбранную конфигурацию услуг и используются для согласования бюджета до подписания финальной редакции договора."
+                }
+            ]
+        },
+        {
+            "title": "2. Период обслуживания и доступ к яхте",
+            "articles": [
+                {
+                    "title": "2.1. Период",
+                    "body": "Период обслуживания: {period}. Расчетный множитель периода: {periodMonths}. Если период изменяется, суммы договора пересчитываются автоматически по актуальной конфигурации услуг."
+                },
+                {
+                    "title": "2.2. Доступ и полномочия",
+                    "body": "Клиент обеспечивает Исполнителю разумный доступ на борт, к технической документации, контактам марины и подрядчиков. Исполнитель действует в пределах поручений Клиента и не принимает на себя полномочия владельца, капитана или страховщика, если это отдельно не закреплено письменно."
+                },
+                {
+                    "title": "2.3. Подрядчики и счета третьих лиц",
+                    "body": "Работы третьих лиц, запасные части, сборы марины, топливо, портовые, таможенные, страховые и иные обязательные платежи не входят в цену услуг Исполнителя, если прямо не включены в выбранную позицию."
+                }
+            ]
+        },
+        {
+            "title": "3. Цена, НДС, дисконт и порядок оплаты",
+            "articles": [
+                {
+                    "title": "3.1. Стоимость услуг",
+                    "body": "Месячные услуги за период: {monthlyPeriodNet}. Разовые услуги: {oneTimeNet}. Нетто до дисконта: {netBeforeDiscount}. Дисконт: {discountPercent}% ({discountAmount}). База НДС после дисконта: {taxableNet}. НДС {vatPercent}%: {vatAmount}. Итого к оплате: {totalGross}."
+                },
+                {
+                    "title": "3.2. Порядок оплаты",
+                    "body": "{paymentTerms} Если иное не согласовано письменно, услуги начинаются после подтверждения профактуры и оплаты согласованного счета."
+                },
+                {
+                    "title": "3.3. Валюта и банковские расходы",
+                    "body": "Все суммы указаны в EUR. Банковские комиссии, комиссии платежных систем и расходы корреспондентских банков оплачиваются Клиентом сверх суммы счета, если банк удерживает их из платежа."
+                }
+            ]
+        },
+        {
+            "title": "4. Объем ответственности и исключения",
+            "articles": [
+                {
+                    "title": "4.1. Исключения из цены",
+                    "body": "{exclusions}"
+                },
+                {
+                    "title": "4.2. Ограничение ответственности",
+                    "body": "Исполнитель отвечает за разумную профессиональную организацию согласованных услуг. Исполнитель не несет ответственность за скрытые дефекты яхты, действия марины, верфи, поставщиков, экипажа, государственных органов, погодные условия, страховые решения и обстоятельства вне разумного контроля Исполнителя."
+                },
+                {
+                    "title": "4.3. Срочные расходы",
+                    "body": "Если для сохранности яхты требуется срочное действие, Исполнитель вправе запросить оперативное подтверждение расходов у Клиента. Без подтверждения Клиента Исполнитель не обязан финансировать третьих лиц за собственный счет."
+                }
+            ]
+        },
+        {
+            "title": "5. Документы, отчетность и юридические условия",
+            "articles": [
+                {
+                    "title": "5.1. Отчетность",
+                    "body": "По согласованным позициям Исполнитель предоставляет Клиенту рабочие комментарии, фото, счета подрядчиков и/или краткие технические отчеты в разумном объеме, соответствующем выбранному пакету услуг."
+                },
+                {
+                    "title": "5.2. Электронная версия",
+                    "body": "Электронная версия профактуры хранится по адресу: {electronicUrl}. Штрихкод в документе предназначен для быстрой проверки электронной версии."
+                },
+                {
+                    "title": "5.3. Применимое право и споры",
+                    "body": "Применимое право и юрисдикция: {jurisdiction}. Стороны стремятся урегулировать спор путем переговоров до обращения в компетентный суд или согласованный арбитраж."
+                }
+            ]
+        }
+    ]
+}

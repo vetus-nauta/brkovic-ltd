@@ -1,0 +1,9 @@
+# DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION BEGIN
+<IfModule passenger_module>
+PassengerAppRoot "/home/brkovic/journal-backend"
+PassengerBaseURI "/api"
+PassengerNodejs "/home/brkovic/nodevenv/journal-backend/24/bin/node"
+PassengerAppType node
+PassengerStartupFile dist/main.js
+</IfModule>
+# DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION END

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta name="robots" content="noindex,nofollow,noarchive" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BRKOVIC — Управление постами</title>
+  <meta name="theme-color" content="#10243a" />
+  <link rel="icon" href="images/icons/favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/variables.css" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+  <link rel="stylesheet" href="css/admin-posts.css?v=20260515-management-01" />
+</head>
+<body>
+  <div class="site-shell">
+    <header class="topbar">
+      <a href="index.html#hero" class="brand" aria-label="BRKOVIC home">
+        <span class="brand__word">BRKO<span class="brand__sail">V</span>IC</span>
+        <span class="brand__tag">Управление постами</span>
+      </a>
+    </header>
+
+    <main class="section admin-posts-page">
+      <section class="section--paper admin-posts-card">
+        <div class="section-heading">
+          <p class="section-heading__eyebrow">Админка</p>
+          <h1>Управление постами</h1>
+          <p>Создавайте, редактируйте, публикуйте записи и загружайте медиа.</p>
+        </div>
+
+        <nav class="admin-section-nav" aria-label="Разделы админки">
+          <a href="admin-posts.html" class="is-active">Посты</a>
+          <a href="admin-comments.html">Комментарии</a>
+          <a href="admin-management.html">Менеджмент</a>
+        </nav>
+
+        <form id="adminPostsLoginForm" class="admin-posts-login">
+          <label>
+            <span>Email</span>
+            <input type="email" id="adminPostsEmail" value="vetus.nauta@gmail.com" required />
+          </label>
+          <label>
+            <span>Пароль</span>
+            <input type="password" id="adminPostsPassword" required />
+          </label>
+          <button type="submit" class="btn btn--primary">Войти</button>
+        </form>
+
+        <div id="adminPostsStatus" class="admin-posts-status"></div>
+
+        <div class="admin-posts-layout">
+          <aside class="admin-posts-sidebar">
+            <div class="admin-posts-toolbar">
+              <button id="createPostBtn" class="btn btn--primary" type="button">Новый пост</button>
+              <button id="refreshPostsBtn" class="btn btn--secondary" type="button">Обновить</button>
+            </div>
+            <div id="adminPostsList" class="admin-posts-list"></div>
+          </aside>
+
+          <section class="admin-posts-editor">
+            <form id="postEditorForm" class="post-editor-form">
+              <input type="hidden" id="postId" />
+
+              <div class="post-editor-grid">
+                <label>
+                  <span>Slug</span>
+                  <input type="text" id="slug" required />
+                </label>
+                <label>
+                  <span>Статус</span>
+                  <select id="status">
+                    <option value="DRAFT">Черновик</option>
+                    <option value="PUBLISHED">Опубликован</option>
+                    <option value="ARCHIVED">Архив</option>
+                  </select>
+                </label>
+
+                <label>
+                  <span>Дата публикации</span>
+                  <input type="datetime-local" id="publishedAt" />
+                </label>
+                <label>
+                  <span>Закрепить</span>
+                  <select id="isPinned">
+                    <option value="false">Нет</option>
+                    <option value="true">Да</option>
+                  </select>
+                </label>
+
+                <label>
+                  <span>Разрешить комментарии</span>
+                  <select id="allowComments">
+                    <option value="true">Да</option>
+                    <option value="false">Нет</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Разрешить лайки</span>
+                  <select id="allowLikes">
+                    <option value="true">Да</option>
+                    <option value="false">Нет</option>
+                  </select>
+                </label>
+              </div>
+
+              <label>
+                <span>Заголовок RU</span>
+                <input type="text" id="titleRu" required />
+              </label>
+
+              <label>
+                <span>Заголовок EN</span>
+                <input type="text" id="titleEn" />
+              </label>
+
+              <label>
+                <span>Краткое описание RU</span>
+                <textarea id="excerptRu" rows="3"></textarea>
+              </label>
+
+              <label>
+                <span>Краткое описание EN</span>
+                <textarea id="excerptEn" rows="3"></textarea>
+              </label>
+
+              <label>
+                <span>Текст RU</span>
+                <textarea id="contentRu" rows="8" required></textarea>
+              </label>
+
+              <label>
+                <span>Текст EN</span>
+                <textarea id="contentEn" rows="8"></textarea>
+              </label>
+
+              <label>
+                <span>SEO Title RU</span>
+                <input type="text" id="seoTitleRu" />
+              </label>
+
+              <label>
+                <span>SEO Title EN</span>
+                <input type="text" id="seoTitleEn" />
+              </label>
+
+              <label>
+                <span>SEO Description RU</span>
+                <textarea id="seoDescriptionRu" rows="3"></textarea>
+              </label>
+
+              <label>
+                <span>SEO Description EN</span>
+                <textarea id="seoDescriptionEn" rows="3"></textarea>
+              </label>
+
+              <div class="post-editor-actions">
+                <button type="button" id="generateEnBtn" class="btn btn--secondary">Сгенерировать EN из RU</button>
+                <button type="submit" class="btn btn--primary">Сохранить пост</button>
+                <a id="openPublicPostLink" class="btn btn--secondary" href="journal.html" target="_blank" rel="noopener">Открыть публикацию</a>
+              </div>
+            </form>
+
+            <section class="media-upload-card">
+              <h2>Загрузка медиа</h2>
+              <form id="mediaUploadForm" class="media-upload-form">
+                <input type="file" id="mediaFile" accept="image/*,video/*" />
+                <button type="submit" class="btn btn--secondary">Загрузить медиа</button>
+                            </form></form>
+              <div class="media-upload-actions">
+                <button id="rebuildGpsBtn" class="btn btn--secondary" type="button">Обновить GPS после новых фото</button>
+              </div>
+              <div id="mediaUploadStatus" class="media-upload-status"></div>
+              <div class="media-upload-hint">После загрузки новых фото нажмите «Обновить GPS после новых фото», чтобы координаты и Google Maps появились в журнале.</div>
+              <div id="mediaList" class="media-list"></div>
+            </section>
+          </section>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="js/admin-posts.js?v=20260515-management-01"></script>
+</body>
+</html>

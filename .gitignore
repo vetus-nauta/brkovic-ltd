@@ -1,0 +1,24 @@
+/.DS_Store
+/Thumbs.db
+
+# Local server/runtime files
+/forms/config.php
+/forms/smtp-error.log
+/error_log
+/.ftpquota
+/.listing
+**/.listing
+
+# Local backups and broken snapshots
+*.bak
+*.bak*
+*.bad*
+*.broken*
+*.readonly.bak
+
+# Experimental branches copied from older site folders.
+# Keep these in a separate repo or branch, not in the main brkovic.ltd project.
+/public_html_nested/
+/revoyacht/
+/yacht-flex-demo/
+

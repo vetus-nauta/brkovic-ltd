@@ -1,0 +1,1433 @@
+.admin-management-page,
+.admin-management-page * {
+  box-sizing: border-box;
+}
+
+.admin-management-page {
+  padding-top: 32px;
+  padding-bottom: 48px;
+}
+
+.admin-management-card {
+  width: min(100%, 1680px);
+  margin: 0 auto;
+  padding: clamp(18px, 2vw, 30px);
+  overflow: hidden;
+}
+
+.admin-section-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 20px 0 22px;
+}
+
+.admin-section-nav a {
+  border: 1px solid rgba(16,36,58,.12);
+  border-radius: 999px;
+  padding: 10px 16px;
+  background: #fff;
+  color: var(--color-brand);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.admin-section-nav a.is-active {
+  background: var(--color-brand);
+  color: #fff;
+}
+
+.admin-management-login {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: end;
+  margin: 24px 0 16px;
+}
+
+.admin-management-login label,
+.pricing-field,
+.contract-builder-form label,
+.contract-default-field {
+  min-width: 0;
+}
+
+.admin-management-login label span,
+.pricing-field span,
+.contract-builder-form label span,
+.contract-default-field span {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--color-brand);
+  font-size: .88rem;
+  font-weight: 800;
+}
+
+.admin-management-login input,
+.pricing-field input,
+.pricing-field select,
+.contract-builder-form input,
+.contract-builder-form select,
+.contract-builder-form textarea,
+.contract-default-field input,
+.contract-default-field textarea {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  border: 1px solid rgba(16,36,58,.14);
+  border-radius: 12px;
+  padding: 12px 13px;
+  background: #fff;
+  color: var(--color-ink);
+  outline: none;
+}
+
+.pricing-field input[readonly] {
+  background: rgba(16,36,58,.045);
+  color: var(--color-muted);
+  cursor: default;
+}
+
+.pricing-field select {
+  min-height: 44px;
+}
+
+.admin-management-status {
+  min-height: 24px;
+  margin-bottom: 16px;
+  color: var(--color-muted);
+  line-height: 1.45;
+}
+
+.admin-management-diagnostics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+  margin: -6px 0 18px;
+  padding: 10px 12px;
+  border: 1px solid rgba(28, 127, 94, .22);
+  border-radius: 12px;
+  background: rgba(28, 127, 94, .07);
+  color: #244033;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.admin-management-diagnostics[hidden] {
+  display: none;
+}
+
+.admin-management-diagnostics.has-error {
+  border-color: rgba(174, 71, 71, .28);
+  background: rgba(174, 71, 71, .08);
+  color: #643434;
+}
+
+.admin-management-diagnostics strong {
+  margin-right: 4px;
+  color: inherit;
+}
+
+.management-admin-panel {
+  min-width: 0;
+  padding: clamp(16px, 1.7vw, 24px);
+  border: 1px solid rgba(16,36,58,.10);
+  border-radius: 18px;
+  background: #fff;
+}
+
+.management-admin-panel.is-disabled {
+  opacity: .58;
+  pointer-events: none;
+}
+
+.management-admin-panel__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.management-admin-panel h2,
+.pricing-card h3,
+.contract-preview h2 {
+  margin: 0 0 8px;
+  color: var(--color-brand);
+}
+
+.management-admin-panel p,
+.pricing-card__head p {
+  margin: 0;
+  color: var(--color-muted);
+  line-height: 1.5;
+}
+
+.management-admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.btn--danger {
+  border-color: rgba(174, 71, 71, .26);
+  background: rgba(174, 71, 71, .08);
+  color: #793d3d;
+}
+
+.service-catalog-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  margin: 0 0 16px;
+  padding: 14px;
+  border: 1px solid rgba(16, 36, 58, .13);
+  border-radius: 14px;
+  background: #f7fafc;
+}
+
+.service-catalog-toolbar strong,
+.service-catalog-toolbar span {
+  display: block;
+}
+
+.service-catalog-toolbar strong {
+  color: var(--color-brand);
+  font-size: 1rem;
+}
+
+.service-catalog-toolbar span {
+  margin-top: 4px;
+  color: var(--color-muted);
+  line-height: 1.45;
+}
+
+.formula-note {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(16,36,58,.045);
+  color: var(--color-brand);
+  font-weight: 700;
+}
+
+.admin-management-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.pricing-support-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.pricing-card {
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid rgba(16,36,58,.10);
+  border-radius: 16px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.pricing-card--services {
+  margin-top: 16px;
+}
+
+.pricing-card__tools {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  min-width: 0;
+}
+
+.pricing-popup-summary {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(16,36,58,.08);
+  border-radius: 12px;
+  background: rgba(16,36,58,.025);
+  color: var(--color-muted);
+  font-size: .92rem;
+  line-height: 1.45;
+}
+
+.pricing-popup-summary strong {
+  color: var(--color-brand);
+}
+
+.admin-management-layout > .pricing-card {
+  display: grid;
+  grid-template-columns: minmax(220px, .24fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.admin-management-layout > .pricing-card > .pricing-card__head {
+  margin-bottom: 0;
+}
+
+.pricing-card--type .pricing-fields {
+  grid-template-columns: repeat(2, minmax(320px, 1fr));
+}
+
+.pricing-card--length .pricing-fields {
+  grid-template-columns: 1fr;
+}
+
+.pricing-popup #typePricingFields {
+  grid-template-columns: repeat(2, minmax(280px, 1fr));
+}
+
+.pricing-popup #lengthPricingFields {
+  grid-template-columns: 1fr;
+}
+
+.pricing-popup[hidden] {
+  display: none !important;
+}
+
+.pricing-popup {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: block;
+  padding: 0;
+  pointer-events: none;
+}
+
+.pricing-popup__shade {
+  display: none;
+}
+
+.pricing-popup__card {
+  position: absolute;
+  top: 72px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1;
+  width: min(940px, calc(100vw - 32px));
+  min-width: min(420px, calc(100vw - 32px));
+  min-height: 260px;
+  max-width: calc(100vw - 24px);
+  max-height: calc(100vh - 24px);
+  overflow: auto;
+  resize: both;
+  padding: 18px;
+  border: 1px solid rgba(255,255,255,.54);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 24px 80px rgba(8,21,35,.30);
+  pointer-events: auto;
+}
+
+.pricing-popup__card--wide {
+  width: min(1180px, calc(100vw - 32px));
+}
+
+.pricing-popup__head {
+  position: sticky;
+  top: -18px;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  margin: -18px -18px 16px;
+  padding: 18px;
+  border-bottom: 1px solid rgba(16,36,58,.10);
+  background: rgba(255,255,255,.96);
+  backdrop-filter: blur(8px);
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+
+.pricing-popup__head:active {
+  cursor: grabbing;
+}
+
+.pricing-popup__head p {
+  margin: 0 0 3px;
+  color: #6e5b2f;
+  font-size: .76rem;
+  font-weight: 900;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.pricing-popup__head h3 {
+  margin: 0;
+  color: var(--color-brand);
+  font-size: 1.18rem;
+}
+
+.pricing-popup__close {
+  display: inline-grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(16,36,58,.12);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--color-brand);
+  font-size: 1.45rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.pricing-popup__card.is-dragging {
+  user-select: none;
+}
+
+.pricing-card--contract {
+  display: grid;
+  gap: 16px;
+  align-items: start;
+  margin-top: 16px;
+  grid-template-columns: 1fr !important;
+}
+
+.contract-toggle-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid rgba(16,36,58,.08);
+  border-radius: 14px;
+  background: rgba(16,36,58,.025);
+}
+
+.contract-toggle-row p {
+  margin: 0;
+}
+
+.contract-builder-shell {
+  display: grid;
+  grid-template-columns: minmax(360px, .68fr) minmax(360px, .52fr);
+  gap: 18px;
+  align-items: start;
+  min-width: 0;
+}
+
+.contract-builder-shell[hidden] {
+  display: none !important;
+}
+
+.pricing-card--contract .contract-defaults-block {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.pricing-card--contract .contract-preview {
+  grid-column: 1 / -1;
+}
+
+.pricing-card__head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  margin-bottom: 14px;
+}
+
+.pricing-card__index {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  background: rgba(16,36,58,.08);
+  color: var(--color-brand);
+  font-weight: 900;
+}
+
+.pricing-fields,
+.service-pricing-fields,
+.contract-default-fields,
+.contract-legal-fields,
+.contract-builder-form,
+.contract-scope-fields {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.pricing-row {
+  display: grid;
+  gap: 10px;
+  align-items: end;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid rgba(16,36,58,.08);
+  border-radius: 14px;
+  background: rgba(16,36,58,.025);
+}
+
+.pricing-row--type,
+.pricing-row--crew,
+.pricing-row--range {
+  grid-template-columns: minmax(0, 1fr) minmax(120px, .45fr);
+}
+
+.pricing-row--type {
+  grid-template-columns: minmax(220px, 1fr) minmax(140px, .42fr);
+}
+
+.pricing-row--length {
+  grid-template-columns: minmax(120px, .85fr) minmax(150px, .58fr) minmax(150px, .58fr);
+}
+
+.pricing-row--service {
+  grid-template-columns: repeat(4, minmax(140px, 1fr));
+}
+
+.pricing-row--service .pricing-field--name,
+.pricing-row--service .pricing-field--wide {
+  grid-column: span 2;
+}
+
+.pricing-field--actions {
+  align-self: end;
+}
+
+.pricing-field--actions .btn {
+  min-height: 44px;
+  width: 100%;
+}
+
+.pricing-field--name strong,
+.pricing-field--readonly strong,
+.pricing-field--toggle strong {
+  display: block;
+  color: var(--color-ink);
+  font-size: .98rem;
+  line-height: 1.25;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+.pricing-field small {
+  display: block;
+  margin-top: 5px;
+  color: var(--color-muted);
+  font-size: .78rem;
+  line-height: 1.25;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+.pricing-row.is-anchor {
+  border-color: rgba(193,164,99,.42);
+  background: rgba(193,164,99,.08);
+}
+
+.pricing-row--core {
+  border-color: rgba(193,164,99,.34);
+  background: rgba(193,164,99,.07);
+}
+
+.length-core-note {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid rgba(193,164,99,.26);
+  border-radius: 14px;
+  background: rgba(193,164,99,.07);
+}
+
+.length-core-note strong {
+  color: var(--color-brand);
+}
+
+.length-core-note span {
+  color: var(--color-muted);
+  font-size: .86rem;
+  line-height: 1.4;
+}
+
+.length-auto-calc {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(193,164,99,.22);
+  border-radius: 14px;
+  background: rgba(193,164,99,.06);
+  color: var(--color-brand);
+}
+
+.length-auto-calc p {
+  margin: 0;
+  color: var(--color-brand);
+  font-size: .86rem;
+  line-height: 1.45;
+}
+
+.length-auto-calc div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.length-auto-calc span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.72);
+}
+
+.length-auto-calc strong {
+  color: var(--color-brand);
+  font-size: .82rem;
+}
+
+.length-auto-calc small {
+  color: var(--color-muted);
+  font-size: .78rem;
+}
+
+.pricing-field--toggle {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 8px;
+  align-items: center;
+}
+
+.pricing-field--toggle span {
+  grid-column: 1 / -1;
+}
+
+.pricing-field--toggle input {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+}
+
+.pricing-field--readonly {
+  align-self: stretch;
+  padding: 10px 12px;
+  border: 1px solid rgba(16,36,58,.08);
+  border-radius: 12px;
+  background: rgba(16,36,58,.035);
+}
+
+.service-price-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 2px 0 14px;
+}
+
+.service-price-tab {
+  border: 1px solid rgba(16,36,58,.12);
+  border-radius: 999px;
+  padding: 10px 16px;
+  background: #fff;
+  color: var(--color-brand);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.service-price-tab.is-active {
+  background: var(--color-brand);
+  color: #fff;
+}
+
+.contract-builder-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.contract-auto-price-toggle {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid rgba(16,36,58,.08);
+  border-radius: 12px;
+  background: rgba(16,36,58,.025);
+  color: var(--color-brand);
+  font-weight: 800;
+}
+
+.contract-auto-price-toggle input {
+  width: 18px;
+  height: 18px;
+}
+
+.contract-auto-price-toggle span {
+  margin: 0 !important;
+}
+
+.contract-auto-price-note {
+  margin: -2px 0 0 !important;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(193,164,99,.07);
+  color: #6e5b2f !important;
+  font-size: .86rem;
+  font-weight: 800;
+}
+
+.contract-builder-subsection {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(16,36,58,.10);
+  border-radius: 14px;
+  background: rgba(255,255,255,.72);
+}
+
+.contract-builder-subsection h4 {
+  margin: 0 0 4px;
+  color: var(--color-brand);
+  font-size: 1rem;
+}
+
+.contract-builder-subsection p {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: .9rem;
+  line-height: 1.45;
+}
+
+.contract-scope-fields {
+  max-height: 260px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.contract-scope-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid rgba(16,36,58,.08);
+  border-radius: 12px;
+  background: rgba(16,36,58,.025);
+  color: var(--color-brand);
+  font-weight: 800;
+}
+
+.contract-scope-item span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.contract-one-time-fields {
+  display: grid;
+  gap: 10px;
+  max-height: 360px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.contract-one-time-item {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(120px, .34fr) minmax(90px, .24fr) minmax(210px, .62fr) minmax(220px, .8fr);
+  gap: 10px;
+  align-items: end;
+  padding: 12px;
+  border: 1px solid rgba(16,36,58,.08);
+  border-radius: 12px;
+  background: rgba(16,36,58,.025);
+}
+
+.contract-one-time-check {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  min-height: 44px;
+  color: var(--color-brand);
+  font-weight: 900;
+}
+
+.contract-one-time-check input {
+  width: 18px;
+  height: 18px;
+}
+
+.contract-one-time-check span,
+.contract-one-time-note input,
+.contract-one-time-result {
+  min-width: 0;
+}
+
+.contract-one-time-result {
+  display: grid;
+  gap: 3px;
+  min-height: 64px;
+  padding: 10px 12px;
+  border: 1px solid rgba(193,164,99,.24);
+  border-radius: 12px;
+  background: rgba(193,164,99,.08);
+}
+
+.contract-one-time-result span {
+  color: var(--color-muted);
+  font-size: .82rem;
+  font-weight: 800;
+}
+
+.contract-one-time-result strong {
+  color: var(--color-brand);
+  font-size: 1rem;
+}
+
+.contract-one-time-result small {
+  color: #6e5b2f;
+  font-size: .78rem;
+  line-height: 1.35;
+}
+
+.contract-empty-note {
+  margin: 0;
+  color: var(--color-muted);
+}
+
+.contract-defaults-block {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(16,36,58,.10);
+}
+
+.contract-defaults-block h4 {
+  margin: 0 0 12px;
+  color: var(--color-brand);
+  font-size: 1rem;
+}
+
+.contract-default-field input,
+.contract-default-field textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.contract-default-field input,
+.contract-default-field textarea[rows="1"] {
+  min-height: 44px;
+}
+
+.contract-legal-fields {
+  max-height: 560px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.contract-legal-section {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(16,36,58,.10);
+  border-radius: 14px;
+  background: rgba(16,36,58,.025);
+}
+
+.contract-legal-section-title {
+  display: grid;
+  gap: 8px;
+}
+
+.contract-legal-section-title span,
+.contract-legal-article span {
+  color: var(--color-brand);
+  font-size: .84rem;
+  font-weight: 900;
+}
+
+.contract-legal-section-title input,
+.contract-legal-article input,
+.contract-legal-article textarea {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  border: 1px solid rgba(16,36,58,.14);
+  border-radius: 12px;
+  padding: 11px 12px;
+  background: #fff;
+  color: var(--color-ink);
+  outline: none;
+}
+
+.contract-legal-articles {
+  display: grid;
+  gap: 10px;
+}
+
+.contract-legal-article {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid rgba(16,36,58,.08);
+  border-radius: 12px;
+  background: rgba(255,255,255,.72);
+}
+
+.contract-legal-article textarea {
+  min-height: 118px;
+  resize: vertical;
+  line-height: 1.45;
+}
+
+.contract-legal-hint {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: .82rem;
+  line-height: 1.4;
+}
+
+.contract-preview {
+  margin-top: 18px;
+  padding: 18px;
+  border: 1px solid rgba(16,36,58,.10);
+  border-radius: 16px;
+  background: rgba(16,36,58,.025);
+  color: var(--color-ink);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.contract-preview h3 {
+  margin: 18px 0 8px;
+  color: var(--color-brand);
+}
+
+.contract-preview ul {
+  margin: 8px 0 0;
+  padding-left: 1.1rem;
+}
+
+.proforma-document {
+  color: #13283d;
+  background:
+    linear-gradient(135deg, rgba(193,164,99,.11), transparent 24%),
+    linear-gradient(180deg, #fff 0%, #fbfaf6 100%);
+  border: 1px solid rgba(16,36,58,.12);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 18px 46px rgba(16,36,58,.10);
+}
+
+.proforma-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+  padding: 18px 22px;
+  color: #fff;
+  background:
+    linear-gradient(135deg, rgba(210,179,105,.22), transparent 38%),
+    repeating-linear-gradient(45deg, rgba(255,255,255,.035) 0 1px, transparent 1px 8px),
+    #10243a;
+}
+
+.proforma-brand {
+  display: grid;
+  grid-template-columns: 224px minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+}
+
+.proforma-brand img {
+  width: 224px;
+  max-width: 100%;
+  max-height: 54px;
+  height: auto;
+  object-fit: contain;
+  object-position: left center;
+  filter: drop-shadow(0 8px 20px rgba(0,0,0,.18));
+}
+
+.proforma-kicker {
+  margin: 0 0 6px;
+  color: rgba(255,255,255,.68);
+  font-size: .78rem;
+  font-weight: 800;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+
+.proforma-hero h2 {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(1.45rem, 3vw, 2.2rem);
+  line-height: 1.05;
+}
+
+.proforma-meta {
+  display: grid;
+  gap: 6px;
+  justify-items: end;
+  text-align: right;
+  color: rgba(255,255,255,.78);
+}
+
+.proforma-meta strong {
+  color: #fff;
+  font-size: 1.15rem;
+}
+
+.proforma-parties,
+.proforma-summary,
+.proforma-footer {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  padding: 24px 28px;
+}
+
+.proforma-parties h3,
+.proforma-summary h3,
+.proforma-footer h3 {
+  margin: 0 0 10px;
+  color: #10243a;
+  font-size: .86rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.proforma-parties p,
+.proforma-summary p,
+.proforma-footer p {
+  margin: 0 0 6px;
+  color: #31465b;
+  line-height: 1.45;
+}
+
+.proforma-texture-band {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 0 28px 22px;
+  padding: 12px 16px;
+  border: 1px solid rgba(193,164,99,.34);
+  background:
+    repeating-linear-gradient(90deg, rgba(193,164,99,.08) 0 1px, transparent 1px 10px),
+    rgba(193,164,99,.09);
+  color: #6e5b2f;
+  font-size: .82rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.proforma-table {
+  width: calc(100% - 56px);
+  margin: 0 28px 24px;
+  border-collapse: collapse;
+  background: #fff;
+  table-layout: fixed;
+}
+
+.proforma-table th,
+.proforma-table td {
+  padding: 12px 10px;
+  border-bottom: 1px solid rgba(16,36,58,.10);
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.proforma-table th {
+  color: #6e5b2f;
+  background: rgba(193,164,99,.10);
+  font-size: .7rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.proforma-table th:nth-child(1),
+.proforma-table td:nth-child(1) {
+  width: 42px;
+}
+
+.proforma-table th:nth-child(3),
+.proforma-table td:nth-child(3) {
+  width: 96px;
+}
+
+.proforma-table th:nth-child(4),
+.proforma-table td:nth-child(4),
+.proforma-table th:nth-child(5),
+.proforma-table td:nth-child(5),
+.proforma-table th:nth-child(6),
+.proforma-table td:nth-child(6),
+.proforma-table th:nth-child(7),
+.proforma-table td:nth-child(7) {
+  width: 92px;
+}
+
+.proforma-position {
+  display: grid;
+  gap: 4px;
+}
+
+.proforma-position strong {
+  color: #10243a;
+}
+
+.proforma-position small,
+.proforma-calc {
+  color: #66768a;
+  font-size: .82rem;
+  line-height: 1.35;
+}
+
+.proforma-calc {
+  display: block;
+}
+
+.proforma-line-price {
+  display: inline-block;
+  margin-left: 6px;
+  color: #6e5b2f;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.proforma-money {
+  white-space: nowrap;
+  text-align: right !important;
+  font-weight: 900;
+}
+
+.proforma-summary {
+  align-items: start;
+  padding-top: 0;
+}
+
+.proforma-period-summary {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid rgba(193,164,99,.28);
+  background: rgba(193,164,99,.07);
+}
+
+.proforma-period-summary div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: #31465b;
+}
+
+.proforma-period-summary strong {
+  color: #10243a;
+}
+
+.proforma-total-box {
+  border: 1px solid rgba(16,36,58,.12);
+  background: #fff;
+}
+
+.proforma-total-box div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(16,36,58,.08);
+}
+
+.proforma-total-box div:last-child {
+  border-bottom: 0;
+}
+
+.proforma-total-box span {
+  color: #5b6b7c;
+}
+
+.proforma-total-box strong {
+  color: #10243a;
+}
+
+.proforma-grand-total {
+  background: #10243a;
+  color: #fff;
+}
+
+.proforma-grand-total span,
+.proforma-grand-total strong {
+  color: #fff;
+  font-size: 1.12rem;
+}
+
+.proforma-legal {
+  padding: 0 28px 24px;
+}
+
+.proforma-legal h3 {
+  margin: 0 0 12px;
+  color: #10243a;
+  font-size: .86rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.proforma-legal-section {
+  margin: 0 0 14px;
+  padding: 14px 16px;
+  border: 1px solid rgba(16,36,58,.10);
+  background: rgba(255,255,255,.72);
+  break-inside: avoid;
+}
+
+.proforma-legal-section h4 {
+  margin: 0 0 10px;
+  color: #10243a;
+  font-size: 1rem;
+}
+
+.proforma-legal-article {
+  margin: 0 0 10px;
+}
+
+.proforma-legal-article:last-child {
+  margin-bottom: 0;
+}
+
+.proforma-legal-article strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #6e5b2f;
+  font-size: .88rem;
+}
+
+.proforma-legal-article p {
+  margin: 0;
+  color: #31465b;
+  line-height: 1.45;
+}
+
+.proforma-footer {
+  border-top: 1px solid rgba(16,36,58,.10);
+  background: rgba(16,36,58,.035);
+}
+
+.proforma-barcode {
+  display: block;
+  width: min(100%, 420px);
+  height: 54px;
+  margin-top: 10px;
+}
+
+.proforma-muted {
+  color: #7b8794;
+}
+
+@media (max-width: 1120px) {
+  .admin-management-layout,
+  .pricing-support-grid,
+  .admin-management-login {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-management-layout > .pricing-card,
+  .pricing-card--contract,
+  .pricing-card--type .pricing-fields {
+    grid-template-columns: 1fr !important;
+  }
+
+  .pricing-card--contract .contract-builder-form,
+  .pricing-card--contract .contract-defaults-block,
+  .pricing-card--contract .contract-preview {
+    grid-column: auto;
+  }
+
+  .pricing-popup #typePricingFields {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-management-layout > .pricing-card > .pricing-card__head {
+    margin-bottom: 14px;
+  }
+
+  .management-admin-panel__head {
+    flex-direction: column;
+  }
+
+  .management-admin-actions {
+    justify-content: flex-start;
+  }
+
+  .pricing-row,
+  .pricing-row--type,
+  .pricing-row--crew,
+  .pricing-row--range,
+  .pricing-row--length,
+  .pricing-row--service,
+  .contract-toggle-row,
+  .contract-builder-shell,
+  .contract-builder-grid,
+  .contract-one-time-item,
+  .proforma-hero,
+  .proforma-brand,
+  .proforma-parties,
+  .proforma-summary,
+  .proforma-footer {
+    grid-template-columns: 1fr;
+  }
+
+  .proforma-meta {
+    justify-items: start;
+    text-align: left;
+  }
+}
+
+@media (max-width: 560px) {
+  .admin-management-page {
+    padding-top: 18px;
+  }
+
+  .admin-management-card,
+  .management-admin-panel,
+  .pricing-card {
+    border-radius: 12px;
+  }
+
+  .admin-section-nav a,
+  .service-price-tab,
+  .management-admin-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+  }
+
+  body * {
+    visibility: hidden !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .contract-print-area,
+  .contract-print-area * {
+    visibility: visible !important;
+  }
+
+  body:has(.contract-print-area .proforma-document) .topbar,
+  body:has(.contract-print-area .proforma-document) .admin-management-card > .admin-management-card__head,
+  body:has(.contract-print-area .proforma-document) .admin-section-nav,
+  body:has(.contract-print-area .proforma-document) .admin-management-login,
+  body:has(.contract-print-area .proforma-document) .management-admin-panel > :not(.admin-management-layout),
+  body:has(.contract-print-area .proforma-document) .admin-management-layout > :not(.pricing-card--contract),
+  body:has(.contract-print-area .proforma-document) .pricing-card--contract > :not(.contract-print-area) {
+    display: none !important;
+  }
+
+  body:has(.contract-print-area .proforma-document) .site-shell,
+  body:has(.contract-print-area .proforma-document) .admin-management-page,
+  body:has(.contract-print-area .proforma-document) .admin-management-card,
+  body:has(.contract-print-area .proforma-document) .management-admin-panel,
+  body:has(.contract-print-area .proforma-document) .admin-management-layout,
+  body:has(.contract-print-area .proforma-document) .pricing-card--contract {
+    display: block !important;
+    min-height: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+    box-shadow: none !important;
+  }
+
+  .contract-print-area {
+    position: absolute !important;
+    inset: 0 auto auto 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: #fff !important;
+  }
+
+  .contract-print-area > .proforma-document {
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .proforma-hero {
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    align-items: center !important;
+    padding: 7mm 10mm 6mm !important;
+    gap: 7mm !important;
+  }
+
+  .proforma-brand {
+    grid-template-columns: 58mm minmax(0, 1fr) !important;
+    gap: 6mm !important;
+  }
+
+  .proforma-brand img {
+    width: 58mm !important;
+    max-height: 14mm !important;
+  }
+
+  .proforma-kicker {
+    margin-bottom: 2mm !important;
+    font-size: 7pt !important;
+    letter-spacing: .11em !important;
+  }
+
+  .proforma-hero h2 {
+    font-size: 20pt !important;
+    line-height: 1.05 !important;
+  }
+
+  .proforma-meta {
+    gap: 2mm !important;
+    justify-items: end !important;
+    text-align: right !important;
+    font-size: 9pt !important;
+  }
+
+  .proforma-meta strong {
+    font-size: 11pt !important;
+  }
+
+  .proforma-parties,
+  .proforma-summary,
+  .proforma-footer {
+    padding: 8mm 14mm !important;
+  }
+
+  .proforma-texture-band {
+    margin: 0 14mm 7mm !important;
+  }
+
+  .proforma-table {
+    width: calc(100% - 28mm) !important;
+    margin: 0 14mm 8mm !important;
+  }
+
+  .proforma-legal {
+    padding: 0 14mm 8mm !important;
+  }
+}
