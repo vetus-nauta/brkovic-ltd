@@ -1,5 +1,15 @@
 (function () {
-  const API_ORIGIN = window.location.hostname === 'brkovic-local.local' ? 'https://brkovic.ltd' : '';
+  const LIVE_API_ORIGIN = 'https://brkovic.ltd';
+  const hostname = window.location.hostname;
+  const isLocalPreviewHost = hostname === 'localhost'
+    || hostname === '127.0.0.1'
+    || hostname === '::1'
+    || hostname === 'brkovic-local.local'
+    || hostname.endsWith('.local')
+    || /^10\./.test(hostname)
+    || /^192\.168\./.test(hostname)
+    || /^172\.(1[6-9]|2\d|3[0-1])\./.test(hostname);
+  const API_ORIGIN = isLocalPreviewHost ? LIVE_API_ORIGIN : '';
   const API_BASE = `${API_ORIGIN}/api/public/journal`;
   const STORAGE_TRANSLATIONS = 'brkovic_journal_translations_v1';
 
@@ -348,13 +358,13 @@ let lightboxJustClosedAt = 0;
     if (title) {
       title.textContent = singleMode
         ? (getLang() === 'ru' ? 'Запись судового журнала' : 'Journal entry')
-        : (getLang() === 'ru' ? 'Лента судового журнала' : 'Ship log feed');
+        : (getLang() === 'ru' ? 'Заметки с морей' : 'Notes from the seas');
     }
 
     if (eyebrow) {
       eyebrow.textContent = singleMode
         ? (getLang() === 'ru' ? 'Запись' : 'Entry')
-        : (getLang() === 'ru' ? 'Записи' : 'Entries');
+        : (getLang() === 'ru' ? 'Судовой журнал' : 'Deck Log');
     }
 
     const backLink = document.querySelector('#journalSingleBack a');
@@ -379,13 +389,13 @@ let lightboxJustClosedAt = 0;
     if (title) {
       title.textContent = singleMode
         ? '\u0417\u0430\u043f\u0438\u0441\u044c \u0441\u0443\u0434\u043e\u0432\u043e\u0433\u043e \u0436\u0443\u0440\u043d\u0430\u043b\u0430'
-        : '\u041b\u0435\u043d\u0442\u0430 \u0441\u0443\u0434\u043e\u0432\u043e\u0433\u043e \u0436\u0443\u0440\u043d\u0430\u043b\u0430';
+        : '\u0417\u0430\u043c\u0435\u0442\u043a\u0438 \u0441 \u043c\u043e\u0440\u0435\u0439';
     }
 
     if (eyebrow) {
       eyebrow.textContent = singleMode
         ? '\u0417\u0430\u043f\u0438\u0441\u044c'
-        : '\u0417\u0430\u043f\u0438\u0441\u0438';
+        : '\u0421\u0443\u0434\u043e\u0432\u043e\u0439 \u0436\u0443\u0440\u043d\u0430\u043b';
     }
   }
 
@@ -1163,133 +1173,64 @@ let lightboxJustClosedAt = 0;
   });
 })();
 
-/* === Journal top cards labels and mobile accordion 20260503-11 === */
+/* === Journal Nav Desk card polish 20260520 === */
 (() => {
-  const mq = window.matchMedia('(max-width: 700px)');
+  let tapTimer = null;
 
   function isRu() {
     return document.documentElement.lang === 'ru';
   }
 
-  function syncCardState(card) {
-    if (!card) return;
-    if (mq.matches) {
-      card.setAttribute('role', 'button');
-      card.setAttribute('tabindex', '0');
-      card.setAttribute('aria-expanded', card.classList.contains('is-open') ? 'true' : 'false');
-    } else {
-      card.classList.remove('is-open');
-      card.removeAttribute('role');
-      card.removeAttribute('tabindex');
-      card.removeAttribute('aria-expanded');
-    }
-  }
-
-  function bindTopCard(card) {
-    if (!card || card.dataset.topCardAccordionBound === '1') return;
-    card.dataset.topCardAccordionBound = '1';
-    card.classList.add('journal-top-card-toggle');
-
-    card.addEventListener('click', (event) => {
-      if (!mq.matches) return;
-      if (event.target.closest('a, button, input, select, textarea')) return;
-      card.classList.toggle('is-open');
-      syncCardState(card);
-    });
-
-    card.addEventListener('keydown', (event) => {
-      if (!mq.matches || (event.key !== 'Enter' && event.key !== ' ')) return;
-      event.preventDefault();
-      card.classList.toggle('is-open');
-      syncCardState(card);
-    });
-  }
-
-  function applyTopCardsPolish() {
-    const heroCard = document.querySelector('.journal-hero__content');
+  function polishNavDeskCard() {
     const navCard = document.querySelector('.journal-card--navdesk');
+    if (!navCard) return;
 
-	    const navTitle = navCard && navCard.querySelector('h2');
-	    if (navTitle) {
-	      navTitle.textContent = isRu() ? 'Штурманский стол' : 'Nav Desk';
-	    }
+    const navEyebrow = navCard.querySelector('.section-heading__eyebrow');
+    const navTitle = navCard.querySelector('h2');
+    const navIntro = navCard.querySelector('[data-i18n="journal_navdesk_intro"]');
 
-    const navIntro = navCard && navCard.querySelector('[data-i18n="journal_navdesk_intro"], p');
-    if (navIntro && isRu()) {
-      navIntro.textContent = 'Практические расчёты для перехода, топлива, времени, приливов и навигационного планирования.';
-    }
+    navCard.classList.remove('journal-top-card-toggle', 'is-open');
+    navCard.removeAttribute('role');
+    navCard.removeAttribute('tabindex');
+    navCard.removeAttribute('aria-expanded');
+    navCard.setAttribute('aria-label', isRu() ? 'Открыть штурманский стол' : 'Open Nav Desk');
 
-    bindTopCard(heroCard);
-    bindTopCard(navCard);
-    syncCardState(heroCard);
-    syncCardState(navCard);
-  }
-
-  function scheduleTopCardsPolish() {
-    applyTopCardsPolish();
-    requestAnimationFrame(applyTopCardsPolish);
-    window.setTimeout(applyTopCardsPolish, 160);
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', scheduleTopCardsPolish);
-  } else {
-    scheduleTopCardsPolish();
-  }
-
-  document.addEventListener('languageChanged', scheduleTopCardsPolish);
-  mq.addEventListener ? mq.addEventListener('change', scheduleTopCardsPolish) : mq.addListener(scheduleTopCardsPolish);
-})();
-
-/* === Journal top cards accordion correction 20260503-12 === */
-(() => {
-  const mq = window.matchMedia('(max-width: 700px)');
-
-  function isRu() {
-    return document.documentElement.lang === 'ru';
-  }
-
-  function fixTopCards() {
-    const heroCard = document.querySelector('.journal-hero__content');
-    const navCard = document.querySelector('.journal-card--navdesk');
-
-    const heroEyebrow = heroCard && heroCard.querySelector('.section-heading__eyebrow');
-    const navEyebrow = navCard && navCard.querySelector('.section-heading__eyebrow');
-    const navTitle = navCard && navCard.querySelector('h2');
-    const navIntro = navCard && navCard.querySelector('[data-i18n="journal_navdesk_intro"]');
-
-    if (heroEyebrow) heroEyebrow.textContent = isRu() ? 'Судовой журнал' : 'Deck Log';
     if (navEyebrow) navEyebrow.textContent = isRu() ? 'Штурманский стол' : 'Nav Desk';
-	    if (navTitle) navTitle.textContent = isRu() ? 'Штурманский стол' : 'Nav Desk';
-	    if (navIntro) {
-	      navIntro.textContent = isRu()
-	        ? 'Практические расчёты для перехода, топлива, времени, приливов и навигационного планирования.'
-	        : 'Practical calculations for passage, fuel, timing, tides and navigation planning.';
-	    }
-
-    [heroCard, navCard].forEach((card) => {
-      if (!card) return;
-      card.classList.add('journal-top-card-toggle');
-      if (mq.matches) {
-        card.setAttribute('role', 'button');
-        card.setAttribute('tabindex', '0');
-        card.setAttribute('aria-expanded', card.classList.contains('is-open') ? 'true' : 'false');
-      }
-    });
+    if (navTitle) navTitle.textContent = isRu() ? 'Практические инструменты' : 'Practical tools';
+    if (navIntro) {
+      navIntro.textContent = isRu()
+        ? 'Расчёты для перехода, топлива, времени, приливов и навигационного планирования.'
+        : 'Calculations for passage, fuel, timing, tides and navigation planning.';
+    }
   }
 
-  function runTopCardsFix() {
-    fixTopCards();
-    requestAnimationFrame(fixTopCards);
-    window.setTimeout(fixTopCards, 240);
+  function bindNavDeskFeedback() {
+    const navCard = document.querySelector('.journal-card--navdesk');
+    if (!navCard || navCard.dataset.tapFeedbackBound === '1') return;
+    navCard.dataset.tapFeedbackBound = '1';
+
+    navCard.addEventListener('pointerdown', (event) => {
+      if (event.pointerType && event.pointerType !== 'touch') return;
+      navCard.classList.add('is-tap-highlight');
+      window.clearTimeout(tapTimer);
+      tapTimer = window.setTimeout(() => {
+        navCard.classList.remove('is-tap-highlight');
+      }, 1400);
+    }, { passive: true });
+  }
+
+  function runNavDeskPolish() {
+    polishNavDeskCard();
+    bindNavDeskFeedback();
+    requestAnimationFrame(polishNavDeskCard);
+    window.setTimeout(polishNavDeskCard, 240);
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', runTopCardsFix);
+    document.addEventListener('DOMContentLoaded', runNavDeskPolish);
   } else {
-    runTopCardsFix();
+    runNavDeskPolish();
   }
 
-  document.addEventListener('languageChanged', runTopCardsFix);
-  mq.addEventListener ? mq.addEventListener('change', runTopCardsFix) : mq.addListener(runTopCardsFix);
+  document.addEventListener('languageChanged', runNavDeskPolish);
 })();

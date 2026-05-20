@@ -1,7 +1,7 @@
 (function () {
   const LOCAL_HOSTS = ['brkovic-local.local', '127.0.0.1', 'localhost'];
   const IS_LOCAL = LOCAL_HOSTS.includes(window.location.hostname);
-  const ADMIN_BUILD = '20260519-04';
+  const ADMIN_BUILD = '20260519-06';
   const API_BASE = IS_LOCAL ? '/admin-api-proxy.php?path=' : '/api';
   const MANAGEMENT_API = '/management-admin-api.php';
 
@@ -15,6 +15,8 @@
   let isSyncingLengthBases = false;
   let popupZIndex = 80;
   let popupDragState = null;
+  let projectStore = null;
+  let currentProjectId = '';
 
   const CORE_MONTHLY_KEYS = ['boatWatch', 'technicalWatch', 'ownerRep'];
   const MONTHLY_ADDON_KEYS = [
@@ -47,6 +49,10 @@
   const servicePricingNode = document.getElementById('servicePricingFields');
   const monthlyAddOnPricingNode = document.getElementById('monthlyAddOnPricingFields');
   const managementPanel = document.querySelector('.management-admin-panel');
+  const projectWorkspaceSummary = document.getElementById('projectWorkspaceSummary');
+  const projectListNode = document.getElementById('managementProjectList');
+  const counterpartyListNode = document.getElementById('managementCounterpartyList');
+  const documentListNode = document.getElementById('managementDocumentList');
 
   const groupOrder = {
     typeData: ['motor', 'sailing', 'motorCat', 'sailingCat'],
@@ -146,7 +152,7 @@
       return;
     }
 
-    diagnosticsNode.classList.toggle('has-error', !data?.dataDir?.writable || !data?.pricingFile?.writable);
+    diagnosticsNode.classList.toggle('has-error', !data?.dataDir?.writable || !data?.pricingFile?.writable || !data?.projectsFile?.writable);
     diagnosticsNode.hidden = false;
     diagnosticsNode.innerHTML = `
       <strong>Диагностика админки</strong>
@@ -154,6 +160,7 @@
       <span>Доступ: ${yesNo(data.authenticated)}</span>
       <span>Папка data: ${yesNo(data.dataDir?.writable)}${data.dataDir?.perms ? ` (${escapeHtml(data.dataDir.perms)})` : ''}</span>
       <span>Файл цен: ${yesNo(data.pricingFile?.writable)}${data.pricingFile?.perms ? ` (${escapeHtml(data.pricingFile.perms)})` : ''}</span>
+      <span>Файл проектов: ${yesNo(data.projectsFile?.writable)}${data.projectsFile?.perms ? ` (${escapeHtml(data.projectsFile.perms)})` : data.projectsFile?.exists === false ? ' (будет создан)' : ''}</span>
       <span>Версия админки: ${ADMIN_BUILD}</span>
       <span>Host: ${escapeHtml(data.host || '')}</span>
     `;
@@ -212,6 +219,53 @@
     const date = todayISO().replace(/-/g, '');
     const stamp = compactNumber(Date.now().toString(36));
     return `VN-PF-${date}-${stamp}`;
+  }
+
+  function makeDocumentNumber(prefix) {
+    const date = todayISO().replace(/-/g, '');
+    const stamp = compactNumber(`${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`);
+    return `${prefix}-${date}-${stamp}`;
+  }
+
+  function fieldValue(id, fallback = '') {
+    return document.getElementById(id)?.value?.trim() || fallback;
+  }
+
+  function setFieldValue(id, value) {
+    const node = document.getElementById(id);
+    if (node) node.value = value ?? '';
+  }
+
+  function currentDocumentNumbers() {
+    return {
+      project: fieldValue('projectNumber'),
+      combinedProforma: fieldValue('proformaNumber'),
+      monthlyProforma: fieldValue('monthlyProformaNumber'),
+      oneTimeProforma: fieldValue('oneTimeProformaNumber'),
+      contract: fieldValue('contractNumber'),
+    };
+  }
+
+  function activeDocumentNumber(type = 'combinedProforma') {
+    const numbers = currentDocumentNumbers();
+    if (type === 'monthlyProforma') return numbers.monthlyProforma || numbers.combinedProforma || makeDocumentNumber('VN-PF-M');
+    if (type === 'oneTimeProforma') return numbers.oneTimeProforma || numbers.combinedProforma || makeDocumentNumber('VN-PF-O');
+    if (type === 'contract') return numbers.contract || makeDocumentNumber('VN-AGR');
+    return numbers.combinedProforma || makeProformaNumber();
+  }
+
+  function ensureBuilderNumbers(type = '') {
+    if (!fieldValue('projectNumber')) setFieldValue('projectNumber', makeDocumentNumber('VN-YM'));
+    if (!fieldValue('proformaNumber')) setFieldValue('proformaNumber', makeProformaNumber());
+    if ((type === 'monthlyProforma' || type === 'all') && !fieldValue('monthlyProformaNumber')) {
+      setFieldValue('monthlyProformaNumber', makeDocumentNumber('VN-PF-M'));
+    }
+    if ((type === 'oneTimeProforma' || type === 'all') && !fieldValue('oneTimeProformaNumber')) {
+      setFieldValue('oneTimeProformaNumber', makeDocumentNumber('VN-PF-O'));
+    }
+    if ((type === 'contract' || type === 'all') && !fieldValue('contractNumber')) {
+      setFieldValue('contractNumber', makeDocumentNumber('VN-AGR'));
+    }
   }
 
   function invoiceDefaults() {
@@ -467,6 +521,21 @@
     if (input.type === 'checkbox') pricing[group][key][field] = input.checked;
     else if (input.type === 'number') pricing[group][key][field] = toNumber(input.value, pricing[group][key][field]);
     else pricing[group][key][field] = input.value;
+  }
+
+  function syncOneTimeBuilderRowFromCatalog(key) {
+    const item = pricing?.oneTimeServices?.[key];
+    if (!item) return;
+    document.querySelectorAll(`#contractOneTimeFields [data-one-time-key="${selectorValue(key)}"]`).forEach((row) => {
+      const title = row.querySelector('[data-one-time-title]');
+      const priceInput = row.querySelector('[data-one-time-price]');
+      const quantityInput = row.querySelector('[data-one-time-quantity]');
+      if (title) title.textContent = labelFor(item, key);
+      if (priceInput && document.activeElement !== priceInput) priceInput.value = String(toNumber(item.price, 0));
+      if (quantityInput && document.activeElement !== quantityInput) {
+        quantityInput.value = String(Math.max(1, Math.round(toNumber(item.quantityDefault, 1))));
+      }
+    });
   }
 
   function estimateMonthlyPrice(typeKey, lengthKey, crewKey = selectedContractCrew()) {
@@ -1102,9 +1171,9 @@
     updateContractBuilderSummary();
   }
 
-	  function collectPricing() {
-	    const next = JSON.parse(JSON.stringify(pricing));
-	    document.querySelectorAll('[data-group][data-key][data-field]').forEach((input) => {
+  function collectPricing() {
+    const next = JSON.parse(JSON.stringify(pricing));
+    document.querySelectorAll('[data-group][data-key][data-field]').forEach((input) => {
       const group = input.dataset.group;
       const key = input.dataset.key;
       const field = input.dataset.field;
@@ -1117,20 +1186,11 @@
       next[group] = next[group] || {};
       next[group][key] = next[group][key] || {};
       if (input.type === 'checkbox') next[group][key][field] = input.checked;
-	      else if (input.type === 'number') next[group][key][field] = toNumber(input.value, next[group][key][field]);
-	      else next[group][key][field] = input.value;
-	    });
+      else if (input.type === 'number') next[group][key][field] = toNumber(input.value, next[group][key][field]);
+      else next[group][key][field] = input.value;
+    });
 
-	    document.querySelectorAll('#contractOneTimeFields [data-one-time-key]').forEach((row) => {
-	      const key = row.dataset.oneTimeKey;
-	      if (!key || !next.oneTimeServices?.[key]) return;
-	      const priceInput = row.querySelector('[data-one-time-price]');
-	      if (priceInput) {
-	        next.oneTimeServices[key].price = toNumber(priceInput.value, next.oneTimeServices[key].price || 0);
-	      }
-	    });
-	
-	    document.querySelectorAll('[data-contract-default]').forEach((input) => {
+    document.querySelectorAll('[data-contract-default]').forEach((input) => {
       const key = input.dataset.contractDefault;
       next.contractDefaults = next.contractDefaults || {};
       next.contractDefaults[key] = input.value.trim();
@@ -1242,6 +1302,45 @@
     setStatus('Сохранено. Публичный калькулятор уже читает обновленные данные.');
   }
 
+  async function loadProjects() {
+    if (!isLoggedIn) return null;
+    projectStore = await managementApi({ method: 'GET', query: 'projects=1' });
+    renderProjectStore();
+    return projectStore;
+  }
+
+  async function saveProjectRegistry(payload) {
+    if (!isLoggedIn) {
+      setStatus('Сначала войдите в админку или откройте локальную версию через 127.0.0.1.');
+      return null;
+    }
+    const result = await managementApi({
+      method: 'POST',
+      query: 'projects=1',
+      body: JSON.stringify(payload),
+    });
+    if (result?.project) {
+      currentProjectId = result.project.id || currentProjectId;
+      applyProjectNumbers(result.project);
+    }
+    if (result?.store) {
+      projectStore = result.store;
+      renderProjectStore();
+    } else {
+      await loadProjects();
+    }
+    return result;
+  }
+
+  function applyProjectNumbers(project) {
+    if (!project) return;
+    setFieldValue('projectNumber', project.projectNumber || project.documentNumbers?.project || fieldValue('projectNumber'));
+    setFieldValue('proformaNumber', project.documentNumbers?.combinedProforma || fieldValue('proformaNumber'));
+    setFieldValue('monthlyProformaNumber', project.documentNumbers?.monthlyProforma || fieldValue('monthlyProformaNumber'));
+    setFieldValue('oneTimeProformaNumber', project.documentNumbers?.oneTimeProforma || fieldValue('oneTimeProformaNumber'));
+    setFieldValue('contractNumber', project.documentNumbers?.contract || fieldValue('contractNumber'));
+  }
+
   function selectedScopeDetails() {
     return Array.from(document.querySelectorAll('#contractScopeFields input:checked')).map((input) => ({
       group: input.dataset.scopeGroup || '',
@@ -1278,6 +1377,210 @@
         note,
       };
     }).filter(Boolean);
+  }
+
+  function buildProjectPayload(status = 'draft', source = 'admin') {
+    ensureBuilderNumbers('all');
+    const invoice = currentInvoiceDefaults();
+    const typeKey = selectedContractType();
+    const lengthKey = selectedContractLength();
+    const crewKey = selectedContractCrew();
+    const context = oneTimeFactorContext();
+    const includeBase = contractBaseIncluded();
+    const periodStart = fieldValue('contractStart');
+    const periodEnd = fieldValue('contractEnd');
+    const periodMeta = periodInfo(periodStart, periodEnd);
+    const monthlyBase = includeBase ? toNumber(document.getElementById('contractMonthlyPrice')?.value, estimateMonthlyPrice(typeKey, lengthKey, crewKey) || 0) : 0;
+    const monthlyServices = selectedScopeDetails();
+    const monthlyAddOnsTotal = selectedMonthlyScopeTotal(context);
+    const oneTimeServices = selectedOneTimeDetails();
+    const autoOneTime = document.getElementById('contractAutoOneTimeToggle')?.checked;
+    const oneTimeTotal = autoOneTime
+      ? oneTimeServices.reduce((sum, item) => sum + toNumber(item.price, 0), 0)
+      : toNumber(document.getElementById('contractOneTimePrice')?.value, 0);
+    const discountPercent = clampPercent(document.getElementById('contractDiscountPercent')?.value, invoice.discountPercent || 0);
+    const vatPercent = clampPercent(document.getElementById('contractVatPercent')?.value, invoice.vatPercent ?? 21);
+    const monthlyPeriodNet = (monthlyBase + monthlyAddOnsTotal) * periodMeta.multiplier;
+    const netBeforeDiscount = monthlyPeriodNet + oneTimeTotal;
+    const totals = proformaTotals(netBeforeDiscount, discountPercent, vatPercent);
+    const clientName = fieldValue('contractClient');
+    const company = fieldValue('contractClientCompany');
+    const yachtName = fieldValue('contractYacht');
+
+    return {
+      id: currentProjectId,
+      projectNumber: fieldValue('projectNumber'),
+      status,
+      source,
+      title: [clientName || company || 'Комитент', yachtName || 'яхта'].filter(Boolean).join(' / '),
+      client: {
+        name: clientName,
+        company,
+        email: fieldValue('contractClientEmail'),
+        phone: fieldValue('contractClientPhone'),
+      },
+      yacht: {
+        name: yachtName,
+        typeKey,
+        typeLabel: context.typeLabel,
+        lengthKey,
+        lengthLabel: context.lengthLabel,
+        crewKey,
+        crewLabel: context.crewLabel,
+        location: fieldValue('contractLocation'),
+      },
+      period: {
+        start: periodStart,
+        end: periodEnd,
+        multiplier: periodMeta.multiplier,
+        label: periodMeta.label,
+        note: periodMeta.note,
+      },
+      selections: {
+        includeBase,
+        autoMonthly: document.getElementById('contractAutoPriceToggle')?.checked !== false,
+        autoOneTime: document.getElementById('contractAutoOneTimeToggle')?.checked !== false,
+        monthlyServices,
+        oneTimeServices,
+      },
+      amounts: {
+        monthlyBase,
+        monthlyAddOnsTotal,
+        monthlyTotal: monthlyBase + monthlyAddOnsTotal,
+        monthlyPeriodNet,
+        oneTimeTotal,
+        netBeforeDiscount,
+        discountPercent,
+        vatPercent,
+        discountAmount: totals.discount,
+        taxableNet: totals.taxable,
+        vatAmount: totals.vat,
+        totalGross: totals.total,
+      },
+      documentNumbers: currentDocumentNumbers(),
+      notes: fieldValue('contractNotes'),
+      pricingSnapshot: {
+        version: pricing?.version || 1,
+        updatedAt: pricing?.updatedAt || '',
+      },
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
+  function documentTitle(type) {
+    if (type === 'monthlyProforma') return 'месячная профактура';
+    if (type === 'oneTimeProforma') return 'разовая профактура';
+    if (type === 'contract') return 'договор';
+    return 'документ';
+  }
+
+  function renderProjectStore() {
+    const projects = Array.isArray(projectStore?.projects) ? projectStore.projects : [];
+    const counterparties = Array.isArray(projectStore?.counterparties) ? projectStore.counterparties : [];
+    const documents = Array.isArray(projectStore?.documents) ? projectStore.documents : [];
+
+    if (projectWorkspaceSummary) {
+      projectWorkspaceSummary.textContent = `Проектов: ${projects.length}. Комитентов: ${counterparties.length}. Документов: ${documents.length}. Текущий проект: ${fieldValue('projectNumber') || 'еще не сохранен'}.`;
+    }
+
+    if (projectListNode) {
+      projectListNode.innerHTML = projects.length ? projects.slice(0, 18).map((project) => `
+        <button type="button" class="project-list-item ${project.id === currentProjectId ? 'is-active' : ''}" data-load-project="${escapeHtml(project.id)}">
+          <strong>${escapeHtml(project.projectNumber || project.id)}</strong>
+          <span>${escapeHtml(project.title || project.client?.name || project.yacht?.name || 'Без названия')}</span>
+          <small>${escapeHtml(project.status || 'draft')} · ${escapeHtml((project.updatedAt || '').slice(0, 16).replace('T', ' '))}</small>
+        </button>
+      `).join('') : '<p class="contract-empty-note">Сохраненных проектов пока нет.</p>';
+    }
+
+    if (counterpartyListNode) {
+      counterpartyListNode.innerHTML = counterparties.length ? counterparties.slice(0, 18).map((item) => `
+        <article class="project-list-item project-list-item--static">
+          <strong>${escapeHtml(item.name || item.company || item.email || item.phone || item.id)}</strong>
+          <span>${escapeHtml([item.company, item.email, item.phone].filter(Boolean).join(' · '))}</span>
+          <small>${escapeHtml((item.projectIds || []).length)} проект(ов)</small>
+        </article>
+      `).join('') : '<p class="contract-empty-note">Комитенты появятся после сохранения проекта.</p>';
+    }
+
+    if (documentListNode) {
+      documentListNode.innerHTML = documents.length ? documents.slice(0, 24).map((doc) => `
+        <article class="document-list-item">
+          <div>
+            <strong>${escapeHtml(doc.number || doc.id)}</strong>
+            <span>${escapeHtml(documentTitle(doc.type))} · ${escapeHtml(doc.status || '')}</span>
+            <small>${escapeHtml((doc.createdAt || '').slice(0, 16).replace('T', ' '))}</small>
+          </div>
+          <button type="button" class="btn btn--secondary" data-print-document="${escapeHtml(doc.id)}">Печать</button>
+        </article>
+      `).join('') : '<p class="contract-empty-note">Документы пока не выпускались.</p>';
+    }
+  }
+
+  function applyProjectToBuilder(project) {
+    if (!project) return;
+    currentProjectId = project.id || '';
+    setContractBuilderOpen(true);
+    setFieldValue('projectNumber', project.projectNumber || project.documentNumbers?.project || '');
+    setFieldValue('proformaNumber', project.documentNumbers?.combinedProforma || '');
+    setFieldValue('monthlyProformaNumber', project.documentNumbers?.monthlyProforma || '');
+    setFieldValue('oneTimeProformaNumber', project.documentNumbers?.oneTimeProforma || '');
+    setFieldValue('contractNumber', project.documentNumbers?.contract || '');
+    setFieldValue('contractClient', project.client?.name || '');
+    setFieldValue('contractClientCompany', project.client?.company || '');
+    setFieldValue('contractClientEmail', project.client?.email || '');
+    setFieldValue('contractClientPhone', project.client?.phone || '');
+    setFieldValue('contractYacht', project.yacht?.name || '');
+    setFieldValue('contractLocation', project.yacht?.location || '');
+    setFieldValue('contractStart', project.period?.start || '');
+    setFieldValue('contractEnd', project.period?.end || '');
+    setFieldValue('contractNotes', project.notes || '');
+    setFieldValue('contractDiscountPercent', project.amounts?.discountPercent ?? currentInvoiceDefaults().discountPercent ?? 0);
+    setFieldValue('contractVatPercent', project.amounts?.vatPercent ?? currentInvoiceDefaults().vatPercent ?? 21);
+
+    selectedContractTypeKey = project.yacht?.typeKey || selectedContractTypeKey;
+    selectedContractLengthKey = project.yacht?.lengthKey || selectedContractLengthKey;
+    selectedContractCrewKey = project.yacht?.crewKey || selectedContractCrewKey;
+    renderContractSelectors();
+    renderContractScope();
+    renderContractOneTimeFields();
+
+    const baseToggle = document.getElementById('contractBaseToggle');
+    if (baseToggle) baseToggle.checked = project.selections?.includeBase !== false;
+    const autoMonthly = document.getElementById('contractAutoPriceToggle');
+    if (autoMonthly) autoMonthly.checked = project.selections?.autoMonthly !== false;
+    const autoOneTime = document.getElementById('contractAutoOneTimeToggle');
+    if (autoOneTime) autoOneTime.checked = project.selections?.autoOneTime !== false;
+
+    setFieldValue('contractMonthlyPrice', project.amounts?.monthlyBase ?? '');
+    setFieldValue('contractOneTimePrice', project.amounts?.oneTimeTotal ?? '');
+
+    const monthlyKeys = new Set((project.selections?.monthlyServices || []).map((item) => item.key));
+    document.querySelectorAll('#contractScopeFields input[data-scope-key]').forEach((input) => {
+      input.checked = monthlyKeys.has(input.dataset.scopeKey);
+    });
+
+    const oneTimeByKey = new Map((project.selections?.oneTimeServices || []).map((item) => [item.key, item]));
+    document.querySelectorAll('#contractOneTimeFields .contract-one-time-item').forEach((row) => {
+      const item = oneTimeByKey.get(row.dataset.oneTimeKey);
+      const enabledInput = row.querySelector('[data-one-time-enabled]');
+      if (enabledInput) enabledInput.checked = !!item;
+      if (item) {
+        const priceInput = row.querySelector('[data-one-time-price]');
+        const quantityInput = row.querySelector('[data-one-time-quantity]');
+        const noteInput = row.querySelector('[data-one-time-note]');
+        if (priceInput) priceInput.value = item.basePrice ?? item.price ?? 0;
+        if (quantityInput) quantityInput.value = item.quantity ?? 1;
+        if (noteInput) noteInput.value = item.note || '';
+      }
+    });
+
+    updateAutoMonthlyPrice(false);
+    updateAutoOneTimePrice(false);
+    updatePricingPopupSummaries();
+    updateContractBuilderSummary();
+    renderProjectStore();
+    setStatus(`Проект ${project.projectNumber || project.id} загружен в конструктор.`);
   }
 
   function refreshOneTimeLinePreviews() {
@@ -1550,10 +1853,10 @@
     `;
   }
 
-  function generateContractHtml() {
+  function generateContractHtml(documentMode = 'combinedProforma') {
     const defaults = currentContractDefaults();
     const invoice = currentInvoiceDefaults();
-    const number = document.getElementById('proformaNumber')?.value.trim() || makeProformaNumber();
+    const number = activeDocumentNumber(documentMode);
     const date = document.getElementById('proformaDate')?.value || todayISO();
     const client = document.getElementById('contractClient')?.value.trim() || '[клиент]';
     const yacht = document.getElementById('contractYacht')?.value.trim() || '[яхта]';
@@ -1583,7 +1886,7 @@
     const electronicUrl = normalizeDocumentUrl(invoice.electronicBaseUrl, number);
     const context = oneTimeFactorContext();
     const baseLengthNet = baseForLength(context.lengthKey) || monthly;
-    const lineItems = [];
+    let lineItems = [];
 
     if (includeBase && monthly > 0) {
       lineItems.push({
@@ -1622,6 +1925,12 @@
       });
     });
 
+    if (documentMode === 'monthlyProforma') {
+      lineItems = lineItems.filter((item) => item.bucket === 'monthly');
+    } else if (documentMode === 'oneTimeProforma') {
+      lineItems = lineItems.filter((item) => item.bucket === 'oneTime');
+    }
+
     if (!lineItems.length) {
       lineItems.push({
         category: 'Расчет',
@@ -1633,6 +1942,12 @@
       });
     }
 
+    const documentHeading = documentMode === 'contract' ? 'Service Agreement Draft' : 'Proforma Invoice';
+    const documentKicker = documentMode === 'monthlyProforma'
+      ? 'Monthly Yacht Management'
+      : documentMode === 'oneTimeProforma'
+        ? 'One-time Yacht Services'
+        : 'Yacht Management';
     const monthlyPeriodNet = lineItems.filter((item) => item.bucket === 'monthly').reduce((sum, item) => sum + item.net, 0);
     const oneTimeNet = lineItems.filter((item) => item.bucket === 'oneTime').reduce((sum, item) => sum + item.net, 0);
     const netBeforeDiscount = lineItems.reduce((sum, item) => sum + item.net, 0);
@@ -1675,7 +1990,7 @@
             <img src="${escapeHtml(logoUrl(invoice.logoUrl))}" alt="${escapeHtml(invoice.companyName)}" />
             <div>
               <p class="proforma-kicker">Yacht Management</p>
-              <h2>Proforma Invoice</h2>
+              <h2>${escapeHtml(documentHeading)}</h2>
             </div>
           </div>
           <div class="proforma-meta">
@@ -1704,7 +2019,7 @@
         </section>
 
         <section class="proforma-texture-band">
-          <span>Private yacht operations</span>
+          <span>${escapeHtml(documentKicker)}</span>
           <strong>net pricing + VAT</strong>
         </section>
 
@@ -1796,7 +2111,7 @@
     };
     frame.onload = runPrint;
 
-    const cssHref = new URL('css/admin-management.css?v=20260516-10', window.location.href).href;
+    const cssHref = new URL('css/admin-management.css?v=20260519-06', window.location.href).href;
     const variablesHref = new URL('css/variables.css', window.location.href).href;
     const mainHref = new URL('css/main.css', window.location.href).href;
     const doc = frame.contentDocument || frame.contentWindow.document;
@@ -1823,6 +2138,46 @@
     doc.close();
 
     window.setTimeout(runPrint, 900);
+  }
+
+  async function saveBuilderProject(status = 'draft', action = 'saveProject') {
+    ensureBuilderNumbers(action === 'issueDocument' ? 'all' : '');
+    const project = buildProjectPayload(status, 'admin');
+    setStatus(status === 'counterparty' ? 'Сохраняю комитента и проект...' : 'Сохраняю проект...');
+    const result = await saveProjectRegistry({ action, project });
+    if (result?.project) {
+      setStatus(`Проект ${result.project.projectNumber || result.project.id} сохранен.`);
+    }
+    return result;
+  }
+
+  async function issueBuilderDocument(type) {
+    ensureBuilderNumbers(type);
+    const preview = document.getElementById('contractPreview');
+    const html = generateContractHtml(type);
+    if (preview) preview.innerHTML = html;
+    const projectStatus = type === 'contract' ? 'contract' : 'issued';
+    const project = buildProjectPayload(projectStatus, 'admin');
+    setStatus(`Сохраняю ${documentTitle(type)}...`);
+    const result = await saveProjectRegistry({
+      action: 'issueDocument',
+      documentType: type,
+      documentHtml: html,
+      project,
+    });
+    if (result?.document) {
+      setStatus(`${documentTitle(type)} ${result.document.number} сохранен(а) в документах проекта.`);
+    }
+    return result;
+  }
+
+  function printStoredDocument(documentId) {
+    const doc = (projectStore?.documents || []).find((item) => item.id === documentId);
+    if (!doc?.html) {
+      setStatus('Документ не найден или не содержит HTML.');
+      return;
+    }
+    printProformaHtml(doc.html);
   }
 
   function bindTabs() {
@@ -1881,6 +2236,7 @@
     }
 
     if (group === 'oneTimeServices') {
+      syncOneTimeBuilderRowFromCatalog(key);
       updateAutoOneTimePrice(true);
     }
 
@@ -2046,8 +2402,79 @@
     if (!isLoggedIn) return;
     try {
       await loadPricing();
+      await loadProjects();
     } catch (error) {
       setStatus(error.message || 'Не удалось загрузить настройки.');
+    }
+  });
+
+  document.getElementById('reloadProjectsBtn')?.addEventListener('click', async () => {
+    try {
+      await loadProjects();
+      setStatus('Проекты, комитенты и документы обновлены.');
+    } catch (error) {
+      setStatus(error.message || 'Не удалось загрузить проекты.');
+    }
+  });
+
+  document.getElementById('saveProjectBtn')?.addEventListener('click', async () => {
+    try {
+      await saveBuilderProject('draft', 'saveProject');
+    } catch (error) {
+      setStatus(error.message || 'Не удалось сохранить проект.');
+    }
+  });
+
+  document.getElementById('saveCounterpartyBtn')?.addEventListener('click', async () => {
+    try {
+      await saveBuilderProject('counterparty', 'saveProject');
+    } catch (error) {
+      setStatus(error.message || 'Не удалось сохранить комитента.');
+    }
+  });
+
+  document.getElementById('saveCommitmentBtn')?.addEventListener('click', async () => {
+    try {
+      await saveBuilderProject('commitment', 'saveCommitment');
+    } catch (error) {
+      setStatus(error.message || 'Не удалось зафиксировать обязательства.');
+    }
+  });
+
+  document.getElementById('issueMonthlyProformaBtn')?.addEventListener('click', async () => {
+    try {
+      await issueBuilderDocument('monthlyProforma');
+    } catch (error) {
+      setStatus(error.message || 'Не удалось сохранить месячную профактуру.');
+    }
+  });
+
+  document.getElementById('issueOneTimeProformaBtn')?.addEventListener('click', async () => {
+    try {
+      await issueBuilderDocument('oneTimeProforma');
+    } catch (error) {
+      setStatus(error.message || 'Не удалось сохранить разовую профактуру.');
+    }
+  });
+
+  document.getElementById('prepareContractBtn')?.addEventListener('click', async () => {
+    try {
+      await issueBuilderDocument('contract');
+    } catch (error) {
+      setStatus(error.message || 'Не удалось подготовить договор.');
+    }
+  });
+
+  document.getElementById('projectWorkspace')?.addEventListener('click', (event) => {
+    const projectButton = event.target.closest('[data-load-project]');
+    if (projectButton) {
+      const project = (projectStore?.projects || []).find((item) => item.id === projectButton.dataset.loadProject);
+      applyProjectToBuilder(project);
+      return;
+    }
+    const documentButton = event.target.closest('[data-print-document]');
+    if (documentButton) {
+      printStoredDocument(documentButton.dataset.printDocument);
     }
   });
 
@@ -2142,6 +2569,7 @@
       setLoggedInUI(true);
       try {
         await loadPricing();
+        await loadProjects();
         setStatus('Локальный режим: цены сохраняются прямо в data/management-pricing.json.');
       } catch (error) {
         setLoggedInUI(false);
@@ -2155,6 +2583,7 @@
       setLoggedInUI(true);
       try {
         await loadPricing();
+        await loadProjects();
       } catch (error) {
         setStatus(error.message || 'Не удалось загрузить настройки.');
       }

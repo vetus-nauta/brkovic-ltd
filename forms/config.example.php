@@ -2,6 +2,7 @@
 return [
     'recipient_email' => 'you@example.com',
     'site_name' => 'BRKOVIC',
+    'send_auto_reply' => false,
     'smtp' => [
         'host' => 'smtp.example.com',
         'port' => 465,
@@ -13,4 +14,3 @@ return [
         'timeout' => 20,
     ],
 ];
-

@@ -39,6 +39,35 @@
     }
   }
 
+  function buildSecurityToken(source, timestamp) {
+    let hash = 2166136261;
+    const payload = `${source}|${timestamp}|sail-skill`;
+
+    for (let i = 0; i < payload.length; i += 1) {
+      hash ^= payload.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
+    }
+
+    return `brk2-${(hash >>> 0).toString(36)}`;
+  }
+
+  function syncSecurityFields(form) {
+    const tsInput = form.querySelector('input[name="form_ts"]');
+    const sourceInput = form.querySelector('input[name="source_page"]');
+    const tokenInput = form.querySelector('input[name="form_token"]');
+    const source = window.location.pathname + window.location.search;
+
+    if (tsInput && !tsInput.value) {
+      tsInput.value = String(Date.now());
+    }
+    if (sourceInput) {
+      sourceInput.value = source;
+    }
+    if (tokenInput && tsInput && tsInput.value) {
+      tokenInput.value = buildSecurityToken(source, tsInput.value);
+    }
+  }
+
   document.addEventListener("languageChanged", (event) => {
     currentTranslations = event.detail.translations || {};
     syncLanguageField();
@@ -54,12 +83,14 @@
     if (!form || !status) return;
 
     syncLanguageField();
+    syncSecurityFields(form);
 
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       clearStatus(status);
       if (fallback) fallback.hidden = true;
       syncLanguageField();
+      syncSecurityFields(form);
 
       const formData = new FormData(form);
       const name = String(formData.get("name") || "").trim();
@@ -106,6 +137,7 @@
         if (serviceSelect) serviceSelect.selectedIndex = 0;
         if (requestType) requestType.value = 'general';
         syncLanguageField();
+        syncSecurityFields(form);
         setStatus(status, "success", result.message || t("form_success", "Your request has been sent."));
       } catch (error) {
         setStatus(status, "error", error.message || t("form_error_server", "The form is not sending from the site right now. Open your email app and send the message directly."));

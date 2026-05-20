@@ -802,6 +802,124 @@
   color: var(--color-muted);
 }
 
+.project-workspace {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid rgba(16,36,58,.10);
+  border-radius: 16px;
+  background: #f7fafc;
+}
+
+.project-workspace__head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: start;
+}
+
+.project-workspace h4,
+.project-workspace h5 {
+  margin: 0 0 6px;
+  color: var(--color-brand);
+}
+
+.project-workspace p {
+  margin: 0;
+  color: var(--color-muted);
+  line-height: 1.45;
+}
+
+.project-workspace-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.project-workspace-grid > article {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid rgba(16,36,58,.08);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.project-list,
+.document-list {
+  display: grid;
+  gap: 8px;
+  max-height: 320px;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.project-list-item,
+.document-list-item {
+  min-width: 0;
+  width: 100%;
+  padding: 10px 11px;
+  border: 1px solid rgba(16,36,58,.10);
+  border-radius: 12px;
+  background: rgba(16,36,58,.025);
+  color: var(--color-ink);
+  text-align: left;
+}
+
+button.project-list-item {
+  cursor: pointer;
+}
+
+.project-list-item.is-active {
+  border-color: rgba(193,164,99,.46);
+  background: rgba(193,164,99,.09);
+}
+
+.project-list-item strong,
+.project-list-item span,
+.project-list-item small,
+.document-list-item strong,
+.document-list-item span,
+.document-list-item small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.project-list-item strong,
+.document-list-item strong {
+  color: var(--color-brand);
+  font-size: .92rem;
+}
+
+.project-list-item span,
+.document-list-item span {
+  margin-top: 3px;
+  color: var(--color-ink);
+  font-size: .86rem;
+  line-height: 1.35;
+}
+
+.project-list-item small,
+.document-list-item small {
+  margin-top: 4px;
+  color: var(--color-muted);
+  font-size: .78rem;
+}
+
+.project-list-item--static {
+  display: block;
+}
+
+.document-list-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
 .contract-defaults-block {
   margin-top: 16px;
   padding-top: 16px;
@@ -917,58 +1035,56 @@
 .proforma-document {
   color: #13283d;
   background:
-    linear-gradient(135deg, rgba(193,164,99,.11), transparent 24%),
+    linear-gradient(135deg, rgba(193,164,99,.08), transparent 24%),
     linear-gradient(180deg, #fff 0%, #fbfaf6 100%);
   border: 1px solid rgba(16,36,58,.12);
-  border-radius: 18px;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 18px 46px rgba(16,36,58,.10);
+  box-shadow: 0 12px 30px rgba(16,36,58,.08);
 }
 
 .proforma-hero {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 16px;
+  gap: 14px;
   align-items: center;
-  padding: 18px 22px;
-  color: #fff;
-  background:
-    linear-gradient(135deg, rgba(210,179,105,.22), transparent 38%),
-    repeating-linear-gradient(45deg, rgba(255,255,255,.035) 0 1px, transparent 1px 8px),
-    #10243a;
+  padding: 14px 20px;
+  color: #10243a;
+  background: rgba(255,255,255,.92);
+  border-bottom: 1px solid rgba(16,36,58,.12);
+  box-shadow: inset 0 -3px 0 rgba(193,164,99,.22);
 }
 
 .proforma-brand {
   display: grid;
-  grid-template-columns: 224px minmax(0, 1fr);
-  gap: 16px;
+  grid-template-columns: 168px minmax(0, 1fr);
+  gap: 14px;
   align-items: center;
 }
 
 .proforma-brand img {
-  width: 224px;
+  width: 168px;
   max-width: 100%;
-  max-height: 54px;
+  max-height: 42px;
   height: auto;
   object-fit: contain;
   object-position: left center;
-  filter: drop-shadow(0 8px 20px rgba(0,0,0,.18));
 }
 
 .proforma-kicker {
-  margin: 0 0 6px;
-  color: rgba(255,255,255,.68);
-  font-size: .78rem;
+  margin: 0 0 4px;
+  color: #8d7334;
+  font-size: .7rem;
   font-weight: 800;
-  letter-spacing: .16em;
+  letter-spacing: .12em;
   text-transform: uppercase;
 }
 
 .proforma-hero h2 {
   margin: 0;
-  color: #fff;
-  font-size: clamp(1.45rem, 3vw, 2.2rem);
-  line-height: 1.05;
+  color: #10243a;
+  font-size: 1.45rem;
+  line-height: 1.12;
 }
 
 .proforma-meta {
@@ -976,12 +1092,12 @@
   gap: 6px;
   justify-items: end;
   text-align: right;
-  color: rgba(255,255,255,.78);
+  color: #516579;
 }
 
 .proforma-meta strong {
-  color: #fff;
-  font-size: 1.15rem;
+  color: #10243a;
+  font-size: 1rem;
 }
 
 .proforma-parties,
@@ -1230,6 +1346,67 @@
   color: #7b8794;
 }
 
+.public-demo-document {
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+}
+
+.public-demo-document header,
+.public-demo-document footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+.public-demo-document h1,
+.public-demo-document h2,
+.public-demo-document p {
+  margin: 0;
+}
+
+.public-demo-document h1 {
+  color: #10243a;
+  font-size: 1.8rem;
+}
+
+.public-demo-document h2 {
+  color: #10243a;
+  font-size: .88rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.public-demo-document p {
+  color: #31465b;
+  line-height: 1.45;
+}
+
+.public-demo-document table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.public-demo-document th,
+.public-demo-document td {
+  padding: 10px;
+  border: 1px solid rgba(16,36,58,.14);
+  text-align: left;
+  vertical-align: top;
+}
+
+.public-demo-document th {
+  background: #10243a;
+  color: #fff;
+}
+
+.public-demo-document td:last-child,
+.public-demo-document th:last-child {
+  text-align: right;
+  white-space: nowrap;
+}
+
 @media (max-width: 1120px) {
   .admin-management-layout,
   .pricing-support-grid,
@@ -1275,6 +1452,9 @@
   .contract-builder-shell,
   .contract-builder-grid,
   .contract-one-time-item,
+  .project-workspace__head,
+  .project-workspace-grid,
+  .document-list-item,
   .proforma-hero,
   .proforma-brand,
   .proforma-parties,
@@ -1376,40 +1556,42 @@
   .proforma-hero {
     grid-template-columns: minmax(0, 1fr) auto !important;
     align-items: center !important;
-    padding: 7mm 10mm 6mm !important;
-    gap: 7mm !important;
+    padding: 5mm 8mm 4mm !important;
+    gap: 5mm !important;
+    border-bottom: 1px solid rgba(16,36,58,.18) !important;
+    box-shadow: inset 0 -1.2mm 0 rgba(193,164,99,.22) !important;
   }
 
   .proforma-brand {
-    grid-template-columns: 58mm minmax(0, 1fr) !important;
-    gap: 6mm !important;
+    grid-template-columns: 42mm minmax(0, 1fr) !important;
+    gap: 4mm !important;
   }
 
   .proforma-brand img {
-    width: 58mm !important;
-    max-height: 14mm !important;
+    width: 42mm !important;
+    max-height: 11mm !important;
   }
 
   .proforma-kicker {
-    margin-bottom: 2mm !important;
-    font-size: 7pt !important;
-    letter-spacing: .11em !important;
+    margin-bottom: 1mm !important;
+    font-size: 6.5pt !important;
+    letter-spacing: .08em !important;
   }
 
   .proforma-hero h2 {
-    font-size: 20pt !important;
-    line-height: 1.05 !important;
+    font-size: 15pt !important;
+    line-height: 1.12 !important;
   }
 
   .proforma-meta {
-    gap: 2mm !important;
+    gap: 1.2mm !important;
     justify-items: end !important;
     text-align: right !important;
-    font-size: 9pt !important;
+    font-size: 8pt !important;
   }
 
   .proforma-meta strong {
-    font-size: 11pt !important;
+    font-size: 9.5pt !important;
   }
 
   .proforma-parties,
@@ -1427,7 +1609,7 @@
     margin: 0 14mm 8mm !important;
   }
 
-  .proforma-legal {
-    padding: 0 14mm 8mm !important;
-  }
+.proforma-legal {
+  padding: 0 14mm 8mm !important;
+}
 }

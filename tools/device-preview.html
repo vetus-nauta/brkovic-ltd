@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ru" translate="no" class="notranslate">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="google" content="notranslate" />
+  <title>BRKOVIC local preview</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+    body {
+      margin: 0;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      color: #f6f8fb;
+      font: 14px/1.45 Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 18% 12%, rgba(98, 157, 200, .28), transparent 28rem),
+        radial-gradient(circle at 84% 20%, rgba(216, 180, 111, .20), transparent 30rem),
+        linear-gradient(145deg, #07111d, #182737 58%, #0d141d);
+    }
+    .preview {
+      width: min(100vw, 1180px);
+      height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 22px;
+    }
+    .device {
+      --device-w: 390px;
+      --device-h: 844px;
+      width: min(var(--device-w), calc(100vw - 44px));
+      height: min(var(--device-h), calc(100vh - 44px));
+      aspect-ratio: var(--device-w) / var(--device-h);
+      padding: 12px;
+      border: 1px solid rgba(255,255,255,.24);
+      border-radius: 38px;
+      background:
+        linear-gradient(145deg, rgba(255,255,255,.28), rgba(255,255,255,.08)),
+        rgba(255,255,255,.08);
+      box-shadow:
+        0 30px 80px rgba(0,0,0,.42),
+        inset 0 1px 0 rgba(255,255,255,.36);
+      backdrop-filter: blur(22px) saturate(140%);
+      -webkit-backdrop-filter: blur(22px) saturate(140%);
+    }
+    .device--tablet {
+      --device-w: 820px;
+      --device-h: 1180px;
+      padding: 14px;
+      border-radius: 30px;
+    }
+    .screen {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.20);
+      border-radius: 28px;
+      background: #fff;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.04);
+    }
+    .device--tablet .screen {
+      border-radius: 22px;
+    }
+    iframe {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: #fff;
+    }
+  </style>
+</head>
+<body>
+  <main class="preview" aria-label="BRKOVIC local device preview">
+    <section class="device" id="device">
+      <div class="screen">
+        <iframe id="siteFrame" title="BRKOVIC local homepage preview" src="/index.html"></iframe>
+      </div>
+    </section>
+  </main>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const device = params.get("device") === "tablet" ? "tablet" : "phone";
+    const lang = params.get("lang");
+    const target = new URL("/index.html", window.location.origin);
+    if (lang === "ru" || lang === "en") target.searchParams.set("lang", lang);
+    if (device === "tablet") document.getElementById("device").classList.add("device--tablet");
+    document.title = device === "tablet" ? "BRKOVIC планшет" : "BRKOVIC мобила";
+    document.getElementById("siteFrame").src = target.toString();
+  </script>
+</body>
+</html>

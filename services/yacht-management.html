@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="en" data-i18n-title="service_page_1_meta_title" data-i18n-description="service_page_1_meta_description">
+<html lang="en" translate="no" class="notranslate" data-i18n-title="service_page_1_meta_title" data-i18n-description="service_page_1_meta_description">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Yacht Management — BRKOVIC</title>
+
+  <meta name="google" content="notranslate" /><title>Yacht Management — BRKOVIC</title>
   <meta name="description" content="Operational yacht management in Montenegro and the Adriatic: supervision, contractor coordination, guest readiness and preliminary estimate." />
   <link rel="canonical" href="https://brkovic.ltd/services/yacht-management.html" />
   <meta name="theme-color" content="#10243a" />
@@ -11,11 +12,11 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cormorant+Garamond:wght@500;600;700&family=Marck+Script&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="../css/variables.css" />
-  <link rel="stylesheet" href="../css/main.css?v=20260516-07" />
-  <link rel="stylesheet" href="../css/responsive.css?v=20260516-07" />
+  <link rel="stylesheet" href="../css/main.css?v=20260520-footer-01" />
+  <link rel="stylesheet" href="../css/responsive.css?v=20260520-footer-01" />
   <link rel="icon" type="image/png" href="../favicons/favicon-clean.png?v=2" />
 </head>
-<body>
+<body class="management-page">
   <div class="site-shell">
     <header class="topbar">
       <a href="../index.html#hero" class="brand brand--image" aria-label="VETUS NAUTA - Brkovic home">
@@ -25,8 +26,10 @@
         </span>
       </a>
       <div class="topbar__actions">
-        <a class="instagram-link" href="#" id="instagramTopLink" target="_blank" rel="noopener" aria-label="Instagram"><img src="../images/icons/instagram.svg" alt="" /></a>
-        <div class="lang-switch" aria-label="Language switcher"><button class="lang-switch__btn is-active" data-lang="en">EN</button><button class="lang-switch__btn" data-lang="ru">RU</button></div>
+        <button class="site-menu-button" type="button" id="siteMenuButton" aria-haspopup="dialog" aria-controls="siteMenuModal">
+          <span class="site-menu-button__icon" aria-hidden="true"><span></span><span></span><span></span></span>
+          <span data-i18n="ym_site_menu_button">Menu</span>
+        </button>
       </div>
     </header>
     <main>
@@ -62,49 +65,6 @@
         </div>
       </section>
 
-      <section id="management-scope" class="section section--paper">
-        <div class="section-heading section-heading--editorial">
-          <p class="section-heading__eyebrow" data-i18n="ym_services_eyebrow">Scope</p>
-          <h2 data-i18n="ym_services_title">Choose the level of support</h2>
-          <p data-i18n="ym_services_intro">The management model is split into a base monthly layer, optional monthly add-ons and one-time actions. This keeps the estimate readable and prevents recurring work from being mixed with event-based tasks.</p>
-        </div>
-        <div class="management-card-grid">
-          <article class="management-card management-card--wide management-card--base-scope">
-            <span>01</span>
-            <h3 data-i18n="ym_model_base_title">Base monthly service</h3>
-            <div class="management-base-scope-grid">
-              <article>
-                <h4 data-i18n="ym_base_scope_watch_title">Yacht control alongside</h4>
-                <p data-i18n="ym_base_scope_watch_text">Mooring lines, moorings, bad-weather control, ventilation, battery charging and washing at least once a month.</p>
-              </article>
-              <article>
-                <h4 data-i18n="ym_base_scope_technical_title">Technical control</h4>
-                <p data-i18n="ym_base_scope_technical_text">Start-up of onboard units and machinery, working-mode checks and battery condition.</p>
-              </article>
-              <article>
-                <h4 data-i18n="ym_base_scope_owner_title">Owner representation</h4>
-                <p data-i18n="ym_base_scope_owner_text">Communication with marina administration and service companies on behalf of the owner.</p>
-              </article>
-            </div>
-            <p class="management-base-scope-note" data-i18n="ym_model_base_text">Price depends on length, yacht type and crew participation.</p>
-          </article>
-          <article class="management-card"><span>02</span><h3 data-i18n="ym_model_monthly_title">Monthly add-ons</h3><p data-i18n="ym_model_monthly_text">Monthly add-on blocks: operational works, finance, administration and sailing control for sailing yachts.</p></article>
-          <article class="management-card"><span>03</span><h3 data-i18n="ym_model_onetime_title">One-time actions</h3><p data-i18n="ym_model_onetime_text">Event-based services for guest arrival, seasonal launch, winterization, emergency visit, yard period, safety review, tender preparation or provisioning.</p></article>
-          <article class="management-card management-card--wide"><span>04</span><h3 data-i18n="ym_model_total_title">Readable estimate</h3><p data-i18n="ym_model_total_text">The calculator separates base month, monthly add-ons, monthly total and one-time services.</p></article>
-        </div>
-      </section>
-
-      <section class="section management-layer-grid">
-        <article class="service-panel">
-          <h2 data-i18n="ym_layers_physical_title">Physical onboard work</h2>
-          <p data-i18n="ym_layers_physical_text">Washing, opening, ventilating, checking lines and fenders, preparing cabins and basic onboard routines. If competent crew is onboard, part of this work may already be covered.</p>
-        </article>
-        <article class="service-panel">
-          <h2 data-i18n="ym_layers_control_title">Management and control</h2>
-          <p data-i18n="ym_layers_control_text">Planning, contractor control, reporting, budget supervision, marina communication, technical schedule and owner representation. Crew can support the boat, but this layer still needs structure.</p>
-        </article>
-      </section>
-
       <section id="management-calculator" class="section management-calculator">
         <div class="section-heading section-heading--editorial">
           <p class="section-heading__eyebrow" data-i18n="ym_calc_eyebrow">Budget tool</p>
@@ -112,8 +72,57 @@
           <p data-i18n="ym_calc_intro">Select yacht type, length, crew participation and services. The calculator shows an approximate market range, not a binding quotation.</p>
         </div>
 
-        <div class="management-calc-layout">
-          <form class="management-calc-form" id="managementCalcForm">
+        <div class="management-calc-layout management-calc-layout--summary">
+          <aside class="management-estimate management-estimate--full" id="managementEstimate" aria-live="polite">
+            <p class="section-heading__eyebrow" data-i18n="ym_result_eyebrow">Preliminary estimate</p>
+            <h3 data-i18n="ym_result_title">Your management range</h3>
+            <div class="management-estimate__prices">
+              <div class="management-estimate__price">
+                <span data-i18n="ym_result_base_monthly">Base month</span>
+                <strong id="managementBaseMonthlyRange">€0 - €0</strong>
+              </div>
+              <div class="management-estimate__price">
+                <span data-i18n="ym_result_addon_monthly">Monthly add-ons</span>
+                <strong id="managementAddOnMonthlyRange">€0 - €0</strong>
+              </div>
+              <div class="management-estimate__price management-estimate__price--total">
+                <span data-i18n="ym_result_monthly">Total monthly management</span>
+                <strong id="managementMonthlyRange">€0 - €0</strong>
+              </div>
+              <div class="management-estimate__price">
+                <span data-i18n="ym_result_onetime">One-time services</span>
+                <strong id="managementOneTimeRange">€0 - €0</strong>
+              </div>
+            </div>
+            <ul class="management-summary" id="managementSummary"></ul>
+            <p class="management-estimate__note" id="managementCrewNote"></p>
+            <div class="management-command-row">
+              <button type="button" class="btn btn--secondary" id="managementConfigOpenBtn" data-i18n="ym_action_config">Adjust calculation</button>
+              <button type="button" class="btn btn--secondary" id="managementDocsOpenBtn" data-i18n="ym_action_documents">Documents</button>
+              <button type="button" class="btn btn--primary" id="managementRequestBtn" data-i18n="ym_action_request">Send request</button>
+            </div>
+          </aside>
+
+          <article class="management-logic-card">
+            <p class="section-heading__eyebrow" data-i18n="ym_logic_eyebrow">Scope logic</p>
+            <h3 data-i18n="ym_logic_title">A clear range first, details on demand</h3>
+            <p data-i18n="ym_logic_text">The visible card keeps only final monthly and one-time figures. Yacht type, length, crew and service choices are adjusted in one modal, so the page stays easy to read.</p>
+            <button type="button" class="management-info-link" id="managementInfoOpenBtn" data-i18n="ym_action_info">How the range works</button>
+          </article>
+        </div>
+
+        <div class="management-modal" id="managementConfigModal" aria-hidden="true">
+          <div class="management-modal__backdrop" data-management-modal-close></div>
+          <div class="management-modal__dialog management-modal__dialog--wide" role="dialog" aria-modal="true" aria-labelledby="managementConfigTitle">
+            <div class="management-modal__header">
+              <div>
+                <p class="section-heading__eyebrow" data-i18n="ym_config_eyebrow">Calculation settings</p>
+                <h3 id="managementConfigTitle" data-i18n="ym_config_title">Adjust calculation</h3>
+                <p data-i18n="ym_config_intro">Change yacht type, length, crew participation and services. The final price card updates instantly.</p>
+              </div>
+              <button type="button" class="management-modal__close" data-management-modal-close aria-label="Close">×</button>
+            </div>
+            <form class="management-calc-form" id="managementCalcForm">
             <fieldset class="management-step">
               <legend><span>01</span><strong data-i18n="ym_calc_type_title">Yacht type</strong></legend>
               <p data-i18n="ym_calc_type_help">Different yachts create different management workloads.</p>
@@ -174,37 +183,91 @@
               <p data-i18n="ym_calc_onetime_help">One-time services are event-based actions. Select a service and set the quantity when it may be needed more than once.</p>
               <div class="management-check-grid management-check-grid--services" id="managementOneTimeServices"></div>
             </fieldset>
-          </form>
+            </form>
+            <div class="management-modal__footer">
+              <button type="button" class="btn btn--primary" data-management-modal-close data-i18n="ym_action_apply">Apply</button>
+            </div>
+          </div>
+        </div>
 
-          <aside class="management-estimate" id="managementEstimate" aria-live="polite">
-            <p class="section-heading__eyebrow" data-i18n="ym_result_eyebrow">Preliminary estimate</p>
-            <h3 data-i18n="ym_result_title">Your management range</h3>
-            <div class="management-estimate__price">
-              <span data-i18n="ym_result_base_monthly">Base month</span>
-              <strong id="managementBaseMonthlyRange">€0 - €0</strong>
+        <div class="management-modal" id="managementDocsModal" aria-hidden="true">
+          <div class="management-modal__backdrop" data-management-modal-close></div>
+          <div class="management-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="managementDocsTitle">
+            <div class="management-modal__header">
+              <div>
+                <p class="section-heading__eyebrow" data-i18n="ym_docs_eyebrow">Documents</p>
+                <h3 id="managementDocsTitle" data-i18n="ym_docs_title">Print, save and proformas</h3>
+                <p data-i18n="ym_docs_intro">Prepare a public estimate or draft proforma documents from the current calculation.</p>
+              </div>
+              <button type="button" class="management-modal__close" data-management-modal-close aria-label="Close">×</button>
             </div>
-            <div class="management-estimate__price">
-              <span data-i18n="ym_result_addon_monthly">Monthly add-ons</span>
-              <strong id="managementAddOnMonthlyRange">€0 - €0</strong>
-            </div>
-            <div class="management-estimate__price management-estimate__price--total">
-              <span data-i18n="ym_result_monthly">Total monthly management</span>
-              <strong id="managementMonthlyRange">€0 - €0</strong>
-            </div>
-            <div class="management-estimate__price">
-              <span data-i18n="ym_result_onetime">One-time services</span>
-              <strong id="managementOneTimeRange">€0 - €0</strong>
-            </div>
-            <ul class="management-summary" id="managementSummary"></ul>
-            <p class="management-estimate__note" id="managementCrewNote"></p>
             <div class="management-actions">
               <button type="button" class="btn btn--secondary" id="managementPrintBtn" data-i18n="ym_action_print">Print estimate</button>
               <button type="button" class="btn btn--secondary" id="managementPdfBtn" data-i18n="ym_action_pdf">Save as PDF</button>
-              <button type="button" class="btn btn--primary" id="managementRequestBtn" data-i18n="ym_action_request">Send request</button>
+              <button type="button" class="btn btn--secondary" id="managementMonthlyProformaBtn" data-i18n="ym_action_monthly_proforma">Monthly proforma</button>
+              <button type="button" class="btn btn--secondary" id="managementOneTimeProformaBtn" data-i18n="ym_action_onetime_proforma">One-time proforma</button>
             </div>
-            <p class="management-disclaimer" data-i18n="ym_disclaimer">This estimate is provided for informational and budgeting purposes only and does not constitute a binding commercial offer. Final pricing, scope of services, liabilities and operational conditions are defined exclusively in the signed agreement after vessel review and scope confirmation.</p>
-          </aside>
+            <p class="management-demo-status" id="managementDemoStatus" aria-live="polite"></p>
+          </div>
         </div>
+
+        <div class="management-modal" id="managementInfoModal" aria-hidden="true">
+          <div class="management-modal__backdrop" data-management-modal-close></div>
+          <div class="management-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="managementInfoTitle">
+            <div class="management-modal__header">
+              <div>
+                <p class="section-heading__eyebrow" data-i18n="ym_info_eyebrow">Explanation</p>
+                <h3 id="managementInfoTitle" data-i18n="ym_info_title">How the range is formed</h3>
+              </div>
+              <button type="button" class="management-modal__close" data-management-modal-close aria-label="Close">×</button>
+            </div>
+            <p data-i18n="ym_info_text">The estimate starts with a monthly base, then adjusts by yacht type, length and crew setup. Monthly add-ons and one-time services are shown separately so recurring work is not mixed with event-based tasks.</p>
+            <p class="management-disclaimer" data-i18n="ym_disclaimer">This estimate is provided for informational and budgeting purposes only and does not constitute a binding commercial offer. Final pricing, scope of services, liabilities and operational conditions are defined exclusively in the signed agreement after vessel review and scope confirmation.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="management-scope" class="section section--paper">
+        <div class="section-heading section-heading--editorial">
+          <p class="section-heading__eyebrow" data-i18n="ym_services_eyebrow">Scope</p>
+          <h2 data-i18n="ym_services_title">Choose the level of support</h2>
+          <p data-i18n="ym_services_intro">The management model is split into a base monthly layer, optional monthly add-ons and one-time actions. This keeps the estimate readable and prevents recurring work from being mixed with event-based tasks.</p>
+        </div>
+        <div class="management-card-grid">
+          <article class="management-card management-card--wide management-card--base-scope">
+            <span>01</span>
+            <h3 data-i18n="ym_model_base_title">Base monthly service</h3>
+            <div class="management-base-scope-grid">
+              <article>
+                <h4 data-i18n="ym_base_scope_watch_title">Yacht control alongside</h4>
+                <p data-i18n="ym_base_scope_watch_text">Mooring lines, moorings, bad-weather control, ventilation, battery charging and washing at least once a month.</p>
+              </article>
+              <article>
+                <h4 data-i18n="ym_base_scope_technical_title">Technical control</h4>
+                <p data-i18n="ym_base_scope_technical_text">Start-up of onboard units and machinery, working-mode checks and battery condition.</p>
+              </article>
+              <article>
+                <h4 data-i18n="ym_base_scope_owner_title">Owner representation</h4>
+                <p data-i18n="ym_base_scope_owner_text">Communication with marina administration and service companies on behalf of the owner.</p>
+              </article>
+            </div>
+            <p class="management-base-scope-note" data-i18n="ym_model_base_text">Price depends on length, yacht type and crew participation.</p>
+          </article>
+          <article class="management-card"><span>02</span><h3 data-i18n="ym_model_monthly_title">Monthly add-ons</h3><p data-i18n="ym_model_monthly_text">Monthly add-on blocks: operational works, finance, administration and sailing control for sailing yachts.</p></article>
+          <article class="management-card"><span>03</span><h3 data-i18n="ym_model_onetime_title">One-time actions</h3><p data-i18n="ym_model_onetime_text">Event-based services for guest arrival, seasonal launch, winterization, emergency visit, yard period, safety review, tender preparation or provisioning.</p></article>
+          <article class="management-card management-card--wide"><span>04</span><h3 data-i18n="ym_model_total_title">Readable estimate</h3><p data-i18n="ym_model_total_text">The calculator separates base month, monthly add-ons, monthly total and one-time services.</p></article>
+        </div>
+      </section>
+
+      <section class="section management-layer-grid">
+        <article class="service-panel">
+          <h2 data-i18n="ym_layers_physical_title">Physical onboard work</h2>
+          <p data-i18n="ym_layers_physical_text">Washing, opening, ventilating, checking lines and fenders, preparing cabins and basic onboard routines. If competent crew is onboard, part of this work may already be covered.</p>
+        </article>
+        <article class="service-panel">
+          <h2 data-i18n="ym_layers_control_title">Management and control</h2>
+          <p data-i18n="ym_layers_control_text">Planning, contractor control, reporting, budget supervision, marina communication, technical schedule and owner representation. Crew can support the boat, but this layer still needs structure.</p>
+        </article>
       </section>
 
       <section class="section management-faq">
@@ -230,6 +293,12 @@
         <form id="contactForm" class="contact-form" action="../forms/send.php" method="POST" novalidate>
           <input type="hidden" name="lang" id="contactLang" value="en" />
           <input type="hidden" name="request_type" id="requestType" value="general" />
+          <input type="hidden" name="form_ts" id="contactFormTs" value="" />
+          <input type="hidden" name="source_page" id="contactSourcePage" value="" />
+          <input type="hidden" name="form_token" id="contactFormToken" value="" />
+          <div class="form-trap" aria-hidden="true">
+            <label>Website <input type="text" name="company_url" tabindex="-1" autocomplete="off" /></label>
+          </div>
           <div class="field-grid">
             <label><span data-i18n="form_name">Name</span><input type="text" name="name" required /></label>
             <label><span data-i18n="form_email">Email</span><input type="email" name="email" required /></label>
@@ -248,16 +317,83 @@
           <p class="form-fallback" id="formFallback" hidden><a id="formFallbackLink" href="#" data-i18n="form_fallback_link">Open your email app instead</a></p>
         </form>
       </section>
+
+      <section class="section management-disclaimer-section" aria-label="Yacht management disclaimer">
+        <p class="management-disclaimer" data-i18n="ym_disclaimer">This estimate is provided for informational and budgeting purposes only and does not constitute a binding commercial offer. Final pricing, scope of services, liabilities and operational conditions are defined exclusively in the signed agreement after vessel review and scope confirmation.</p>
+      </section>
     </main>
-    <nav class="mobile-dock" aria-label="Quick actions"><a href="../index.html#hero"><img src="../images/icons/home.svg" alt="" /><span data-i18n="dock_home">Home</span></a><a href="../index.html#services"><img src="../images/icons/grid.svg" alt="" /><span data-i18n="dock_services">Services</span></a><a id="dockWhatsapp" href="#" target="_blank" rel="noopener"><img src="../images/icons/whatsapp.svg" alt="" /><span>WhatsApp</span></a><a id="dockTelegram" href="#" target="_blank" rel="noopener"><img src="../images/icons/telegram.svg" alt="" /><span>Telegram</span></a><a id="dockCall" href="tel:+00000000000"><img src="../images/icons/phone.svg" alt="" /><span data-i18n="dock_call">Call</span></a></nav>
-    <footer class="footer">
-      <div><strong>VETUS NAUTA</strong><p>Brkovic</p><p data-i18n="footer_text">Practical experience in yachting and sea travel</p></div>
-      <div class="footer-admin-links">
-        <a href="../admin-mnr.html" target="_blank" rel="nofollow noopener noreferrer">admin-mnr</a>
+    <nav class="mobile-dock management-dock" aria-label="Quick actions">
+      <button type="button" id="managementDockMenuButton"><img src="../images/icons/grid.svg" alt="" /><span data-i18n="ym_dock_menu">Menu</span></button>
+      <a href="#management-calculator"><img src="../images/icons/grid.svg" alt="" /><span data-i18n="ym_dock_calc">Calc</span></a>
+      <a href="#managementEstimate"><img src="../images/icons/chat.svg" alt="" /><span data-i18n="ym_dock_result">Result</span></a>
+      <a href="#contact"><img src="../images/icons/whatsapp.svg" alt="" /><span data-i18n="ym_dock_request">Request</span></a>
+      <a id="dockCall" href="tel:+00000000000"><img src="../images/icons/phone.svg" alt="" /><span data-i18n="dock_call">Call</span></a>
+    </nav>
+    <footer class="footer footer--site">
+      <div class="footer__brandline">
+        <strong>VETUS NAUTA</strong>
+        <p>Brkovic</p>
+        <p data-i18n="footer_text">Practical experience in yachting and sea travel</p>
+        <p class="footer__copy">© <span id="currentYear"></span> VETUS NAUTA — Brkovic</p>
+        <div class="footer-admin-links">
+          <a href="../admin-mnr.html" target="_blank" rel="nofollow noopener noreferrer">admin-mnr</a>
+        </div>
       </div>
-      <p class="footer__copy">© <span id="currentYear"></span> VETUS NAUTA — Brkovic</p>
+      <nav class="footer__map-card" aria-label="Services">
+        <h2 data-i18n="footer_services_title">Services</h2>
+        <div class="footer__links">
+          <a href="../services/yacht-management.html" data-i18n="service_1_title">Yacht Management</a>
+          <a href="../services/iyt-training.html" data-i18n="footer_link_iyt">IYT Training Center</a>
+          <a href="../services/skipper-service.html" data-i18n="service_3_title">Skipper Service</a>
+          <a href="../services/yacht-acceptance-delivery.html" data-i18n="service_6_title">Yacht Acceptance & Delivery</a>
+          <a href="../services/yacht-registration.html" data-i18n="service_7_title">Yacht Registration</a>
+        </div>
+      </nav>
+      <nav class="footer__map-card" aria-label="Leisure and practical tools">
+        <h2 data-i18n="footer_leisure_tools_title">Leisure & tools</h2>
+        <div class="footer__links">
+          <a href="../services/sailing-tours.html" data-i18n="service_4_title">Sailing Tours</a>
+          <a href="../journal.html" data-i18n="footer_link_journal">Deck Log</a>
+          <a href="../navdesk.html" data-i18n="footer_link_navdesk">Nav Desk</a>
+          <a href="../index.html#contact" data-i18n="footer_link_contact">Contact</a>
+        </div>
+      </nav>
     </footer>
   </div>
-  <script src="../js/config.js"></script><script src="../js/language.js?v=20260515-02"></script><script src="../js/main.js?v=20260515-02"></script><script src="../js/management.js?v=20260519-01"></script><script src="../js/form.js"></script>
+  <div class="management-modal site-menu-modal" id="siteMenuModal" aria-hidden="true">
+    <div class="management-modal__backdrop" data-management-modal-close></div>
+    <div class="management-modal__dialog management-modal__dialog--compact" role="dialog" aria-modal="true" aria-labelledby="siteMenuTitle">
+      <div class="management-modal__header">
+        <div>
+          <p class="section-heading__eyebrow" data-i18n="ym_site_menu_eyebrow">Page controls</p>
+          <h3 id="siteMenuTitle" data-i18n="ym_site_menu_title">Menu and settings</h3>
+        </div>
+        <button type="button" class="management-modal__close" data-management-modal-close aria-label="Close">×</button>
+      </div>
+      <nav class="management-modal-nav" aria-label="Yacht management sections">
+        <a href="#management-calculator" data-management-modal-close data-i18n="ym_nav_calc">Calculator</a>
+        <a href="#management-scope" data-management-modal-close data-i18n="ym_nav_scope">Services</a>
+        <a href="#contact" data-management-modal-close data-i18n="ym_nav_contact">Request</a>
+      </nav>
+      <div class="site-menu-settings">
+        <a class="instagram-link" href="#" id="instagramTopLink" target="_blank" rel="noopener" aria-label="Instagram"><img src="../images/icons/instagram.svg" alt="" /></a>
+        <div class="lang-switch" aria-label="Language switcher"><button class="lang-switch__btn is-active" data-lang="en">EN</button><button class="lang-switch__btn" data-lang="ru">RU</button></div>
+      </div>
+    </div>
+  </div>
+  <div class="management-modal management-disclaimer-modal" id="managementDisclaimerModal" aria-hidden="true">
+    <div class="management-modal__backdrop"></div>
+    <div class="management-modal__dialog management-modal__dialog--compact" role="dialog" aria-modal="true" aria-labelledby="managementDisclaimerTitle">
+      <div class="management-modal__header">
+        <div>
+          <p class="section-heading__eyebrow" data-i18n="ym_disclaimer_modal_eyebrow">Terms of use</p>
+          <h3 id="managementDisclaimerTitle" data-i18n="ym_disclaimer_modal_title">Preliminary calculation</h3>
+        </div>
+      </div>
+      <p class="management-disclaimer-modal__text" data-i18n="ym_disclaimer_modal_text">This yacht management calculator provides reference information and preliminary budgeting only. It is not a binding commercial offer. Final price, scope, liability and operating terms are agreed only after vessel review and signed agreement.</p>
+      <button type="button" class="btn btn--primary" id="managementDisclaimerAccept" data-i18n="ym_disclaimer_modal_accept">I accept</button>
+    </div>
+  </div>
+  <script src="../js/config.js"></script><script src="../js/language.js?v=20260519-01"></script><script src="../js/main.js?v=20260519-01"></script><script src="../js/management.js?v=20260519-08"></script><script src="../js/form.js?v=20260520-anti-spam-02"></script>
 </body>
 </html>

@@ -4,6 +4,10 @@
 # Local server/runtime files
 /forms/config.php
 /forms/smtp-error.log
+/forms/form-security.log
+/forms/form-rate-limit.json
+/forms/form-rate-limit.lock
+/data/management-projects.json
 /error_log
 /.ftpquota
 /.listing
@@ -21,4 +25,3 @@
 /public_html_nested/
 /revoyacht/
 /yacht-flex-demo/
-

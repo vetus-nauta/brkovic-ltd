@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="css/variables.css" />
   <link rel="stylesheet" href="css/main.css" />
   <link rel="stylesheet" href="css/responsive.css" />
-  <link rel="stylesheet" href="css/admin-management.css?v=20260519-04" />
+  <link rel="stylesheet" href="css/admin-management.css?v=20260519-06" />
 </head>
 <body>
   <div class="site-shell">
@@ -156,6 +156,19 @@
                     <label><span>Дата профактуры</span><input type="date" id="proformaDate" /></label>
                   </div>
                   <label><span>Клиент</span><input type="text" id="contractClient" placeholder="Имя клиента или компания" /></label>
+                  <div class="contract-builder-grid">
+                    <label><span>Компания / комитент</span><input type="text" id="contractClientCompany" placeholder="Юрлицо или представитель владельца" /></label>
+                    <label><span>Email комитента</span><input type="email" id="contractClientEmail" placeholder="client@example.com" /></label>
+                  </div>
+                  <div class="contract-builder-grid">
+                    <label><span>Телефон / мессенджер</span><input type="text" id="contractClientPhone" placeholder="+382..." /></label>
+                    <label><span>Номер проекта</span><input type="text" id="projectNumber" placeholder="VN-YM-20260519-001" /></label>
+                  </div>
+                  <div class="contract-builder-grid">
+                    <label><span>Номер договора</span><input type="text" id="contractNumber" placeholder="VN-AGR-20260519-001" /></label>
+                    <label><span>Профактура месяца</span><input type="text" id="monthlyProformaNumber" placeholder="VN-PF-M-20260519-001" /></label>
+                  </div>
+                  <label><span>Профактура разовых услуг</span><input type="text" id="oneTimeProformaNumber" placeholder="VN-PF-O-20260519-001" /></label>
                   <label><span>Яхта</span><input type="text" id="contractYacht" placeholder="Название, тип и длина яхты" /></label>
                   <div class="contract-builder-grid">
                     <label><span>Тип для расчета</span><select id="contractTypeSelect"></select></label>
@@ -203,6 +216,38 @@
                     <button class="btn btn--secondary" id="printContractBtn" type="button">Печать / PDF</button>
                   </div>
                 </form>
+
+                <section class="project-workspace" id="projectWorkspace">
+                  <div class="project-workspace__head">
+                    <div>
+                      <h4>Проекты, комитенты и документы</h4>
+                      <p id="projectWorkspaceSummary">Сохраните черновик проекта, затем выпускайте месячную профактуру, разовую профактуру и договор с общими номерами.</p>
+                    </div>
+                    <div class="management-admin-actions">
+                      <button class="btn btn--secondary" id="reloadProjectsBtn" type="button">Обновить проекты</button>
+                      <button class="btn btn--primary" id="saveProjectBtn" type="button">Сохранить проект</button>
+                      <button class="btn btn--secondary" id="saveCounterpartyBtn" type="button">Сохранить комитента</button>
+                      <button class="btn btn--secondary" id="saveCommitmentBtn" type="button">Зафиксировать обязательства</button>
+                      <button class="btn btn--secondary" id="issueMonthlyProformaBtn" type="button">Профактура месяца</button>
+                      <button class="btn btn--secondary" id="issueOneTimeProformaBtn" type="button">Профактура разовых</button>
+                      <button class="btn btn--secondary" id="prepareContractBtn" type="button">Подготовить договор</button>
+                    </div>
+                  </div>
+                  <div class="project-workspace-grid">
+                    <article>
+                      <h5>Сохраненные проекты</h5>
+                      <div id="managementProjectList" class="project-list"></div>
+                    </article>
+                    <article>
+                      <h5>Комитенты</h5>
+                      <div id="managementCounterpartyList" class="project-list"></div>
+                    </article>
+                    <article>
+                      <h5>Документы</h5>
+                      <div id="managementDocumentList" class="document-list"></div>
+                    </article>
+                  </div>
+                </section>
 
                 <div class="contract-defaults-block">
                   <h4>Шаблонные условия</h4>
@@ -322,6 +367,6 @@
     </main>
   </div>
 
-  <script src="js/admin-management.js?v=20260519-04"></script>
+  <script src="js/admin-management.js?v=20260519-06"></script>
 </body>
 </html>
