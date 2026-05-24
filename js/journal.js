@@ -11,6 +11,7 @@
     || /^172\.(1[6-9]|2\d|3[0-1])\./.test(hostname);
   const API_ORIGIN = isLocalPreviewHost ? LIVE_API_ORIGIN : '';
   const API_BASE = `${API_ORIGIN}/api/public/journal`;
+  const LOCAL_JOURNAL_SNAPSHOT = '/data/journal-public.json';
   const STORAGE_TRANSLATIONS = 'brkovic_journal_translations_v1';
 
   let currentFilter = 'all';
@@ -86,21 +87,99 @@ let lightboxJustClosedAt = 0;
     return `${API_ORIGIN}${path}`;
   }
 
+  function entryTime(entry) {
+    const value = new Date(entry?.date || entry?.publishedAt || entry?.createdAt || 0).getTime();
+    return Number.isFinite(value) ? value : 0;
+  }
+
+  function getGroupedEntryCounts(entries) {
+    const counts = new Map();
+    (entries || []).forEach((entry) => {
+      if (!entry?.groupId || !entry.group) return;
+      counts.set(entry.groupId, (counts.get(entry.groupId) || 0) + 1);
+    });
+    return counts;
+  }
+
+  function getTimelineKey(entry, groupCounts = getGroupedEntryCounts(backendEntries)) {
+    if (entry?.groupId && entry.group && (groupCounts.get(entry.groupId) || 0) > 1) {
+      return `group:${entry.groupId}`;
+    }
+    return `post:${entry?.slug || entry?.id || ''}`;
+  }
+
+  function buildJournalTimeline(entries) {
+    const groupCounts = getGroupedEntryCounts(entries);
+    const timeline = new Map();
+
+    (entries || []).forEach((entry) => {
+      if (!entry?.slug || !entry.date) return;
+      const key = getTimelineKey(entry, groupCounts);
+      const at = entryTime(entry);
+      const tie = String(entry.slug || '');
+      const item = timeline.get(key) || {
+        key,
+        date: at,
+        tie,
+        slugs: []
+      };
+
+      item.date = Math.min(item.date, at);
+      item.tie = item.tie.localeCompare(tie) <= 0 ? item.tie : tie;
+      item.slugs.push(entry.slug);
+      timeline.set(key, item);
+    });
+
+    return Array.from(timeline.values()).sort((a, b) => {
+      if (a.date !== b.date) return a.date - b.date;
+      return a.tie.localeCompare(b.tie);
+    });
+  }
+
+  function sortEntriesForFeed(entries) {
+    const groupCounts = getGroupedEntryCounts(entries);
+    const order = new Map(buildJournalTimeline(entries).map((item, index) => [item.key, index]));
+
+    return (entries || []).slice().sort((a, b) => {
+      const keyA = getTimelineKey(a, groupCounts);
+      const keyB = getTimelineKey(b, groupCounts);
+      const topOrder = (order.get(keyA) ?? 0) - (order.get(keyB) ?? 0);
+      if (topOrder !== 0) return topOrder;
+
+      if (keyA === keyB && keyA.startsWith('group:')) {
+        const groupOrder = Number(a.groupOrder || 0) - Number(b.groupOrder || 0);
+        if (groupOrder !== 0) return groupOrder;
+      }
+
+      const at = entryTime(a);
+      const bt = entryTime(b);
+      if (at !== bt) return at - bt;
+      return String(a.slug || '').localeCompare(String(b.slug || ''));
+    });
+  }
+
   function getPostNumberBySlug(posts, slug) {
     if (!Array.isArray(posts) || !slug) return null;
 
-    const published = posts
-      .filter((item) => item && item.slug && item.date)
-      .slice()
-      .sort((a, b) => {
-        const at = new Date(a.date).getTime();
-        const bt = new Date(b.date).getTime();
-        if (at !== bt) return at - bt;
-        return String(a.slug).localeCompare(String(b.slug));
-      });
-
-    const index = published.findIndex((item) => item.slug === slug);
+    const timeline = buildJournalTimeline(posts);
+    const index = timeline.findIndex((item) => item.slugs.includes(slug));
     return index >= 0 ? index + 1 : null;
+  }
+
+  async function fetchJson(url, options = {}) {
+    const res = await fetch(url, options);
+    if (!res.ok) throw new Error(`Failed to fetch ${url}`);
+    return res.json();
+  }
+
+  async function fetchJournalIndexPayload() {
+    if (isLocalPreviewHost) {
+      try {
+        return await fetchJson(LOCAL_JOURNAL_SNAPSHOT, { cache: 'no-store' });
+      } catch {}
+    }
+
+    return fetchJson(API_BASE, { cache: 'no-store' });
   }
 
   async function translateFree(text, targetLang) {
@@ -205,8 +284,7 @@ let lightboxJustClosedAt = 0;
     }
 
     try {
-      const res = await fetch(API_BASE, { cache: 'no-store' });
-      const data = await res.json();
+      const data = await fetchJournalIndexPayload();
       backendEntries = normalizeApiPayload(data);
       await hydrateLikeStates();
     } catch {
@@ -727,9 +805,10 @@ let lightboxJustClosedAt = 0;
       return true;
     });
 
-    const entries = isSingleMode && currentSlug
+    const entriesRaw = isSingleMode && currentSlug
       ? filteredEntries.filter((entry) => entry.slug === currentSlug)
       : filteredEntries;
+    const entries = isSingleMode ? entriesRaw : sortEntriesForFeed(entriesRaw);
 
     if (!entries.length) {
       feed.innerHTML = `<div class="journal-empty">${escapeHtml(t('journal_empty', 'No entries yet.'))}</div>`;
@@ -853,20 +932,29 @@ let lightboxJustClosedAt = 0;
       await fetchBackendEntries();
       if (sequence !== bootSequence) return;
 
-      const res = await fetch(`${API_BASE}/${encodeURIComponent(slug)}`, {
-        cache: 'no-store',
-        credentials: API_ORIGIN ? 'include' : 'same-origin',
-      });
-      const data = await res.json();
-      if (sequence !== bootSequence) return;
-      const item = data?.data?.data || data?.data;
+      let detailedEntry = isLocalPreviewHost
+        ? backendEntries.find((entry) => entry.slug === slug)
+        : null;
 
-      if (!item || !item.id) {
+      if (!detailedEntry) {
+        const res = await fetch(`${API_BASE}/${encodeURIComponent(slug)}`, {
+          cache: 'no-store',
+          credentials: API_ORIGIN ? 'include' : 'same-origin',
+        });
+        const data = await res.json();
+        if (sequence !== bootSequence) return;
+        const item = data?.data?.data || data?.data;
+
+        if (item?.id) {
+          detailedEntry = normalizeApiPayload({ data: { data: [item] } })[0];
+        }
+      }
+
+      if (!detailedEntry?.id) {
         feed.innerHTML = `<div class="journal-empty">${escapeHtml(t('journal_empty', 'Entry not found.'))}</div>`;
         return;
       }
 
-      const detailedEntry = normalizeApiPayload({ data: { data: [item] } })[0];
       const existingIndex = backendEntries.findIndex((entry) => entry.slug === slug);
 
       if (existingIndex >= 0) {

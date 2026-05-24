@@ -3212,3 +3212,95 @@ body.journal-page {
   background: rgba(255,255,255,.98);
   box-shadow: 0 20px 46px rgba(16,36,58,.16);
 }
+
+/* === Journal grouped entries tablet containment 20260524 === */
+@media (min-width: 701px) and (max-width: 920px) {
+  .journal-page .site-shell--journal,
+  .journal-page .journal-card--feed,
+  .journal-page .journal-feed,
+  .journal-page .journal-group-card,
+  .journal-page .journal-group-card__viewport,
+  .journal-page .journal-group-card__track,
+  .journal-page .journal-group-card .journal-post--group-slide {
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .journal-page .journal-card--feed,
+  .journal-page .journal-group-card,
+  .journal-page .journal-group-card__viewport {
+    overflow: hidden;
+  }
+
+  .journal-page .journal-card--feed {
+    padding: clamp(18px, 3vw, 28px);
+  }
+
+  .journal-page .journal-group-card {
+    width: 100%;
+    padding: 14px;
+    border-radius: 18px;
+  }
+
+  .journal-page .journal-group-card__head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    padding: 0;
+  }
+
+  .journal-page .journal-group-card__title,
+  .journal-page .journal-post__title,
+  .journal-page .journal-post__text,
+  .journal-page .journal-post__rights {
+    overflow-wrap: anywhere;
+  }
+
+  .journal-page .journal-group-card__track {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+  }
+
+  .journal-page .journal-group-card .journal-post--group-slide {
+    flex: 0 0 100%;
+    width: 100%;
+    min-width: 100%;
+    padding: clamp(18px, 3vw, 24px);
+    overflow: hidden;
+  }
+
+  .journal-page .journal-post__meta,
+  .journal-page .journal-post__actions {
+    flex-wrap: wrap;
+  }
+
+  .journal-page .journal-post__media {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .journal-page .journal-post__media-item,
+  .journal-page .journal-post__media-item img,
+  .journal-page .journal-post__media-item video {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .journal-page .journal-comment-form {
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .journal-page .journal-comment-form input,
+  .journal-page .journal-comment-form button {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+}
