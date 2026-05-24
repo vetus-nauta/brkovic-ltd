@@ -1059,6 +1059,28 @@
   justify-content: flex-end !important;
 }
 
+.service-page--sailing-tours .topbar {
+  justify-content: space-between !important;
+}
+
+.service-page--sailing-tours .brand.brand--image,
+.service-page--sailing-tours .brand {
+  flex: 0 1 auto !important;
+  width: auto !important;
+  margin: 0 auto 0 0 !important;
+  justify-content: flex-start !important;
+  text-align: left !important;
+}
+
+.service-page--sailing-tours .brand__picture--home {
+  justify-content: flex-start !important;
+}
+
+.service-page--sailing-tours .brand__logo-image {
+  margin: 0 !important;
+  transform: none !important;
+}
+
 .service-page--sailing-tours .service-hero--tours {
   grid-template-columns: minmax(0, .94fr) minmax(500px, 1.06fr);
 }
@@ -1167,8 +1189,45 @@
     gap: 10px !important;
   }
 
+  .service-page--sailing-tours .topbar {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 10px 12px !important;
+  }
+
+  .service-page--sailing-tours .brand.brand--image,
+  .service-page--sailing-tours .brand {
+    flex: 0 1 auto !important;
+    width: auto !important;
+    min-width: 0 !important;
+    margin: 0 auto 0 0 !important;
+  }
+
   .service-page .brand__logo-image {
     max-width: min(86vw, 360px) !important;
+  }
+
+  .service-page--sailing-tours .brand__logo-image {
+    max-width: min(58vw, 230px) !important;
+    margin: 0 !important;
+    transform: none !important;
+  }
+
+  .service-page--sailing-tours .brand__picture--home .brand__logo-image--desktop {
+    display: block !important;
+    height: 54px !important;
+  }
+
+  .service-page--sailing-tours .brand__picture--home .brand__logo-image--mobile {
+    display: none !important;
+  }
+
+  .service-page--sailing-tours .topbar__actions {
+    width: auto !important;
+    margin: 0 0 0 auto !important;
+    justify-content: flex-end !important;
   }
 
   .service-page--sailing-tours .service-hero__media--tours img {
