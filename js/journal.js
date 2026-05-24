@@ -484,6 +484,27 @@ let lightboxJustClosedAt = 0;
       : (group.descriptionEn || group.descriptionRu || '');
   }
 
+  function groupNavMarkup(total, position) {
+    const isRu = getLang() === 'ru';
+    const progress = isRu ? `Часть 1 из ${total}` : `Part 1 of ${total}`;
+    const prev = isRu ? 'Начало записи' : 'Start of entry';
+    const next = isRu ? 'Продолжить запись: часть 2' : 'Continue entry: part 2';
+
+    return `
+      <div class="journal-group-card__nav journal-group-card__nav--${position}" data-group-nav>
+        <button class="journal-group-card__button journal-group-card__button--prev" type="button" data-group-step="-1" aria-label="${escapeHtml(prev)}" disabled>
+          <span class="journal-group-card__button-icon" aria-hidden="true">\u2039</span>
+          <span class="journal-group-card__button-text" data-group-prev-label>${escapeHtml(prev)}</span>
+        </button>
+        <div class="journal-group-card__progress" data-group-progress>${escapeHtml(progress)}</div>
+        <button class="journal-group-card__button journal-group-card__button--next" type="button" data-group-step="1" aria-label="${escapeHtml(next)}">
+          <span class="journal-group-card__button-text" data-group-next-label>${escapeHtml(next)}</span>
+          <span class="journal-group-card__button-icon" aria-hidden="true">\u203a</span>
+        </button>
+      </div>
+    `;
+  }
+
   function wrapJournalGroups(entries) {
     const feed = document.getElementById('journalFeed');
     if (!feed || isSingleMode) return;
@@ -526,22 +547,12 @@ let lightboxJustClosedAt = 0;
             <h3 class="journal-group-card__title">${escapeHtml(title)}</h3>
             ${description ? `<p class="journal-group-card__description">${escapeHtml(description)}</p>` : ''}
           </div>
-          <div class="journal-group-card__tools">
-            <button class="journal-group-card__button journal-group-card__button--top" type="button" data-group-step="-1" aria-label="Previous">\u2039</button>
-            <div class="journal-group-card__count">${escapeHtml(String(sortedCards.length))}</div>
-            <button class="journal-group-card__button journal-group-card__button--top" type="button" data-group-step="1" aria-label="Next">\u203a</button>
-          </div>
         </div>
+        ${groupNavMarkup(sortedCards.length, 'top')}
         <div class="journal-group-card__viewport">
           <div class="journal-group-card__track"></div>
         </div>
-        <div class="journal-group-card__nav">
-          <button class="journal-group-card__button" type="button" data-group-step="-1" aria-label="Previous">\u2039</button>
-          <div class="journal-group-card__dots">
-            ${sortedCards.map((_, index) => `<button class="journal-group-card__dot ${index === 0 ? 'is-active' : ''}" type="button" data-group-index="${index}" aria-label="${index + 1}"></button>`).join('')}
-          </div>
-          <button class="journal-group-card__button" type="button" data-group-step="1" aria-label="Next">\u203a</button>
-        </div>
+        ${groupNavMarkup(sortedCards.length, 'bottom')}
       `;
 
       const track = wrapper.querySelector('.journal-group-card__track');
@@ -562,6 +573,43 @@ let lightboxJustClosedAt = 0;
       const dots = Array.from(card.querySelectorAll('.journal-group-card__dot'));
       if (!track || !slides.length) return;
       const nextButtons = Array.from(card.querySelectorAll('[data-group-step="1"]'));
+      const prevButtons = Array.from(card.querySelectorAll('[data-group-step="-1"]'));
+      const progressNodes = Array.from(card.querySelectorAll('[data-group-progress]'));
+      const prevLabels = Array.from(card.querySelectorAll('[data-group-prev-label]'));
+      const nextLabels = Array.from(card.querySelectorAll('[data-group-next-label]'));
+
+      const labelForState = (index) => {
+        const total = slides.length;
+        const isRu = getLang() === 'ru';
+        return {
+          progress: isRu ? `Часть ${index + 1} из ${total}` : `Part ${index + 1} of ${total}`,
+          prev: index > 0
+            ? (isRu ? `К части ${index}` : `Back to part ${index}`)
+            : (isRu ? 'Начало записи' : 'Start of entry'),
+          next: index < total - 1
+            ? (isRu ? `Продолжить запись: часть ${index + 2}` : `Continue entry: part ${index + 2}`)
+            : (isRu ? 'Продолжение прочитано' : 'Continuation read')
+        };
+      };
+
+      const updateControls = (index) => {
+        const next = Math.max(0, Math.min(slides.length - 1, index));
+        const labels = labelForState(next);
+
+        progressNodes.forEach((node) => { node.textContent = labels.progress; });
+        prevLabels.forEach((node) => { node.textContent = labels.prev; });
+        nextLabels.forEach((node) => { node.textContent = labels.next; });
+
+        prevButtons.forEach((button) => {
+          button.disabled = next <= 0;
+          button.setAttribute('aria-label', labels.prev);
+        });
+
+        nextButtons.forEach((button) => {
+          button.disabled = next >= slides.length - 1;
+          button.setAttribute('aria-label', labels.next);
+        });
+      };
 
       const currentIndex = () => Math.round(track.scrollLeft / Math.max(1, track.clientWidth));
 
@@ -575,6 +623,7 @@ let lightboxJustClosedAt = 0;
 
       const setActive = (index) => {
         dots.forEach((dot, dotIndex) => dot.classList.toggle('is-active', dotIndex === index));
+        updateControls(index);
         updateHeight(index);
       };
 
