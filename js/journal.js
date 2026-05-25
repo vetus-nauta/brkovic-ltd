@@ -1154,6 +1154,29 @@ let lightboxJustClosedAt = 0;
     `;
   }
 
+  function collectionCoverArtMarkup(collection, title, excerpt, lang) {
+    const image = (collection.media || []).find((item) => item.type === 'image' && item.src);
+    const author = collection.authorLine || 'Vetus Nauta - Brkovic';
+    const kicker = lang === 'ru' ? 'Многостраничная запись' : 'Multi-page entry';
+    const date = collection.date ? formatDate(collection.date) : '';
+
+    return `
+      <div class="journal-collection-cover-art${image ? '' : ' journal-collection-cover-art--empty'}">
+        ${image ? `<img class="journal-collection-cover-art__image" src="${escapeHtml(image.src)}" alt="${escapeHtml(mediaAlt(image) || title)}" loading="eager" />` : ''}
+        <div class="journal-collection-cover-art__shade"></div>
+        <div class="journal-collection-cover-art__content">
+          <p class="journal-collection-cover-art__kicker">${escapeHtml(kicker)}</p>
+          <h3 class="journal-collection-cover-art__title">${escapeHtml(title)}</h3>
+          ${excerpt ? `<p class="journal-collection-cover-art__excerpt">${escapeHtml(excerpt)}</p>` : ''}
+          <div class="journal-collection-cover-art__meta">
+            <span>${escapeHtml(author)}</span>
+            ${date ? `<span>${escapeHtml(date)}</span>` : ''}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   function renderCollectionDetail(feed, collection, lang) {
     const title = entryTitle(collection, lang);
     const excerpt = entryExcerpt(collection, lang);
@@ -1172,6 +1195,7 @@ let lightboxJustClosedAt = 0;
     const firstProgress = lang === 'ru'
       ? `Обложка · 1 из ${totalBookPages}`
       : `Cover · 1 of ${totalBookPages}`;
+    const coverArt = collectionCoverArtMarkup(collection, title, excerpt, lang);
 
     const article = document.createElement('article');
     article.className = 'journal-post journal-post--single journal-collection-single';
@@ -1193,24 +1217,17 @@ let lightboxJustClosedAt = 0;
         <div class="journal-collection-book__viewport">
           <div class="journal-collection-book__track" data-collection-track>
             <section class="journal-collection-page journal-collection-page--cover" data-collection-page data-book-label="${escapeHtml(firstProgress)}">
-              <div class="journal-post__meta">
-                <div>
-                  <p class="journal-post__eyebrow">${escapeHtml(lang === 'ru' ? 'Многостраничная запись' : 'Multi-page entry')}</p>
-                  <h3 class="journal-post__title">${escapeHtml(title)}</h3>
-                  <p class="journal-collection-cover__author">${escapeHtml(collection.authorLine || 'Vetus Nauta - Brkovic')}</p>
+              ${coverArt}
+              <div class="journal-collection-cover-index">
+                <div class="journal-collection-single__meta">
+                  <span>${escapeHtml(lang === 'ru' ? `Глав: ${collection.pagesCount || collection.pages?.length || 0}` : `Chapters: ${collection.pagesCount || collection.pages?.length || 0}`)}</span>
                 </div>
-                <div class="journal-post__date">${escapeHtml(formatDate(collection.date))}</div>
+                ${pageList ? `
+                  <ol class="journal-collection-cover__pages journal-collection-cover__pages--book">
+                    ${pageList}
+                  </ol>
+                ` : ''}
               </div>
-              ${mediaMarkup(collection.media, collection.slug)}
-              ${excerpt ? `<p class="journal-collection-cover__excerpt">${escapeHtml(excerpt)}</p>` : ''}
-              <div class="journal-collection-single__meta">
-                <span>${escapeHtml(lang === 'ru' ? `Глав: ${collection.pagesCount || collection.pages?.length || 0}` : `Chapters: ${collection.pagesCount || collection.pages?.length || 0}`)}</span>
-              </div>
-              ${pageList ? `
-                <ol class="journal-collection-cover__pages journal-collection-cover__pages--book">
-                  ${pageList}
-                </ol>
-              ` : ''}
             </section>
             ${pagesMarkup || `<section class="journal-collection-page" data-collection-page><div class="journal-empty">${escapeHtml(t('journal_empty', 'No entries yet.'))}</div></section>`}
           </div>
@@ -1606,6 +1623,7 @@ let lightboxJustClosedAt = 0;
 
   function bindCollectionBooks() {
     document.querySelectorAll('[data-collection-book]').forEach((book) => {
+      const viewport = book.querySelector('.journal-collection-book__viewport');
       const track = book.querySelector('[data-collection-track]');
       const pages = Array.from(book.querySelectorAll('[data-collection-page]'));
       const progress = book.querySelector('[data-collection-progress]');
@@ -1622,7 +1640,7 @@ let lightboxJustClosedAt = 0;
         const page = pages[Math.max(0, Math.min(pages.length - 1, index))];
         if (!page) return;
         const height = Math.ceil(page.getBoundingClientRect().height);
-        if (height > 0) track.style.minHeight = `${height}px`;
+        if (height > 0 && viewport) viewport.style.height = `${height}px`;
       };
 
       const updateState = (index = currentIndex()) => {
