@@ -88,7 +88,8 @@ Backend судового журнала не находится внутри fro
 - локальный read-only snapshot backend-а лежит в `/home/alexey/.local/share/brkovic-ltd/ftp-snapshot/journal-backend`;
 - локальная working copy backend-а лежит в `/home/alexey/.local/share/brkovic-ltd/work/journal-backend`;
 - backend: NestJS + Prisma + PostgreSQL;
-- production Prisma schema пока post-centric и RU/EN;
-- в локальной working copy подготовлены, но не выложены на production, модели multipage / collections / translations и collection API;
+- production DB/backend уже получили multipage / collections / translations schema и collection API 2026-05-25;
+- public `/api/public/journal/collections` работает и пока возвращает пустой массив;
+- public like / unlike / like-status для обычных записей подключены;
 - PostgreSQL напрямую с локального ПК не открыт, база доступна backend-у на сервере через localhost;
-- перед backend-изменениями нужен backup `/journal-backend` и релевантных таблиц базы.
+- перед следующими backend/schema-изменениями снова нужен свежий backup `/journal-backend` и релевантных таблиц базы.

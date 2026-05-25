@@ -94,7 +94,7 @@ prisma/schema.prisma
 
 ## Текущая Backend-Картина На Production
 
-Production Prisma schema сейчас post-centric и RU/EN:
+До multipage-деплоя 2026-05-25 production Prisma schema была post-centric и RU/EN:
 
 - `Admin`
 - `AdminSession`
@@ -105,7 +105,7 @@ Production Prisma schema сейчас post-centric и RU/EN:
 - `Like`
 - `Share`
 
-На production пока нет моделей:
+На production до деплоя не было моделей:
 
 - `JournalCollection`;
 - `JournalCollectionPage`;
@@ -113,13 +113,13 @@ Production Prisma schema сейчас post-centric и RU/EN:
 - `JournalMediaTranslation`;
 - multipage / collection API.
 
-Публичный endpoint коллекций пока отсутствует:
+До деплоя публичный endpoint коллекций отсутствовал:
 
 ```text
 GET /api/public/journal-collections -> 404
 ```
 
-`PublicLikesService` в production backend-е есть, но публичные маршруты для `like`, `unlike` и `like-status` пока не подключены контроллером. Поэтому frontend может получать `404` на:
+До деплоя `PublicLikesService` в production backend-е был, но публичные маршруты для `like`, `unlike` и `like-status` не были подключены контроллером. Поэтому frontend мог получать `404` на:
 
 ```text
 /api/public/journal/:slug/like-status
@@ -133,7 +133,7 @@ GET /api/public/journal-collections -> 404
 /home/alexey/.local/share/brkovic-ltd/work/journal-backend
 ```
 
-Это обычный локальный Git-репозиторий. Состояние после первого backend-шага:
+Это обычный локальный Git-репозиторий. Состояние после backend-деплоя 2026-05-25:
 
 ```text
 5a22e1a Baseline live journal backend snapshot
@@ -141,9 +141,10 @@ cf8bb39 Add local dependency lock and ignores
 71fa821 Wire public journal like routes
 b6a428d Add journal collection and translation schema
 0438128 Add journal collection API draft
+7fd2776 Add server Prisma engine targets
 ```
 
-Что уже подготовлено локально, но не выкладывалось на production:
+Что подготовлено в local working copy и выложено на production 2026-05-25:
 
 - Prisma-модели `JournalCollection`, `JournalCollectionPage`, `JournalTranslation`, `JournalMediaTranslation`;
 - `Post.sortOrder` и `Post.sourceLanguage`;
@@ -168,7 +169,107 @@ DATABASE_URL='postgresql://user:pass@localhost:5432/brkovic_journal' npx prisma 
 npm run build
 ```
 
-Обе проверки прошли. Это не означает, что миграция применена к production базе.
+Обе проверки прошли.
+
+## Production Migration And Deploy — 2026-05-25
+
+Production DB migration applied successfully on 2026-05-25 through a temporary random-name PHP runner uploaded to `public_html`, called once over HTTPS, and deleted immediately after execution.
+
+Temporary runner URLs were verified deleted:
+
+```text
+php: 404
+sql: 404
+```
+
+Before the real apply, the same SQL was executed in a dry-run transaction and rolled back:
+
+```text
+/home/alexey/.local/share/brkovic-ltd/ops/journal-migration-dry-run-20260525T144042Z.json
+```
+
+Real apply result:
+
+```text
+/home/alexey/.local/share/brkovic-ltd/ops/journal-migration-apply-20260525T144212Z.json
+```
+
+Counts before and after migration were identical:
+
+```text
+Admin: 1
+JournalGroup: 2
+Post: 13
+Media: 12
+Comment: 2
+Like: 2
+Share: 0
+```
+
+Production now has:
+
+- `JournalCollection`;
+- `JournalCollectionPage`;
+- `JournalTranslation`;
+- `JournalMediaTranslation`;
+- `Post.sortOrder`;
+- `Post.sourceLanguage`;
+- `collectionId` on `Comment`, `Like`, `Share`.
+
+Generated Prisma Client on the server was updated under:
+
+```text
+/nodevenv/journal-backend/24/lib/node_modules/.prisma/client
+```
+
+Old generated Prisma Client backup:
+
+```text
+/home/alexey/.local/share/brkovic-ltd/backups/20260525T144459Z-prisma-client-pre-multipage-deploy
+```
+
+Backend files were uploaded to:
+
+```text
+/journal-backend
+```
+
+Admin frontend files were uploaded to `public_html` after backend deploy:
+
+```text
+admin-posts.html
+css/admin-posts.css
+js/admin-posts.js
+admin-api-proxy.php
+```
+
+`admin-posts.html` now uses cache-bust version:
+
+```text
+20260525-journal-multipage-01
+```
+
+Restart was triggered by uploading:
+
+```text
+/journal-backend/tmp/restart.txt
+```
+
+Post-deploy checks:
+
+```text
+GET /api/health -> 200
+GET /api/public/journal -> 200, 4 items
+GET /api/public/journal/:slug -> 200
+GET /api/public/journal/:slug/like-status -> 200
+POST /api/public/journal/:slug/like with JSON body -> 201
+DELETE /api/public/journal/:slug/like -> 200
+GET /api/public/journal/collections -> 200, []
+GET /api/admin/journal-collections without auth -> 401
+local admin-api-proxy.php path=/admin/journal-collections -> 401 from live API, not 403
+```
+
+Note: POST like should be sent with a JSON body / content type. A bare empty POST can be blocked by the host before reaching Node.
 
 ## Database
 

@@ -331,10 +331,11 @@ Backend source is now available as a read-only FTP snapshot and as a local worki
 /home/alexey/.local/share/brkovic-ltd/work/journal-backend
 ```
 
-Local backend commits already prepared, not deployed:
+Local backend commits prepared and deployed to production on 2026-05-25:
 
 - `b6a428d Add journal collection and translation schema`
 - `0438128 Add journal collection API draft`
+- `7fd2776 Add server Prisma engine targets`
 
 The local draft includes schema/API support for multipage collections, shared collection comments/likes, and manual post ordering. It also includes:
 
@@ -342,11 +343,21 @@ The local draft includes schema/API support for multipage collections, shared co
 prisma/manual-migrations/20260525_journal_collections_translations.sql
 ```
 
-To apply database/API changes safely on production, the next requirement is still a controlled edit/deploy workflow for `/journal-backend`:
+Database/API changes were applied through the controlled workflow:
 
-- make a backup of `/journal-backend` and relevant database tables before migrations;
-- decide whether edits are done directly on server source or through a local backend working copy;
-- deploy built `dist` only after TypeScript build and Prisma migration checks;
-- do not edit live backend files blindly from the frontend repo.
+- dry-run migration in transaction and rollback;
+- real migration in transaction;
+- generated Prisma Client update under `nodevenv`;
+- backend `dist` / `src` / `prisma/schema.prisma` upload;
+- restart through `/journal-backend/tmp/restart.txt`;
+- health/public/admin endpoint checks.
 
-Without a controlled deploy/migration path, frontend can be prepared for the new shape, but production persistence for multipage records and true many-language slots should wait.
+Next backend requirements:
+
+- keep using the local backend working copy, not blind live edits;
+- before any new schema change, make a fresh DB/backend backup;
+- public `journal.html` still needs a multipage renderer;
+- admin can now call `/admin/journal-collections`, but real authoring requires logged-in testing;
+- true multilingual translation editing endpoints are still a later layer.
+
+Production persistence for multipage parent records now exists. Public rendering and editorial workflow still need to be finished carefully.
