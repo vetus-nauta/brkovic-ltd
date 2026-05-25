@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="css/variables.css" />
   <link rel="stylesheet" href="css/main.css" />
   <link rel="stylesheet" href="css/responsive.css" />
-  <link rel="stylesheet" href="css/admin-posts.css?v=20260525-journal-multipage-02" />
+  <link rel="stylesheet" href="css/admin-posts.css?v=20260525-journal-multipage-03" />
 </head>
 <body>
   <div class="site-shell">
@@ -192,7 +192,7 @@
               <p>Обложка, порядок страниц и один общий блок лайков/комментариев для длинного материала.</p>
             </div>
             <div class="journal-collections-actions">
-              <button id="newCollectionBtn" class="btn btn--secondary" type="button">Новая запись</button>
+              <button id="newCollectionBtn" class="btn btn--secondary" type="button">Новая обложка</button>
               <button id="refreshCollectionsBtn" class="btn btn--secondary" type="button">Обновить</button>
             </div>
           </div>
@@ -206,11 +206,11 @@
               <div class="post-editor-grid">
                 <label>
                   <span>Название обложки RU</span>
-                  <input type="text" id="collectionTitleRu" />
+                  <input type="text" id="collectionTitleRu" required />
                 </label>
                 <label>
                   <span>Slug</span>
-                  <input type="text" id="collectionSlug" />
+                  <input type="text" id="collectionSlug" placeholder="Можно оставить пустым" />
                 </label>
 
                 <label>
@@ -235,7 +235,7 @@
                 </label>
                 <label>
                   <span>Авторство</span>
-                  <input type="text" id="collectionAuthorLine" value="Vetus Naut - Brkovic" />
+                  <input type="text" id="collectionAuthorLine" value="Vetus Nauta - Brkovic" />
                 </label>
               </div>
 
@@ -258,7 +258,7 @@
               </div>
 
               <div class="post-editor-actions">
-                <button type="submit" class="btn btn--primary">Сохранить многостраничную запись</button>
+                <button type="submit" id="saveCollectionBtn" class="btn btn--primary">Сохранить многостраничную запись</button>
                 <a id="openPublicCollectionLink" class="btn btn--secondary" href="journal.html" target="_blank" rel="noopener">Открыть</a>
               </div>
             </form>
@@ -270,6 +270,6 @@
     </main>
   </div>
 
-  <script src="js/admin-posts.js?v=20260525-journal-multipage-02"></script>
+  <script src="js/admin-posts.js?v=20260525-journal-multipage-03"></script>
 </body>
 </html>

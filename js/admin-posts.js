@@ -5,6 +5,7 @@
   const STORAGE_TRANSLATIONS = 'brkovic_admin_translations_v1';
   const STORAGE_ADVANCED_OPEN = 'brkovic_admin_posts_advanced_open_v1';
   const TRANSLATE_CHUNK_LIMIT = 450;
+  const COLLECTION_AUTHOR_DEFAULT = 'Vetus Nauta - Brkovic';
 
   let isLoggedIn = false;
   let currentPostId = '';
@@ -43,6 +44,7 @@
   const newCollectionBtn = document.getElementById('newCollectionBtn');
   const collectionTitleRuInput = document.getElementById('collectionTitleRu');
   const collectionSlugInput = document.getElementById('collectionSlug');
+  const saveCollectionBtn = document.getElementById('saveCollectionBtn');
   const openPublicCollectionLink = document.getElementById('openPublicCollectionLink');
 
   let archiveToggleBtn = document.getElementById('toggleArchiveBtn');
@@ -74,7 +76,19 @@
 
   function setStatus(text) { if (statusNode) statusNode.textContent = text || ''; }
   function setMediaStatus(text) { if (mediaStatusNode) mediaStatusNode.textContent = text || ''; }
-  function setCollectionsStatus(text) { if (collectionsStatusNode) collectionsStatusNode.textContent = text || ''; }
+  function setCollectionsStatus(text, reveal = false) {
+    if (!collectionsStatusNode) return;
+    collectionsStatusNode.textContent = text || '';
+    if (reveal && text) {
+      collectionsStatusNode.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  }
+
+  function setCollectionSaving(isSaving) {
+    if (!saveCollectionBtn) return;
+    saveCollectionBtn.disabled = isSaving;
+    saveCollectionBtn.textContent = isSaving ? 'Сохраняем...' : 'Сохранить многостраничную запись';
+  }
   function setLoggedInUI(loggedIn) {
     isLoggedIn = loggedIn;
     if (loginForm) loginForm.style.display = loggedIn ? 'none' : '';
@@ -588,7 +602,7 @@
     if (!collectionsListNode) return;
 
     if (!items.length) {
-      collectionsListNode.innerHTML = '<div class="admin-post-meta">Многостраничных записей пока нет. Нажмите «Новая запись» и соберите обложку со страницами из существующих постов.</div>';
+      collectionsListNode.innerHTML = '<div class="admin-post-meta">Многостраничных записей пока нет. Нажмите «Новая обложка» и соберите материал из существующих постов-страниц.</div>';
       return;
     }
 
@@ -624,7 +638,7 @@
     document.getElementById('collectionStatus').value = collection?.status || 'DRAFT';
     document.getElementById('collectionPublishedAt').value = toDatetimeLocal(collection?.publishedAt);
     document.getElementById('collectionPinned').value = String(!!collection?.isPinned);
-    document.getElementById('collectionAuthorLine').value = collection?.authorLine || 'Vetus Naut - Brkovic';
+    document.getElementById('collectionAuthorLine').value = collection?.authorLine || COLLECTION_AUTHOR_DEFAULT;
     document.getElementById('collectionExcerptRu').value = collection?.excerptRu || '';
     document.getElementById('collectionCoverMediaId').value = collection?.coverMedia?.id || collection?.coverMediaId || '';
 
@@ -647,7 +661,7 @@
     document.getElementById('collectionPinned').value = 'false';
     document.getElementById('collectionPublishedAt').value = '';
     document.getElementById('collectionSlug').value = '';
-    document.getElementById('collectionAuthorLine').value = 'Vetus Naut - Brkovic';
+    document.getElementById('collectionAuthorLine').value = COLLECTION_AUTHOR_DEFAULT;
     renderCollectionPagesPicker([]);
     renderCollectionsList();
     if (openPublicCollectionLink) openPublicCollectionLink.href = 'journal.html';
@@ -661,7 +675,7 @@
       status: document.getElementById('collectionStatus').value,
       publishedAt: fromDatetimeLocal(document.getElementById('collectionPublishedAt').value),
       isPinned: document.getElementById('collectionPinned').value === 'true',
-      authorLine: document.getElementById('collectionAuthorLine').value.trim() || 'Vetus Naut - Brkovic',
+      authorLine: document.getElementById('collectionAuthorLine').value.trim() || COLLECTION_AUTHOR_DEFAULT,
       coverMediaId: document.getElementById('collectionCoverMediaId').value.trim() || null,
       sourceLanguage: 'ru',
       allowComments: true,
@@ -958,9 +972,13 @@
   });
 
   newCollectionBtn?.addEventListener('click', () => {
-    if (!isLoggedIn) return;
+    if (!isLoggedIn) {
+      setCollectionsStatus('Сначала войдите в админку, затем создайте обложку.', true);
+      return;
+    }
     clearCollectionForm();
-    setCollectionsStatus('Форма новой многостраничной записи готова.');
+    setCollectionsStatus('Форма готова: заполните название обложки RU и нажмите «Сохранить многостраничную запись». Страницы можно добавить сразу или позже.', true);
+    collectionTitleRuInput?.focus();
   });
 
   refreshCollectionsBtn?.addEventListener('click', async () => {
@@ -1039,29 +1057,41 @@
 
   collectionForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
-    if (!isLoggedIn) return;
-
-    const payload = collectCollectionPayload();
-
-    if (!payload.slug || !payload.titleRu) {
-      setCollectionsStatus('Обязательные поля: Slug и название обложки RU.');
+    if (!isLoggedIn) {
+      setCollectionsStatus('Сессия админки не активна. Войдите снова и повторите сохранение.', true);
       return;
     }
 
+    const payload = collectCollectionPayload();
+
+    if (!payload.titleRu) {
+      setCollectionsStatus('Заполните название обложки RU. Slug можно оставить пустым, он создастся из названия.', true);
+      collectionTitleRuInput?.focus();
+      return;
+    }
+
+    if (!payload.slug) {
+      payload.slug = slugify(payload.titleRu) || `journal-book-${Date.now()}`;
+      if (collectionSlugInput) collectionSlugInput.value = payload.slug;
+    }
+
     try {
+      setCollectionSaving(true);
       if (currentCollectionId) {
-        setCollectionsStatus('Сохраняем многостраничную запись...');
+        setCollectionsStatus('Сохраняем многостраничную запись...', true);
         const updated = await updateCollection(currentCollectionId, payload);
         await refreshCollections(updated.id);
-        setCollectionsStatus('Многостраничная запись обновлена.');
+        setCollectionsStatus('Многостраничная запись обновлена.', true);
       } else {
-        setCollectionsStatus('Создаём многостраничную запись...');
+        setCollectionsStatus('Создаём многостраничную запись...', true);
         const created = await createCollection(payload);
         await refreshCollections(created.id);
-        setCollectionsStatus('Многостраничная запись создана.');
+        setCollectionsStatus('Многостраничная запись создана.', true);
       }
     } catch (error) {
-      setCollectionsStatus(error.message || 'Не удалось сохранить многостраничную запись.');
+      setCollectionsStatus(error.message || 'Не удалось сохранить многостраничную запись.', true);
+    } finally {
+      setCollectionSaving(false);
     }
   });
 
