@@ -588,7 +588,7 @@
     if (!collectionsListNode) return;
 
     if (!items.length) {
-      collectionsListNode.innerHTML = '<div class="admin-post-meta">Многостраничных записей пока нет или backend API ещё не включён.</div>';
+      collectionsListNode.innerHTML = '<div class="admin-post-meta">Многостраничных записей пока нет. Нажмите «Новая запись» и соберите обложку со страницами из существующих постов.</div>';
       return;
     }
 
@@ -682,10 +682,12 @@
       setCollectionsStatus(collectionsCache.length ? 'Многостраничные записи загружены.' : 'Многостраничных записей пока нет.');
     } catch (error) {
       collectionsCache = [];
-      renderCollectionsList([]);
+      if (collectionsListNode) {
+        collectionsListNode.innerHTML = '<div class="admin-post-meta">Не удалось загрузить многостраничные записи. Проверьте вход в админку и нажмите «Обновить».</div>';
+      }
       renderCollectionPagesPicker();
       setCollectionsStatus(options.silent
-        ? 'Многостраничные записи ждут backend-деплой.'
+        ? 'Многостраничные записи временно не загрузились.'
         : (error.message || 'Не удалось загрузить многостраничные записи.'));
     }
   }
