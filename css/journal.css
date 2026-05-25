@@ -151,6 +151,88 @@
 .journal-comment-form input { border: 1px solid rgba(16,36,58,.14); border-radius: 14px; padding: 12px 14px; }
 .journal-empty { text-align: center; padding: 46px 18px; color: var(--color-muted); border: 1px dashed rgba(16,36,58,.16); border-radius: 22px; }
 .journal-translation-note { color: var(--color-muted); font-size: .88rem; margin-top: 12px; }
+.journal-collection-cover {
+  border-color: rgba(42, 91, 132, .18);
+  background:
+    linear-gradient(135deg, rgba(42, 91, 132, .08), rgba(255,255,255,0) 42%),
+    #fff;
+}
+.journal-collection-cover__author {
+  margin: 8px 0 0;
+  color: var(--color-muted);
+  font-size: .94rem;
+}
+.journal-collection-cover__excerpt {
+  margin: 16px 0 0;
+  color: var(--color-ink);
+  line-height: 1.62;
+}
+.journal-collection-cover__pages {
+  display: grid;
+  gap: 8px;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.journal-collection-cover__pages li {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  color: var(--color-brand);
+  line-height: 1.42;
+}
+.journal-collection-cover__pages span {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: rgba(16,36,58,.08);
+  color: var(--color-muted);
+  font-weight: 800;
+  font-size: .78rem;
+}
+.journal-collection-cover__open {
+  text-decoration: none;
+}
+.journal-collection-single__cover {
+  padding-bottom: 22px;
+  border-bottom: 1px solid rgba(16,36,58,.1);
+}
+.journal-collection-single__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+  color: var(--color-muted);
+  font-weight: 700;
+}
+.journal-collection-single__pages {
+  display: grid;
+  gap: 26px;
+  margin-top: 28px;
+}
+.journal-collection-page {
+  padding-top: 26px;
+  border-top: 1px solid rgba(16,36,58,.1);
+}
+.journal-collection-page__head {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.journal-collection-page__head h4 {
+  margin: 0;
+  color: var(--color-brand);
+  font-family: var(--font-editorial);
+  font-size: clamp(1.35rem, 2vw, 1.9rem);
+  line-height: 1.12;
+}
+.journal-collection-page__head time {
+  color: var(--color-muted);
+  font-size: .92rem;
+}
 
 @media (max-width: 1120px) {
   .journal-layout { grid-template-columns: 1fr; }

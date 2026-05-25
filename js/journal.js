@@ -16,7 +16,9 @@
 
   let currentFilter = 'all';
   let backendEntries = [];
+  let journalCollections = [];
   let isSingleMode = false;
+  let singleModeKind = 'post';
   let likeStateBySlug = {};
   let gpsMetaByPath = {};
   let bootSequence = 0;
@@ -87,6 +89,14 @@ let lightboxJustClosedAt = 0;
     return `${API_ORIGIN}${path}`;
   }
 
+  function likeStateKey(kind, slug) {
+    return kind === 'collection' ? `collection:${slug}` : slug;
+  }
+
+  function entryKind(entry) {
+    return entry?.entryType === 'collection' ? 'collection' : 'post';
+  }
+
   function entryTime(entry) {
     const value = new Date(entry?.date || entry?.publishedAt || entry?.createdAt || 0).getTime();
     return Number.isFinite(value) ? value : 0;
@@ -102,6 +112,10 @@ let lightboxJustClosedAt = 0;
   }
 
   function getTimelineKey(entry, groupCounts = getGroupedEntryCounts(backendEntries)) {
+    if (entryKind(entry) === 'collection') {
+      return `collection:${entry?.slug || entry?.id || ''}`;
+    }
+
     if (entry?.groupId && entry.group && (groupCounts.get(entry.groupId) || 0) > 1) {
       return `group:${entry.groupId}`;
     }
@@ -182,6 +196,10 @@ let lightboxJustClosedAt = 0;
     return fetchJson(API_BASE, { cache: 'no-store' });
   }
 
+  async function fetchJournalCollectionsPayload() {
+    return fetchJson(`${API_BASE}/collections`, { cache: 'no-store' });
+  }
+
   async function translateFree(text, targetLang) {
     const cacheKey = `${targetLang}::${text}`;
     const cache = getTranslationsCache();
@@ -217,10 +235,35 @@ let lightboxJustClosedAt = 0;
     return text;
   }
 
-  function normalizeApiPayload(response) {
-    const items = response?.data?.data || response?.data || [];
-    if (!Array.isArray(items)) return [];
-    return items.map((item) => ({
+  function normalizeMediaItems(media, fallbackTitle = '') {
+    if (!Array.isArray(media)) return [];
+
+    return media.map((m) => {
+      const src = resolveApiAssetUrl(m.filePath || m.thumbPath || m.posterPath || '');
+      const captionRu = String(m.altRu || '').trim();
+      const captionEn = String(m.altEn || '').trim();
+      const caption = {
+        ru: captionRu || captionEn,
+        en: captionEn || captionRu
+      };
+      const gps = gpsMetaByPath[src] || {};
+      return {
+        id: m.id,
+        type: m.type === 'VIDEO' || m.type === 'video' ? 'video' : 'image',
+        src,
+        poster: resolveApiAssetUrl(m.posterPath || ''),
+        alt: (caption.ru || caption.en || fallbackTitle || '').trim(),
+        caption,
+        gpsLatLabel: gps.gpsLatLabel || '',
+        gpsLonLabel: gps.gpsLonLabel || '',
+        gpsDecimal: gps.gpsDecimal || ''
+      };
+    });
+  }
+
+  function normalizePostItem(item) {
+    return {
+      entryType: 'post',
       id: item.id,
       slug: item.slug,
       title: {
@@ -249,32 +292,66 @@ let lightboxJustClosedAt = 0;
         status: item.group.status || '',
         sortOrder: Number(item.group.sortOrder || 0)
       } : null,
-      media: Array.isArray(item.media) ? item.media.map((m) => {
-        const src = resolveApiAssetUrl(m.filePath || m.thumbPath || m.posterPath || '');
-        const captionRu = String(m.altRu || '').trim();
-        const captionEn = String(m.altEn || '').trim();
-        const caption = {
-          ru: captionRu || captionEn,
-          en: captionEn || captionRu
-        };
-        const gps = gpsMetaByPath[src] || {};
-        return {
-          id: m.id,
-          type: m.type === 'VIDEO' || m.type === 'video' ? 'video' : 'image',
-          src,
-          poster: resolveApiAssetUrl(m.posterPath || ''),
-          alt: (caption.ru || caption.en || item.titleRu || item.titleEn || '').trim(),
-          caption,
-          gpsLatLabel: gps.gpsLatLabel || '',
-          gpsLonLabel: gps.gpsLonLabel || '',
-          gpsDecimal: gps.gpsDecimal || ''
-        };
-      }) : [],
+      media: normalizeMediaItems(item.media, item.titleRu || item.titleEn || ''),
       comments: Array.isArray(item.comments) ? item.comments : [],
       commentsCount: item.commentsCount || 0,
       likesCount: item.likesCount || 0,
       isPinned: !!item.isPinned
-    }));
+    };
+  }
+
+  function normalizeApiPayload(response) {
+    const items = response?.data?.data || response?.data || [];
+    if (!Array.isArray(items)) return [];
+    return items.map(normalizePostItem);
+  }
+
+  function normalizeCollectionItem(item) {
+    const pages = Array.isArray(item.pages) ? item.pages
+      .map((page, index) => ({
+        id: page.id || '',
+        pageOrder: Number.isFinite(Number(page.pageOrder)) ? Number(page.pageOrder) : index,
+        post: page.post ? normalizePostItem(page.post) : null,
+      }))
+      .filter((page) => page.post?.slug) : [];
+    const coverMedia = item.coverMedia
+      ? normalizeMediaItems([item.coverMedia], item.titleRu || item.titleEn || '')
+      : [];
+    const firstPageMedia = pages.find((page) => page.post?.media?.length)?.post?.media?.slice(0, 1) || [];
+
+    return {
+      entryType: 'collection',
+      id: item.id,
+      slug: item.slug,
+      title: {
+        ru: item.titleRu || '',
+        en: item.titleEn || ''
+      },
+      date: item.publishedAt || item.createdAt,
+      excerpt: {
+        ru: item.excerptRu || '',
+        en: item.excerptEn || ''
+      },
+      text: {
+        ru: '',
+        en: ''
+      },
+      media: coverMedia.length ? coverMedia : firstPageMedia,
+      authorLine: item.authorLine || 'Vetus Nauta - Brkovic',
+      pages,
+      pagesCount: item.pagesCount || pages.length,
+      comments: Array.isArray(item.comments) ? item.comments : [],
+      commentsCount: item.commentsCount || 0,
+      likesCount: item.likesCount || 0,
+      isPinned: !!item.isPinned,
+      sortOrder: Number.isFinite(Number(item.sortOrder)) ? Number(item.sortOrder) : null,
+    };
+  }
+
+  function normalizeCollectionsPayload(response) {
+    const items = response?.data?.data || response?.data || [];
+    if (!Array.isArray(items)) return [];
+    return items.map(normalizeCollectionItem);
   }
 
   async function fetchBackendEntries() {
@@ -284,11 +361,16 @@ let lightboxJustClosedAt = 0;
     }
 
     try {
-      const data = await fetchJournalIndexPayload();
+      const [data, collectionsData] = await Promise.all([
+        fetchJournalIndexPayload(),
+        fetchJournalCollectionsPayload().catch(() => ({ data: [] })),
+      ]);
       backendEntries = normalizeApiPayload(data);
+      journalCollections = normalizeCollectionsPayload(collectionsData);
       await hydrateLikeStates();
     } catch {
       backendEntries = [];
+      journalCollections = [];
       if (feed) {
         feed.innerHTML = `<div class="journal-empty">${escapeHtml(t('journal_load_error', 'Failed to load entries.'))}</div>`;
       }
@@ -296,7 +378,7 @@ let lightboxJustClosedAt = 0;
   }
 
   async function hydrateLikeStates() {
-    const tasks = backendEntries.map(async (entry) => {
+    const postTasks = backendEntries.map(async (entry) => {
       try {
         const res = await fetch(`${API_BASE}/${encodeURIComponent(entry.slug)}/like-status`, {
           cache: 'no-store',
@@ -304,19 +386,39 @@ let lightboxJustClosedAt = 0;
         });
         const data = await res.json();
         const payload = data?.data?.data || data?.data || {};
-        likeStateBySlug[entry.slug] = {
+        likeStateBySlug[likeStateKey('post', entry.slug)] = {
           liked: !!payload.liked,
           likesCount: Number(payload.likesCount || 0),
         };
       } catch {
-        likeStateBySlug[entry.slug] = {
+        likeStateBySlug[likeStateKey('post', entry.slug)] = {
           liked: false,
           likesCount: entry.likesCount || 0,
         };
       }
     });
 
-    await Promise.all(tasks);
+    const collectionTasks = journalCollections.map(async (collection) => {
+      try {
+        const res = await fetch(`${API_BASE}/collections/${encodeURIComponent(collection.slug)}/like-status`, {
+          cache: 'no-store',
+          credentials: API_ORIGIN ? 'include' : 'same-origin',
+        });
+        const data = await res.json();
+        const payload = data?.data?.data || data?.data || {};
+        likeStateBySlug[likeStateKey('collection', collection.slug)] = {
+          liked: !!payload.liked,
+          likesCount: Number(payload.likesCount || 0),
+        };
+      } catch {
+        likeStateBySlug[likeStateKey('collection', collection.slug)] = {
+          liked: false,
+          likesCount: collection.likesCount || 0,
+        };
+      }
+    });
+
+    await Promise.all([...postTasks, ...collectionTasks]);
   }
 
   async function fetchGpsMeta() {
@@ -435,13 +537,17 @@ let lightboxJustClosedAt = 0;
 
     if (title) {
       title.textContent = singleMode
-        ? (getLang() === 'ru' ? 'Запись судового журнала' : 'Journal entry')
+        ? (singleModeKind === 'collection'
+          ? (getLang() === 'ru' ? 'Многостраничная запись' : 'Multi-page entry')
+          : (getLang() === 'ru' ? 'Запись судового журнала' : 'Journal entry'))
         : (getLang() === 'ru' ? 'Заметки с морей' : 'Notes from the seas');
     }
 
     if (eyebrow) {
       eyebrow.textContent = singleMode
-        ? (getLang() === 'ru' ? 'Запись' : 'Entry')
+        ? (singleModeKind === 'collection'
+          ? (getLang() === 'ru' ? 'Серия' : 'Series')
+          : (getLang() === 'ru' ? 'Запись' : 'Entry'))
         : (getLang() === 'ru' ? 'Судовой журнал' : 'Deck Log');
     }
 
@@ -466,13 +572,15 @@ let lightboxJustClosedAt = 0;
 
     if (title) {
       title.textContent = singleMode
-        ? '\u0417\u0430\u043f\u0438\u0441\u044c \u0441\u0443\u0434\u043e\u0432\u043e\u0433\u043e \u0436\u0443\u0440\u043d\u0430\u043b\u0430'
+        ? (singleModeKind === 'collection'
+          ? '\u041c\u043d\u043e\u0433\u043e\u0441\u0442\u0440\u0430\u043d\u0438\u0447\u043d\u0430\u044f \u0437\u0430\u043f\u0438\u0441\u044c'
+          : '\u0417\u0430\u043f\u0438\u0441\u044c \u0441\u0443\u0434\u043e\u0432\u043e\u0433\u043e \u0436\u0443\u0440\u043d\u0430\u043b\u0430')
         : '\u0417\u0430\u043c\u0435\u0442\u043a\u0438 \u0441 \u043c\u043e\u0440\u0435\u0439';
     }
 
     if (eyebrow) {
       eyebrow.textContent = singleMode
-        ? '\u0417\u0430\u043f\u0438\u0441\u044c'
+        ? (singleModeKind === 'collection' ? '\u0421\u0435\u0440\u0438\u044f' : '\u0417\u0430\u043f\u0438\u0441\u044c')
         : '\u0421\u0443\u0434\u043e\u0432\u043e\u0439 \u0436\u0443\u0440\u043d\u0430\u043b';
     }
   }
@@ -729,8 +837,12 @@ let lightboxJustClosedAt = 0;
 
   function getImagesForSlug(slug) {
     const entry = backendEntries.find((item) => item.slug === slug);
-    if (!entry) return [];
-    return (entry.media || []).filter((item) => item.type === 'image' && item.src);
+    if (entry) return (entry.media || []).filter((item) => item.type === 'image' && item.src);
+
+    const collection = journalCollections.find((item) => item.slug === slug);
+    if (collection) return (collection.media || []).filter((item) => item.type === 'image' && item.src);
+
+    return [];
   }
 
   function renderLightbox() {
@@ -836,6 +948,178 @@ let lightboxJustClosedAt = 0;
     }
   }
 
+  function entryTitle(entry, lang = getLang()) {
+    return lang === 'ru'
+      ? (entry?.title?.ru || entry?.title?.en || entry?.slug || '')
+      : (entry?.title?.en || entry?.title?.ru || entry?.slug || '');
+  }
+
+  function entryExcerpt(entry, lang = getLang()) {
+    return lang === 'ru'
+      ? (entry?.excerpt?.ru || entry?.excerpt?.en || '')
+      : (entry?.excerpt?.en || entry?.excerpt?.ru || '');
+  }
+
+  function entryText(entry, lang = getLang()) {
+    return lang === 'ru'
+      ? (entry?.text?.ru || entry?.text?.en || '')
+      : (entry?.text?.en || entry?.text?.ru || '');
+  }
+
+  function getCollectionPageSlugs(collections = journalCollections) {
+    const slugs = new Set();
+    collections.forEach((collection) => {
+      (collection.pages || []).forEach((page) => {
+        if (page.post?.slug) slugs.add(page.post.slug);
+      });
+    });
+    return slugs;
+  }
+
+  function buildRootFeedEntries(entries, collections) {
+    const collectionPageSlugs = getCollectionPageSlugs(collections);
+    const visiblePosts = entries.filter((entry) => !collectionPageSlugs.has(entry.slug));
+    return sortEntriesForFeed([...visiblePosts, ...collections]);
+  }
+
+  function renderCollectionCoverCard(feed, collection, lang) {
+    const title = entryTitle(collection, lang);
+    const excerpt = entryExcerpt(collection, lang);
+    const likeState = likeStateBySlug[likeStateKey('collection', collection.slug)] || {
+      liked: false,
+      likesCount: collection.likesCount || 0,
+    };
+    const pages = collection.pages || [];
+    const pageList = pages.slice(0, 6).map((page, index) => {
+      const pageTitle = entryTitle(page.post, lang);
+      return `<li><span>${escapeHtml(String(index + 1))}</span>${escapeHtml(pageTitle)}</li>`;
+    }).join('');
+    const commentsCount = collection.comments?.length || collection.commentsCount || 0;
+
+    const card = document.createElement('article');
+    card.className = 'journal-post journal-collection-cover';
+    card.dataset.slug = collection.slug;
+    card.dataset.kind = 'collection';
+    card.innerHTML = `
+      <div class="journal-post__meta">
+        <div>
+          <p class="journal-post__eyebrow">${escapeHtml(lang === 'ru' ? 'Многостраничная запись' : 'Multi-page entry')}</p>
+          <h3 class="journal-post__title">
+            <a href="journal.html?collection=${encodeURIComponent(collection.slug)}">${escapeHtml(title)}</a>
+          </h3>
+          <p class="journal-collection-cover__author">${escapeHtml(collection.authorLine || 'Vetus Nauta - Brkovic')}</p>
+        </div>
+        <div class="journal-post__date">${escapeHtml(formatDate(collection.date))}</div>
+      </div>
+      ${mediaMarkup(collection.media, collection.slug)}
+      ${excerpt ? `<p class="journal-collection-cover__excerpt">${escapeHtml(excerpt)}</p>` : ''}
+      ${pageList ? `
+        <ol class="journal-collection-cover__pages">
+          ${pageList}
+        </ol>
+      ` : ''}
+      <div class="journal-post__actions">
+        <div class="journal-post__left">
+          <button class="journal-action ${likeState.liked ? 'is-liked' : ''}" data-action="like" data-kind="collection" data-id="${escapeHtml(collection.id)}" data-slug="${escapeHtml(collection.slug)}">
+            ${escapeHtml(t('journal_like', 'Like'))} · <span>${likeState.likesCount}</span>
+          </button>
+          <a class="journal-action" href="journal.html?collection=${encodeURIComponent(collection.slug)}#journal-comments-${encodeURIComponent(collection.slug)}">
+            ${escapeHtml(t('journal_comment', 'Comment'))} · <span>${commentsCount}</span>
+          </a>
+        </div>
+        <div class="journal-post__right">
+          <a class="journal-action journal-collection-cover__open" href="journal.html?collection=${encodeURIComponent(collection.slug)}">
+            ${escapeHtml(lang === 'ru' ? 'Открыть главы' : 'Open chapters')}
+          </a>
+          <button class="journal-action" data-action="share" data-kind="collection" data-id="${escapeHtml(collection.id)}" data-slug="${escapeHtml(collection.slug)}">
+            ${escapeHtml(t('journal_share', 'Share'))}
+          </button>
+        </div>
+      </div>
+    `;
+
+    feed.appendChild(card);
+  }
+
+  function renderCollectionDetail(feed, collection, lang) {
+    const title = entryTitle(collection, lang);
+    const excerpt = entryExcerpt(collection, lang);
+    const comments = Array.isArray(collection.comments) ? collection.comments : [];
+    const likeState = likeStateBySlug[likeStateKey('collection', collection.slug)] || {
+      liked: false,
+      likesCount: collection.likesCount || 0,
+    };
+    const pagesMarkup = (collection.pages || []).map((page, index) => {
+      const post = page.post || {};
+      const pageTitle = entryTitle(post, lang);
+      const pageText = entryText(post, lang);
+      return `
+        <section class="journal-collection-page" id="chapter-${index + 1}">
+          <div class="journal-collection-page__head">
+            <p class="journal-post__eyebrow">${escapeHtml(lang === 'ru' ? `Часть ${index + 1}` : `Part ${index + 1}`)}</p>
+            <h4>${escapeHtml(pageTitle)}</h4>
+            <time>${escapeHtml(formatDate(post.date))}</time>
+          </div>
+          ${mediaMarkup(post.media || [], post.slug)}
+          ${textMarkup(pageText)}
+        </section>
+      `;
+    }).join('');
+
+    const article = document.createElement('article');
+    article.className = 'journal-post journal-post--single journal-collection-single';
+    article.dataset.slug = collection.slug;
+    article.dataset.kind = 'collection';
+    article.innerHTML = `
+      <header class="journal-collection-single__cover">
+        <div class="journal-post__meta">
+          <div>
+            <p class="journal-post__eyebrow">${escapeHtml(lang === 'ru' ? 'Многостраничная запись' : 'Multi-page entry')}</p>
+            <h3 class="journal-post__title">${escapeHtml(title)}</h3>
+            <p class="journal-collection-cover__author">${escapeHtml(collection.authorLine || 'Vetus Nauta - Brkovic')}</p>
+          </div>
+          <div class="journal-post__date">${escapeHtml(formatDate(collection.date))}</div>
+        </div>
+        ${mediaMarkup(collection.media, collection.slug)}
+        ${excerpt ? `<p class="journal-collection-cover__excerpt">${escapeHtml(excerpt)}</p>` : ''}
+        <div class="journal-collection-single__meta">
+          <span>${escapeHtml(lang === 'ru' ? `Глав: ${collection.pagesCount || collection.pages?.length || 0}` : `Chapters: ${collection.pagesCount || collection.pages?.length || 0}`)}</span>
+        </div>
+      </header>
+      <div class="journal-collection-single__pages">
+        ${pagesMarkup || `<div class="journal-empty">${escapeHtml(t('journal_empty', 'No entries yet.'))}</div>`}
+      </div>
+      <p class="journal-post__rights">${escapeHtml(t('journal_rights_notice', lang === 'ru' ? '© BRKOVIC / VETUS NAUTA. Текст и медиа защищены авторским правом. Использование только с письменного разрешения.' : '© BRKOVIC / VETUS NAUTA. Text and media are protected by copyright. Use only with written permission.'))}</p>
+      <div class="journal-post__actions" id="journal-comments-${escapeHtml(collection.slug)}">
+        <div class="journal-post__left">
+          <button class="journal-action ${likeState.liked ? 'is-liked' : ''}" data-action="like" data-kind="collection" data-id="${escapeHtml(collection.id)}" data-slug="${escapeHtml(collection.slug)}">
+            ${escapeHtml(t('journal_like', 'Like'))} · <span>${likeState.likesCount}</span>
+          </button>
+          <button class="journal-action" data-action="comment-focus" data-kind="collection" data-id="${escapeHtml(collection.id)}">
+            ${escapeHtml(t('journal_comment', 'Comment'))} · <span>${comments.length || collection.commentsCount || 0}</span>
+          </button>
+        </div>
+        <div class="journal-post__right">
+          <button class="journal-action" data-action="share" data-kind="collection" data-id="${escapeHtml(collection.id)}" data-slug="${escapeHtml(collection.slug)}">
+            ${escapeHtml(t('journal_share', 'Share'))}
+          </button>
+        </div>
+      </div>
+      <div class="journal-comments">
+        <div class="journal-comments__list">${comments.map(commentMarkup).join('') || ''}</div>
+        <form class="journal-comment-form" data-kind="collection" data-id="${escapeHtml(collection.id)}" data-slug="${escapeHtml(collection.slug)}">
+          <input type="text" name="name" placeholder="${escapeHtml(t('journal_comment_name', 'Name'))}" maxlength="80" required />
+          <input type="email" name="email" placeholder="${escapeHtml(t('journal_comment_email', 'Email (необязательно)'))}" maxlength="120" />
+          <input type="text" name="text" placeholder="${escapeHtml(t('journal_comment_text', 'Написать комментарий'))}" maxlength="2000" required />
+          <button class="btn btn--secondary" type="submit">${escapeHtml(t('journal_comment_submit', 'Send'))}</button>
+        </form>
+        <div class="journal-comment-status" data-comment-status-for="${escapeHtml(collection.id)}"></div>
+      </div>
+    `;
+
+    feed.appendChild(article);
+  }
+
   async function renderFeed(filter = 'all') {
     const feed = document.getElementById('journalFeed');
     if (!feed) return;
@@ -847,7 +1131,11 @@ let lightboxJustClosedAt = 0;
     const lang = getLang();
     const currentSlug = new URLSearchParams(window.location.search).get('slug');
 
-    const filteredEntries = backendEntries.filter((entry) => {
+    const sourceEntries = !isSingleMode && filter === 'all'
+      ? buildRootFeedEntries(backendEntries, journalCollections)
+      : backendEntries;
+
+    const filteredEntries = sourceEntries.filter((entry) => {
       if (filter === 'all') return true;
       if (filter === 'photo') return entry.media.some((item) => item.type === 'image');
       if (filter === 'video') return entry.media.some((item) => item.type === 'video');
@@ -871,6 +1159,11 @@ let lightboxJustClosedAt = 0;
     }
 
     for (const entry of entries) {
+      if (entryKind(entry) === 'collection') {
+        renderCollectionCoverCard(feed, entry, lang);
+        continue;
+      }
+
       const resolved = await resolveEntryText(entry, lang);
 
       const title = lang === 'ru'
@@ -882,7 +1175,7 @@ let lightboxJustClosedAt = 0;
         : (resolved.text.en || resolved.text.ru || '');
 
       const approvedComments = Array.isArray(entry.comments) ? entry.comments : [];
-      const likeState = likeStateBySlug[entry.slug] || {
+      const likeState = likeStateBySlug[likeStateKey('post', entry.slug)] || {
         liked: false,
         likesCount: entry.likesCount || 0,
       };
@@ -900,7 +1193,7 @@ let lightboxJustClosedAt = 0;
         <div class="journal-post__meta">
           <div>
             ${(() => {
-              const noteNumber = getPostNumberBySlug(backendEntries, entry.slug);
+              const noteNumber = getPostNumberBySlug(entries, entry.slug);
               return noteNumber
                 ? `<div class="journal-note-number"><span>${escapeHtml(getLang() === 'ru' ? 'Заметка' : 'Note')}</span><span class="journal-note-number__value">№ ${noteNumber}</span></div>`
                 : `<p class="journal-post__eyebrow">${escapeHtml(t('journal_post_meta', 'Ship log entry'))}</p>`;
@@ -934,7 +1227,7 @@ let lightboxJustClosedAt = 0;
         </div>
         <div class="journal-comments">
           <div class="journal-comments__list">${approvedComments.map(commentMarkup).join('') || ''}</div>
-          <form class="journal-comment-form" data-id="${entry.id}" data-slug="${entry.slug}">
+          <form class="journal-comment-form" data-kind="post" data-id="${entry.id}" data-slug="${entry.slug}">
             <input type="text" name="name" placeholder="${escapeHtml(t('journal_comment_name', 'Name'))}" maxlength="80" required />
             <input type="email" name="email" placeholder="${escapeHtml(t('journal_comment_email', 'Email (необязательно)'))}" maxlength="120" />
             <input type="text" name="text" placeholder="${escapeHtml(t('journal_comment_text', 'Написать комментарий'))}" maxlength="2000" required />
@@ -947,7 +1240,7 @@ let lightboxJustClosedAt = 0;
 
       const noteLabelNode = card.querySelector('.journal-note-number span:first-child');
       const noteValueNode = card.querySelector('.journal-note-number__value');
-      const noteNumber = getPostNumberBySlug(backendEntries, entry.slug);
+      const noteNumber = getPostNumberBySlug(entries, entry.slug);
       if (noteLabelNode) {
         noteLabelNode.textContent = getLang() === 'ru' ? '\u0417\u0430\u043c\u0435\u0442\u043a\u0430' : 'Note';
       }
@@ -1020,8 +1313,59 @@ let lightboxJustClosedAt = 0;
     }
   }
 
-  async function submitComment(slug, payload) {
-    const res = await fetch(`${API_BASE}/${encodeURIComponent(slug)}/comments`, {
+  async function renderSingleCollection(slug, sequence = bootSequence) {
+    const feed = document.getElementById('journalFeed');
+    if (!feed) return;
+
+    feed.innerHTML = `<div class="journal-empty">${escapeHtml(t('journal_loading', 'Loading entry...'))}</div>`;
+
+    try {
+      await fetchBackendEntries();
+      if (sequence !== bootSequence) return;
+
+      let detailedCollection = journalCollections.find((collection) => collection.slug === slug) || null;
+
+      const res = await fetch(`${API_BASE}/collections/${encodeURIComponent(slug)}`, {
+        cache: 'no-store',
+        credentials: API_ORIGIN ? 'include' : 'same-origin',
+      });
+      const data = await res.json();
+      if (sequence !== bootSequence) return;
+      const item = data?.data?.data || data?.data;
+
+      if (item?.id) {
+        detailedCollection = normalizeCollectionItem(item);
+      }
+
+      if (!detailedCollection?.id) {
+        feed.innerHTML = `<div class="journal-empty">${escapeHtml(t('journal_empty', 'Entry not found.'))}</div>`;
+        return;
+      }
+
+      const existingIndex = journalCollections.findIndex((collection) => collection.slug === slug);
+      if (existingIndex >= 0) {
+        journalCollections[existingIndex] = detailedCollection;
+      } else {
+        journalCollections.unshift(detailedCollection);
+      }
+
+      await hydrateLikeStates();
+      if (sequence !== bootSequence) return;
+
+      feed.innerHTML = '';
+      renderCollectionDetail(feed, detailedCollection, getLang());
+      bindFeedActions();
+      bindLightboxTriggers();
+    } catch {
+      feed.innerHTML = `<div class="journal-empty">${escapeHtml(t('journal_load_error', 'Failed to load entry.'))}</div>`;
+    }
+  }
+
+  async function submitComment(kind, slug, payload) {
+    const path = kind === 'collection'
+      ? `${API_BASE}/collections/${encodeURIComponent(slug)}/comments`
+      : `${API_BASE}/${encodeURIComponent(slug)}/comments`;
+    const res = await fetch(path, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1039,8 +1383,11 @@ let lightboxJustClosedAt = 0;
     return data;
   }
 
-  async function likePost(slug) {
-    const res = await fetch(`${API_BASE}/${encodeURIComponent(slug)}/like`, {
+  async function likePost(slug, kind = 'post') {
+    const path = kind === 'collection'
+      ? `${API_BASE}/collections/${encodeURIComponent(slug)}/like`
+      : `${API_BASE}/${encodeURIComponent(slug)}/like`;
+    const res = await fetch(path, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1058,8 +1405,11 @@ let lightboxJustClosedAt = 0;
     return data?.data?.data || data?.data || {};
   }
 
-  async function unlikePost(slug) {
-    const res = await fetch(`${API_BASE}/${encodeURIComponent(slug)}/like`, {
+  async function unlikePost(slug, kind = 'post') {
+    const path = kind === 'collection'
+      ? `${API_BASE}/collections/${encodeURIComponent(slug)}/like`
+      : `${API_BASE}/${encodeURIComponent(slug)}/like`;
+    const res = await fetch(path, {
       method: 'DELETE',
       credentials: API_ORIGIN ? 'include' : 'same-origin',
     });
@@ -1130,24 +1480,29 @@ let lightboxJustClosedAt = 0;
     document.querySelectorAll('[data-action="like"]').forEach((button) => {
       button.onclick = async () => {
         const slug = button.dataset.slug;
+        const kind = button.dataset.kind || 'post';
         if (!slug) return;
 
         button.disabled = true;
 
         try {
-          const current = likeStateBySlug[slug] || { liked: false, likesCount: 0 };
+          const current = likeStateBySlug[likeStateKey(kind, slug)] || { liked: false, likesCount: 0 };
           const result = current.liked
-            ? await unlikePost(slug)
-            : await likePost(slug);
+            ? await unlikePost(slug, kind)
+            : await likePost(slug, kind);
 
-          likeStateBySlug[slug] = {
+          likeStateBySlug[likeStateKey(kind, slug)] = {
             liked: !!result.liked,
             likesCount: Number(result.likesCount || 0),
           };
 
           if (isSingleMode) {
             const params = new URLSearchParams(window.location.search);
-            await renderSinglePost(params.get('slug'));
+            if (params.get('collection')) {
+              await renderSingleCollection(params.get('collection'));
+            } else {
+              await renderSinglePost(params.get('slug'));
+            }
           } else {
             await renderFeed(currentFilter);
           }
@@ -1167,8 +1522,9 @@ let lightboxJustClosedAt = 0;
     document.querySelectorAll('[data-action="share"]').forEach((button) => {
       button.onclick = async () => {
         const slug = button.dataset.slug;
+        const kind = button.dataset.kind || 'post';
         const url = new URL(window.location.origin + window.location.pathname);
-        url.searchParams.set('slug', slug);
+        url.searchParams.set(kind === 'collection' ? 'collection' : 'slug', slug);
 
         if (navigator.share) {
           try {
@@ -1182,7 +1538,11 @@ let lightboxJustClosedAt = 0;
         setTimeout(() => {
           if (isSingleMode) {
             const params = new URLSearchParams(window.location.search);
-            renderSinglePost(params.get('slug'));
+            if (params.get('collection')) {
+              renderSingleCollection(params.get('collection'));
+            } else {
+              renderSinglePost(params.get('slug'));
+            }
           } else {
             renderFeed(currentFilter);
           }
@@ -1211,6 +1571,7 @@ let lightboxJustClosedAt = 0;
 
         const id = form.dataset.id;
         const slug = form.dataset.slug;
+        const kind = form.dataset.kind || 'post';
         const statusNode = document.querySelector(`[data-comment-status-for="${id}"]`);
 
         const authorName = form.elements.name.value.trim();
@@ -1226,7 +1587,7 @@ let lightboxJustClosedAt = 0;
         }
 
         try {
-          await submitComment(slug, {
+          await submitComment(kind, slug, {
             authorName,
             authorEmail: authorEmail || undefined,
             content,
@@ -1283,13 +1644,17 @@ let lightboxJustClosedAt = 0;
 
     const params = new URLSearchParams(window.location.search);
     const slug = params.get('slug');
-    isSingleMode = !!slug;
+    const collectionSlug = params.get('collection');
+    isSingleMode = !!(slug || collectionSlug);
+    singleModeKind = collectionSlug ? 'collection' : 'post';
 
     updateSingleModeUI(isSingleMode);
     fixJournalUiLabels(isSingleMode);
     setupFilters();
 
-    if (isSingleMode && slug) {
+    if (isSingleMode && collectionSlug) {
+      await renderSingleCollection(collectionSlug, sequence);
+    } else if (isSingleMode && slug) {
       await renderSinglePost(slug, sequence);
     } else {
       await fetchBackendEntries();
