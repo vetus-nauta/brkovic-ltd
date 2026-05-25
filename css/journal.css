@@ -3878,3 +3878,146 @@ body.journal-page--collection .journal-collection-single {
     text-indent: 1.35em;
   }
 }
+
+/* === Journal collection reader reset 20260525 === */
+body.journal-page--collection .journal-tools-strip {
+  display: none;
+}
+
+body.journal-page--collection .journal-layout {
+  padding-top: clamp(10px, 1.4vw, 18px);
+}
+
+body.journal-page--collection .journal-layout--single {
+  width: min(1080px, calc(100vw - 44px));
+  max-width: min(1080px, calc(100vw - 44px));
+  margin-inline: auto;
+}
+
+body.journal-page--collection .journal-layout--single .journal-card--feed {
+  width: 100%;
+  max-width: 100%;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+body.journal-page--collection .journal-layout--single .journal-feed,
+body.journal-page--collection .journal-collection-single {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body.journal-page--collection .journal-collection-book {
+  overflow: hidden;
+  border: 1px solid rgba(63,50,32,.16);
+  border-radius: 24px;
+  background: rgba(255,252,244,.98);
+  box-shadow: 0 18px 46px rgba(55,43,28,.12);
+}
+
+body.journal-page--collection .journal-collection-book__nav {
+  position: relative;
+  top: auto;
+  z-index: 2;
+  margin: 0;
+  padding: 10px;
+  border: 0;
+  border-bottom: 1px solid rgba(63,50,32,.11);
+  border-radius: 0;
+  background: rgba(255,252,244,.98);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+body.journal-page--collection .journal-collection-book__button {
+  min-height: 42px;
+  background: rgba(255,255,255,.78);
+  box-shadow: none;
+}
+
+body.journal-page--collection .journal-collection-book__viewport {
+  border: 0;
+  border-radius: 0;
+  background: rgba(255,252,244,.98);
+  box-shadow: none;
+}
+
+body.journal-page--collection .journal-collection-single .journal-collection-page {
+  padding: clamp(18px, 2.4vw, 30px);
+  background: rgba(255,252,244,.98);
+}
+
+body.journal-page--collection .journal-collection-cover-art {
+  min-height: clamp(390px, 52vh, 560px);
+  border-radius: 18px;
+  box-shadow: 0 16px 38px rgba(16,36,58,.14);
+}
+
+body.journal-page--collection .journal-collection-cover-index,
+body.journal-page--collection .journal-collection-single .journal-collection-page__head,
+body.journal-page--collection .journal-collection-single .journal-post__media,
+body.journal-page--collection .journal-collection-single .journal-post__text {
+  width: min(820px, 100%);
+  max-width: min(820px, 100%);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+body.journal-page--collection .journal-collection-single .journal-collection-page__head {
+  margin-bottom: 12px;
+}
+
+body.journal-page--collection .journal-collection-single .journal-collection-page__head h4 {
+  max-width: none;
+}
+
+body.journal-page--collection .journal-collection-single .journal-post__media {
+  margin-top: 12px;
+  margin-bottom: 14px;
+}
+
+body.journal-page--collection .journal-collection-single .journal-post__media--single .journal-post__media-item {
+  max-width: 100%;
+}
+
+body.journal-page--collection .journal-collection-single .journal-post__text {
+  margin-top: 10px;
+  text-align: left;
+}
+
+body.journal-page--collection .journal-collection-single > .journal-post__rights,
+body.journal-page--collection .journal-collection-single > .journal-post__actions,
+body.journal-page--collection .journal-collection-single > .journal-comments {
+  width: min(820px, 100%);
+  max-width: min(820px, 100%);
+}
+
+@media (max-width: 720px) {
+  body.journal-page--collection .journal-layout--single {
+    width: min(100%, calc(100vw - 16px));
+    max-width: min(100%, calc(100vw - 16px));
+  }
+
+  body.journal-page--collection .journal-collection-book {
+    border-radius: 18px;
+  }
+
+  body.journal-page--collection .journal-collection-book__nav {
+    padding: 8px;
+    gap: 8px;
+  }
+
+  body.journal-page--collection .journal-collection-single .journal-collection-page {
+    padding: 14px;
+  }
+
+  body.journal-page--collection .journal-collection-cover-art {
+    min-height: 400px;
+    border-radius: 16px;
+  }
+}
