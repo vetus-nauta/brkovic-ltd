@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-URL="http://127.0.0.1:18090/tools/device-preview.html?device=tablet"
+URL="http://127.0.0.1:18090/tools/device-preview.html?device=tablet&path=/journal.html%3Fcollection%3Dchelovecheskoe-i-morskoe&v=20260525-journal-book-03"
 LOG="/tmp/brkovic-ltd-preview-server.log"
 
 if ! curl -fsS "http://127.0.0.1:18090/index.html" >/dev/null 2>&1; then

@@ -76,7 +76,7 @@
   <main class="preview" aria-label="BRKOVIC local device preview">
     <section class="device" id="device">
       <div class="screen">
-        <iframe id="siteFrame" title="BRKOVIC local homepage preview" src="/index.html"></iframe>
+        <iframe id="siteFrame" title="BRKOVIC local preview" src="/index.html"></iframe>
       </div>
     </section>
   </main>
@@ -84,7 +84,8 @@
     const params = new URLSearchParams(window.location.search);
     const device = params.get("device") === "tablet" ? "tablet" : "phone";
     const lang = params.get("lang");
-    const target = new URL("/index.html", window.location.origin);
+    const rawPath = params.get("path") || "/index.html";
+    const target = new URL(rawPath.startsWith("/") ? rawPath : `/${rawPath}`, window.location.origin);
     if (lang === "ru" || lang === "en") target.searchParams.set("lang", lang);
     if (device === "tablet") document.getElementById("device").classList.add("device--tablet");
     document.title = device === "tablet" ? "BRKOVIC планшет" : "BRKOVIC мобила";

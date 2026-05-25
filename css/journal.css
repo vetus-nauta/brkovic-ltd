@@ -3538,7 +3538,19 @@ body.journal-page {
 
 /* === Journal multipage book reader 20260525 === */
 body.journal-page--collection .journal-layout--single .journal-card--feed {
-  max-width: min(1120px, calc(100vw - 28px));
+  max-width: min(1188px, calc(100vw - 28px));
+}
+
+body.journal-page--collection .journal-layout--single {
+  max-width: 1188px;
+}
+
+body.journal-page--collection .journal-layout--single .journal-feed {
+  max-width: none;
+}
+
+body.journal-page--collection .journal-collection-single {
+  padding: 0;
 }
 
 .journal-collection-cover__count {
