@@ -530,6 +530,7 @@ let lightboxJustClosedAt = 0;
     const eyebrow = document.getElementById('journalFeedEyebrow');
 
     if (body) body.classList.toggle('journal-page--single', singleMode);
+    if (body) body.classList.toggle('journal-page--collection', singleMode && singleModeKind === 'collection');
     if (layout) layout.classList.toggle('journal-layout--single', singleMode);
     if (side) side.hidden = singleMode;
     if (filters) filters.hidden = singleMode;
@@ -985,16 +986,11 @@ let lightboxJustClosedAt = 0;
   function renderCollectionCoverCard(feed, collection, lang) {
     const title = entryTitle(collection, lang);
     const excerpt = entryExcerpt(collection, lang);
-    const likeState = likeStateBySlug[likeStateKey('collection', collection.slug)] || {
-      liked: false,
-      likesCount: collection.likesCount || 0,
-    };
     const pages = collection.pages || [];
     const pageList = pages.slice(0, 6).map((page, index) => {
       const pageTitle = entryTitle(page.post, lang);
       return `<li><span>${escapeHtml(String(index + 1))}</span>${escapeHtml(pageTitle)}</li>`;
     }).join('');
-    const commentsCount = collection.comments?.length || collection.commentsCount || 0;
 
     const card = document.createElement('article');
     card.className = 'journal-post journal-collection-cover';
@@ -1020,25 +1016,142 @@ let lightboxJustClosedAt = 0;
       ` : ''}
       <div class="journal-post__actions">
         <div class="journal-post__left">
-          <button class="journal-action ${likeState.liked ? 'is-liked' : ''}" data-action="like" data-kind="collection" data-id="${escapeHtml(collection.id)}" data-slug="${escapeHtml(collection.slug)}">
-            ${escapeHtml(t('journal_like', 'Like'))} · <span>${likeState.likesCount}</span>
-          </button>
-          <a class="journal-action" href="journal.html?collection=${encodeURIComponent(collection.slug)}#journal-comments-${encodeURIComponent(collection.slug)}">
-            ${escapeHtml(t('journal_comment', 'Comment'))} · <span>${commentsCount}</span>
-          </a>
+          <span class="journal-collection-cover__count">${escapeHtml(lang === 'ru' ? `Глав: ${collection.pagesCount || pages.length}` : `Chapters: ${collection.pagesCount || pages.length}`)}</span>
         </div>
         <div class="journal-post__right">
           <a class="journal-action journal-collection-cover__open" href="journal.html?collection=${encodeURIComponent(collection.slug)}">
             ${escapeHtml(lang === 'ru' ? 'Открыть главы' : 'Open chapters')}
           </a>
-          <button class="journal-action" data-action="share" data-kind="collection" data-id="${escapeHtml(collection.id)}" data-slug="${escapeHtml(collection.slug)}">
-            ${escapeHtml(t('journal_share', 'Share'))}
-          </button>
         </div>
       </div>
     `;
 
     feed.appendChild(card);
+  }
+
+  function textUnits(text) {
+    const raw = String(text || '').trim();
+    if (!raw) return [];
+
+    return raw
+      .split(/\n{2,}/)
+      .map((part) => part.trim())
+      .filter(Boolean)
+      .flatMap((part) => {
+        if (part.length < 680) return [part];
+        const sentences = part.match(/[^.!?…]+[.!?…]+|[^.!?…]+$/g);
+        if (!sentences || sentences.length <= 1) return [part];
+
+        const units = [];
+        let current = '';
+        sentences.forEach((sentence) => {
+          const clean = sentence.trim();
+          if (!clean) return;
+          const next = current ? `${current} ${clean}` : clean;
+          if (current && next.length > 620) {
+            units.push(current);
+            current = clean;
+          } else {
+            current = next;
+          }
+        });
+        if (current) units.push(current);
+        return units;
+      });
+  }
+
+  function preferredBookChunks(text, mediaCount = 0) {
+    const length = String(text || '').trim().length;
+    const narrow = typeof window !== 'undefined' && window.matchMedia('(max-width: 720px)').matches;
+    const target = narrow ? 760 : 1180;
+    const imageWeight = Math.max(0, Number(mediaCount || 0)) * (narrow ? 280 : 420);
+    return Math.max(1, Math.ceil((length + imageWeight) / target));
+  }
+
+  function chunkTextUnits(units, preferredCount) {
+    const clean = (units || []).filter(Boolean);
+    if (!clean.length) return [[]];
+
+    const count = Math.max(1, Math.min(preferredCount, clean.length));
+    const totalLength = clean.reduce((sum, unit) => sum + unit.length, 0);
+    const targetLength = Math.max(1, Math.round(totalLength / count));
+    const chunks = [];
+    let current = [];
+    let currentLength = 0;
+
+    clean.forEach((unit, index) => {
+      current.push(unit);
+      currentLength += unit.length;
+
+      const chunksLeft = count - chunks.length;
+      const unitsLeft = clean.length - index - 1;
+      if (chunksLeft > 1 && currentLength >= targetLength && unitsLeft >= chunksLeft - 1) {
+        chunks.push(current);
+        current = [];
+        currentLength = 0;
+      }
+    });
+
+    if (current.length) chunks.push(current);
+    return chunks;
+  }
+
+  function bookTextMarkup(units) {
+    const list = (units || []).filter(Boolean);
+    if (!list.length) return '<div class="journal-post__text"></div>';
+    return '<div class="journal-post__text">' + list.map((p) => '<p>' + escapeHtml(p).replace(/\n/g, '<br>') + '</p>').join('') + '</div>';
+  }
+
+  function mediaForBookChunk(media, chunkIndex, chunksCount) {
+    const items = Array.isArray(media) ? media.filter((item) => item?.src) : [];
+    if (!items.length) return [];
+    if (chunksCount <= 1) return items;
+
+    return items.filter((_, mediaIndex) => {
+      const targetChunk = Math.min(chunksCount - 1, Math.floor((mediaIndex * chunksCount) / items.length));
+      return targetChunk === chunkIndex;
+    });
+  }
+
+  function buildCollectionBookPages(collection, lang) {
+    return (collection.pages || []).flatMap((page, chapterIndex) => {
+      const post = page.post || {};
+      const title = entryTitle(post, lang);
+      const text = entryText(post, lang);
+      const chunks = chunkTextUnits(textUnits(text), preferredBookChunks(text, post.media?.length || 0));
+
+      return chunks.map((units, partIndex) => ({
+        chapterIndex,
+        partIndex,
+        partTotal: chunks.length,
+        title,
+        date: post.date,
+        slug: post.slug,
+        media: mediaForBookChunk(post.media || [], partIndex, chunks.length),
+        units,
+      }));
+    });
+  }
+
+  function renderCollectionBookPage(page, index, total, lang) {
+    const partLabel = page.partTotal > 1
+      ? (lang === 'ru' ? ` · лист ${page.partIndex + 1}/${page.partTotal}` : ` · sheet ${page.partIndex + 1}/${page.partTotal}`)
+      : '';
+    const progressLabel = lang === 'ru'
+      ? `Часть ${page.chapterIndex + 1}${partLabel} · ${index + 2} из ${total + 1}`
+      : `Part ${page.chapterIndex + 1}${partLabel} · ${index + 2} of ${total + 1}`;
+
+    return `
+      <section class="journal-collection-page" id="chapter-${page.chapterIndex + 1}-${page.partIndex + 1}" data-collection-page data-book-label="${escapeHtml(progressLabel)}">
+        <div class="journal-collection-page__head">
+          <p class="journal-post__eyebrow">${escapeHtml(lang === 'ru' ? `Часть ${page.chapterIndex + 1}${partLabel}` : `Part ${page.chapterIndex + 1}${partLabel}`)}</p>
+          <h4>${escapeHtml(page.title)}</h4>
+          ${page.date ? `<time>${escapeHtml(formatDate(page.date))}</time>` : ''}
+        </div>
+        ${mediaMarkup(page.media || [], page.slug)}
+        ${bookTextMarkup(page.units)}
+      </section>
+    `;
   }
 
   function renderCollectionDetail(feed, collection, lang) {
@@ -1049,45 +1162,59 @@ let lightboxJustClosedAt = 0;
       liked: false,
       likesCount: collection.likesCount || 0,
     };
-    const pagesMarkup = (collection.pages || []).map((page, index) => {
-      const post = page.post || {};
-      const pageTitle = entryTitle(post, lang);
-      const pageText = entryText(post, lang);
-      return `
-        <section class="journal-collection-page" id="chapter-${index + 1}">
-          <div class="journal-collection-page__head">
-            <p class="journal-post__eyebrow">${escapeHtml(lang === 'ru' ? `Часть ${index + 1}` : `Part ${index + 1}`)}</p>
-            <h4>${escapeHtml(pageTitle)}</h4>
-            <time>${escapeHtml(formatDate(post.date))}</time>
-          </div>
-          ${mediaMarkup(post.media || [], post.slug)}
-          ${textMarkup(pageText)}
-        </section>
-      `;
+    const bookPages = buildCollectionBookPages(collection, lang);
+    const pagesMarkup = bookPages.map((page, index) => renderCollectionBookPage(page, index, bookPages.length, lang)).join('');
+    const pageList = (collection.pages || []).map((page, index) => {
+      const pageTitle = entryTitle(page.post, lang);
+      return `<li><span>${escapeHtml(String(index + 1))}</span>${escapeHtml(pageTitle)}</li>`;
     }).join('');
+    const totalBookPages = bookPages.length + 1;
+    const firstProgress = lang === 'ru'
+      ? `Обложка · 1 из ${totalBookPages}`
+      : `Cover · 1 of ${totalBookPages}`;
 
     const article = document.createElement('article');
     article.className = 'journal-post journal-post--single journal-collection-single';
     article.dataset.slug = collection.slug;
     article.dataset.kind = 'collection';
     article.innerHTML = `
-      <header class="journal-collection-single__cover">
-        <div class="journal-post__meta">
-          <div>
-            <p class="journal-post__eyebrow">${escapeHtml(lang === 'ru' ? 'Многостраничная запись' : 'Multi-page entry')}</p>
-            <h3 class="journal-post__title">${escapeHtml(title)}</h3>
-            <p class="journal-collection-cover__author">${escapeHtml(collection.authorLine || 'Vetus Nauta - Brkovic')}</p>
+      <div class="journal-collection-book" data-collection-book>
+        <div class="journal-collection-book__nav">
+          <button class="journal-collection-book__button" type="button" data-collection-step="-1" disabled>
+            <span aria-hidden="true">‹</span>
+            ${escapeHtml(lang === 'ru' ? 'Назад' : 'Back')}
+          </button>
+          <div class="journal-collection-book__progress" data-collection-progress>${escapeHtml(firstProgress)}</div>
+          <button class="journal-collection-book__button" type="button" data-collection-step="1">
+            ${escapeHtml(lang === 'ru' ? 'Дальше' : 'Next')}
+            <span aria-hidden="true">›</span>
+          </button>
+        </div>
+        <div class="journal-collection-book__viewport">
+          <div class="journal-collection-book__track" data-collection-track>
+            <section class="journal-collection-page journal-collection-page--cover" data-collection-page data-book-label="${escapeHtml(firstProgress)}">
+              <div class="journal-post__meta">
+                <div>
+                  <p class="journal-post__eyebrow">${escapeHtml(lang === 'ru' ? 'Многостраничная запись' : 'Multi-page entry')}</p>
+                  <h3 class="journal-post__title">${escapeHtml(title)}</h3>
+                  <p class="journal-collection-cover__author">${escapeHtml(collection.authorLine || 'Vetus Nauta - Brkovic')}</p>
+                </div>
+                <div class="journal-post__date">${escapeHtml(formatDate(collection.date))}</div>
+              </div>
+              ${mediaMarkup(collection.media, collection.slug)}
+              ${excerpt ? `<p class="journal-collection-cover__excerpt">${escapeHtml(excerpt)}</p>` : ''}
+              <div class="journal-collection-single__meta">
+                <span>${escapeHtml(lang === 'ru' ? `Глав: ${collection.pagesCount || collection.pages?.length || 0}` : `Chapters: ${collection.pagesCount || collection.pages?.length || 0}`)}</span>
+              </div>
+              ${pageList ? `
+                <ol class="journal-collection-cover__pages journal-collection-cover__pages--book">
+                  ${pageList}
+                </ol>
+              ` : ''}
+            </section>
+            ${pagesMarkup || `<section class="journal-collection-page" data-collection-page><div class="journal-empty">${escapeHtml(t('journal_empty', 'No entries yet.'))}</div></section>`}
           </div>
-          <div class="journal-post__date">${escapeHtml(formatDate(collection.date))}</div>
         </div>
-        ${mediaMarkup(collection.media, collection.slug)}
-        ${excerpt ? `<p class="journal-collection-cover__excerpt">${escapeHtml(excerpt)}</p>` : ''}
-        <div class="journal-collection-single__meta">
-          <span>${escapeHtml(lang === 'ru' ? `Глав: ${collection.pagesCount || collection.pages?.length || 0}` : `Chapters: ${collection.pagesCount || collection.pages?.length || 0}`)}</span>
-        </div>
-      </header>
-      <div class="journal-collection-single__pages">
-        ${pagesMarkup || `<div class="journal-empty">${escapeHtml(t('journal_empty', 'No entries yet.'))}</div>`}
       </div>
       <p class="journal-post__rights">${escapeHtml(t('journal_rights_notice', lang === 'ru' ? '© BRKOVIC / VETUS NAUTA. Текст и медиа защищены авторским правом. Использование только с письменного разрешения.' : '© BRKOVIC / VETUS NAUTA. Text and media are protected by copyright. Use only with written permission.'))}</p>
       <div class="journal-post__actions" id="journal-comments-${escapeHtml(collection.slug)}">
@@ -1356,6 +1483,7 @@ let lightboxJustClosedAt = 0;
       renderCollectionDetail(feed, detailedCollection, getLang());
       bindFeedActions();
       bindLightboxTriggers();
+      bindCollectionBooks();
     } catch {
       feed.innerHTML = `<div class="journal-empty">${escapeHtml(t('journal_load_error', 'Failed to load entry.'))}</div>`;
     }
@@ -1473,6 +1601,65 @@ let lightboxJustClosedAt = 0;
 
         openLightbox(slug, index);
       };
+    });
+  }
+
+  function bindCollectionBooks() {
+    document.querySelectorAll('[data-collection-book]').forEach((book) => {
+      const track = book.querySelector('[data-collection-track]');
+      const pages = Array.from(book.querySelectorAll('[data-collection-page]'));
+      const progress = book.querySelector('[data-collection-progress]');
+      const prevButton = book.querySelector('[data-collection-step="-1"]');
+      const nextButton = book.querySelector('[data-collection-step="1"]');
+      if (!track || !pages.length) return;
+
+      const currentIndex = () => Math.max(0, Math.min(
+        pages.length - 1,
+        Math.round(track.scrollLeft / Math.max(1, track.clientWidth))
+      ));
+
+      const updateHeight = (index = currentIndex()) => {
+        const page = pages[Math.max(0, Math.min(pages.length - 1, index))];
+        if (!page) return;
+        const height = Math.ceil(page.getBoundingClientRect().height);
+        if (height > 0) track.style.minHeight = `${height}px`;
+      };
+
+      const updateState = (index = currentIndex()) => {
+        const next = Math.max(0, Math.min(pages.length - 1, index));
+        if (progress) {
+          progress.textContent = pages[next]?.dataset.bookLabel || `${next + 1} / ${pages.length}`;
+        }
+        if (prevButton) prevButton.disabled = next <= 0;
+        if (nextButton) nextButton.disabled = next >= pages.length - 1;
+        updateHeight(next);
+      };
+
+      const goTo = (index) => {
+        const next = Math.max(0, Math.min(pages.length - 1, index));
+        track.scrollTo({ left: next * track.clientWidth, behavior: 'smooth' });
+        updateState(next);
+      };
+
+      book.querySelectorAll('[data-collection-step]').forEach((button) => {
+        button.onclick = () => goTo(currentIndex() + Number(button.dataset.collectionStep || 0));
+      });
+
+      let scrollTimer = 0;
+      track.addEventListener('scroll', () => {
+        window.clearTimeout(scrollTimer);
+        scrollTimer = window.setTimeout(() => updateState(), 80);
+      });
+
+      pages.forEach((page) => {
+        page.querySelectorAll('img, video').forEach((media) => {
+          media.addEventListener('load', () => updateHeight(), { once: true });
+          media.addEventListener('loadedmetadata', () => updateHeight(), { once: true });
+        });
+      });
+
+      window.addEventListener('resize', () => updateState());
+      window.requestAnimationFrame(() => updateState(0));
     });
   }
 
