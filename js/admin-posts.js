@@ -3,6 +3,7 @@
   const API_ORIGIN = IS_LOCAL ? 'https://brkovic.ltd' : '';
   const API_BASE = IS_LOCAL ? '/admin-api-proxy.php?path=' : '/api';
   const STORAGE_TRANSLATIONS = 'brkovic_admin_translations_v1';
+  const STORAGE_ADVANCED_OPEN = 'brkovic_admin_posts_advanced_open_v1';
   const TRANSLATE_CHUNK_LIMIT = 450;
 
   let isLoggedIn = false;
@@ -14,6 +15,9 @@
   let groupsCache = [];
   let groupSelect = null;
   let groupOrderInput = null;
+  let collectionsCache = [];
+  let currentCollectionId = '';
+  let collectionSlugTouched = false;
 
   const statusNode = document.getElementById('adminPostsStatus');
   const postsListNode = document.getElementById('adminPostsList');
@@ -29,6 +33,17 @@
   const generateEnBtn = document.getElementById('generateEnBtn');
   const slugInput = document.getElementById('slug');
   const titleRuInput = document.getElementById('titleRu');
+  const advancedToggleBtn = document.getElementById('toggleAdvancedFields');
+  const advancedFieldsSummary = document.getElementById('advancedFieldsSummary');
+  const collectionsStatusNode = document.getElementById('journalCollectionsStatus');
+  const collectionsListNode = document.getElementById('journalCollectionsList');
+  const collectionForm = document.getElementById('collectionEditorForm');
+  const collectionPagesPicker = document.getElementById('collectionPagesPicker');
+  const refreshCollectionsBtn = document.getElementById('refreshCollectionsBtn');
+  const newCollectionBtn = document.getElementById('newCollectionBtn');
+  const collectionTitleRuInput = document.getElementById('collectionTitleRu');
+  const collectionSlugInput = document.getElementById('collectionSlug');
+  const openPublicCollectionLink = document.getElementById('openPublicCollectionLink');
 
   let archiveToggleBtn = document.getElementById('toggleArchiveBtn');
 
@@ -59,9 +74,58 @@
 
   function setStatus(text) { if (statusNode) statusNode.textContent = text || ''; }
   function setMediaStatus(text) { if (mediaStatusNode) mediaStatusNode.textContent = text || ''; }
+  function setCollectionsStatus(text) { if (collectionsStatusNode) collectionsStatusNode.textContent = text || ''; }
   function setLoggedInUI(loggedIn) {
     isLoggedIn = loggedIn;
     if (loginForm) loginForm.style.display = loggedIn ? 'none' : '';
+  }
+
+  function advancedValuesFromForm() {
+    return [
+      'titleEn',
+      'excerptEn',
+      'contentEn',
+      'seoTitleRu',
+      'seoTitleEn',
+      'seoDescriptionRu',
+      'seoDescriptionEn',
+    ].some((id) => (document.getElementById(id)?.value || '').trim());
+  }
+
+  function advancedValuesFromPost(post) {
+    return !!(
+      post?.titleEn ||
+      post?.excerptEn ||
+      post?.contentEn ||
+      post?.seoTitleRu ||
+      post?.seoTitleEn ||
+      post?.seoDescriptionRu ||
+      post?.seoDescriptionEn
+    );
+  }
+
+  function updateAdvancedFieldsSummary(hasValues = advancedValuesFromForm()) {
+    if (!advancedFieldsSummary) return;
+    const isOpen = form?.classList.contains('is-advanced-open');
+    if (isOpen) {
+      advancedFieldsSummary.textContent = 'Открыто: переводы и SEO доступны для редактирования.';
+      return;
+    }
+    advancedFieldsSummary.textContent = hasValues
+      ? 'Свернуто: переводы/SEO уже есть, данные сохранятся.'
+      : 'Свернуто: можно писать и публиковать только по-русски.';
+  }
+
+  function setAdvancedFieldsExpanded(expanded, persist = true, hasValues = advancedValuesFromForm()) {
+    if (!form) return;
+    form.classList.toggle('is-advanced-open', expanded);
+    form.classList.toggle('is-advanced-collapsed', !expanded);
+    if (advancedToggleBtn) {
+      advancedToggleBtn.textContent = expanded ? 'Свернуть переводы и SEO' : 'Переводы и SEO';
+      advancedToggleBtn.setAttribute('aria-expanded', String(expanded));
+    }
+    if (persist) writeJson(STORAGE_ADVANCED_OPEN, expanded);
+    updateAdvancedFieldsSummary(hasValues);
   }
 
   function escapeHtml(text) {
@@ -281,15 +345,23 @@
 
   async function listPosts() { return api('/admin/posts'); }
   async function listGroups() { return api('/admin/journal-groups'); }
+  async function listCollections() { return api('/admin/journal-collections'); }
   async function createGroup(payload) {
     return api('/admin/journal-groups', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
   }
   async function getPost(id) { return api(`/admin/posts/${encodeURIComponent(id)}`); }
+  async function getCollection(id) { return api(`/admin/journal-collections/${encodeURIComponent(id)}`); }
   async function createPost(payload) {
     return api('/admin/posts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
   }
+  async function createCollection(payload) {
+    return api('/admin/journal-collections', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+  }
   async function updatePost(id, payload) {
     return api(`/admin/posts/${encodeURIComponent(id)}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+  }
+  async function updateCollection(id, payload) {
+    return api(`/admin/journal-collections/${encodeURIComponent(id)}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
   }
   async function rebuildGps() {
     return api('/admin/gps/rebuild', {
@@ -454,6 +526,183 @@
     });
   }
 
+  function getPostTitle(post) {
+    return post?.titleRu || post?.titleEn || post?.slug || 'Без названия';
+  }
+
+  function getCollectionSelectedPages(pages = []) {
+    return pages
+      .map((page, index) => ({
+        postId: page?.post?.id || page?.postId || '',
+        pageOrder: Number.isFinite(Number(page?.pageOrder)) ? Number(page.pageOrder) : index,
+      }))
+      .filter((page) => page.postId);
+  }
+
+  function collectCollectionPages() {
+    if (!collectionPagesPicker) return [];
+
+    return Array.from(collectionPagesPicker.querySelectorAll('[data-collection-page-post]'))
+      .filter((checkbox) => checkbox.checked)
+      .map((checkbox, index) => {
+        const postId = checkbox.dataset.collectionPagePost;
+        const orderInput = Array.from(collectionPagesPicker.querySelectorAll('[data-collection-page-order]'))
+          .find((input) => input.dataset.collectionPageOrder === postId);
+        const pageOrder = Number(orderInput?.value);
+        return {
+          postId,
+          pageOrder: Number.isFinite(pageOrder) ? Math.trunc(pageOrder) : index,
+        };
+      })
+      .filter((page) => page.postId);
+  }
+
+  function renderCollectionPagesPicker(selectedPages = collectCollectionPages()) {
+    if (!collectionPagesPicker) return;
+
+    const selected = new Map(getCollectionSelectedPages(selectedPages).map((page) => [page.postId, page.pageOrder]));
+    const items = postsCache.filter((post) => post.status !== 'ARCHIVED');
+
+    if (!items.length) {
+      collectionPagesPicker.innerHTML = '<div class="admin-post-meta">Сначала создайте обычные посты-страницы.</div>';
+      return;
+    }
+
+    collectionPagesPicker.innerHTML = items.map((post, index) => {
+      const checked = selected.has(post.id);
+      const order = checked ? selected.get(post.id) : index;
+      return `
+        <label class="collection-page-row">
+          <input type="checkbox" data-collection-page-post="${escapeHtml(post.id)}" ${checked ? 'checked' : ''} />
+          <span>
+            <span class="collection-page-title">${escapeHtml(getPostTitle(post))}</span>
+            <span class="admin-post-meta">Slug: ${escapeHtml(post.slug || '')} · ${escapeHtml(getStatusLabel(post.status))}</span>
+          </span>
+          <input type="number" data-collection-page-order="${escapeHtml(post.id)}" min="0" step="1" value="${escapeHtml(String(order))}" aria-label="Порядок страницы" />
+        </label>
+      `;
+    }).join('');
+  }
+
+  function renderCollectionsList(items = collectionsCache) {
+    if (!collectionsListNode) return;
+
+    if (!items.length) {
+      collectionsListNode.innerHTML = '<div class="admin-post-meta">Многостраничных записей пока нет или backend API ещё не включён.</div>';
+      return;
+    }
+
+    collectionsListNode.innerHTML = items.map((item) => `
+      <article class="journal-collection-item ${item.id === currentCollectionId ? 'is-active' : ''}" data-collection-id="${escapeHtml(item.id)}">
+        <h3>${escapeHtml(item.titleRu || item.titleEn || item.slug)}</h3>
+        <div class="admin-post-meta">
+          <div>Статус: ${escapeHtml(getStatusLabel(item.status))}</div>
+          <div>Slug: ${escapeHtml(item.slug || '')}</div>
+          <div>Страницы: ${escapeHtml(String(item.pagesCount || item.pages?.length || 0))}</div>
+          <div>Комментарии: ${escapeHtml(String(item.commentsCount || 0))}</div>
+          <div>Лайки: ${escapeHtml(String(item.likesCount || 0))}</div>
+        </div>
+      </article>
+    `).join('');
+
+    collectionsListNode.querySelectorAll('.journal-collection-item').forEach((node) => {
+      node.addEventListener('click', async () => {
+        const id = node.dataset.collectionId;
+        if (!id) return;
+        await loadCollection(id);
+      });
+    });
+  }
+
+  function fillCollectionForm(collection) {
+    currentCollectionId = collection?.id || '';
+    collectionSlugTouched = true;
+
+    document.getElementById('collectionId').value = collection?.id || '';
+    document.getElementById('collectionTitleRu').value = collection?.titleRu || '';
+    document.getElementById('collectionSlug').value = collection?.slug || '';
+    document.getElementById('collectionStatus').value = collection?.status || 'DRAFT';
+    document.getElementById('collectionPublishedAt').value = toDatetimeLocal(collection?.publishedAt);
+    document.getElementById('collectionPinned').value = String(!!collection?.isPinned);
+    document.getElementById('collectionAuthorLine').value = collection?.authorLine || 'Vetus Naut - Brkovic';
+    document.getElementById('collectionExcerptRu').value = collection?.excerptRu || '';
+    document.getElementById('collectionCoverMediaId').value = collection?.coverMedia?.id || collection?.coverMediaId || '';
+
+    renderCollectionPagesPicker(collection?.pages || []);
+    renderCollectionsList();
+
+    if (openPublicCollectionLink) {
+      openPublicCollectionLink.href = collection?.slug
+        ? `journal.html?collection=${encodeURIComponent(collection.slug)}`
+        : 'journal.html';
+    }
+  }
+
+  function clearCollectionForm() {
+    currentCollectionId = '';
+    collectionSlugTouched = false;
+    collectionForm?.reset();
+    document.getElementById('collectionId').value = '';
+    document.getElementById('collectionStatus').value = 'DRAFT';
+    document.getElementById('collectionPinned').value = 'false';
+    document.getElementById('collectionPublishedAt').value = '';
+    document.getElementById('collectionSlug').value = '';
+    document.getElementById('collectionAuthorLine').value = 'Vetus Naut - Brkovic';
+    renderCollectionPagesPicker([]);
+    renderCollectionsList();
+    if (openPublicCollectionLink) openPublicCollectionLink.href = 'journal.html';
+  }
+
+  function collectCollectionPayload() {
+    return {
+      titleRu: document.getElementById('collectionTitleRu').value.trim(),
+      slug: document.getElementById('collectionSlug').value.trim(),
+      excerptRu: document.getElementById('collectionExcerptRu').value.trim() || undefined,
+      status: document.getElementById('collectionStatus').value,
+      publishedAt: fromDatetimeLocal(document.getElementById('collectionPublishedAt').value),
+      isPinned: document.getElementById('collectionPinned').value === 'true',
+      authorLine: document.getElementById('collectionAuthorLine').value.trim() || 'Vetus Naut - Brkovic',
+      coverMediaId: document.getElementById('collectionCoverMediaId').value.trim() || null,
+      sourceLanguage: 'ru',
+      allowComments: true,
+      allowLikes: true,
+      pages: collectCollectionPages(),
+    };
+  }
+
+  async function refreshCollections(selectCollectionId, options = {}) {
+    if (!isLoggedIn || !collectionsListNode) return;
+
+    try {
+      collectionsCache = await listCollections();
+      renderCollectionsList(collectionsCache);
+      if (selectCollectionId) await loadCollection(selectCollectionId);
+      else if (currentCollectionId) await loadCollection(currentCollectionId);
+      else clearCollectionForm();
+      setCollectionsStatus(collectionsCache.length ? 'Многостраничные записи загружены.' : 'Многостраничных записей пока нет.');
+    } catch (error) {
+      collectionsCache = [];
+      renderCollectionsList([]);
+      renderCollectionPagesPicker();
+      setCollectionsStatus(options.silent
+        ? 'Многостраничные записи ждут backend-деплой.'
+        : (error.message || 'Не удалось загрузить многостраничные записи.'));
+    }
+  }
+
+  async function loadCollection(id) {
+    if (!isLoggedIn) return;
+
+    try {
+      setCollectionsStatus('Загружаем многостраничную запись...');
+      const collection = await getCollection(id);
+      fillCollectionForm(collection);
+      setCollectionsStatus('Многостраничная запись загружена.');
+    } catch (error) {
+      setCollectionsStatus(error.message || 'Не удалось загрузить многостраничную запись.');
+    }
+  }
+
   function renderMediaList(media) {
     if (!mediaListNode) return;
 
@@ -580,6 +829,7 @@
     document.getElementById('seoTitleEn').value = post?.seoTitleEn || '';
     document.getElementById('seoDescriptionRu').value = post?.seoDescriptionRu || '';
     document.getElementById('seoDescriptionEn').value = post?.seoDescriptionEn || '';
+    setAdvancedFieldsExpanded(!!readJson(STORAGE_ADVANCED_OPEN, false), false, advancedValuesFromPost(post));
 
     if (openPublicLink) {
       openPublicLink.href = post?.slug ? `journal.html?slug=${encodeURIComponent(post.slug)}` : 'journal.html';
@@ -601,6 +851,7 @@
     document.getElementById('allowLikes').value = 'true';
     document.getElementById('publishedAt').value = '';
     document.getElementById('slug').value = '';
+    setAdvancedFieldsExpanded(false, false, false);
     ensureGroupControls();
     renderGroupControls('');
     if (groupSelect) groupSelect.value = '';
@@ -637,6 +888,7 @@
     postsCache = await listPosts();
     updateArchiveButtonLabel();
     renderPostsList(postsCache);
+    renderCollectionPagesPicker();
     if (selectPostId) await loadPost(selectPostId);
     else if (currentPostId) await loadPost(currentPostId);
   }
@@ -663,6 +915,7 @@
       postsCache = await listPosts();
       updateArchiveButtonLabel();
       renderPostsList(postsCache);
+      await refreshCollections(null, { silent: true });
       clearFormForNewPost();
       setStatus('Вы вошли. Можно работать с постами.');
     } catch (error) {
@@ -675,6 +928,7 @@
     setStatus('Обновляем посты...');
     try {
       await refreshPosts();
+      await refreshCollections(null, { silent: true });
       setStatus('Посты обновлены.');
     } catch (error) {
       setStatus(error.message || 'Не удалось обновить посты.');
@@ -701,7 +955,20 @@
     setStatus('Форма нового поста готова.');
   });
 
+  newCollectionBtn?.addEventListener('click', () => {
+    if (!isLoggedIn) return;
+    clearCollectionForm();
+    setCollectionsStatus('Форма новой многостраничной записи готова.');
+  });
+
+  refreshCollectionsBtn?.addEventListener('click', async () => {
+    if (!isLoggedIn) return;
+    setCollectionsStatus('Обновляем многостраничные записи...');
+    await refreshCollections();
+  });
+
   slugInput?.addEventListener('input', () => { slugTouched = true; });
+  collectionSlugInput?.addEventListener('input', () => { collectionSlugTouched = true; });
 
   titleRuInput?.addEventListener('input', (event) => {
     if (!slugTouched || !slugInput.value.trim()) {
@@ -709,11 +976,24 @@
     }
   });
 
+  collectionTitleRuInput?.addEventListener('input', (event) => {
+    if (!collectionSlugTouched || !collectionSlugInput.value.trim()) {
+      collectionSlugInput.value = slugify(event.target.value);
+    }
+  });
+
+  advancedToggleBtn?.addEventListener('click', () => {
+    const next = !form?.classList.contains('is-advanced-open');
+    setAdvancedFieldsExpanded(next);
+  });
+
   generateEnBtn?.addEventListener('click', async () => {
     try {
       setStatus('Генерируем английскую версию...');
+      setAdvancedFieldsExpanded(true);
       generateEnBtn.disabled = true;
       await generateEnglishFields();
+      updateAdvancedFieldsSummary(true);
       setStatus('Поля EN сгенерированы из RU.');
     } catch (error) {
       setStatus(error.message || 'Не удалось сгенерировать EN.');
@@ -721,6 +1001,12 @@
       generateEnBtn.disabled = false;
     }
   });
+
+  document.querySelectorAll('.admin-advanced-field input, .admin-advanced-field textarea').forEach((input) => {
+    input.addEventListener('input', () => updateAdvancedFieldsSummary());
+  });
+
+  setAdvancedFieldsExpanded(!!readJson(STORAGE_ADVANCED_OPEN, false), false);
 
   form?.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -746,6 +1032,34 @@
       }
     } catch (error) {
       setStatus(error.message || 'Не удалось сохранить пост.');
+    }
+  });
+
+  collectionForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!isLoggedIn) return;
+
+    const payload = collectCollectionPayload();
+
+    if (!payload.slug || !payload.titleRu) {
+      setCollectionsStatus('Обязательные поля: Slug и название обложки RU.');
+      return;
+    }
+
+    try {
+      if (currentCollectionId) {
+        setCollectionsStatus('Сохраняем многостраничную запись...');
+        const updated = await updateCollection(currentCollectionId, payload);
+        await refreshCollections(updated.id);
+        setCollectionsStatus('Многостраничная запись обновлена.');
+      } else {
+        setCollectionsStatus('Создаём многостраничную запись...');
+        const created = await createCollection(payload);
+        await refreshCollections(created.id);
+        setCollectionsStatus('Многостраничная запись создана.');
+      }
+    } catch (error) {
+      setCollectionsStatus(error.message || 'Не удалось сохранить многостраничную запись.');
     }
   });
 
@@ -786,6 +1100,7 @@
       postsCache = await listPosts();
       updateArchiveButtonLabel();
       renderPostsList(postsCache);
+      await refreshCollections(null, { silent: true });
       clearFormForNewPost();
       setStatus('Вы уже вошли. Можно работать с постами.');
     }

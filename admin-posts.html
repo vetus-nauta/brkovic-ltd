@@ -62,7 +62,7 @@
           </aside>
 
           <section class="admin-posts-editor">
-            <form id="postEditorForm" class="post-editor-form">
+            <form id="postEditorForm" class="post-editor-form is-advanced-collapsed">
               <input type="hidden" id="postId" />
 
               <div class="post-editor-grid">
@@ -113,18 +113,8 @@
               </label>
 
               <label>
-                <span>Заголовок EN</span>
-                <input type="text" id="titleEn" />
-              </label>
-
-              <label>
                 <span>Краткое описание RU</span>
                 <textarea id="excerptRu" rows="3"></textarea>
-              </label>
-
-              <label>
-                <span>Краткое описание EN</span>
-                <textarea id="excerptEn" rows="3"></textarea>
               </label>
 
               <label>
@@ -132,27 +122,42 @@
                 <textarea id="contentRu" rows="8" required></textarea>
               </label>
 
-              <label>
+              <div class="post-editor-advanced-toggle">
+                <button type="button" id="toggleAdvancedFields" class="btn btn--secondary">Переводы и SEO</button>
+                <span id="advancedFieldsSummary" class="post-editor-advanced-summary">Свернуто</span>
+              </div>
+
+              <label class="admin-advanced-field">
+                <span>Заголовок EN</span>
+                <input type="text" id="titleEn" />
+              </label>
+
+              <label class="admin-advanced-field">
+                <span>Краткое описание EN</span>
+                <textarea id="excerptEn" rows="3"></textarea>
+              </label>
+
+              <label class="admin-advanced-field">
                 <span>Текст EN</span>
                 <textarea id="contentEn" rows="8"></textarea>
               </label>
 
-              <label>
+              <label class="admin-advanced-field">
                 <span>SEO Title RU</span>
                 <input type="text" id="seoTitleRu" />
               </label>
 
-              <label>
+              <label class="admin-advanced-field">
                 <span>SEO Title EN</span>
                 <input type="text" id="seoTitleEn" />
               </label>
 
-              <label>
+              <label class="admin-advanced-field">
                 <span>SEO Description RU</span>
                 <textarea id="seoDescriptionRu" rows="3"></textarea>
               </label>
 
-              <label>
+              <label class="admin-advanced-field">
                 <span>SEO Description EN</span>
                 <textarea id="seoDescriptionEn" rows="3"></textarea>
               </label>
@@ -169,7 +174,7 @@
               <form id="mediaUploadForm" class="media-upload-form">
                 <input type="file" id="mediaFile" accept="image/*,video/*" />
                 <button type="submit" class="btn btn--secondary">Загрузить медиа</button>
-                            </form></form>
+              </form>
               <div class="media-upload-actions">
                 <button id="rebuildGpsBtn" class="btn btn--secondary" type="button">Обновить GPS после новых фото</button>
               </div>
@@ -179,6 +184,88 @@
             </section>
           </section>
         </div>
+
+        <section class="journal-collections-card" id="journalCollectionsPanel">
+          <div class="journal-collections-head">
+            <div>
+              <h2>Многостраничные записи</h2>
+              <p>Обложка, порядок страниц и один общий блок лайков/комментариев для длинного материала.</p>
+            </div>
+            <div class="journal-collections-actions">
+              <button id="newCollectionBtn" class="btn btn--secondary" type="button">Новая запись</button>
+              <button id="refreshCollectionsBtn" class="btn btn--secondary" type="button">Обновить</button>
+            </div>
+          </div>
+
+          <div id="journalCollectionsStatus" class="admin-posts-status"></div>
+
+          <div class="journal-collections-layout">
+            <form id="collectionEditorForm" class="collection-editor-form">
+              <input type="hidden" id="collectionId" />
+
+              <div class="post-editor-grid">
+                <label>
+                  <span>Название обложки RU</span>
+                  <input type="text" id="collectionTitleRu" />
+                </label>
+                <label>
+                  <span>Slug</span>
+                  <input type="text" id="collectionSlug" />
+                </label>
+
+                <label>
+                  <span>Статус</span>
+                  <select id="collectionStatus">
+                    <option value="DRAFT">Черновик</option>
+                    <option value="PUBLISHED">Опубликована</option>
+                    <option value="ARCHIVED">Архив</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Дата публикации</span>
+                  <input type="datetime-local" id="collectionPublishedAt" />
+                </label>
+
+                <label>
+                  <span>Закрепить</span>
+                  <select id="collectionPinned">
+                    <option value="false">Нет</option>
+                    <option value="true">Да</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Авторство</span>
+                  <input type="text" id="collectionAuthorLine" value="Vetus Naut - Brkovic" />
+                </label>
+              </div>
+
+              <label>
+                <span>Короткое описание обложки RU</span>
+                <textarea id="collectionExcerptRu" rows="3"></textarea>
+              </label>
+
+              <label>
+                <span>ID медиа для обложки</span>
+                <input type="text" id="collectionCoverMediaId" placeholder="Можно оставить пустым" />
+              </label>
+
+              <div class="collection-pages-picker">
+                <div class="collection-pages-picker__head">
+                  <h3>Страницы</h3>
+                  <span>По умолчанию порядок идёт сверху вниз.</span>
+                </div>
+                <div id="collectionPagesPicker" class="collection-pages-picker__list"></div>
+              </div>
+
+              <div class="post-editor-actions">
+                <button type="submit" class="btn btn--primary">Сохранить многостраничную запись</button>
+                <a id="openPublicCollectionLink" class="btn btn--secondary" href="journal.html" target="_blank" rel="noopener">Открыть</a>
+              </div>
+            </form>
+
+            <div id="journalCollectionsList" class="journal-collections-list"></div>
+          </div>
+        </section>
       </section>
     </main>
   </div>

@@ -39,7 +39,8 @@
 }
 
 .admin-posts-login label span,
-.post-editor-form label span {
+.post-editor-form label span,
+.collection-editor-form label span {
   display: block;
   margin-bottom: 8px;
   color: var(--color-brand);
@@ -51,6 +52,9 @@
 .post-editor-form input,
 .post-editor-form textarea,
 .post-editor-form select,
+.collection-editor-form input,
+.collection-editor-form textarea,
+.collection-editor-form select,
 .media-upload-form input[type="file"] {
   width: 100%;
   border: 1px solid rgba(16,36,58,.14);
@@ -121,7 +125,8 @@
 }
 
 .post-editor-form,
-.media-upload-card {
+.media-upload-card,
+.journal-collections-card {
   border: 1px solid rgba(16,36,58,.10);
   border-radius: 18px;
   padding: 22px;
@@ -134,9 +139,30 @@
   gap: 14px;
 }
 
-.post-editor-form textarea {
+.post-editor-form textarea,
+.collection-editor-form textarea {
   resize: vertical;
   min-height: 110px;
+}
+
+.post-editor-form.is-advanced-collapsed .admin-advanced-field {
+  display: none;
+}
+
+.post-editor-advanced-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 14px 0 4px;
+  padding: 12px 0 2px;
+  border-top: 1px solid rgba(16,36,58,.08);
+}
+
+.post-editor-advanced-summary {
+  color: var(--color-muted);
+  font-size: 0.92rem;
+  line-height: 1.45;
 }
 
 .post-editor-actions {
@@ -175,8 +201,111 @@
   margin-top: 10px;
 }
 
+.journal-collections-card {
+  margin-top: 22px;
+}
+
+.journal-collections-head,
+.collection-pages-picker__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.journal-collections-head h2,
+.collection-pages-picker__head h3 {
+  margin: 0 0 6px;
+  color: var(--color-brand);
+}
+
+.journal-collections-head p,
+.collection-pages-picker__head span {
+  margin: 0;
+  color: var(--color-muted);
+  line-height: 1.45;
+}
+
+.journal-collections-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.journal-collections-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 22px;
+  align-items: start;
+}
+
+.collection-editor-form {
+  display: grid;
+  gap: 14px;
+}
+
+.collection-pages-picker {
+  display: grid;
+  gap: 12px;
+  border-top: 1px solid rgba(16,36,58,.08);
+  padding-top: 16px;
+}
+
+.collection-pages-picker__list,
+.journal-collections-list {
+  display: grid;
+  gap: 10px;
+}
+
+.collection-page-row,
+.journal-collection-item {
+  border: 1px solid rgba(16,36,58,.10);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.collection-page-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) 88px;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+}
+
+.collection-page-row input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+}
+
+.collection-page-row input[type="number"] {
+  padding: 10px 12px;
+}
+
+.collection-page-title,
+.journal-collection-item h3 {
+  color: var(--color-ink);
+  font-weight: 750;
+}
+
+.journal-collection-item {
+  padding: 14px;
+  cursor: pointer;
+}
+
+.journal-collection-item.is-active {
+  border-color: rgba(156,62,46,.35);
+  box-shadow: 0 0 0 3px rgba(191,109,78,.08);
+}
+
+.journal-collection-item h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+
 @media (max-width: 1100px) {
-  .admin-posts-layout {
+  .admin-posts-layout,
+  .journal-collections-layout {
     grid-template-columns: 1fr;
   }
 }
@@ -186,6 +315,23 @@
   .post-editor-grid,
   .media-upload-form {
     grid-template-columns: 1fr;
+  }
+
+  .journal-collections-head,
+  .collection-pages-picker__head {
+    display: grid;
+  }
+
+  .journal-collections-actions {
+    justify-content: flex-start;
+  }
+
+  .collection-page-row {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .collection-page-row input[type="number"] {
+    grid-column: 2;
   }
 }
 

@@ -37,6 +37,7 @@ $allowed = [
     '#^/auth/(login|logout|me)$#',
     '#^/admin/posts(?:/[^?]*)?$#',
     '#^/admin/journal-groups(?:/[^?]*)?$#',
+    '#^/admin/journal-collections(?:/[^?]*)?$#',
     '#^/admin/comments(?:/[^?]*)?$#',
     '#^/admin/gps/rebuild$#',
 ];
