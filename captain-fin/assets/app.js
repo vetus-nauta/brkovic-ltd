@@ -1,4 +1,4 @@
-const APP_VERSION = '2026.05.20-captain-fin-010';
+const APP_VERSION = '2026.05.28-captain-fin-015';
 const PUBLIC_WEB_APP_URL = 'https://brkovic.ltd/captain-fin/';
 const DRIVE_FOLDER_URL = 'https://drive.google.com/drive/folders/1x9m41AUYPocx7H0UezF_lZnFvzWO54zQ?usp=sharing';
 const $ = (id) => document.getElementById(id);
@@ -12,6 +12,30 @@ let isHydrating = false;
 let isComposing = false;
 let savePromise = null;
 let lastSavedSnapshot = '';
+let signedEntriesApplied = false;
+let selectRequestToken = 0;
+let saveRequestToken = 0;
+
+function isMobileLayout() {
+  return window.matchMedia('(max-width: 920px)').matches;
+}
+
+function historyStateEquals(next) {
+  const current = window.history.state || null;
+  if (!current && !next) return true;
+  if (!current || !next) return false;
+  return JSON.stringify(current) === JSON.stringify(next);
+}
+
+function syncHistoryState(state, replace = false) {
+  if (!window.history || !window.history.pushState) return;
+  if (historyStateEquals(state)) return;
+  if (replace) {
+    history.replaceState(state, '', window.location.pathname);
+    return;
+  }
+  history.pushState(state, '', window.location.pathname);
+}
 
 function today() {
   return new Date().toISOString().slice(0, 10);
@@ -50,7 +74,7 @@ async function downloadFile(url, fallbackName = 'captain-fin.xlsx') {
   setTimeout(() => URL.revokeObjectURL(objectUrl), 30000);
 }
 
-function blankReport() {
+function blankReport({ fromHistory = false } = {}) {
   clearTimeout(saveTimer);
   isHydrating = true;
   selectedId = null;
@@ -59,9 +83,10 @@ function blankReport() {
   $('notes').value = '';
   $('submitted').checked = false;
   $('entries').innerHTML = '';
+  signedEntriesApplied = false;
   renderAttachments([]);
   addEntry('income');
-  showEditor();
+  showEditor({ fromHistory });
   isHydrating = false;
   updateAll();
   lastSavedSnapshot = currentSnapshot();
@@ -73,7 +98,7 @@ function escapeAttr(value) {
   return String(value ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 }
 
-function addEntry(type = 'income', entry = {}) {
+function addEntry(type = 'income', entry = {}, source = 'manual') {
   const row = document.createElement('div');
   row.className = 'entry';
   row.innerHTML = `
@@ -88,8 +113,13 @@ function addEntry(type = 'income', entry = {}) {
     <button class="danger remove" title="Удалить">×</button>
   `;
   row.querySelector('.type').value = entry.type || type;
-  row.querySelectorAll('input,select').forEach((el) => el.addEventListener('input', handleEditorInput));
-  row.querySelector('.remove').addEventListener('click', () => { row.remove(); handleEditorInput(); });
+  row.querySelectorAll('input,select').forEach((el) => el.addEventListener('input', (event) => handleEditorInput(event.target)));
+  if (source !== 'auto') signedEntriesApplied = false;
+  row.querySelector('.remove').addEventListener('click', () => {
+    signedEntriesApplied = false;
+    row.remove();
+    handleEditorInput();
+  });
   $('entries').appendChild(row);
   updateAll();
 }
@@ -122,10 +152,17 @@ function renderAttachments(items = []) {
     return;
   }
   $('attachmentsList').innerHTML = items.map((item) => `
-    <a class="attachment-item" href="${escapeAttr(item.url)}" target="_blank" rel="noopener">
-      <span>${escapeAttr(item.name)}</span>
-      <span>${Math.ceil(Number(item.size || 0) / 1024)} KB</span>
-    </a>
+    <div class="attachment-item">
+      <div class="attachment-meta">
+        <strong>${escapeAttr(item.name)}</strong>
+        <span>${Math.ceil(Number(item.size || 0) / 1024)} KB</span>
+        ${item.relative_path || item.path ? `<small>${escapeAttr(item.relative_path || item.path)}</small>` : ''}
+      </div>
+      <div class="attachment-actions">
+        <a class="attachment-btn" href="${escapeAttr(item.open_url || item.url)}" target="_blank" rel="noopener">Открыть</a>
+        <a class="attachment-btn" href="${escapeAttr(item.download_url || item.url)}" target="_blank" rel="noopener">Скачать</a>
+      </div>
+    </div>
   `).join('');
 }
 
@@ -170,14 +207,37 @@ function parseSignedItems(text) {
   return items;
 }
 
+function isSignedLikeSavedReport(reportEntries, signedItems) {
+  if (!Array.isArray(reportEntries) || !Array.isArray(signedItems)) return false;
+  if (!signedItems.length || reportEntries.length !== signedItems.length) return false;
+  for (let i = 0; i < signedItems.length; i += 1) {
+    const row = reportEntries[i] ?? {};
+    const item = signedItems[i];
+    if ((row.type || '') !== item.type) return false;
+    if (Math.abs((Number(row.amount || 0) - Number(item.amount || 0))) > 0.0001) return false;
+    if (String(row.description || '').trim() !== String(item.description || '').trim()) return false;
+    if (String(row.entry_date || '').trim() !== String(item.entry_date || '').trim()) return false;
+  }
+  return true;
+}
+
 function syncSignedEntries({ force = false } = {}) {
   const items = parseSignedItems($('notes').value);
   if (!items.length) {
+    if (signedEntriesApplied) {
+      $('entries').innerHTML = '';
+      addEntry('income');
+      signedEntriesApplied = false;
+      updateAll();
+      if (force) setStatus('Signed-строки удалены из заметок: таблица очищена.');
+      return true;
+    }
     if (force) setStatus('Не нашел суммы со знаком + или -.');
     return false;
   }
   $('entries').innerHTML = '';
-  items.forEach((item) => addEntry(item.type, item));
+  items.forEach((item) => addEntry(item.type, item, 'auto'));
+  signedEntriesApplied = true;
   updateAll();
   if (force) setStatus(`Обновлено строк: ${items.length}.`);
   return true;
@@ -203,10 +263,21 @@ function renderList() {
       <strong>${escapeAttr(r.report_date)}${r.submitted ? ' · сдано' : ''}</strong>
       <span>${escapeAttr((r.notes || '').slice(0, 72) || 'Без заметок')}</span>
       <span>остаток ${money(c.current)} / будущий ${money(c.future)}</span>
+      <button class="soft report-delete" type="button" data-delete="${escapeAttr(r.id)}">Удалить</button>
     </div>`;
   }).join('');
   document.querySelectorAll('.report-item').forEach((item) => {
     item.addEventListener('click', () => selectReport(item.dataset.id));
+  });
+  document.querySelectorAll('.report-delete').forEach((button) => {
+    button.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const id = button.dataset.delete;
+      if (id) {
+        deleteReport(id).catch((error) => setStatus(error.message));
+      }
+    });
   });
 }
 
@@ -218,39 +289,58 @@ async function loadReports() {
   else blankReport();
 }
 
-async function selectReport(id) {
+async function selectReport(id, { fromHistory = false } = {}) {
   clearTimeout(saveTimer);
+  const token = ++selectRequestToken;
   isHydrating = true;
   const report = await api(`report&id=${encodeURIComponent(id)}`);
+  if (token !== selectRequestToken) {
+    isHydrating = false;
+    return;
+  }
   selectedId = report.id;
   $('reportDate').value = report.report_date;
   $('openingBalance').value = report.opening_balance;
   $('notes').value = report.notes || '';
   $('submitted').checked = Boolean(report.submitted);
   $('entries').innerHTML = '';
+  const reportLooksAutoSigned = isSignedLikeSavedReport(report.entries, parseSignedItems($('notes').value));
+  signedEntriesApplied = reportLooksAutoSigned;
   renderAttachments(report.attachments || []);
-  report.entries.forEach((entry) => addEntry(entry.type, entry));
-  if (!report.entries.length) addEntry('income');
-  showEditor();
+  report.entries.forEach((entry) => addEntry(entry.type, entry, 'manual'));
+  if (!report.entries.length) addEntry('income', {}, 'manual');
+  showEditor({ fromHistory });
   isHydrating = false;
   updateAll();
   lastSavedSnapshot = currentSnapshot();
   markClean();
   renderList();
+  if (!fromHistory && isMobileLayout()) {
+    syncHistoryState({ view: 'editor', id: selectedId }, history.state && history.state.view === 'editor');
+  }
 }
 
 async function saveReport({ refreshEditor = false } = {}) {
   if (isSaving) return savePromise;
   isSaving = true;
+  const saveToken = ++saveRequestToken;
+  const saveTargetId = selectedId;
   $('saveState').textContent = 'Сохранение...';
   savePromise = (async () => {
     const payload = collectReport();
     const sentSnapshot = JSON.stringify(payload);
     const saved = await api('save', { method: 'POST', body: JSON.stringify(payload) });
+    if (saveToken !== saveRequestToken) return;
+    if (selectedId !== saveTargetId) {
+      reports = await api('reports');
+      renderList();
+      return;
+    }
     selectedId = saved.id;
     reports = await api('reports');
+    if (saveToken !== saveRequestToken) return;
     if (refreshEditor) {
-      await selectReport(selectedId);
+      await selectReport(saved.id, { fromHistory: true });
       setStatus('Сохранено.');
       return;
     }
@@ -283,7 +373,11 @@ function markClean() {
 
 function handleEditorInput(source = null) {
   if (isHydrating || isComposing) return;
-  if (source && source.id === 'notes') syncSignedEntries();
+  if (source && source.id === 'notes') {
+    syncSignedEntries();
+  } else if (source && source.closest('.entry')) {
+    signedEntriesApplied = false;
+  }
   updateAll();
   scheduleAutosave();
 }
@@ -298,31 +392,77 @@ function scheduleAutosave() {
 }
 
 async function saveAndShowList() {
+  if (!saveAndShowList.running) {
+    saveAndShowList.running = true;
+    const backButton = $('backToList');
+    if (backButton) backButton.disabled = true;
+    try {
+      clearTimeout(saveTimer);
+      if (currentSnapshot() !== lastSavedSnapshot) await saveReport();
+      showList();
+    } finally {
+      saveAndShowList.running = false;
+      if (backButton) backButton.disabled = false;
+    }
+    return;
+  }
   clearTimeout(saveTimer);
-  if (currentSnapshot() !== lastSavedSnapshot) await saveReport();
-  showList();
+  setStatus('Подождите, идёт переход.');
 }
 
-function showList() {
+function showList({ fromHistory = false } = {}) {
   $('appShell').classList.add('mobile-list');
   $('appShell').classList.remove('mobile-editor');
+  if (isMobileLayout() && !fromHistory) {
+    syncHistoryState({ view: 'list' }, history.state && history.state.view === 'editor');
+  }
 }
 
-function showEditor() {
+function showEditor({ fromHistory = false } = {}) {
   $('appShell').classList.add('mobile-editor');
   $('appShell').classList.remove('mobile-list');
+  if (isMobileLayout() && !fromHistory && selectedId) {
+    syncHistoryState({ view: 'editor', id: selectedId }, history.state && history.state.view === 'editor');
+  } else if (isMobileLayout() && !fromHistory) {
+    syncHistoryState({ view: 'editor' }, history.state && history.state.view === 'editor');
+  }
 }
 
-async function deleteReport() {
-  if (!selectedId) return;
+async function deleteReport(reportId = null) {
+  const targetId = reportId || selectedId;
+  if (!targetId) {
+    setStatus('Нет выбранного отчета для удаления.');
+    return;
+  }
   if (!confirm('Удалить отчет в архив удаленных?')) return;
   if (!confirm('Подтвердите еще раз. Запись исчезнет из списка, но останется в архиве удаленных.')) return;
-  await api(`delete&id=${encodeURIComponent(selectedId)}`, { method: 'POST', body: '{}' });
-  selectedId = null;
+  const previousId = selectedId;
+  const deletingActive = previousId === targetId;
+  await api(`delete&id=${encodeURIComponent(targetId)}`, { method: 'POST', body: '{}' });
   reports = await api('reports');
-  const current = reports.find((report) => !report.submitted);
-  if (current) await selectReport(current.id);
-  else blankReport();
+  selectedId = null;
+  if (deletingActive || !previousId) {
+    const next = reports.find((report) => !report.submitted) || reports[0];
+    if (next) {
+      await selectReport(next.id, { fromHistory: true });
+    } else {
+      blankReport({ fromHistory: true });
+    }
+    setStatus('Перемещено в архив удаленных.');
+    return;
+  }
+  const keepTarget = reports.find((report) => report.id === previousId);
+  if (keepTarget) {
+    await selectReport(previousId, { fromHistory: true });
+    setStatus('Перемещено в архив удаленных.');
+    return;
+  }
+  const fallback = reports.find((report) => !report.submitted) || reports[0];
+  if (fallback) {
+    await selectReport(fallback.id, { fromHistory: true });
+  } else {
+    blankReport({ fromHistory: true });
+  }
   setStatus('Перемещено в архив удаленных.');
 }
 
@@ -340,14 +480,39 @@ async function uploadAttachment() {
   if (!res.ok || payload.error) throw new Error(payload.error || `Ошибка ${res.status}`);
   $('attachmentInput').value = '';
   renderAttachments(payload.attachments || []);
+  const lastSaved = payload.attachments && payload.attachments.length ? payload.attachments[payload.attachments.length - 1] : null;
+  if (lastSaved && (lastSaved.relative_path || lastSaved.path)) {
+    setStatus(`Вложение сохранено: ${lastSaved.relative_path || lastSaved.path}`);
+    return;
+  }
   setStatus('Вложение сохранено на сервере.');
 }
 
 async function openArchive() {
   const archived = await api('archived');
   if (!archived.length) return setStatus('Архив удаленных пуст.');
-  const text = archived.slice(0, 12).map((r) => `${r.report_date} · ${r.notes || r.id}`).join('\n');
-  alert(`Архив удаленных:\n\n${text}`);
+  const preview = archived.slice(0, 24).map((r, index) => {
+    const note = (r.notes || '').slice(0, 48) || 'Без заметок';
+    const current = money(r.computed?.current || 0);
+    return `${index + 1}) ${r.report_date} · ${current} · ${note} · id:${r.id}`;
+  }).join('\n');
+  const request = prompt(`Архив удаленных: выберите № или вставьте id (Enter — просто закрыть).\n\n${preview}`);
+  if (!request) return;
+  const selected = request.trim();
+  if (!selected) return;
+  const asNumber = Number(selected);
+  const foundByNumber = Number.isFinite(asNumber) && Number.isInteger(asNumber)
+    ? archived[asNumber - 1]
+    : null;
+  const found = (foundByNumber && archived.includes(foundByNumber)) ? foundByNumber : archived.find((record) => record.id === selected);
+  if (!found) {
+    setStatus('Не нашел запись в архиве по этому номеру/id.');
+    return;
+  }
+  if (!confirm(`Восстановить карточку ${found.report_date} (${found.id}) обратно в рабочие отчеты?`)) return;
+  await api(`restore&id=${encodeURIComponent(found.id)}`, { method: 'POST', body: '{}' });
+  await loadReports();
+  setStatus('Карточка восстановлена из архива.');
 }
 
 async function showStorageInfo() {
@@ -378,7 +543,8 @@ async function exportExcel() {
   if (!selectedId || currentSnapshot() !== lastSavedSnapshot) await saveReport();
   const result = await api('export', { method: 'POST', body: JSON.stringify({ id: selectedId }) });
   if (result.url) await downloadFile(result.url, `captain-fin-${$('reportDate').value || today()}.xlsx`);
-  setStatus('Excel сформирован и отправлен на скачивание.');
+  if (result.path) setStatus(`Excel сформирован: ${result.path}`);
+  else setStatus('Excel сформирован и отправлен на скачивание.');
 }
 
 function openShareSheet() {
@@ -425,6 +591,7 @@ async function checkAuth() {
   if (me.authenticated) {
     $('guestScreen').classList.add('hidden');
     $('appShell').classList.remove('hidden');
+    if (isMobileLayout()) syncHistoryState({ view: 'list' }, true);
     await loadReports();
   } else {
     $('guestScreen').classList.remove('hidden');
@@ -451,7 +618,7 @@ document.addEventListener('input', (event) => {
 document.addEventListener('compositionstart', () => { isComposing = true; });
 document.addEventListener('compositionend', () => {
   isComposing = false;
-  handleEditorInput();
+  handleEditorInput(document.activeElement);
 });
 document.querySelectorAll('[data-add]').forEach((button) => button.addEventListener('click', () => {
   addEntry(button.dataset.add);
@@ -478,5 +645,20 @@ $('shareWhatsApp').addEventListener('click', () => openShareTarget('whatsapp'));
 $('shareTelegram').addEventListener('click', () => openShareTarget('telegram'));
 $('shareDrive').addEventListener('click', () => openShareTarget('drive'));
 $('search').addEventListener('input', renderList);
+window.addEventListener('popstate', (event) => {
+  const state = event.state || {};
+  if (!state.view) return;
+  if (state.view === 'list') {
+    showList({ fromHistory: true });
+    return;
+  }
+  if (state.view === 'editor') {
+    if (state.id) {
+      selectReport(state.id, { fromHistory: true }).catch((error) => setStatus(error.message));
+      return;
+    }
+    blankReport({ fromHistory: true });
+  }
+});
 
 checkAuth().catch((error) => setStatus(error.message));

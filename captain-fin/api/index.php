@@ -12,7 +12,7 @@ session_set_cookie_params([
 ]);
 session_start();
 
-const APP_VERSION = '2026.05.20-captain-fin-010';
+const APP_VERSION = '2026.05.28-captain-fin-015';
 const AUTH_BASE = 'https://brkovic.ltd/api';
 const STORAGE_DIR = __DIR__ . '/../storage';
 const REPORTS_DIR = STORAGE_DIR . '/reports';
@@ -176,8 +176,37 @@ function attachment_dir(string $id, string $date): string {
     return $dir;
 }
 
+function attachment_mime(string $path): string {
+    $extension = strtolower((string) pathinfo($path, PATHINFO_EXTENSION));
+    $type = match ($extension) {
+        'pdf' => 'application/pdf',
+        'jpg', 'jpeg' => 'image/jpeg',
+        'png' => 'image/png',
+        'gif' => 'image/gif',
+        'webp' => 'image/webp',
+        'heic' => 'image/heic',
+        'txt' => 'text/plain',
+        'json' => 'application/json',
+        'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'xls' => 'application/vnd.ms-excel',
+        default => 'application/octet-stream',
+    };
+    if ($type !== 'application/octet-stream') return $type;
+    if (function_exists('finfo_open')) {
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $detected = is_resource($finfo) ? finfo_file($finfo, $path) : false;
+        if (is_string($detected) && $detected !== '') {
+            finfo_close($finfo);
+            return $detected;
+        }
+        if (is_resource($finfo)) finfo_close($finfo);
+    }
+    return $type;
+}
+
 function list_attachments(string $id, string $date): array {
     $dir = year_dir(ATTACHMENTS_DIR, $date) . '/' . basename($id);
+    $year = preg_match('/^\\d{4}/', $date) ? substr($date, 0, 4) : date('Y');
     $items = [];
     foreach (glob($dir . '/*') ?: [] as $path) {
         if (!is_file($path)) continue;
@@ -186,11 +215,41 @@ function list_attachments(string $id, string $date): array {
             'name' => $name,
             'size' => filesize($path) ?: 0,
             'updated_at' => gmdate('c', filemtime($path) ?: time()),
+            'path' => 'storage/attachments/' . $year . '/' . basename($id) . '/' . $name,
+            'relative_path' => 'storage/attachments/' . $year . '/' . basename($id) . '/' . $name,
+            'mime' => attachment_mime($path),
             'url' => 'api/?action=attachment&id=' . rawurlencode($id) . '&file=' . rawurlencode($name),
+            'download_url' => 'api/?action=attachment&id=' . rawurlencode($id) . '&file=' . rawurlencode($name) . '&disposition=attachment',
+            'open_url' => 'api/?action=attachment&id=' . rawurlencode($id) . '&file=' . rawurlencode($name) . '&disposition=inline',
         ];
     }
     usort($items, fn($a, $b) => strcmp($a['name'], $b['name']));
     return $items;
+}
+
+function sync_attachment_dir(string $id, string $oldDate, string $newDate): void {
+    $oldYear = preg_match('/^\d{4}/', $oldDate) ? substr($oldDate, 0, 4) : date('Y');
+    $newYear = preg_match('/^\d{4}/', $newDate) ? substr($newDate, 0, 4) : date('Y');
+    if ($oldYear === $newYear) return;
+    $oldDir = ATTACHMENTS_DIR . '/' . $oldYear . '/' . basename($id);
+    $newDir = ATTACHMENTS_DIR . '/' . $newYear . '/' . basename($id);
+    if (!is_dir($oldDir) || is_dir($newDir) && $oldDir === $newDir) return;
+    if (!is_dir($newDir)) mkdir($newDir, 0775, true);
+    foreach (glob($oldDir . '/*') ?: [] as $source) {
+        if (!is_file($source)) continue;
+        $target = $newDir . '/' . basename($source);
+        if (!is_file($target)) {
+            @rename($source, $target);
+            continue;
+        }
+        $pathInfo = pathinfo($source);
+        $base = $pathInfo['filename'] ?? 'attachment';
+        $ext = isset($pathInfo['extension']) ? '.' . $pathInfo['extension'] : '';
+        @rename($source, $newDir . '/' . $base . '-' . date('His') . $ext);
+    }
+    if (is_dir($oldDir) && count(glob($oldDir . '/*') ?: []) === 0) {
+        @rmdir($oldDir);
+    }
 }
 
 function read_report_file(string $path): ?array {
@@ -274,7 +333,11 @@ function save_report(array $payload): array {
     ensure_dirs();
     $report = normalize_report($payload);
     foreach (glob(REPORTS_DIR . '/*/' . basename($report['id']) . '.json') ?: [] as $old) {
-        if ($old !== report_path($report['id'], $report['report_date'])) @unlink($old);
+        $oldDate = basename(dirname($old));
+        if ($old !== report_path($report['id'], $report['report_date'])) {
+            sync_attachment_dir($report['id'], $oldDate, $report['report_date']);
+            @unlink($old);
+        }
     }
     $path = report_path($report['id'], $report['report_date']);
     file_put_contents($path, json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), LOCK_EX);
@@ -284,7 +347,8 @@ function save_report(array $payload): array {
     return $report;
 }
 
-function delete_report(string $id): void {
+function delete_report(string $id): bool {
+    $deleted = false;
     foreach (glob(REPORTS_DIR . '/*/' . basename($id) . '.json') ?: [] as $path) {
         $report = read_report_file($path);
         $date = $report['report_date'] ?? date('Y-m-d');
@@ -292,7 +356,9 @@ function delete_report(string $id): void {
         $trash = year_dir(TRASH_DIR, (string) $date) . '/' . gmdate('Ymd-His') . '-' . basename($id) . '.json';
         file_put_contents($trash, json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), LOCK_EX);
         @unlink($path);
+        $deleted = true;
     }
+    return $deleted;
 }
 
 function restore_report(string $id): ?array {
@@ -544,8 +610,9 @@ if ($action === 'report') {
 }
 if ($action === 'save') respond(save_report(input_json()));
 if ($action === 'delete') {
-    delete_report((string) ($_GET['id'] ?? ''));
-    respond(['archived' => true]);
+    $deleted = delete_report((string) ($_GET['id'] ?? ''));
+    if (!$deleted) fail('Отчет не найден', 404);
+    respond(['archived' => true, 'id' => (string) ($_GET['id'] ?? '')]);
 }
 if ($action === 'restore') {
     $report = restore_report((string) ($_GET['id'] ?? ''));
@@ -560,8 +627,12 @@ if ($action === 'attachment') {
     $file = safe_file_name((string) ($_GET['file'] ?? ''));
     $path = year_dir(ATTACHMENTS_DIR, $report['report_date']) . '/' . basename($report['id']) . '/' . $file;
     if (!is_file($path)) fail('Вложение не найдено', 404);
-    header('Content-Type: application/octet-stream');
-    header('Content-Disposition: attachment; filename="' . basename($path) . '"');
+    $disposition = strtolower(trim((string) ($_GET['disposition'] ?? 'attachment')));
+    if (!in_array($disposition, ['inline', 'attachment'], true)) {
+        $disposition = 'attachment';
+    }
+    header('Content-Type: ' . attachment_mime($path));
+    header('Content-Disposition: ' . $disposition . '; filename="' . basename($path) . '"');
     header('Content-Length: ' . filesize($path));
     header('X-Robots-Tag: noindex, nofollow, noarchive');
     readfile($path);
