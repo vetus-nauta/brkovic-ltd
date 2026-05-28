@@ -11,8 +11,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cormorant+Garamond:wght@500;600;700&family=Marck+Script&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/variables.css" />
-  <link rel="stylesheet" href="css/main.css?v=20260520-footer-01" />
-  <link rel="stylesheet" href="css/responsive.css?v=20260520-footer-01" />
+  <link rel="stylesheet" href="css/main.css?v=20260528-language-access-01" />
+  <link rel="stylesheet" href="css/responsive.css?v=20260525-home-services-01" />
   <link rel="icon" type="image/png" href="favicons/favicon-clean.png?v=2" />
   <link rel="apple-touch-icon" href="favicons/apple-touch-icon-clean.png?v=2" />
 </head>
@@ -29,10 +29,6 @@
         <a class="instagram-link" href="#" id="instagramTopLink" target="_blank" rel="noopener" aria-label="Instagram">
           <img src="images/icons/instagram.svg" alt="" />
         </a>
-        <div class="lang-switch" aria-label="Language switcher">
-          <button class="lang-switch__btn is-active" data-lang="en">EN</button>
-          <button class="lang-switch__btn" data-lang="ru">RU</button>
-        </div>
       </div>
     </header>
 
@@ -89,12 +85,12 @@
           <p data-i18n="services_intro">Personal service across yacht management, training, skippering and curated Adriatic experiences.</p>
         </div>
         <div class="cards-grid cards-grid--editorial">
-          <a id="service-yacht-management" class="service-card service-card--link service-card--priority" href="services/yacht-management.html"><div class="service-card__index">01</div><h3 data-i18n="service_1_title">Yacht Management</h3><p data-i18n="service_1_text">Professional yacht support, condition control, service coordination and seasonal preparation.</p></a>
+          <a id="service-yacht-management" class="service-card service-card--link service-card--priority service-card--management" href="services/yacht-management.html"><div class="service-card__index">01</div><h3 data-i18n="service_1_title">Yacht Management</h3><p data-i18n="service_1_text">Professional yacht support, condition control, service coordination and seasonal preparation.</p></a>
           <a id="service-iyt-training" class="service-card service-card--link service-card--iyt" href="services/iyt-training.html"><div class="service-card__index">02</div><div class="service-card__brand-row" aria-label="IYT and Sail Skill Association"><span class="service-card__brand-mark service-card__brand-mark--iyt">IYT</span><span class="service-card__brand-mark service-card__brand-mark--sailskill">Sail Skill</span></div><h3 data-i18n="service_2_title">IYT Training Center in Montenegro</h3><p data-i18n="service_2_text">Preparation of future skippers through Bareboat Skipper and Yachtmaster programs with Sail Skill Association.</p></a>
-          <a id="service-skipper-service" class="service-card service-card--link" href="services/skipper-service.html"><div class="service-card__index">03</div><h3 data-i18n="service_3_title">Skipper Service</h3><p data-i18n="service_3_text">Trusted hired skipper for private trips, deliveries and Adriatic cruising.</p></a>
-          <a id="service-sailing-tours" class="service-card service-card--link" href="services/sailing-tours.html"><div class="service-card__index">04</div><h3 data-i18n="service_4_title">Sailing Tours</h3><p data-i18n="service_4_text">Private sailing tours in Montenegro, Croatia and Italy.</p></a>
-          <a id="service-yacht-delivery" class="service-card service-card--link" href="services/yacht-acceptance-delivery.html"><div class="service-card__index">06</div><h3 data-i18n="service_6_title">Yacht Acceptance & Delivery</h3><p data-i18n="service_6_text">Independent handover checks, delivery runs and practical owner support before departure or after arrival.</p></a>
-          <a id="service-yacht-registration" class="service-card service-card--link" href="services/yacht-registration.html"><div class="service-card__index">07</div><h3 data-i18n="service_7_title">Yacht Registration</h3><p data-i18n="service_7_text">Guidance through registration steps, documents and coordination with local procedures.</p></a>
+          <a id="service-skipper-service" class="service-card service-card--link service-card--skipper" href="services/skipper-service.html"><div class="service-card__index">03</div><h3 data-i18n="service_3_title">Skipper Service</h3><p data-i18n="service_3_text">Trusted hired skipper for private trips, deliveries and Adriatic cruising.</p></a>
+          <a id="service-sailing-tours" class="service-card service-card--link service-card--tours" href="services/sailing-tours.html"><div class="service-card__index">04</div><h3 data-i18n="service_4_title">Sailing Tours</h3><p data-i18n="service_4_text">Private sailing tours in Montenegro, Croatia and Italy.</p></a>
+          <a id="service-yacht-delivery" class="service-card service-card--link service-card--delivery" href="services/yacht-acceptance-delivery.html"><div class="service-card__index">06</div><h3 data-i18n="service_6_title">Yacht Acceptance & Delivery</h3><p data-i18n="service_6_text">Independent handover checks, delivery runs and practical owner support before departure or after arrival.</p></a>
+          <a id="service-yacht-registration" class="service-card service-card--link service-card--registration" href="services/yacht-registration.html"><div class="service-card__index">07</div><h3 data-i18n="service_7_title">Yacht Registration</h3><p data-i18n="service_7_text">Guidance through registration steps, documents and coordination with local procedures.</p></a>
         </div>
       </section>
 
@@ -154,27 +150,6 @@
             <strong data-i18n="destination_5_title">Turkey</strong>
             <span data-i18n="destination_5_text">Aegean coastline, marina support and private itineraries</span>
           </div>
-        </div>
-      </section>
-
-      <section id="weather" class="section">
-        <div class="section-heading section-heading--editorial">
-          <p class="section-heading__eyebrow" data-i18n="weather_eyebrow">Coastal Weather</p>
-          <h2 data-i18n="weather_title">Current conditions for your day on the water</h2>
-          <p data-i18n="weather_text">Live weather powered by Open-Meteo for Kotor, Montenegro.</p>
-        </div>
-        <div class="weather-card" aria-live="polite">
-          <div class="weather-card__row">
-            <div><p class="weather-card__label" data-i18n="weather_location_label">Location</p><strong id="weatherLocation">Kotor</strong></div>
-            <div><p class="weather-card__label" data-i18n="weather_updated_label">Updated</p><strong id="weatherUpdated">—</strong></div>
-          </div>
-          <div class="weather-grid">
-            <div class="weather-metric"><span data-i18n="weather_metric_air">Air</span><strong id="weatherAir">—</strong></div>
-            <div class="weather-metric"><span data-i18n="weather_metric_water">Water</span><strong id="weatherWater">—</strong></div>
-            <div class="weather-metric"><span data-i18n="weather_metric_wind">Wind</span><strong id="weatherWind">—</strong></div>
-            <div class="weather-metric"><span data-i18n="weather_metric_precip">Precipitation</span><strong id="weatherPrecip">—</strong></div>
-          </div>
-          <p class="weather-card__status" id="weatherStatus" data-i18n="weather_loading">Loading weather…</p>
         </div>
       </section>
 
@@ -266,9 +241,8 @@
       </nav>
     </footer></div>
   <script src="js/config.js"></script>
-  <script src="js/language.js?v=20260519-01"></script>
-  <script src="js/weather.js"></script>
+  <script src="js/language.js?v=20260528-language-access-01"></script>
   <script src="js/form.js?v=20260520-anti-spam-02"></script>
-  <script src="js/main.js?v=20260519-01"></script>
+  <script src="js/main.js?v=20260528-language-access-01"></script>
 </body>
 </html>

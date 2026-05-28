@@ -4,6 +4,25 @@ Clean source project for the main `brkovic.ltd` website.
 
 This repository intentionally excludes the Revoyacht experimental branch and old backup folders. Keep `/revoyacht`, `/yacht-flex-demo`, and `/public_html_nested` outside the main production project unless they are moved to a dedicated branch or repository.
 
+## Repository Map
+
+Fast path summary:
+
+```text
+PATHS_QUICK.md
+```
+
+See [REPOSITORY_MAP.md](REPOSITORY_MAP.md) before starting new work.
+
+Canonical paths:
+
+```text
+Main site: /home/alexey/GitHub/Revoyacht/brkovic-ltd
+Game platform: /home/alexey/GitHub/Revoyacht/brkovic-ltd/game.brkovic.ltd
+```
+
+The old staging path `/home/alexey/GitHub/Revoyacht/game-brkovic-ltd` is deprecated.
+
 ## Local Run
 
 ```bash
@@ -15,6 +34,12 @@ Open:
 - Public site: `http://127.0.0.1:18090/`
 - Yacht management public page: `http://127.0.0.1:18090/services/yacht-management.html`
 - Yacht management admin: `http://127.0.0.1:18090/admin-mnr.html`
+
+Game platform local run, if PHP is available:
+
+```bash
+php -S 127.0.0.1:18110 -t game.brkovic.ltd/public
+```
 
 ## Writable Data
 
@@ -63,4 +88,3 @@ Admin supports:
 - adding/removing non-core services
 - public visibility toggles
 - local diagnostics for auth and write permissions
-

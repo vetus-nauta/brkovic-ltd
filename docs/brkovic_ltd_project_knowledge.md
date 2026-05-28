@@ -93,3 +93,120 @@ Backend судового журнала не находится внутри fro
 - public like / unlike / like-status для обычных записей подключены;
 - PostgreSQL напрямую с локального ПК не открыт, база доступна backend-у на сервере через localhost;
 - перед следующими backend/schema-изменениями снова нужен свежий backup `/journal-backend` и релевантных таблиц базы.
+
+## BRKOVIC.LTD project office
+
+Для финального локального MVP-аудита, подготовки релиза, выкладки, SEO, языков и post-deploy контроля создан отдельный офис проекта:
+
+```text
+docs/brkovic_ltd_project_office/
+```
+
+Перед открытием рабочих чатов по офису читать:
+
+```text
+docs/brkovic_ltd_project_office/README.md
+docs/brkovic_ltd_project_office/office-discipline.md
+docs/brkovic_ltd_project_office/chat-registry.md
+docs/brkovic_ltd_project_office/task-registry.md
+game.brkovic.ltd/docs/game-director/mandatory-chat-operating-rules.md
+game.brkovic.ltd/docs/game-director/chat-reporting-rules.md
+```
+
+Текущие кабинеты:
+
+- `cabinets/release-steward/` - безопасный release manifest;
+- `cabinets/qa-ux/` - локальный UX/QA smoke;
+- `cabinets/seo-i18n/` - SEO, языки, индексация;
+- `cabinets/localization-architect/` - архитектура локализации интерфейса, терминология, скрытые/генерируемые языковые поверхности;
+- `cabinets/backend-admin/` - backend/admin/API границы;
+- `cabinets/backend-engineer/` - backend-реализация после утвержденной задачи, отдельно от аудита;
+- `cabinets/deploy/` - controlled deploy, закрыт до gate approval;
+- `cabinets/production-qa/` - post-deploy smoke, закрыт до deploy.
+
+Ни один рабочий чат не выкладывает production и не трогает FTP без отдельной директорской задачи.
+
+## OpenAI API и многоязычный журнал
+
+У владельца есть активный OpenAI API key. Секрет нельзя вставлять в чат, Git, HTML, JS, `lang/*.json`, Google Drive или офисные отчеты.
+
+Правило проекта:
+
+- OpenAI используется только server-side;
+- браузерная админка не видит ключ;
+- AI language desk создает черновики переводов и SEO, но не публикует автоматически;
+- русский пост владельца остается canonical source;
+- итоговые языковые версии проходят review/approve/publish.
+
+Локально ключ хранить вне репозитория:
+
+```text
+~/.config/brkovic-ltd/openai.env
+```
+
+Статус на `Vetus-Home`: локальный `openai.env` создан, права `600`, значение ключа не выводилось и не записывалось в проект.
+
+Для production использовать environment variable или приватный путь вне public root, например:
+
+```text
+/home/brkovic/private/openai.env
+```
+
+См.:
+
+```text
+docs/brkovic_ltd_project_office/reports/openai-api-key-server-boundary-2026-05-27.md
+docs/brkovic_ltd_project_office/cabinets/backend-admin/task-0002-openai-language-desk-server-boundary.md
+api/openai.config.example.php
+```
+
+Текущий директорский приказ по MVP:
+
+```text
+docs/brkovic_ltd_project_office/director-reports/2026-05-27-mvp-stabilization-order.md
+```
+
+Фаза сейчас - стабилизация MVP, не редизайн. Интерфейс не переделывать без согласования владельца/директора. UX только фиксирует блокеры, риски и предложения, помечая их как требующие согласования. Доделывание перед релизом начинается только в функциях `NavDesk`, если не будет отдельной новой задачи.
+
+Финальный локальный MVP gate-review от 2026-05-27:
+
+```text
+docs/brkovic_ltd_project_office/director-reports/2026-05-27-final-mvp-gate-review.md
+```
+
+Вывод: локальный MVP-аудит завершен, явный MVP-блокер не найден, но production upload не запущен автоматически. Следующий риск - дисциплина выкладки: точный пакет, backup production, сохранение server-only config и production data. Малые SEO-правки перед upload возможны только отдельным решением владельца/директора.
+
+## Обязательный маркер: многоязычный журнал через AI
+
+Многоязычность судового журнала не должна потеряться в MVP-аудите. Это отдельная архитектурная задача офиса:
+
+```text
+docs/brkovic_ltd_project_office/director-reports/2026-05-27-ai-multilingual-admin-marker.md
+docs/brkovic_ltd_project_office/cabinets/seo-i18n/task-0002-ai-multilingual-admin-architecture.md
+```
+
+Канонический сценарий: владелец пишет запись в админке на русском, добавляет фото, геометки, подписи и alt. Дальше отдельный AI-раздел админки через OpenAI-аккаунт владельца создает языковые дубли с сохранением структуры, медиа, SEO и статусов проверки. Генерация переводов не публикует их автоматически и не заменяет авторский русский текст.
+
+Технический принцип: не плодить поля под каждый язык. Для журнала нужна масштабируемая модель переводов через `JournalTranslation` / `JournalMediaTranslation` или совместимую таблицу строк по entity/language. OpenAI-ключи хранятся только server-side, не в браузере и не в Git.
+
+## Должность Localization Architect
+
+Добавлена отдельная должность:
+
+```text
+docs/brkovic_ltd_project_office/cabinets/localization-architect/
+docs/brkovic_ltd_project_office/cabinets/localization-architect/task-0001-language-surface-inventory.md
+```
+
+Причина: многоязычность проекта касается не только SEO и не только русского/английского JSON. Локализатор должен отдельно проверить видимые строки, скрытые подписи, `placeholder`, `aria-label`, `alt`, meta, печать/PDF/share/notifications, JS-generated statuses, NavDesk terminology, журнал/admin workflow и будущие AI-дубли по многим языкам. Правки локализации начинать только после отчета-инвентаризации и решения владельца/директора.
+
+## Должность SEO Integration Director
+
+Для боевой SEO-интеграции создан отдельный директорский кабинет:
+
+```text
+docs/brkovic_ltd_project_office/cabinets/seo-integration-director/
+docs/brkovic_ltd_project_office/cabinets/seo-integration-director/new-chat-prompt.md
+```
+
+`seo-i18n` остается аудитом, языками, metadata и архитектурным маркером. `SEO Integration Director` - должность выше по уровню: стратегия и тактика выхода в живой поиск, page-agent command, index/noindex политика, schema, OG/Twitter, sitemap/robots, внутренние связи, журнал, NavDesk и многоязычные SEO-гейты. Страницы должны разбираться отдельно, потому что запросы, интент и полезность у главной, услуг, журнала и NavDesk разные.

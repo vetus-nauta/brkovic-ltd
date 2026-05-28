@@ -12,9 +12,58 @@
     return (window.__BRKOVIC_TRANSLATIONS && window.__BRKOVIC_TRANSLATIONS[key]) || fallback || key;
   }
 
+  function removeLegacyLanguageControls(root = document) {
+    root.querySelectorAll(".lang-switch, .language-switch").forEach((node) => {
+      node.remove();
+    });
+  }
+
+  function currentLanguage() {
+    const api = window.BRKOVIC_LANGUAGE;
+    if (api && typeof api.getCurrentLang === "function") return api.getCurrentLang();
+    return document.documentElement.lang === "ru" ? "ru" : "en";
+  }
+
+  function syncSiteMenuLanguageState(root = document, lang = currentLanguage()) {
+    root.querySelectorAll(".site-menu-language__option[data-lang]").forEach((button) => {
+      const isActive = button.dataset.lang === lang;
+      button.classList.toggle("is-active", isActive);
+      button.setAttribute("aria-pressed", isActive ? "true" : "false");
+    });
+  }
+
+  function setupSiteMenuLanguageControls(modal) {
+    if (!modal || modal.dataset.languageControlsBound === "true") return;
+    modal.dataset.languageControlsBound = "true";
+
+    modal.addEventListener("click", async (event) => {
+      const button = event.target.closest?.(".site-menu-language__option[data-lang]");
+      if (!button || !modal.contains(button)) return;
+      const api = window.BRKOVIC_LANGUAGE;
+      if (!api || typeof api.setLanguage !== "function") return;
+      button.disabled = true;
+      try {
+        await api.setLanguage(button.dataset.lang);
+        syncSiteMenuLanguageState(modal, button.dataset.lang);
+      } catch (error) {
+        syncSiteMenuLanguageState(modal);
+      } finally {
+        button.disabled = false;
+      }
+    });
+
+    document.addEventListener("languageChanged", (event) => {
+      syncSiteMenuLanguageState(modal, event.detail?.lang);
+    });
+    syncSiteMenuLanguageState(modal);
+  }
+
   function buildSiteMenuModal(actionsNode) {
     const existing = document.getElementById("siteMenuModal");
-    if (existing) return existing;
+    if (existing) {
+      removeLegacyLanguageControls(existing);
+      return existing;
+    }
 
     const modal = document.createElement("div");
     modal.className = "management-modal site-menu-modal";
@@ -37,21 +86,40 @@
           <a href="/navdesk.html" data-management-modal-close data-i18n="site_menu_navdesk">${escapeHtml(t("site_menu_navdesk", "Nav Desk"))}</a>
           <a href="/index.html#contact" data-management-modal-close data-i18n="site_menu_contact">${escapeHtml(t("site_menu_contact", "Contact"))}</a>
         </nav>
-        <div class="site-menu-settings" data-site-menu-settings>
-          <span class="site-menu-settings__label" data-i18n="site_menu_language">${escapeHtml(t("site_menu_language", "Language"))}</span>
-        </div>
+        <section class="site-menu-language" aria-labelledby="siteMenuLanguageTitle">
+          <div class="site-menu-language__head">
+            <span class="site-menu-language__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <circle cx="12" cy="12" r="9"></circle>
+                <path d="M3 12h18"></path>
+                <path d="M12 3a14 14 0 0 1 0 18"></path>
+                <path d="M12 3a14 14 0 0 0 0 18"></path>
+              </svg>
+            </span>
+            <div>
+              <p class="site-menu-language__kicker" data-i18n="site_menu_language">${escapeHtml(t("site_menu_language", "Language versions"))}</p>
+              <h4 id="siteMenuLanguageTitle" data-i18n="site_menu_language_title">${escapeHtml(t("site_menu_language_title", "Choose interface language"))}</h4>
+            </div>
+          </div>
+          <p class="site-menu-language__note" data-i18n="site_menu_language_note">${escapeHtml(t("site_menu_language_note", "Current public UI languages are available here."))}</p>
+          <div class="site-menu-language__list" role="list">
+            <button type="button" class="site-menu-language__option" data-lang="ru" aria-pressed="false">
+              <span class="site-menu-language__name">Русский</span>
+              <span class="site-menu-language__current" data-i18n="site_menu_language_current">${escapeHtml(t("site_menu_language_current", "Current"))}</span>
+            </button>
+            <button type="button" class="site-menu-language__option" data-lang="en" aria-pressed="false">
+              <span class="site-menu-language__name">English</span>
+              <span class="site-menu-language__current" data-i18n="site_menu_language_current">${escapeHtml(t("site_menu_language_current", "Current"))}</span>
+            </button>
+          </div>
+        </section>
         <p class="site-menu-future" data-i18n="site_menu_future_settings">${escapeHtml(t("site_menu_future_settings", "User settings will live here later."))}</p>
       </div>
     `;
 
-    const settings = modal.querySelector("[data-site-menu-settings]");
-    if (settings && actionsNode) {
-      Array.from(actionsNode.children).forEach((child) => {
-        if (child.classList.contains("site-menu-button")) return;
-        settings.appendChild(child);
-      });
-    }
+    removeLegacyLanguageControls(modal);
     document.body.appendChild(modal);
+    setupSiteMenuLanguageControls(modal);
     return modal;
   }
 
@@ -83,6 +151,7 @@
       actions.className = "topbar__actions";
       topbar.appendChild(actions);
     }
+    removeLegacyLanguageControls(document);
 
     let button = document.getElementById("siteMenuButton");
     if (!button) {
@@ -101,6 +170,7 @@
     topbar.classList.add("topbar--site-menu");
 
     const modal = buildSiteMenuModal(actions);
+    setupSiteMenuLanguageControls(modal);
     if (!modal || button.dataset.siteMenuBound === "true") return;
     button.dataset.siteMenuBound = "true";
 
@@ -196,10 +266,31 @@
     }
   }
 
+  function setupMobileCollapsibles() {
+    const collapsibles = Array.from(document.querySelectorAll("[data-mobile-collapsible]"));
+    if (!collapsibles.length || !window.matchMedia) return;
+
+    const mobileQuery = window.matchMedia("(max-width: 720px)");
+    const sync = () => {
+      collapsibles.forEach((item) => {
+        if (mobileQuery.matches) item.removeAttribute("open");
+        else item.setAttribute("open", "");
+      });
+    };
+
+    sync();
+    if (mobileQuery.addEventListener) {
+      mobileQuery.addEventListener("change", sync);
+    } else if (mobileQuery.addListener) {
+      mobileQuery.addListener(sync);
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     setupSiteMenu();
     applyContactLinks();
     setupCvTriggers();
     setupServiceRequestFromUrl();
+    setupMobileCollapsibles();
   });
 })();

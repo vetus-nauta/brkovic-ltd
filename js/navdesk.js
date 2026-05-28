@@ -1,3 +1,76 @@
+(function setupNavdeskSharedConsent() {
+  const CONSENT_KEY = 'navdeskAcceptedVersion';
+  const CONSENT_AT_KEY = 'navdeskAcceptedAt';
+  const CONSENT_VERSION = '2026-04-20';
+  const CONSENT_TTL_MS = 14 * 24 * 60 * 60 * 1000;
+
+  const readConsent = () => {
+    try {
+      const acceptedVersion = localStorage.getItem(CONSENT_KEY);
+      if (acceptedVersion !== CONSENT_VERSION) return false;
+
+      const acceptedAt = Number(localStorage.getItem(CONSENT_AT_KEY));
+      if (!Number.isFinite(acceptedAt) || acceptedAt <= 0) {
+        localStorage.setItem(CONSENT_AT_KEY, String(Date.now()));
+        return true;
+      }
+
+      return Date.now() - acceptedAt < CONSENT_TTL_MS;
+    } catch (e) {
+      return false;
+    }
+  };
+
+  const writeConsent = () => {
+    try {
+      localStorage.setItem(CONSENT_KEY, CONSENT_VERSION);
+      localStorage.setItem(CONSENT_AT_KEY, String(Date.now()));
+    } catch (e) {}
+  };
+
+  window.initNavdeskConsent = () => {
+    if (window.__navdeskConsentInitialized) return;
+
+    const navdeskModal = document.getElementById('navdeskModal');
+    const navdeskModalAccept = document.getElementById('navdeskModalAccept');
+    const siteShell = document.querySelector('.site-shell');
+    if (!navdeskModal || !navdeskModalAccept) return;
+
+    window.__navdeskConsentInitialized = true;
+
+    if (siteShell && navdeskModal.parentElement !== siteShell) {
+      siteShell.appendChild(navdeskModal);
+    }
+
+    const openNavdeskModal = () => {
+      navdeskModal.classList.add('is-open');
+      navdeskModal.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('navdesk-locked');
+    };
+
+    const closeNavdeskModal = () => {
+      navdeskModal.classList.remove('is-open');
+      navdeskModal.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('navdesk-locked');
+    };
+
+    navdeskModalAccept.addEventListener('click', () => {
+      writeConsent();
+      closeNavdeskModal();
+    });
+
+    if (!readConsent()) {
+      openNavdeskModal();
+    }
+  };
+})();
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (typeof window.initNavdeskConsent === 'function') {
+    window.initNavdeskConsent();
+  }
+});
+
 document.addEventListener('DOMContentLoaded', () => {
 (function initNavDesk() {
   const speedEl = document.getElementById('calcSpeed');
@@ -39,15 +112,39 @@ document.addEventListener('DOMContentLoaded', () => {
   const tideWindowStatus = document.getElementById('tideWindowStatus');
   const tidePlaceholder = document.getElementById('tidePlaceholder');
   const tideTableBody = document.getElementById('tideTableBody');
+  const tideWeeklyReport = document.getElementById('tideWeeklyReport');
+  const tideWeeklyPrintTitle = document.getElementById('tideWeeklyPrintTitle');
+  const tideWeeklyEyebrow = document.getElementById('tideWeeklyEyebrow');
+  const tideWeeklyTitle = document.getElementById('tideWeeklyTitle');
+  const tideWeeklyMeta = document.getElementById('tideWeeklyMeta');
+  const tideWeeklyPrint = document.getElementById('tideWeeklyPrint');
+  const tideWeeklySettings = document.getElementById('tideWeeklySettings');
+  const tideWeeklySummary = document.getElementById('tideWeeklySummary');
+  const tideWeeklySvg = document.getElementById('tideWeeklySvg');
+  const tideWeeklyLegend = document.getElementById('tideWeeklyLegend');
+  const tideWeeklySource = document.getElementById('tideWeeklySource');
 
   const allFields = [
     speedEl, distanceEl, daysEl, hoursEl, minutesEl,
     fuelHourEl, fuelTotalEl, reserveEl, fuelTotalReserveEl
-  ];
+  ].filter(Boolean);
 
-  if (!speedEl || !distanceEl || !daysEl || !hoursEl || !minutesEl || !fuelHourEl || !fuelTotalEl || !reserveEl || !fuelTotalReserveEl || !runBtn || !resetBtn || !copyBtn || !statusEl || !summaryEl) {
-    return;
-  }
+  const fuelCalculatorReady = !!(
+    speedEl &&
+    distanceEl &&
+    daysEl &&
+    hoursEl &&
+    minutesEl &&
+    fuelHourEl &&
+    fuelTotalEl &&
+    reserveEl &&
+    fuelTotalReserveEl &&
+    runBtn &&
+    resetBtn &&
+    copyBtn &&
+    statusEl &&
+    summaryEl
+  );
 
   const getLang = () => {
     const activeBtn = document.querySelector('.lang-switch__btn.is-active');
@@ -76,7 +173,52 @@ document.addEventListener('DOMContentLoaded', () => {
       tideWindow: 'Введите глубину, осадку и запас под килем.',
       tideWindowStatusIdle: 'Ожидает расчёта.',
       tideNoData: 'Данные прилива пока не загружены.',
-      tidePlaceholder: 'Выберите место и дату, чтобы загрузить события прилива.'
+      tidePlaceholder: 'Выберите место и дату, чтобы загрузить события прилива.',
+      navdesk_tides_manual_station: 'Ручной ввод',
+      navdesk_tides_manual_active: 'Ручной режим',
+      navdesk_tides_manual_table: 'В ручном режиме таблица событий не используется.',
+      navdesk_tides_loading: 'Загрузка данных прилива...',
+      navdesk_tides_no_results: 'Место не найдено.',
+      navdesk_tides_error: 'Не удалось получить данные прилива.',
+      navdesk_tides_searching: 'Ищем место...',
+      navdesk_tides_search_error: 'Не удалось загрузить варианты. Попробуйте еще раз или используйте ручной ввод.',
+      navdesk_tides_search_fallback: 'Внешний поиск недоступен, показаны локальные варианты.',
+      navdesk_tides_query_too_short: 'Введите минимум 2 символа.',
+      navdesk_tides_select_place: 'Выберите место из списка.',
+      navdesk_tides_select_ambiguous: 'Найдено несколько вариантов. Выберите нужное место из списка.',
+      navdesk_weekly_eyebrow: 'Неделя',
+      navdesk_weekly_title: 'Недельный график прилива и глубины',
+      navdesk_weekly_print_title: 'VETUS NAUTA - Brkovic / NavDesk Tides',
+      navdesk_weekly_print: 'Печать / PDF',
+      navdesk_weekly_loading: 'Загружаем недельный график...',
+      navdesk_weekly_error: 'Не удалось загрузить недельный график.',
+      navdesk_weekly_no_data: 'Недостаточно данных для недельного графика.',
+      navdesk_weekly_generated: 'Сформировано',
+      navdesk_weekly_available: 'Доступная глубина',
+      navdesk_weekly_required: 'Требуемая глубина',
+      navdesk_weekly_safe: 'Достаточно',
+      navdesk_weekly_below: 'Ниже настройки',
+      navdesk_weekly_markers: 'HW/LW',
+      navdesk_weekly_charted: 'Глубина на карте',
+      navdesk_weekly_draft: 'Осадка',
+      navdesk_weekly_ukc: 'UKC',
+      navdesk_weekly_formula: 'Формула',
+      navdesk_weekly_formula_text: 'доступная глубина = глубина на карте + прилив',
+      navdesk_weekly_required_formula: 'требуемая = осадка + UKC',
+      navdesk_weekly_minmax: 'Мин/макс доступной глубины за неделю',
+      navdesk_weekly_windows: 'Интервалы по текущим настройкам',
+      navdesk_weekly_no_windows: 'Интервалы с достаточной глубиной не найдены.',
+      navdesk_weekly_more_windows: 'ещё',
+      navdesk_weekly_source: 'Источник',
+      navdesk_weekly_local_source: 'локальные демо-данные',
+      navdesk_window_status_loading: 'Загружаем данные.',
+      navdesk_route_mode_gc: 'Ортодромия',
+      navdesk_route_mode_rl: 'Локсодромия',
+      navdesk_route_error: 'Проверьте координаты.',
+      navdesk_route_same_points: 'Старт и финиш совпадают. Укажите разные точки.',
+      navdesk_route_print_need_results: 'Сначала рассчитайте маршрут.',
+      navdesk_route_table_empty: 'Точки маршрута ещё не рассчитаны.',
+      navdesk_route_status_idle: 'Введите координаты и рассчитайте маршрут.'
     },
     en: {
       idle: 'Enter any known values.',
@@ -95,46 +237,56 @@ document.addEventListener('DOMContentLoaded', () => {
       tideWindow: 'Enter depth, draft and under keel clearance.',
       tideWindowStatusIdle: 'Waiting for calculation.',
       tideNoData: 'No tide data loaded yet.',
-      tidePlaceholder: 'Select a place and date to load tide events.'
+      tidePlaceholder: 'Select a place and date to load tide events.',
+      navdesk_tides_manual_station: 'Manual input',
+      navdesk_tides_manual_active: 'Manual mode',
+      navdesk_tides_manual_table: 'The event table is not used in manual mode.',
+      navdesk_tides_loading: 'Loading tide data...',
+      navdesk_tides_no_results: 'Place not found.',
+      navdesk_tides_error: 'Could not load tide data.',
+      navdesk_tides_searching: 'Searching for place...',
+      navdesk_tides_search_error: 'Could not load suggestions. Try again or use manual input.',
+      navdesk_tides_search_fallback: 'External search is unavailable; showing local matches.',
+      navdesk_tides_query_too_short: 'Enter at least 2 characters.',
+      navdesk_tides_select_place: 'Select a place from the list.',
+      navdesk_tides_select_ambiguous: 'Several places were found. Select the right place from the list.',
+      navdesk_weekly_eyebrow: 'Week',
+      navdesk_weekly_title: 'Weekly tide and depth window',
+      navdesk_weekly_print_title: 'VETUS NAUTA - Brkovic / NavDesk Tides',
+      navdesk_weekly_print: 'Print / PDF',
+      navdesk_weekly_loading: 'Loading weekly graph...',
+      navdesk_weekly_error: 'Could not load weekly graph.',
+      navdesk_weekly_no_data: 'Not enough data for the weekly graph.',
+      navdesk_weekly_generated: 'Generated',
+      navdesk_weekly_available: 'Available depth',
+      navdesk_weekly_required: 'Required depth',
+      navdesk_weekly_safe: 'Sufficient',
+      navdesk_weekly_below: 'Below setting',
+      navdesk_weekly_markers: 'HW/LW',
+      navdesk_weekly_charted: 'Charted depth',
+      navdesk_weekly_draft: 'Draft',
+      navdesk_weekly_ukc: 'UKC',
+      navdesk_weekly_formula: 'Formula',
+      navdesk_weekly_formula_text: 'available depth = charted depth + tide',
+      navdesk_weekly_required_formula: 'required = draft + UKC',
+      navdesk_weekly_minmax: 'Weekly min/max available depth',
+      navdesk_weekly_windows: 'Intervals by current settings',
+      navdesk_weekly_no_windows: 'No sufficient-depth intervals found.',
+      navdesk_weekly_more_windows: 'more',
+      navdesk_weekly_source: 'Source',
+      navdesk_weekly_local_source: 'local demo data',
+      navdesk_window_status_loading: 'Loading data.',
+      navdesk_route_mode_gc: 'Great circle',
+      navdesk_route_mode_rl: 'Rhumb line',
+      navdesk_route_error: 'Check the coordinates.',
+      navdesk_route_same_points: 'Start and finish are the same. Set different points.',
+      navdesk_route_print_need_results: 'Calculate the route first.',
+      navdesk_route_table_empty: 'Route points have not been calculated yet.',
+      navdesk_route_status_idle: 'Enter coordinates and calculate the route.'
     }
   };
 
   const t = (key) => dict[getLang()][key] || '';
-
-  const navdeskModal = document.getElementById('navdeskModal');
-  const navdeskModalAccept = document.getElementById('navdeskModalAccept');
-  const siteShell = document.querySelector('.site-shell');
-  const NAVDESK_CONSENT_KEY = 'navdeskAcceptedVersion';
-  const NAVDESK_CONSENT_VERSION = '2026-04-20';
-
-  if (navdeskModal && siteShell && navdeskModal.parentElement !== siteShell) {
-    siteShell.appendChild(navdeskModal);
-  }
-
-  const openNavdeskModal = () => {
-    if (!navdeskModal) return;
-    navdeskModal.classList.add('is-open');
-    navdeskModal.setAttribute('aria-hidden', 'false');
-    document.body.classList.add('navdesk-locked');
-  };
-
-  const closeNavdeskModal = () => {
-    if (!navdeskModal) return;
-    navdeskModal.classList.remove('is-open');
-    navdeskModal.setAttribute('aria-hidden', 'true');
-    document.body.classList.remove('navdesk-locked');
-  };
-
-  const ensureNavdeskConsent = () => {
-    try {
-      const acceptedVersion = localStorage.getItem(NAVDESK_CONSENT_KEY);
-      if (acceptedVersion !== NAVDESK_CONSENT_VERSION) {
-        openNavdeskModal();
-      }
-    } catch (e) {
-      openNavdeskModal();
-    }
-  };
 
 const setWindowCardState = (state) => {
     if (!tideWindowCard) return;
@@ -151,8 +303,19 @@ const setWindowCardState = (state) => {
     if (tideStation) tideStation.textContent = '—';
   };
 
+  const clearTideWeekly = () => {
+    if (tideWeeklyReport) tideWeeklyReport.hidden = true;
+    if (tideWeeklyMeta) tideWeeklyMeta.textContent = '—';
+    if (tideWeeklySettings) tideWeeklySettings.textContent = '';
+    if (tideWeeklySummary) tideWeeklySummary.textContent = '';
+    if (tideWeeklySvg) tideWeeklySvg.replaceChildren();
+    if (tideWeeklyLegend) tideWeeklyLegend.textContent = '';
+    if (tideWeeklySource) tideWeeklySource.textContent = '—';
+  };
+
   const setManualTideUiState = () => {
     clearTideMeta();
+    clearTideWeekly();
     if (tideStation) tideStation.textContent = t('navdesk_tides_manual_station');
     if (tideTrend) tideTrend.textContent = t('navdesk_tides_manual_active');
     if (tidePlaceholder) {
@@ -190,28 +353,205 @@ const setWindowCardState = (state) => {
     }
   };
 
-  const renderSuggestions = (items = []) => {
+  const TIDE_PLACE_MIN_QUERY = 2;
+  const TIDE_PLACE_DEBOUNCE_MS = 300;
+  let tidePlaceSearchTimer = null;
+  let tidePlaceSearchSeq = 0;
+  let tideSelectedPlace = null;
+  let tideLastSearch = { query: '', results: [], status: '' };
+  let tideActiveSuggestionIndex = -1;
+
+  const normalizeTidePlace = (item = {}) => ({
+    id: String(item.id ?? ''),
+    name: String(item.name ?? ''),
+    region: item.region ? String(item.region) : '',
+    country: item.country ? String(item.country) : '',
+    lat: item.lat ?? '',
+    lon: item.lon ?? '',
+    source: item.source ? String(item.source) : '',
+    timezone: item.timezone ? String(item.timezone) : ''
+  });
+
+  const hasTideCoordinates = (place) => (
+    place &&
+    String(place.lat ?? '').trim() !== '' &&
+    String(place.lon ?? '').trim() !== ''
+  );
+
+  const clearSelectedTidePlace = () => {
+    tideSelectedPlace = null;
+    if (!tidePlaceInput) return;
+    ['id', 'name', 'lat', 'lon', 'source', 'timezone', 'region', 'country', 'selected'].forEach((key) => {
+      delete tidePlaceInput.dataset[key];
+    });
+  };
+
+  const storeSelectedTidePlace = (item) => {
+    const place = normalizeTidePlace(item);
+    tideSelectedPlace = place;
+    if (!tidePlaceInput) return place;
+
+    tidePlaceInput.value = place.name;
+    tidePlaceInput.dataset.id = place.id;
+    tidePlaceInput.dataset.name = place.name;
+    tidePlaceInput.dataset.lat = String(place.lat ?? '');
+    tidePlaceInput.dataset.lon = String(place.lon ?? '');
+    tidePlaceInput.dataset.source = place.source;
+    tidePlaceInput.dataset.timezone = place.timezone;
+    tidePlaceInput.dataset.region = place.region;
+    tidePlaceInput.dataset.country = place.country;
+    tidePlaceInput.dataset.selected = '1';
+    return place;
+  };
+
+  const getStoredTidePlace = () => {
+    if (!tidePlaceInput || tidePlaceInput.dataset.selected !== '1') return null;
+    const place = normalizeTidePlace(tidePlaceInput.dataset);
+    const currentText = tidePlaceInput.value.trim();
+    if (!place.name || currentText !== place.name || !hasTideCoordinates(place)) return null;
+    return place;
+  };
+
+  const formatTidePlaceDetail = (item) => {
+    const parts = [item.region, item.country].filter(Boolean);
+    const lat = Number(item.lat);
+    const lon = Number(item.lon);
+    const coord = Number.isFinite(lat) && Number.isFinite(lon)
+      ? `${lat.toFixed(4)}, ${lon.toFixed(4)}`
+      : '';
+    if (item.source) parts.push(item.source);
+    if (coord) parts.push(coord);
+    return parts.join(' • ');
+  };
+
+  const renderSuggestionState = (message, state = 'idle') => {
     if (!tideSuggestions) return;
-    if (!items.length) {
+    tideSuggestions.innerHTML = '';
+    tideActiveSuggestionIndex = -1;
+    if (tidePlaceInput) tidePlaceInput.removeAttribute('aria-activedescendant');
+
+    const row = document.createElement('div');
+    row.className = `navdesk-suggestion-state is-${state}`;
+    row.setAttribute('role', 'status');
+    row.textContent = message;
+    tideSuggestions.appendChild(row);
+    tideSuggestions.hidden = false;
+  };
+
+  const renderSuggestions = (items = [], options = {}) => {
+    if (!tideSuggestions) return;
+    const normalizedItems = items.map(normalizeTidePlace).filter((item) => item.name);
+    if (!normalizedItems.length && !options.message) {
       tideSuggestions.hidden = true;
       tideSuggestions.innerHTML = '';
+      tideActiveSuggestionIndex = -1;
       return;
     }
 
-    tideSuggestions.innerHTML = items.map((item) => {
-      const label = [item.name, item.region, item.country].filter(Boolean).join(', ');
-      return `<button type="button" class="navdesk-suggestion" data-name="${item.name}" data-lat="${item.lat}" data-lon="${item.lon}" data-timezone="${item.timezone || ''}">${label}</button>`;
-    }).join('');
+    tideSuggestions.innerHTML = '';
+    tideActiveSuggestionIndex = -1;
+    if (tidePlaceInput) tidePlaceInput.removeAttribute('aria-activedescendant');
+
+    if (options.message) {
+      const row = document.createElement('div');
+      row.className = `navdesk-suggestion-state is-${options.state || 'idle'}`;
+      row.setAttribute('role', 'status');
+      row.textContent = options.message;
+      tideSuggestions.appendChild(row);
+    }
+
+    normalizedItems.forEach((item, index) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'navdesk-suggestion';
+      button.id = `tideSuggestion-${index}`;
+      button.setAttribute('role', 'option');
+      button.dataset.name = item.name || '';
+      button.dataset.id = item.id || '';
+      button.dataset.lat = item.lat ?? '';
+      button.dataset.lon = item.lon ?? '';
+      button.dataset.source = item.source || '';
+      button.dataset.timezone = item.timezone || '';
+      button.dataset.region = item.region || '';
+      button.dataset.country = item.country || '';
+
+      const label = document.createElement('span');
+      label.className = 'navdesk-suggestion__label';
+      label.textContent = [item.name, item.region, item.country].filter(Boolean).join(', ') || item.name;
+      button.appendChild(label);
+
+      const detailText = formatTidePlaceDetail(item);
+      if (detailText) {
+        const detail = document.createElement('span');
+        detail.className = 'navdesk-suggestion__detail';
+        detail.textContent = detailText;
+        button.appendChild(detail);
+      }
+
+      tideSuggestions.appendChild(button);
+    });
     tideSuggestions.hidden = false;
   };
 
   const hideSuggestions = () => {
     if (!tideSuggestions) return;
     tideSuggestions.hidden = true;
+    tideActiveSuggestionIndex = -1;
+    if (tidePlaceInput) tidePlaceInput.removeAttribute('aria-activedescendant');
+  };
+
+  const getSuggestionButtons = () => (
+    tideSuggestions ? Array.from(tideSuggestions.querySelectorAll('.navdesk-suggestion')) : []
+  );
+
+  const setActiveSuggestion = (index) => {
+    const buttons = getSuggestionButtons();
+    if (!buttons.length || !tidePlaceInput) return;
+
+    const nextIndex = ((index % buttons.length) + buttons.length) % buttons.length;
+    buttons.forEach((button, buttonIndex) => {
+      button.classList.toggle('is-active', buttonIndex === nextIndex);
+    });
+
+    tideActiveSuggestionIndex = nextIndex;
+    tidePlaceInput.setAttribute('aria-activedescendant', buttons[nextIndex].id);
+    buttons[nextIndex].scrollIntoView({ block: 'nearest' });
+  };
+
+  const selectTideSuggestionButton = (button) => {
+    if (!button || !tidePlaceInput) return null;
+    tidePlaceSearchSeq += 1;
+    if (tidePlaceSearchTimer) {
+      clearTimeout(tidePlaceSearchTimer);
+      tidePlaceSearchTimer = null;
+    }
+    const selected = storeSelectedTidePlace({
+      id: button.dataset.id,
+      name: button.dataset.name,
+      region: button.dataset.region,
+      country: button.dataset.country,
+      lat: button.dataset.lat,
+      lon: button.dataset.lon,
+      source: button.dataset.source,
+      timezone: button.dataset.timezone
+    });
+    hideSuggestions();
+    return selected;
   };
 
   const renderTableMessage = (message, cssClass = 'is-loading') => {
-    tideTableBody.innerHTML = `<tr><td colspan="3"><div class="navdesk-state ${cssClass}">${message}</div></td></tr>`;
+    if (!tideTableBody) return;
+    tideTableBody.innerHTML = '';
+
+    const row = document.createElement('tr');
+    const cell = document.createElement('td');
+    const state = document.createElement('div');
+    cell.colSpan = 3;
+    state.className = `navdesk-state ${cssClass}`;
+    state.textContent = message;
+    cell.appendChild(state);
+    row.appendChild(cell);
+    tideTableBody.appendChild(row);
   };
 
 
@@ -382,43 +722,49 @@ const setWindowCardState = (state) => {
     summaryEl.textContent = '';
   };
 
-  allFields.forEach((el) => {
-    el.addEventListener('input', () => {
-      unlockCalculatedFields();
-      markUserInput(el);
-      statusEl.textContent = t('idle');
-      summaryEl.textContent = '';
+  if (fuelCalculatorReady) {
+    allFields.forEach((el) => {
+      el.addEventListener('input', () => {
+        unlockCalculatedFields();
+        markUserInput(el);
+        statusEl.textContent = t('idle');
+        summaryEl.textContent = '';
+      });
+
+      el.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          runCalculation();
+        }
+      });
     });
 
-    el.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter') {
-        event.preventDefault();
-        runCalculation();
+    runBtn.addEventListener('click', runCalculation);
+    resetBtn.addEventListener('click', resetCalculation);
+    copyBtn.addEventListener('click', async () => {
+      const textToCopy = String(summaryEl.textContent || '').trim();
+      if (!textToCopy) {
+        statusEl.textContent = t('copyEmpty');
+        return;
+      }
+      try {
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(textToCopy);
+        }
+        statusEl.textContent = t('copyDone');
+      } catch {
+        statusEl.textContent = t('copyEmpty');
       }
     });
-  });
-
-  runBtn.addEventListener('click', runCalculation);
-  resetBtn.addEventListener('click', resetCalculation);
-  copyBtn.addEventListener('click', async () => {
-    const textToCopy = String(summaryEl.textContent || '').trim();
-    if (!textToCopy) {
-      statusEl.textContent = t('copyEmpty');
-      return;
-    }
-    try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(textToCopy);
-      }
-      statusEl.textContent = t('copyDone');
-    } catch {
-      statusEl.textContent = t('copyEmpty');
-    }
-  });
+  }
 
   const serverApi = {
     async searchTidesPlace(query) {
-      const url = `/api/tides/search.php?q=${encodeURIComponent(query || '')}`;
+      const params = new URLSearchParams({
+        q: String(query || ''),
+        lang: getLang()
+      });
+      const url = `/api/tides/search.php?${params.toString()}`;
       const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
       if (!res.ok) throw new Error(`search failed: ${res.status}`);
       return res.json();
@@ -437,6 +783,26 @@ const setWindowCardState = (state) => {
         headers: { 'Accept': 'application/json' }
       });
       if (!res.ok) throw new Error(`forecast failed: ${res.status}`);
+      return res.json();
+    },
+
+    async fetchWeeklyTides({ lat, lon, date, units, place, charted_depth, draft, ukc }) {
+      const params = new URLSearchParams({
+        lat: String(lat ?? ''),
+        lon: String(lon ?? ''),
+        date: String(date ?? ''),
+        days: '7',
+        units: String(units ?? 'm'),
+        place: String(place ?? ''),
+        charted_depth: String(charted_depth ?? ''),
+        draft: String(draft ?? ''),
+        ukc: String(ukc ?? '0'),
+        lang: getLang(),
+      });
+      const res = await fetch(`/api/tides/weekly.php?${params.toString()}`, {
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!res.ok) throw new Error(`weekly failed: ${res.status}`);
       return res.json();
     },
 
@@ -482,9 +848,23 @@ const setWindowCardState = (state) => {
       ? forecast.events.filter((row) => !selectedDate || row.date === selectedDate)
       : [];
 
-    tideTableBody.innerHTML = rows.length
-      ? rows.map((row) => `<tr><td>${row.time}</td><td>${row.label}</td><td>${row.height} ${row.units}</td></tr>`).join('')
-      : `<tr><td colspan="3">${t('tideNoData')}</td></tr>`;
+    if (!tideTableBody) return;
+    tideTableBody.innerHTML = '';
+
+    if (!rows.length) {
+      renderTableMessage(t('tideNoData'), 'is-idle');
+      return;
+    }
+
+    rows.forEach((eventRow) => {
+      const row = document.createElement('tr');
+      [eventRow.time, eventRow.label, `${eventRow.height} ${eventRow.units}`].forEach((value) => {
+        const cell = document.createElement('td');
+        cell.textContent = String(value ?? '—');
+        row.appendChild(cell);
+      });
+      tideTableBody.appendChild(row);
+    });
   };
 
   const renderWindow = (windowData) => {
@@ -528,6 +908,354 @@ const setWindowCardState = (state) => {
     if (tideMaxDepth) {
       tideMaxDepth.textContent = result.max_available_depth != null ? `${result.max_available_depth} ${units}` : '—';
     }
+  };
+
+  const formatDepthValue = (value, units, digits = 1) => (
+    Number.isFinite(Number(value)) ? `${Number(value).toFixed(digits)} ${units}` : '—'
+  );
+
+  const formatTideDate = (dateValue, options = {}) => {
+    const date = new Date(`${dateValue}T00:00:00`);
+    if (Number.isNaN(date.getTime())) return String(dateValue || '—');
+    const locale = getLang() === 'ru' ? 'ru-RU' : 'en-GB';
+    return new Intl.DateTimeFormat(locale, {
+      day: '2-digit',
+      month: 'short',
+      ...options
+    }).format(date);
+  };
+
+  const formatTideDateTime = (dateValue, timeValue) => {
+    const dateLabel = formatTideDate(dateValue);
+    return `${dateLabel} ${timeValue || '—'}`;
+  };
+
+  const setWeeklyLoading = () => {
+    if (!tideWeeklyReport) return;
+    tideWeeklyReport.hidden = false;
+    if (tideWeeklyEyebrow) tideWeeklyEyebrow.textContent = t('navdesk_weekly_eyebrow');
+    if (tideWeeklyTitle) tideWeeklyTitle.textContent = t('navdesk_weekly_title');
+    if (tideWeeklyPrintTitle) tideWeeklyPrintTitle.textContent = t('navdesk_weekly_print_title');
+    if (tideWeeklyPrint) tideWeeklyPrint.textContent = t('navdesk_weekly_print');
+    if (tideWeeklyMeta) tideWeeklyMeta.textContent = t('navdesk_weekly_loading');
+    if (tideWeeklySettings) tideWeeklySettings.textContent = '';
+    if (tideWeeklySummary) tideWeeklySummary.textContent = '';
+    if (tideWeeklySvg) tideWeeklySvg.replaceChildren();
+    if (tideWeeklyLegend) tideWeeklyLegend.textContent = '';
+    if (tideWeeklySource) tideWeeklySource.textContent = '';
+  };
+
+  const renderWeeklyError = (message) => {
+    if (!tideWeeklyReport) return;
+    tideWeeklyReport.hidden = false;
+    if (tideWeeklyEyebrow) tideWeeklyEyebrow.textContent = t('navdesk_weekly_eyebrow');
+    if (tideWeeklyTitle) tideWeeklyTitle.textContent = t('navdesk_weekly_title');
+    if (tideWeeklyPrintTitle) tideWeeklyPrintTitle.textContent = t('navdesk_weekly_print_title');
+    if (tideWeeklyPrint) tideWeeklyPrint.textContent = t('navdesk_weekly_print');
+    if (tideWeeklyMeta) tideWeeklyMeta.textContent = message || t('navdesk_weekly_error');
+    if (tideWeeklySettings) tideWeeklySettings.textContent = '';
+    if (tideWeeklySummary) tideWeeklySummary.textContent = '';
+    if (tideWeeklySvg) tideWeeklySvg.replaceChildren();
+    if (tideWeeklyLegend) tideWeeklyLegend.textContent = '';
+    if (tideWeeklySource) tideWeeklySource.textContent = '';
+  };
+
+  const addWeeklyChip = (root, label, value) => {
+    const item = document.createElement('span');
+    item.className = 'navdesk-weekly__chip';
+
+    const strong = document.createElement('strong');
+    strong.textContent = label;
+    item.appendChild(strong);
+    item.appendChild(document.createTextNode(`: ${value}`));
+    root.appendChild(item);
+  };
+
+  const renderWeeklyLegend = () => {
+    if (!tideWeeklyLegend) return;
+    tideWeeklyLegend.replaceChildren();
+    [
+      ['is-available', t('navdesk_weekly_available')],
+      ['is-required', t('navdesk_weekly_required')],
+      ['is-safe', t('navdesk_weekly_safe')],
+      ['is-below', t('navdesk_weekly_below')],
+      ['is-marker', t('navdesk_weekly_markers')]
+    ].forEach(([cssClass, label]) => {
+      const item = document.createElement('span');
+      item.className = `navdesk-weekly__legend-item ${cssClass}`;
+      const mark = document.createElement('span');
+      mark.className = 'navdesk-weekly__legend-mark';
+      item.appendChild(mark);
+      item.appendChild(document.createTextNode(label));
+      tideWeeklyLegend.appendChild(item);
+    });
+  };
+
+  const renderWeeklySummary = (weekly) => {
+    if (!tideWeeklySummary) return;
+    tideWeeklySummary.replaceChildren();
+
+    const units = weekly.settings?.units || weekly.request?.units || 'm';
+    const series = Array.isArray(weekly.series) ? weekly.series : [];
+    const availableValues = series
+      .map((point) => Number(point.available_depth))
+      .filter(Number.isFinite);
+    const minAvailable = availableValues.length ? Math.min(...availableValues) : null;
+    const maxAvailable = availableValues.length ? Math.max(...availableValues) : null;
+
+    const minMax = document.createElement('p');
+    minMax.textContent = `${t('navdesk_weekly_minmax')}: ${formatDepthValue(minAvailable, units, 2)} / ${formatDepthValue(maxAvailable, units, 2)}`;
+    tideWeeklySummary.appendChild(minMax);
+
+    const windows = Array.isArray(weekly.safe_windows) ? weekly.safe_windows : [];
+    const windowsLine = document.createElement('p');
+    const shown = windows.slice(0, 3).map((item) => (
+      `${formatTideDateTime(item.date_start, item.start_time)}–${formatTideDateTime(item.date_end, item.end_time)}`
+    ));
+    if (shown.length) {
+      const extra = windows.length > shown.length
+        ? `, +${windows.length - shown.length} ${t('navdesk_weekly_more_windows')}`
+        : '';
+      windowsLine.textContent = `${t('navdesk_weekly_windows')}: ${shown.join('; ')}${extra}`;
+    } else {
+      windowsLine.textContent = `${t('navdesk_weekly_windows')}: ${t('navdesk_weekly_no_windows')}`;
+    }
+    tideWeeklySummary.appendChild(windowsLine);
+  };
+
+  const renderWeeklySource = (weekly) => {
+    if (!tideWeeklySource) return;
+    const sourceText = weekly.source === 'local-mock'
+      ? t('navdesk_weekly_local_source')
+      : (weekly.source || 'WorldTides');
+    const location = weekly.location || {};
+    const provider = weekly.provider || {};
+    const lat = Number(location.lat ?? weekly.request?.lat);
+    const lon = Number(location.lon ?? weekly.request?.lon);
+    const coords = Number.isFinite(lat) && Number.isFinite(lon)
+      ? `${lat.toFixed(4)}, ${lon.toFixed(4)}`
+      : '';
+    const station = location.station_label || provider.station || location.name || '';
+    const generated = new Date().toLocaleString(getLang() === 'ru' ? 'ru-RU' : 'en-GB');
+    const parts = [
+      `${t('navdesk_weekly_source')}: ${sourceText}`,
+      station ? `Station: ${station}` : '',
+      coords ? `Coordinates: ${coords}` : '',
+      provider.datum ? `Datum: ${provider.datum}` : '',
+      `${t('navdesk_weekly_generated')}: ${generated}`
+    ].filter(Boolean);
+    tideWeeklySource.textContent = parts.join(' | ');
+  };
+
+  const svgEl = (name, attrs = {}, text = '') => {
+    const node = document.createElementNS('http://www.w3.org/2000/svg', name);
+    Object.entries(attrs).forEach(([key, value]) => {
+      node.setAttribute(key, String(value));
+    });
+    if (text) node.textContent = text;
+    return node;
+  };
+
+  const renderWeeklySvg = (weekly) => {
+    if (!tideWeeklySvg) return;
+    tideWeeklySvg.replaceChildren();
+
+    const series = Array.isArray(weekly.series) ? weekly.series : [];
+    if (series.length < 2) return;
+
+    const width = 1120;
+    const height = 360;
+    const margin = { top: 26, right: 22, bottom: 58, left: 58 };
+    const plotWidth = width - margin.left - margin.right;
+    const plotHeight = height - margin.top - margin.bottom;
+    const units = weekly.settings?.units || weekly.request?.units || 'm';
+    const required = Number(weekly.settings?.required_depth ?? 0);
+    const charted = Number(weekly.settings?.charted_depth ?? 0);
+
+    const points = series
+      .map((point) => ({
+        ...point,
+        ts: Date.parse(point.iso),
+        available: Number(point.available_depth),
+        tide: Number(point.tide_height),
+        safe: !!point.safe
+      }))
+      .filter((point) => Number.isFinite(point.ts) && Number.isFinite(point.available));
+
+    if (points.length < 2) return;
+
+    const minTs = points[0].ts;
+    const maxTs = points[points.length - 1].ts;
+    const values = points.map((point) => point.available).concat(Number.isFinite(required) ? [required] : []);
+    const minValueRaw = Math.min(...values);
+    const maxValueRaw = Math.max(...values);
+    const valuePad = Math.max((maxValueRaw - minValueRaw) * 0.18, units === 'ft' ? 0.6 : 0.2);
+    const minValue = minValueRaw - valuePad;
+    const maxValue = maxValueRaw + valuePad;
+
+    const xScale = (ts) => margin.left + ((ts - minTs) / Math.max(maxTs - minTs, 1)) * plotWidth;
+    const yScale = (value) => margin.top + ((maxValue - value) / Math.max(maxValue - minValue, 0.1)) * plotHeight;
+
+    tideWeeklySvg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+    tideWeeklySvg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+    tideWeeklySvg.setAttribute('aria-label', t('navdesk_weekly_title'));
+
+    const background = svgEl('rect', {
+      x: 0,
+      y: 0,
+      width,
+      height,
+      class: 'navdesk-weekly-svg__paper'
+    });
+    tideWeeklySvg.appendChild(background);
+
+    let runStart = 0;
+    for (let i = 1; i <= points.length; i += 1) {
+      const runEnded = i === points.length || points[i].safe !== points[runStart].safe;
+      if (!runEnded) continue;
+      const from = xScale(points[runStart].ts);
+      const to = xScale(points[Math.min(i, points.length - 1)].ts);
+      tideWeeklySvg.appendChild(svgEl('rect', {
+        x: from,
+        y: margin.top,
+        width: Math.max(to - from, 1),
+        height: plotHeight,
+        class: points[runStart].safe ? 'navdesk-weekly-svg__safe-band' : 'navdesk-weekly-svg__below-band'
+      }));
+      runStart = i;
+    }
+
+    for (let i = 0; i <= 4; i += 1) {
+      const value = minValue + ((maxValue - minValue) * i / 4);
+      const y = yScale(value);
+      tideWeeklySvg.appendChild(svgEl('line', {
+        x1: margin.left,
+        y1: y,
+        x2: width - margin.right,
+        y2: y,
+        class: 'navdesk-weekly-svg__grid'
+      }));
+      tideWeeklySvg.appendChild(svgEl('text', {
+        x: margin.left - 10,
+        y: y + 4,
+        class: 'navdesk-weekly-svg__axis',
+        'text-anchor': 'end'
+      }, `${value.toFixed(1)} ${units}`));
+    }
+
+    const seenDates = new Set();
+    points.forEach((point) => {
+      if (seenDates.has(point.date)) return;
+      seenDates.add(point.date);
+      const x = xScale(point.ts);
+      tideWeeklySvg.appendChild(svgEl('line', {
+        x1: x,
+        y1: margin.top,
+        x2: x,
+        y2: height - margin.bottom,
+        class: 'navdesk-weekly-svg__day'
+      }));
+      tideWeeklySvg.appendChild(svgEl('text', {
+        x: x + 5,
+        y: height - 28,
+        class: 'navdesk-weekly-svg__date'
+      }, formatTideDate(point.date)));
+    });
+
+    if (Number.isFinite(required)) {
+      const y = yScale(required);
+      tideWeeklySvg.appendChild(svgEl('line', {
+        x1: margin.left,
+        y1: y,
+        x2: width - margin.right,
+        y2: y,
+        class: 'navdesk-weekly-svg__required'
+      }));
+      tideWeeklySvg.appendChild(svgEl('text', {
+        x: width - margin.right - 6,
+        y: y - 8,
+        class: 'navdesk-weekly-svg__required-label',
+        'text-anchor': 'end'
+      }, `${t('navdesk_weekly_required')} ${required.toFixed(1)} ${units}`));
+    }
+
+    const availablePath = points
+      .map((point, index) => `${index === 0 ? 'M' : 'L'} ${xScale(point.ts).toFixed(2)} ${yScale(point.available).toFixed(2)}`)
+      .join(' ');
+    tideWeeklySvg.appendChild(svgEl('path', {
+      d: availablePath,
+      class: 'navdesk-weekly-svg__available'
+    }));
+
+    const events = Array.isArray(weekly.events) ? weekly.events : [];
+    events.slice(0, 36).forEach((eventData, index) => {
+      const ts = Date.parse(eventData.iso);
+      const tideHeight = Number(eventData.tide_height ?? eventData.height);
+      if (!Number.isFinite(ts) || !Number.isFinite(tideHeight) || ts < minTs || ts > maxTs) return;
+      const x = xScale(ts);
+      const y = yScale(charted + tideHeight);
+      const isHigh = eventData.type === 'high';
+      const label = `${isHigh ? 'HW' : 'LW'} ${tideHeight.toFixed(1)} ${units}`;
+      tideWeeklySvg.appendChild(svgEl('circle', {
+        cx: x,
+        cy: y,
+        r: 4,
+        class: isHigh ? 'navdesk-weekly-svg__marker is-high' : 'navdesk-weekly-svg__marker is-low'
+      }));
+      tideWeeklySvg.appendChild(svgEl('text', {
+        x: x + 6,
+        y: y + (index % 2 === 0 ? -8 : 16),
+        class: 'navdesk-weekly-svg__marker-label'
+      }, label));
+    });
+
+    tideWeeklySvg.appendChild(svgEl('text', {
+      x: margin.left,
+      y: 18,
+      class: 'navdesk-weekly-svg__caption'
+    }, `${t('navdesk_weekly_available')} (${units})`));
+  };
+
+  const renderWeeklyGraph = (weekly) => {
+    if (!tideWeeklyReport) return;
+    const series = Array.isArray(weekly?.series) ? weekly.series : [];
+    if (!weekly?.ok || series.length < 2) {
+      renderWeeklyError(t('navdesk_weekly_no_data'));
+      return;
+    }
+
+    const units = weekly.settings?.units || weekly.request?.units || 'm';
+    const first = series[0];
+    const last = series[series.length - 1];
+    const place = weekly.location?.name || weekly.request?.place || '—';
+    const station = weekly.location?.station_label || weekly.provider?.station || '';
+    const lat = Number(weekly.location?.lat ?? weekly.request?.lat);
+    const lon = Number(weekly.location?.lon ?? weekly.request?.lon);
+    const coords = Number.isFinite(lat) && Number.isFinite(lon) ? `${lat.toFixed(4)}, ${lon.toFixed(4)}` : '';
+    const range = first?.date && last?.date ? `${formatTideDate(first.date)}–${formatTideDate(last.date)}` : '—';
+
+    tideWeeklyReport.hidden = false;
+    if (tideWeeklyEyebrow) tideWeeklyEyebrow.textContent = t('navdesk_weekly_eyebrow');
+    if (tideWeeklyTitle) tideWeeklyTitle.textContent = t('navdesk_weekly_title');
+    if (tideWeeklyPrintTitle) tideWeeklyPrintTitle.textContent = t('navdesk_weekly_print_title');
+    if (tideWeeklyPrint) tideWeeklyPrint.textContent = t('navdesk_weekly_print');
+    if (tideWeeklyMeta) {
+      tideWeeklyMeta.textContent = [place, station, coords, range, units].filter(Boolean).join(' | ');
+    }
+
+    if (tideWeeklySettings) {
+      tideWeeklySettings.replaceChildren();
+      addWeeklyChip(tideWeeklySettings, t('navdesk_weekly_charted'), formatDepthValue(weekly.settings?.charted_depth, units));
+      addWeeklyChip(tideWeeklySettings, t('navdesk_weekly_draft'), formatDepthValue(weekly.settings?.draft, units));
+      addWeeklyChip(tideWeeklySettings, t('navdesk_weekly_ukc'), formatDepthValue(weekly.settings?.ukc, units));
+      addWeeklyChip(tideWeeklySettings, t('navdesk_weekly_required'), formatDepthValue(weekly.settings?.required_depth, units));
+      addWeeklyChip(tideWeeklySettings, t('navdesk_weekly_formula'), `${t('navdesk_weekly_formula_text')}; ${t('navdesk_weekly_required_formula')}`);
+    }
+
+    renderWeeklySummary(weekly);
+    renderWeeklySvg(weekly);
+    renderWeeklyLegend();
+    renderWeeklySource(weekly);
   };
 
   const parseClockToMinutes = (value) => {
@@ -781,28 +1509,94 @@ const setWindowCardState = (state) => {
   updateTideModeUi();
 
   if (tidePlaceInput && tideSuggestions) {
-    tidePlaceInput.addEventListener('input', async () => {
+    tidePlaceInput.setAttribute('aria-autocomplete', 'list');
+    tidePlaceInput.setAttribute('aria-controls', 'tideSuggestions');
+    tideSuggestions.setAttribute('role', 'listbox');
+
+    tidePlaceInput.addEventListener('input', () => {
       if (isManualTideMode()) return;
       const q = tidePlaceInput.value.trim();
+      tidePlaceSearchSeq += 1;
+
+      if (tideSelectedPlace && q !== tideSelectedPlace.name) {
+        clearSelectedTidePlace();
+      }
+
+      if (tidePlaceSearchTimer) {
+        clearTimeout(tidePlaceSearchTimer);
+        tidePlaceSearchTimer = null;
+      }
+
+      tideLastSearch = { query: q, results: [], status: '' };
 
       if (!q) {
-        renderSuggestions([]);
+        hideSuggestions();
         return;
       }
 
-      const search = await serverApi.searchTidesPlace(q);
-      renderSuggestions(search.results || []);
+      if (q.length < TIDE_PLACE_MIN_QUERY) {
+        renderSuggestionState(t('navdesk_tides_query_too_short'), 'idle');
+        return;
+      }
+
+      const searchSeq = tidePlaceSearchSeq;
+      renderSuggestionState(t('navdesk_tides_searching'), 'loading');
+      tidePlaceSearchTimer = setTimeout(async () => {
+        try {
+          const search = await serverApi.searchTidesPlace(q);
+          if (searchSeq !== tidePlaceSearchSeq) return;
+          const results = Array.isArray(search.results) ? search.results.map(normalizeTidePlace) : [];
+          tideLastSearch = { query: q, results, status: search.status || '' };
+
+          if (!results.length) {
+            renderSuggestionState(t('navdesk_tides_no_results'), search.status === 'fallback' ? 'fallback' : 'empty');
+            return;
+          }
+
+          renderSuggestions(results, search.status === 'fallback'
+            ? { message: t('navdesk_tides_search_fallback'), state: 'fallback' }
+            : {});
+        } catch (error) {
+          if (searchSeq !== tidePlaceSearchSeq) return;
+          console.error('NavDesk tide place search error:', error);
+          tideLastSearch = { query: q, results: [], status: 'error' };
+          renderSuggestionState(t('navdesk_tides_search_error'), 'error');
+        }
+      }, TIDE_PLACE_DEBOUNCE_MS);
+    });
+
+    tidePlaceInput.addEventListener('keydown', (event) => {
+      if (tideSuggestions.hidden) return;
+      const buttons = getSuggestionButtons();
+
+      if (event.key === 'ArrowDown' && buttons.length) {
+        event.preventDefault();
+        setActiveSuggestion(tideActiveSuggestionIndex + 1);
+        return;
+      }
+
+      if (event.key === 'ArrowUp' && buttons.length) {
+        event.preventDefault();
+        setActiveSuggestion(tideActiveSuggestionIndex - 1);
+        return;
+      }
+
+      if (event.key === 'Enter' && tideActiveSuggestionIndex >= 0 && buttons[tideActiveSuggestionIndex]) {
+        event.preventDefault();
+        selectTideSuggestionButton(buttons[tideActiveSuggestionIndex]);
+        return;
+      }
+
+      if (event.key === 'Escape') {
+        hideSuggestions();
+      }
     });
 
     tideSuggestions.addEventListener('click', (event) => {
       const btn = event.target.closest('.navdesk-suggestion');
       if (!btn) return;
 
-      tidePlaceInput.value = btn.dataset.name || '';
-      tidePlaceInput.dataset.lat = btn.dataset.lat || '';
-      tidePlaceInput.dataset.lon = btn.dataset.lon || '';
-      tidePlaceInput.dataset.timezone = btn.dataset.timezone || '';
-      hideSuggestions();
+      selectTideSuggestionButton(btn);
     });
 
     document.addEventListener('click', (event) => {
@@ -814,12 +1608,14 @@ const setWindowCardState = (state) => {
 
   if (tideRunBtn) {
     tideRunBtn.addEventListener('click', async () => {
+      clearTideWeekly();
+
       if (isManualTideMode()) {
         renderManualWindow();
         return;
       }
 
-      const place = tidePlaceInput?.value?.trim() || 'Kotor';
+      const place = tidePlaceInput?.value?.trim() || '';
       const date = document.getElementById('tideDate')?.value || new Date().toISOString().slice(0, 10);
       const units = document.getElementById('tideUnits')?.value || 'm';
       const charted_depth = document.getElementById('tideChartedDepth')?.value || '';
@@ -827,29 +1623,96 @@ const setWindowCardState = (state) => {
       const ukc = document.getElementById('tideUkc')?.value || '';
 
       try {
+        const selectedFromInput = getStoredTidePlace();
+        let selected = selectedFromInput;
+
+        if (!selected) {
+          if (place.length < TIDE_PLACE_MIN_QUERY) {
+            clearTideMeta();
+            setWindowCardState('is-idle');
+            if (tideWindowStatus) tideWindowStatus.textContent = t('tideWindowStatusIdle');
+            if (tideSafeWindow) tideSafeWindow.textContent = place ? t('navdesk_tides_query_too_short') : t('navdesk_tides_select_place');
+            if (tidePlaceholder) {
+              tidePlaceholder.style.display = '';
+              tidePlaceholder.textContent = t('navdesk_tides_select_place');
+            }
+            renderTableMessage(t('navdesk_tides_select_place'), 'is-idle');
+            if (place) renderSuggestionState(t('navdesk_tides_query_too_short'), 'idle');
+            else hideSuggestions();
+            return;
+          }
+
+          setWindowCardState('is-loading');
+          if (tideWindowStatus) tideWindowStatus.textContent = t('navdesk_window_status_loading') || t('tideWindowStatusIdle');
+          if (tideSafeWindow) tideSafeWindow.textContent = t('navdesk_tides_searching') || t('tideWindow');
+          renderTableMessage(t('navdesk_tides_searching'), 'is-loading');
+
+          const canReuseSearch =
+            tideLastSearch.query === place &&
+            Array.isArray(tideLastSearch.results) &&
+            (tideLastSearch.status === 'ok' || tideLastSearch.status === 'fallback');
+
+          const search = canReuseSearch
+            ? { results: tideLastSearch.results, status: tideLastSearch.status }
+            : await serverApi.searchTidesPlace(place);
+
+          const searchResults = Array.isArray(search.results)
+            ? search.results.map(normalizeTidePlace).filter(hasTideCoordinates)
+            : [];
+          tideLastSearch = { query: place, results: searchResults, status: search.status || '' };
+
+          if (!searchResults.length) {
+            clearTideMeta();
+            setWindowCardState('is-idle');
+            if (tideWindowStatus) tideWindowStatus.textContent = t('tideWindowStatusIdle');
+            if (tideSafeWindow) tideSafeWindow.textContent = t('navdesk_tides_no_results');
+            if (tidePlaceholder) {
+              tidePlaceholder.style.display = '';
+              tidePlaceholder.textContent = t('navdesk_tides_no_results');
+            }
+            renderTableMessage(t('navdesk_tides_no_results'), 'is-error');
+            renderSuggestionState(t('navdesk_tides_no_results'), search.status === 'fallback' ? 'fallback' : 'empty');
+            return;
+          }
+
+          if (searchResults.length > 1) {
+            clearTideMeta();
+            setWindowCardState('is-idle');
+            if (tideWindowStatus) tideWindowStatus.textContent = t('tideWindowStatusIdle');
+            if (tideSafeWindow) tideSafeWindow.textContent = t('navdesk_tides_select_ambiguous');
+            if (tidePlaceholder) {
+              tidePlaceholder.style.display = '';
+              tidePlaceholder.textContent = t('navdesk_tides_select_ambiguous');
+            }
+            renderTableMessage(t('navdesk_tides_select_ambiguous'), 'is-idle');
+            renderSuggestions(searchResults, {
+              message: search.status === 'fallback'
+                ? t('navdesk_tides_search_fallback')
+                : t('navdesk_tides_select_ambiguous'),
+              state: search.status === 'fallback' ? 'fallback' : 'idle'
+            });
+            return;
+          }
+
+          selected = storeSelectedTidePlace(searchResults[0]);
+          hideSuggestions();
+        }
+
+        if (!hasTideCoordinates(selected)) {
+          clearSelectedTidePlace();
+          clearTideMeta();
+          setWindowCardState('is-idle');
+          if (tideWindowStatus) tideWindowStatus.textContent = t('tideWindowStatusIdle');
+          if (tideSafeWindow) tideSafeWindow.textContent = t('navdesk_tides_select_place');
+          renderTableMessage(t('navdesk_tides_select_place'), 'is-idle');
+          return;
+        }
+
         setWindowCardState('is-loading');
         if (tideWindowStatus) tideWindowStatus.textContent = t('navdesk_window_status_loading') || t('tideWindowStatusIdle');
         tideSafeWindow.textContent = t('navdesk_tides_loading') || t('tideWindow');
         renderTableMessage(t('navdesk_tides_loading'), 'is-loading');
-
-        const search = await serverApi.searchTidesPlace(place);
-        const selected = search.results?.[0];
-
-        if (!selected) {
-          tideNextHigh.textContent = '—';
-          tideNextLow.textContent = '—';
-          tideTrend.textContent = '—';
-          tideStation.textContent = '—';
-          setWindowCardState('is-idle');
-          if (tideWindowStatus) tideWindowStatus.textContent = t('tideWindowStatusIdle');
-          tideSafeWindow.textContent = t('tideWindow');
-          if (tidePlaceholder) {
-            tidePlaceholder.style.display = '';
-            tidePlaceholder.textContent = t('navdesk_tides_no_results');
-          }
-          renderTableMessage(t('navdesk_tides_no_results'), 'is-error');
-          return;
-        }
+        setWeeklyLoading();
 
         const forecast = await serverApi.fetchTidesForecast({
           lat: selected.lat,
@@ -862,6 +1725,8 @@ const setWindowCardState = (state) => {
         renderForecast(forecast);
 
         const normalizedUkc = String(ukc).trim() === '' ? '0' : ukc;
+        const weeklyDepth = String(charted_depth).trim() === '' ? '0' : charted_depth;
+        const weeklyDraft = String(draft).trim() === '' ? '0' : draft;
 
         const hasWindowInputs =
           String(charted_depth).trim() !== '' &&
@@ -883,12 +1748,30 @@ const setWindowCardState = (state) => {
           if (tideWindowStatus) tideWindowStatus.textContent = t('tideWindowStatusIdle');
           tideSafeWindow.textContent = t('tideWindow');
         }
+
+        try {
+          const weekly = await serverApi.fetchWeeklyTides({
+            lat: selected.lat,
+            lon: selected.lon,
+            date,
+            units,
+            place: selected.name,
+            charted_depth: weeklyDepth,
+            draft: weeklyDraft,
+            ukc: normalizedUkc
+          });
+          renderWeeklyGraph(weekly);
+        } catch (weeklyError) {
+          console.error('NavDesk tide weekly graph error:', weeklyError);
+          renderWeeklyError(t('navdesk_weekly_error'));
+        }
       } catch (error) {
         console.error('NavDesk tide demo error:', error);
         tideNextHigh.textContent = '—';
         tideNextLow.textContent = '—';
         tideTrend.textContent = '—';
         tideStation.textContent = '—';
+        clearTideWeekly();
         setWindowCardState('is-not-passable');
         if (tideWindowStatus) tideWindowStatus.textContent = t('navdesk_tides_error');
         tideSafeWindow.textContent = t('navdesk_tides_error');
@@ -900,6 +1783,21 @@ const setWindowCardState = (state) => {
       }
     });
   }
+
+  if (tideWeeklyPrint) {
+    tideWeeklyPrint.addEventListener('click', () => {
+      if (!tideWeeklyReport || tideWeeklyReport.hidden) return;
+      document.body.classList.add('navdesk-tides-printing');
+      window.print();
+      window.setTimeout(() => {
+        document.body.classList.remove('navdesk-tides-printing');
+      }, 1200);
+    });
+  }
+
+  window.addEventListener('afterprint', () => {
+    document.body.classList.remove('navdesk-tides-printing');
+  });
 
 
 
@@ -929,6 +1827,7 @@ const setWindowCardState = (state) => {
       routeRoot.querySelector('#routeReset') ||
       routeRoot.querySelector('#routeCalcReset') ||
       Array.from(routeRoot.querySelectorAll('button')).find((btn) => /Сброс|Reset/i.test(btn.textContent || ''));
+    const routePrintPdf = routeRoot.querySelector('#routePrintPdf');
 
     const routeStatus = routeRoot.querySelector('#routeStatus') || routeRoot.querySelector('.navdesk-calc__status');
     const routeResults = routeRoot.querySelector('#routeResults') || routeRoot.querySelector('#routeResult') || routeRoot.querySelector('.navdesk-route__results, .navdesk-route__result');
@@ -947,9 +1846,16 @@ const setWindowCardState = (state) => {
     const rad2deg = (rad) => rad * 180 / Math.PI;
     const normalizeCourse = (deg) => ((deg % 360) + 360) % 360;
     const earthRadiusNm = 3440.065;
+    let lastRouteReport = null;
 
     const formatNm = (value) => `${value.toFixed(1)} nm`;
     const formatCourse = (value) => `${normalizeCourse(value).toFixed(1)}°T`;
+    const escapeRouteHtml = (value) => String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
 
     const padLatDeg = (value) => String(Math.round(value)).padStart(2, '0');
     const padLonDeg = (value) => String(Math.round(value)).padStart(3, '0');
@@ -1081,6 +1987,12 @@ const setWindowCardState = (state) => {
       const p = Array.from(card.querySelectorAll('p')).find((node) => labelPattern.test(node.textContent || ''));
       if (!p) return;
 
+      const valueSpan = p.querySelector('span[id]');
+      if (valueSpan) {
+        valueSpan.textContent = value;
+        return;
+      }
+
       const strong = p.querySelector('strong');
       if (strong) {
         p.innerHTML = `${strong.outerHTML} ${value}`;
@@ -1109,6 +2021,10 @@ const setWindowCardState = (state) => {
       `).join('');
     };
 
+    const setRoutePrintReady = (ready) => {
+      if (routePrintPdf) routePrintPdf.disabled = !ready;
+    };
+
     const clearRouteSummary = () => {
       if (routeOrthoDistanceEl) routeOrthoDistanceEl.textContent = '—';
       if (routeOrthoInitialEl) routeOrthoInitialEl.textContent = '—';
@@ -1123,11 +2039,136 @@ const setWindowCardState = (state) => {
       setCardValue(rlCard, /Constant|курс|course/i, '—');
     };
 
+    const buildRoutePrintBody = (report) => {
+      const generated = new Date().toLocaleString([], {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      const rowsHtml = report.rows.map((row, index) => `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${escapeRouteHtml(formatMarineLat(row.lat))}</td>
+          <td>${escapeRouteHtml(formatMarineLon(row.lon))}</td>
+          <td>${escapeRouteHtml(row.course != null ? formatCourse(row.course) : '—')}</td>
+          <td>${escapeRouteHtml(row.distance != null ? formatNm(row.distance) : '—')}</td>
+        </tr>
+      `).join('');
+
+      return `
+        <style>
+          .header { gap:10px; padding-bottom:5px; }
+          .logo { width:172px; }
+          .title { font-size:21px; }
+          .subtitle { margin-top:2px; font-size:9.6px; max-width:118mm; }
+          .motto { padding-top:3px; font-size:10px; }
+          .route-print-top { display:grid; grid-template-columns:1.15fr 1fr 1fr; gap:5px; margin-top:6px; }
+          .route-print-summary { display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-top:5px; }
+          .route-print-top .block,
+          .route-print-summary .block { padding:5px 6px; }
+          .route-print-top .block h2,
+          .route-print-summary .block h2,
+          .route-print-table-block h2 { margin-bottom:3px; font-size:10.2px; }
+          .route-print-table-block { break-inside:auto; page-break-inside:auto; padding:5px 6px; }
+          .route-print-table { width:100%; border-collapse:collapse; table-layout:fixed; margin-top:4px; font-size:7.7px; line-height:1.08; }
+          .route-print-table th, .route-print-table td { border:1px solid rgba(16,36,58,.16); padding:1.7px 3px; text-align:left; vertical-align:top; }
+          .route-print-table th { background:#f4f0e7; color:#10243a; font-size:7.2px; text-transform:uppercase; letter-spacing:.04em; }
+          .route-print-table tr { break-inside:avoid; page-break-inside:avoid; }
+          .route-print-note { margin:4px 0 0; font-size:7.6px; color:rgba(16,36,58,.66); }
+          .footer { margin-top:5px; padding-top:4px; }
+          @media print { .route-print-top { grid-template-columns:1.15fr 1fr 1fr; } }
+        </style>
+        <section class="route-print-top">
+          <div class="block">
+            <h2>Расчет маршрута</h2>
+            <div class="meta">
+              <div><span class="label">Дата расчета</span><span class="value">${escapeRouteHtml(generated)}</span></div>
+              <div><span class="label">Шаг точек</span><span class="value">${escapeRouteHtml(formatNm(report.stepNm))}</span></div>
+            </div>
+          </div>
+          <div class="block">
+            <h2>From</h2>
+            <div class="meta">
+              <div><span class="label">Широта</span><span class="value">${escapeRouteHtml(formatMarineLat(report.fromLat))}</span></div>
+              <div><span class="label">Долгота</span><span class="value">${escapeRouteHtml(formatMarineLon(report.fromLon))}</span></div>
+            </div>
+          </div>
+          <div class="block">
+            <h2>To</h2>
+            <div class="meta">
+              <div><span class="label">Широта</span><span class="value">${escapeRouteHtml(formatMarineLat(report.toLat))}</span></div>
+              <div><span class="label">Долгота</span><span class="value">${escapeRouteHtml(formatMarineLon(report.toLon))}</span></div>
+            </div>
+          </div>
+        </section>
+        <section class="route-print-summary">
+          <div class="block">
+            <h2>Ортодромия</h2>
+            <div class="meta">
+              <div><span class="label">Расстояние</span><span class="value">${escapeRouteHtml(formatNm(report.gcDistance))}</span></div>
+              <div><span class="label">Начальный курс</span><span class="value">${escapeRouteHtml(formatCourse(report.gcInitial))}</span></div>
+              <div><span class="label">Конечный курс</span><span class="value">${escapeRouteHtml(formatCourse(report.gcFinal))}</span></div>
+            </div>
+          </div>
+          <div class="block">
+            <h2>Локсодромия</h2>
+            <div class="meta">
+              <div><span class="label">Расстояние</span><span class="value">${escapeRouteHtml(formatNm(report.rhumbDistance))}</span></div>
+              <div><span class="label">Постоянный курс</span><span class="value">${escapeRouteHtml(formatCourse(report.rhumbCourse))}</span></div>
+            </div>
+          </div>
+        </section>
+        <section class="flow">
+          <div class="block route-print-table-block">
+            <h2>Точки ортодромии</h2>
+            <table class="route-print-table">
+              <thead>
+                <tr>
+                  <th>Точка</th>
+                  <th>Широта</th>
+                  <th>Долгота</th>
+                  <th>Истинный курс</th>
+                  <th>От старта, nm</th>
+                </tr>
+              </thead>
+              <tbody>${rowsHtml}</tbody>
+            </table>
+            <p class="route-print-note">Навигационный расчет является вспомогательным и требует проверки по актуальным картам, погоде и Notices to Mariners.</p>
+          </div>
+        </section>`;
+    };
+
+    const printRouteReport = () => {
+      if (!lastRouteReport || !lastRouteReport.rows?.length) {
+        if (routeStatus) routeStatus.textContent = t('navdesk_route_print_need_results');
+        return;
+      }
+
+      const printer = window.NavDeskPrint;
+      if (!printer?.printFromHtml) {
+        window.print();
+        return;
+      }
+
+      printer.printFromHtml({
+        title: 'NavDesk Route',
+        subtitle: 'Ортодромия / локсодромия, курсы и точки маршрута.',
+        bodyHtml: buildRoutePrintBody(lastRouteReport),
+        pageSize: 'A4 landscape',
+        footerLeft: 'Vetus Nauta - Brkovic',
+        footerRight: 'NavDesk Route'
+      });
+    };
+
     const calculateRoute = () => {
       const points = getRoutePoints();
       if (!points) {
         if (routeStatus) routeStatus.textContent = t('navdesk_route_error');
         if (routeResults) routeResults.hidden = false;
+        lastRouteReport = null;
+        setRoutePrintReady(false);
         clearRouteSummary();
         renderRouteTable([]);
         return;
@@ -1136,6 +2177,16 @@ const setWindowCardState = (state) => {
       const { fromLat, fromLon, toLat, toLon } = points;
 
       const gcDistance = greatCircleDistanceNm(fromLat, fromLon, toLat, toLon);
+      if (gcDistance < 0.01) {
+        if (routeStatus) routeStatus.textContent = t('navdesk_route_same_points');
+        if (routeResults) routeResults.hidden = false;
+        lastRouteReport = null;
+        setRoutePrintReady(false);
+        clearRouteSummary();
+        renderRouteTable([]);
+        return;
+      }
+
       const gcInitial = greatCircleInitialCourse(fromLat, fromLon, toLat, toLon);
       const gcFinal = normalizeCourse(greatCircleInitialCourse(toLat, toLon, fromLat, fromLon) + 180);
       const rl = rhumbDistanceCourse(fromLat, fromLon, toLat, toLon);
@@ -1174,6 +2225,20 @@ const setWindowCardState = (state) => {
       if (routeStatus) routeStatus.textContent = `${t('navdesk_route_mode_gc')} / ${t('navdesk_route_mode_rl')}`;
       if (routeResults) routeResults.hidden = false;
       renderRouteTable(rows);
+      lastRouteReport = {
+        fromLat,
+        fromLon,
+        toLat,
+        toLon,
+        stepNm,
+        gcDistance,
+        gcInitial,
+        gcFinal,
+        rhumbDistance: rl.distance,
+        rhumbCourse: rl.course,
+        rows
+      };
+      setRoutePrintReady(true);
     };
 
     const resetRoute = () => {
@@ -1203,6 +2268,8 @@ const setWindowCardState = (state) => {
 
       if (routeStatus) routeStatus.textContent = t('navdesk_route_status_idle');
       if (routeResults) routeResults.hidden = false;
+      lastRouteReport = null;
+      setRoutePrintReady(false);
       clearRouteSummary();
       renderRouteTable([]);
     };
@@ -1263,8 +2330,10 @@ const setWindowCardState = (state) => {
   if (routeLoadPacific) routeLoadPacific.addEventListener('click', loadPacificDemo);
     if (routeCalcRun) routeCalcRun.addEventListener('click', calculateRoute);
     if (routeReset) routeReset.addEventListener('click', resetRoute);
+    if (routePrintPdf) routePrintPdf.addEventListener('click', printRouteReport);
 
     if (routeResults) routeResults.hidden = false;
+    setRoutePrintReady(false);
     clearRouteSummary();
     renderRouteTable([]);
   }
@@ -1278,6 +2347,7 @@ const setWindowCardState = (state) => {
     if (!shell || !toggle || !body) return;
 
     const storageKey = `navdeskCardState:${shellId}`;
+    const forceOpen = shell.hasAttribute('data-navdesk-force-open');
 
     const saveState = (state) => {
       try {
@@ -1314,22 +2384,31 @@ const setWindowCardState = (state) => {
       }
     };
 
-    closeCard(false);
+    if (forceOpen) {
+      openCard(false);
+      if (pin) pin.setAttribute('aria-pressed', 'false');
+    } else {
+      closeCard(false);
 
-    try {
-      const saved = localStorage.getItem(storageKey);
-      if (saved === 'pinned') {
-        setPinned(true, false);
-      } else if (saved === 'open') {
-        openCard(false);
-      } else {
+      try {
+        const saved = localStorage.getItem(storageKey);
+        if (saved === 'pinned') {
+          setPinned(true, false);
+        } else if (saved === 'open') {
+          openCard(false);
+        } else {
+          closeCard(false);
+        }
+      } catch (e) {
         closeCard(false);
       }
-    } catch (e) {
-      closeCard(false);
     }
 
     toggle.addEventListener('click', () => {
+      if (forceOpen) {
+        openCard(false);
+        return;
+      }
       const isOpen = shell.classList.contains('is-open');
       if (isOpen) {
         closeCard();
@@ -1340,6 +2419,11 @@ const setWindowCardState = (state) => {
 
     if (pin) {
       pin.addEventListener('click', () => {
+        if (forceOpen) {
+          openCard(false);
+          pin.setAttribute('aria-pressed', 'false');
+          return;
+        }
         const pinned = shell.classList.contains('is-pinned');
         setPinned(!pinned);
       });
@@ -1472,7 +2556,7 @@ const setWindowCardState = (state) => {
   const ukvScenarioToggles = Array.from(document.querySelectorAll('.navdesk-ukv-scenario__toggle'));
 
   const UKV_PROFILE_STORAGE_KEY = 'navdesk_ukv_profile_v1';
-  const UKV_PROFILE_COLLAPSED_KEY = 'navdesk_ukv_profile_collapsed_v1';
+  const UKV_PROFILE_COLLAPSED_KEY = 'navdesk_ukv_profile_collapsed_v2';
 
   const ukvDemoProfile = {
     vesselType: 'sailing yacht',
@@ -1565,10 +2649,11 @@ const setWindowCardState = (state) => {
     if (ukvProfileSummaryCallSpell) ukvProfileSummaryCallSpell.textContent = toPlainSpelling(data.callSign || '4OAX27');
   };
 
-  const setUkvProfileCollapsed = (collapsed) => {
+  const setUkvProfileCollapsed = (collapsed, save = true) => {
     if (!ukvVesselCard) return;
     ukvVesselCard.classList.toggle('is-collapsed', !!collapsed);
     if (ukvProfileSummary) ukvProfileSummary.hidden = !collapsed;
+    if (!save) return;
     try {
       localStorage.setItem(UKV_PROFILE_COLLAPSED_KEY, collapsed ? '1' : '0');
     } catch (e) {}
@@ -1590,16 +2675,25 @@ const setWindowCardState = (state) => {
     }
   };
 
+  const shouldCollapseUkvProfileByDefault = () => {
+    const standalonePage = !!document.querySelector('.navdesk-ukv-page');
+    const mobileViewport = window.matchMedia?.('(max-width: 720px)').matches;
+    return standalonePage && mobileViewport;
+  };
+
   if (Object.values(ukvProfileFields).some(Boolean)) {
     const storedProfile = loadUkvProfileFromStorage();
     fillUkvProfile(storedProfile || ukvDemoProfile);
     refreshUkvSpelllines();
     refreshUkvProfileSummary();
     try {
-      const collapsed = localStorage.getItem(UKV_PROFILE_COLLAPSED_KEY) === '1';
-      setUkvProfileCollapsed(collapsed);
+      const storedCollapsedState = localStorage.getItem(UKV_PROFILE_COLLAPSED_KEY);
+      const collapsed = storedCollapsedState === null
+        ? shouldCollapseUkvProfileByDefault()
+        : storedCollapsedState === '1';
+      setUkvProfileCollapsed(collapsed, storedCollapsedState !== null);
     } catch (e) {
-      setUkvProfileCollapsed(false);
+      setUkvProfileCollapsed(shouldCollapseUkvProfileByDefault(), false);
     }
   }
 
@@ -2479,14 +3573,16 @@ Out.`
         };
   };
 
-  const buildStandalonePrintDocument = ({ title = '', subtitle = '', bodyHtml = '', footerLeft = 'Vetus Nauta', footerRight = 'Have a good watch Captain!' } = {}) => `<!doctype html>
+  const buildStandalonePrintDocument = ({ title = '', subtitle = '', bodyHtml = '', footerLeft = 'Vetus Nauta', footerRight = 'Have a good watch Captain!', pageSize = 'A4 portrait' } = {}) => {
+    const safePageSize = pageSize === 'A4 landscape' ? 'A4 landscape' : 'A4 portrait';
+    return `<!doctype html>
 <html lang="${getPrintLang()}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>${escapeHtml(title)}</title>
 <style>
-  @page { size: A4 portrait; margin: 9mm; }
+  @page { size: ${safePageSize}; margin: 9mm; }
   html, body { margin: 0; padding: 0; background: #fff; color: #10243a; font-family: Inter, Arial, sans-serif; }
   body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .sheet { width: 100%; box-sizing: border-box; }
@@ -2557,6 +3653,7 @@ window.addEventListener('afterprint', () => { setTimeout(() => window.close(), 1
 </script>
 </body>
 </html>`;
+  };
 
   const openNavdeskPrintWindow = (docHtml) => {
     const html = String(docHtml || '').trim();
@@ -2599,8 +3696,8 @@ window.addEventListener('afterprint', () => { setTimeout(() => window.close(), 1
     openNavdeskPrintWindow(html);
   };
 
-  const printFromHtml = ({ title = '', subtitle = '', bodyHtml = '' } = {}) => {
-    const docHtml = buildStandalonePrintDocument({ title, subtitle, bodyHtml });
+  const printFromHtml = ({ title = '', subtitle = '', bodyHtml = '', pageSize = 'A4 portrait', footerLeft, footerRight } = {}) => {
+    const docHtml = buildStandalonePrintDocument({ title, subtitle, bodyHtml, pageSize, footerLeft, footerRight });
     openNavdeskPrintWindow(docHtml);
   };
 
@@ -2711,16 +3808,9 @@ window.addEventListener('afterprint', () => { setTimeout(() => window.close(), 1
     clearNavdeskPrintHtml();
   });
 
-  if (navdeskModalAccept) {
-    navdeskModalAccept.addEventListener('click', () => {
-      try {
-        localStorage.setItem(NAVDESK_CONSENT_KEY, NAVDESK_CONSENT_VERSION);
-      } catch (e) {}
-      closeNavdeskModal();
-    });
+  if (typeof window.initNavdeskConsent === 'function') {
+    window.initNavdeskConsent();
   }
-
-  ensureNavdeskConsent();
 })();
 
 });
@@ -2731,30 +3821,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const tideModeManual = document.getElementById('tideModeManual');
   const tideNextHigh = document.getElementById('tideNextHigh');
   const tideNextLow = document.getElementById('tideNextLow');
-  const tideTrend = document.getElementById('tideTrend');
-  const tideStation = document.getElementById('tideStation');
   const tideNextHighRow = tideNextHigh ? tideNextHigh.closest('p') : null;
   const tideNextLowRow = tideNextLow ? tideNextLow.closest('p') : null;
-  const tideTrendRow = tideTrend ? tideTrend.closest('p') : null;
-  const tideStationRow = tideStation ? tideStation.closest('p') : null;
-  const tideTableBody = document.getElementById('tideTableBody');
-  const tideTableWrap = tideTableBody ? tideTableBody.closest('.navdesk-table-wrap') : null;
-  const tideTableSection = document.querySelector('.navdesk-table-section');
-  const tideTableHeading = document.querySelector('.navdesk-table-section__heading');
-  const tideTableDisclaimer = document.querySelector('.navdesk-tides-disclaimer');
-  const tidePlaceholder = document.getElementById('tidePlaceholder');
 
   const applyManualModeVisibility = () => {
     const manual = !!(tideModeManual && tideModeManual.checked);
     if (tideNextHighRow) tideNextHighRow.hidden = manual;
     if (tideNextLowRow) tideNextLowRow.hidden = manual;
-    if (tideTrendRow) tideTrendRow.hidden = manual;
-    if (tideStationRow) tideStationRow.hidden = manual;
-    if (tideTableSection) tideTableSection.hidden = manual;
-    if (tideTableHeading) tideTableHeading.hidden = manual;
-    if (tideTableWrap) tideTableWrap.hidden = manual;
-    if (tideTableDisclaimer) tideTableDisclaimer.hidden = manual;
-    if (tidePlaceholder) tidePlaceholder.hidden = manual;
   };
 
   if (tideModeAuto) tideModeAuto.addEventListener('change', applyManualModeVisibility);
@@ -4473,14 +5546,18 @@ document.addEventListener('DOMContentLoaded', () => {
 /* === Nav Desk day/night watch mode 20260425-27 === */
 document.addEventListener('DOMContentLoaded', () => {
   const buttons = Array.from(document.querySelectorAll('[data-navdesk-theme]'));
-  if (!buttons.length) return;
-
   const key = 'navdesk_watch_theme_v1';
 
   const applyTheme = (theme) => {
     const mode = theme === 'night' ? 'night' : 'day';
+    const root = document.documentElement;
+    const themeMeta = document.querySelector('meta[name="theme-color"]');
+    root.classList.toggle('navdesk-boot-night', mode === 'night');
+    root.classList.toggle('navdesk-boot-day', mode === 'day');
+    root.style.colorScheme = mode === 'night' ? 'dark' : 'light';
     document.body.classList.toggle('navdesk-theme-night', mode === 'night');
     document.body.classList.toggle('navdesk-theme-day', mode === 'day');
+    if (themeMeta) themeMeta.setAttribute('content', mode === 'night' ? '#071014' : '#10243a');
 
     buttons.forEach((button) => {
       const active = button.dataset.navdeskTheme === mode;
@@ -4519,6 +5596,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (card && body && openBtn && closeBtn) {
     const closedActions = openBtn.closest('.navdesk-watch-actions--closed');
+    const forceOpen = !!document.querySelector('.navdesk-watch-page');
 
     const setOpen = (open) => {
       card.classList.toggle('is-collapsed', !open);
@@ -4530,6 +5608,7 @@ document.addEventListener('DOMContentLoaded', () => {
     openBtn.addEventListener('click', () => setOpen(true));
 
     closeBtn.addEventListener('click', () => {
+      if (forceOpen) return;
       if (card.classList.contains('is-pinned')) return;
       setOpen(false);
     });
@@ -4550,7 +5629,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     tick();
     setInterval(tick, 30000);
-    setOpen(false);
+    setOpen(forceOpen);
   }
 
   const start = document.getElementById('watchStartDate');
@@ -5212,10 +6291,13 @@ document.addEventListener('DOMContentLoaded', () => {
 document.addEventListener('DOMContentLoaded', () => {
   const openBtn = document.getElementById('navdesk_watch_open');
   const startDate = document.getElementById('watchStartDate');
-  const formIds = [
-    'watchStartDate',
-    'watchDays',
-    'watchUtcOffset',
+	  const formIds = [
+	    'watchVoyageRoute',
+	    'watchStartDate',
+	    'watchStartTime',
+	    'watchDays',
+	    'watchHours',
+	    'watchUtcOffset',
     'watchScheduleMode',
     'watchType',
     'watchCaptain',
@@ -6001,11 +7083,14 @@ document.addEventListener('DOMContentLoaded', () => {
 document.addEventListener('DOMContentLoaded', () => {
   const $ = (id) => document.getElementById(id);
 
-  const ids = {
-    mode: 'watchScheduleMode',
-    start: 'watchStartDate',
-    days: 'watchDays',
-    utc: 'watchUtcOffset',
+	  const ids = {
+	    mode: 'watchScheduleMode',
+	    route: 'watchVoyageRoute',
+	    start: 'watchStartDate',
+	    startTime: 'watchStartTime',
+	    days: 'watchDays',
+	    hours: 'watchHours',
+	    utc: 'watchUtcOffset',
     captain: 'watchCaptain',
     mate: 'watchFirstMate',
     crew: 'watchCrewInput',
@@ -6031,7 +7116,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const el = {};
   Object.entries(ids).forEach(([key, id]) => el[key] = $(id));
 
-  if (!el.mode || !el.start || !el.days || !el.utc || !el.captain || !el.mate || !el.crew || !el.apply || !el.summary || !el.schedule || !el.rest) return;
+	  if (!el.mode || !el.start || !el.startTime || !el.days || !el.hours || !el.utc || !el.captain || !el.mate || !el.crew || !el.apply || !el.summary || !el.schedule || !el.rest) return;
 
   // Снимаем старые обработчики с ключевых кнопок, не ломая внешний вид.
   const replaceNode = (node) => {
@@ -6050,12 +7135,14 @@ document.addEventListener('DOMContentLoaded', () => {
     .replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;');
 
-  const addHours = (d, h) => new Date(d.getTime() + h * 3600000);
-  const hoursBetween = (a, b) => Math.max(0, (b - a) / 3600000);
+	  const addHours = (d, h) => new Date(d.getTime() + h * 3600000);
+	  const hoursBetween = (a, b) => Math.max(0, (b - a) / 3600000);
+	  const pad2 = (value) => String(value).padStart(2, '0');
 
-  const fmt = (d) => d.toLocaleString([], { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
-  const fmtTime = (d) => d.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
-  const fmtDay = (d) => d.toLocaleDateString([], { day:'2-digit', month:'2-digit', year:'numeric' });
+	  const fmt = (d) => d.toLocaleString([], { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+	  const fmtTime = (d) => d.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+	  const fmtDay = (d) => d.toLocaleDateString([], { day:'2-digit', month:'2-digit', year:'numeric' });
+	  const toInputDateTime = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 
   const parseOffsetMinutes = (value) => {
     const m = String(value || '+00:00').trim().match(/^([+-])(\d{1,2})(?::?(\d{2}))?$/);
@@ -6107,9 +7194,27 @@ document.addEventListener('DOMContentLoaded', () => {
     return 4;
   };
 
-  const periodStart = () => new Date(`${el.start.value || new Date().toISOString().slice(0,10)}T00:00:00`);
-  const totalDays = () => Math.max(1, Math.min(30, Number(el.days.value || 1)));
-  const periodEnd = () => addHours(periodStart(), totalDays() * 24);
+	  const normalizedStartTime = () => (/^\d{2}:\d{2}$/.test(el.startTime?.value || '') ? el.startTime.value : '00:00');
+	  const periodStart = () => new Date(`${el.start.value || new Date().toISOString().slice(0,10)}T${normalizedStartTime()}:00`);
+	  const periodStartLabel = () => `${el.start.value || new Date().toISOString().slice(0,10)} ${normalizedStartTime()}`;
+	  const totalDays = () => Math.max(0, Math.min(30, Number(el.days.value || 0)));
+	  const extraHours = () => Math.max(0, Math.min(23, Number(el.hours.value || 0)));
+	  const periodHours = () => Math.max(1, totalDays() * 24 + extraHours());
+	  const periodLabel = () => {
+	    const daysValue = totalDays();
+	    const hoursValue = extraHours();
+	    const parts = [];
+	    if (daysValue) parts.push(`${daysValue} дн.`);
+	    if (hoursValue) parts.push(`${hoursValue} ч`);
+	    return parts.join(' ') || '1 ч';
+	  };
+	  const syncDurationFields = () => {
+	    const daysValue = totalDays();
+	    const hoursValue = daysValue === 0 && extraHours() === 0 ? 1 : extraHours();
+	    el.days.value = String(daysValue);
+	    el.hours.value = String(hoursValue);
+	  };
+	  const periodEnd = () => addHours(periodStart(), periodHours());
 
   const buildAutoShifts = () => {
     const people = getPeople();
@@ -6118,7 +7223,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const step = planHours();
     const start = periodStart();
-    const totalHours = totalDays() * 24;
+	    const totalHours = periodHours();
 
     for (let hour = 0, i = 0; hour < totalHours; hour += step, i++) {
       const from = addHours(start, hour);
@@ -6127,9 +7232,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const lead = people[i % people.length];
       const keep = needsKeeper ? people[(i + 1) % people.length] : '';
 
-      shifts.push({
-        from,
-        to,
+	      shifts.push({
+	        id: `auto-${from.getTime()}-${i}`,
+	        from,
+	        to,
         leader: lead,
         keepers: needsKeeper && keep && keep !== lead ? [keep] : [],
         source: 'auto'
@@ -6138,7 +7244,73 @@ document.addEventListener('DOMContentLoaded', () => {
     return shifts;
   };
 
-  let manualShifts = [];
+	  let manualShifts = [];
+	  const STORE_KEY = 'navdesk_watch_log_state_v1';
+
+	  const readStoredState = () => {
+	    try {
+	      const parsed = JSON.parse(localStorage.getItem(STORE_KEY) || '{}');
+	      return parsed && typeof parsed === 'object' ? parsed : {};
+	    } catch (error) {
+	      return {};
+	    }
+	  };
+
+	  const storedState = readStoredState();
+
+	  const hydrateStoredFields = () => {
+	    const saved = storedState.fields || {};
+	    const map = {
+	      route: el.route,
+	      start: el.start,
+	      startTime: el.startTime,
+	      days: el.days,
+	      hours: el.hours,
+	      utc: el.utc,
+	      mode: el.mode,
+	      type: el.type,
+	      captain: el.captain,
+	      mate: el.mate,
+	      crew: el.crew,
+	      keeperMode: el.keeperMode,
+	      keeperFrom: el.keeperFrom,
+	      keeperTo: el.keeperTo
+	    };
+
+	    Object.entries(map).forEach(([key, node]) => {
+	      if (node && saved[key] != null) node.value = saved[key];
+	    });
+	  };
+
+	  const serializeShift = (s) => ({
+	    id: s.id || `${s.source || 'shift'}-${s.from?.getTime?.() || Date.now()}`,
+	    from: s.from instanceof Date ? s.from.toISOString() : '',
+	    to: s.to instanceof Date ? s.to.toISOString() : '',
+	    leader: s.leader || '',
+	    keepers: Array.isArray(s.keepers) ? s.keepers.slice(0, 3) : [],
+	    source: s.source || ''
+	  });
+
+	  const hydrateStoredManualShifts = () => {
+	    if (!Array.isArray(storedState.manualShifts)) return;
+	    manualShifts = storedState.manualShifts.map((s, index) => {
+	      const from = new Date(s.from);
+	      const to = new Date(s.to);
+	      if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime()) || to <= from || !s.leader) return null;
+	      return {
+	        id: s.id || `manual-${from.getTime()}-${index}`,
+	        from,
+	        to,
+	        leader: s.leader,
+	        keepers: Array.isArray(s.keepers) ? s.keepers.filter(Boolean).slice(0, 3) : [],
+	        source: 'manual'
+	      };
+	    }).filter(Boolean);
+	  };
+
+	  const exposeManualState = () => {
+	    window.navdeskWatchGetManualShifts = () => manualShifts.map(serializeShift);
+	  };
 
   const normalizeManual = () => {
     manualShifts = manualShifts
@@ -6158,12 +7330,12 @@ document.addEventListener('DOMContentLoaded', () => {
       people.map(p => `<option value="${esc(p)}">${esc(p)}</option>`).join('');
   };
 
-  const setManualDefaults = () => {
-    if (!el.manualFrom || !el.manualTo) return;
-    const base = el.start.value || new Date().toISOString().slice(0,10);
-    if (!el.manualFrom.value) el.manualFrom.value = `${base}T00:00`;
-    if (!el.manualTo.value) el.manualTo.value = `${base}T04:00`;
-  };
+	  const setManualDefaults = () => {
+	    if (!el.manualFrom || !el.manualTo) return;
+	    const base = periodStart();
+	    if (!el.manualFrom.value) el.manualFrom.value = toInputDateTime(base);
+	    if (!el.manualTo.value) el.manualTo.value = toInputDateTime(addHours(base, planHours()));
+	  };
 
   const validateManual = () => {
     normalizeManual();
@@ -6218,9 +7390,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     el.manualList.innerHTML = manualShifts.map((s, i) => {
       const state = validation.errorIndexes.has(i) ? 'has-error' : validation.warnIndexes.has(i) ? 'has-warning' : '';
-      return `
-        <article class="navdesk-watch-manual__item ${state}">
-          <div>
+	      return `
+	        <article class="navdesk-watch-manual__item ${state}" data-from="${esc(s.from.toISOString())}" data-to="${esc(s.to.toISOString())}" data-shift-id="${esc(s.id || '')}">
+	          <div>
             <p><strong>${esc(fmt(s.from))} — ${esc(fmt(s.to))}</strong></p>
             <p>Старший: ${esc(s.leader)} · Подвахтенный: ${esc(s.keepers.join(', ') || 'нет')}</p>
           </div>
@@ -6264,7 +7436,7 @@ document.addEventListener('DOMContentLoaded', () => {
         worst24 = Math.min(worst24, 24 - workWindow);
       }
 
-      const rest = Math.max(0, totalDays() * 24 - work);
+	      const rest = Math.max(0, periodHours() - work);
       let status = 'ok';
       let label = 'OK';
       const notes = [];
@@ -6308,9 +7480,9 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="navdesk-watch-day">
           <h5>${esc(day)}</h5>
           <div class="navdesk-watch-shifts">
-            ${groups[day].map(s => `
-              <article class="navdesk-watch-shift">
-                <time>${esc(fmt(s.from))} — ${esc(fmt(s.to))} LT</time>
+	            ${groups[day].map(s => `
+	              <article class="navdesk-watch-shift" data-shift-id="${esc(s.id || '')}" data-from="${esc(s.from.toISOString())}" data-to="${esc(s.to.toISOString())}" data-source="${esc(s.source || '')}">
+		                <time>${esc(fmt(s.from))} — ${esc(fmt(s.to))} LT</time>
                 <p class="navdesk-watch-shift__utc">UTC ${esc(fmt(localToUtc(s.from)))} — ${esc(fmt(localToUtc(s.to)))}</p>
                 <p><strong>Старший:</strong> ${esc(s.leader || '—')}</p>
                 <p><strong>Подвахтенный:</strong> ${esc((s.keepers || []).join(', ') || 'нет')}</p>
@@ -6368,7 +7540,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let activeHasError = false;
   let liveTimer = null;
 
-  const renderLive = () => {
+	  const renderLive = () => {
     const box = ensureCentralLive();
     if (!box) return;
 
@@ -6441,11 +7613,22 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
       <div class="navdesk-watch-live__timer"><span>Статус</span><strong>END</strong></div>
     `;
-  };
+	  };
 
-  const applySchedule = () => {
-    fillManualPeople();
-    const people = getPeople();
+	  const publishSchedule = () => {
+	    window.navdeskWatchSchedule = activeShifts.map(serializeShift);
+	    window.dispatchEvent(new CustomEvent('navdesk:watch-schedule', {
+	      detail: {
+	        hasError: activeHasError,
+	        shifts: window.navdeskWatchSchedule
+	      }
+	    }));
+	  };
+
+	  const applySchedule = () => {
+	    syncDurationFields();
+	    fillManualPeople();
+	    const people = getPeople();
 
     if (el.mode.value === 'manual') {
       normalizeManual();
@@ -6455,7 +7638,7 @@ document.addEventListener('DOMContentLoaded', () => {
       activeShifts = manualShifts.slice();
       activeHasError = validation.hasError;
 
-      el.summary.innerHTML = `<strong>Ручной режим:</strong> ${esc(el.start.value)}, ${totalDays()} дн. · <strong>Людей:</strong> ${people.length} · <strong>Смен:</strong> ${manualShifts.length} · <strong>UTC:</strong> ${esc(el.utc.value)}`;
+	      el.summary.innerHTML = `<strong>Ручной режим:</strong> ${esc(periodStartLabel())}, ${esc(periodLabel())} · <strong>Людей:</strong> ${people.length} · <strong>Смен:</strong> ${manualShifts.length} · <strong>UTC:</strong> ${esc(el.utc.value)}${el.route?.value ? ` · <strong>Переход:</strong> ${esc(el.route.value)}` : ''}`;
 
       if (manualShifts.length) {
         renderSchedule(manualShifts, 'Ручное расписание вахт', 'day');
@@ -6465,24 +7648,26 @@ document.addEventListener('DOMContentLoaded', () => {
         el.rest.hidden = true;
       }
 
-      renderLive();
-      if (liveTimer) clearInterval(liveTimer);
-      liveTimer = setInterval(renderLive, 30000);
-      return;
+	      renderLive();
+	      publishSchedule();
+	      if (liveTimer) clearInterval(liveTimer);
+	      liveTimer = setInterval(renderLive, 30000);
+	      return;
     }
 
     const shifts = buildAutoShifts();
     activeShifts = shifts;
     activeHasError = false;
 
-    el.summary.innerHTML = `<strong>Авто режим:</strong> ${esc(el.start.value)}, ${totalDays()} дн. · <strong>Людей:</strong> ${people.length} · <strong>Смен:</strong> ${shifts.length} · <strong>UTC:</strong> ${esc(el.utc.value)}`;
+	    el.summary.innerHTML = `<strong>Авто режим:</strong> ${esc(periodStartLabel())}, ${esc(periodLabel())} · <strong>Людей:</strong> ${people.length} · <strong>Смен:</strong> ${shifts.length} · <strong>UTC:</strong> ${esc(el.utc.value)}${el.route?.value ? ` · <strong>Переход:</strong> ${esc(el.route.value)}` : ''}`;
 
     renderSchedule(shifts, 'Расписание вахт', 'day');
-    renderRest(calculateRest(people, shifts));
-    renderLive();
+	    renderRest(calculateRest(people, shifts));
+	    renderLive();
+	    publishSchedule();
 
-    if (liveTimer) clearInterval(liveTimer);
-    liveTimer = setInterval(renderLive, 30000);
+	    if (liveTimer) clearInterval(liveTimer);
+	    liveTimer = setInterval(renderLive, 30000);
   };
 
   const syncManualVisibility = () => {
@@ -6506,20 +7691,22 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      manualShifts.push({
-        from,
+	      manualShifts.push({
+	        id: `manual-${from.getTime()}-${Date.now()}`,
+	        from,
         to,
         leader: lead,
         keepers: keep && keep !== lead ? [keep] : [],
         source: 'manual'
       });
 
-      normalizeManual();
-      el.manualFrom.value = to.toISOString().slice(0,16);
-      el.manualTo.value = addHours(to, planHours()).toISOString().slice(0,16);
-      renderManualList();
-    });
-  }
+	      normalizeManual();
+	      el.manualFrom.value = toInputDateTime(to);
+	      el.manualTo.value = toInputDateTime(addHours(to, planHours()));
+	      renderManualList();
+	      exposeManualState();
+	    });
+	  }
 
   if (el.manualList) {
     el.manualList.addEventListener('click', (event) => {
@@ -6527,36 +7714,40 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!btn) return;
       const idx = Number(btn.dataset.manualHardRemove);
       if (!Number.isNaN(idx)) {
-        manualShifts.splice(idx, 1);
-        renderManualList();
-        applySchedule();
-      }
-    });
-  }
+	        manualShifts.splice(idx, 1);
+	        renderManualList();
+	        exposeManualState();
+	        applySchedule();
+	      }
+	    });
+	  }
 
-  el.mode.addEventListener('change', syncManualVisibility);
-  [el.captain, el.mate, el.crew].forEach(input => input.addEventListener('input', fillManualPeople));
-  el.apply.addEventListener('click', applySchedule);
+	  el.mode.addEventListener('change', syncManualVisibility);
+	  [el.captain, el.mate, el.crew].forEach(input => input.addEventListener('input', fillManualPeople));
+	  el.apply.addEventListener('click', applySchedule);
 
-  syncManualVisibility();
-});
+	  hydrateStoredFields();
+	  hydrateStoredManualShifts();
+	  exposeManualState();
+	  syncManualVisibility();
+	  if (getPeople().length || manualShifts.length) applySchedule();
+	});
 
 /* === Manual period logic fix 20260425-54 === */
 document.addEventListener('DOMContentLoaded', () => {
   const mode = document.getElementById('watchScheduleMode');
-  const applyOld = document.getElementById('watchSetupApply');
+  const apply = document.getElementById('watchSetupApply');
 
-  if (!mode || !applyOld) return;
-
-  const apply = applyOld.cloneNode(true);
-  applyOld.parentNode.replaceChild(apply, applyOld);
+  if (!mode || !apply) return;
 
   const $ = (id) => document.getElementById(id);
 
-  const el = {
-    start: $('watchStartDate'),
-    days: $('watchDays'),
-    utc: $('watchUtcOffset'),
+	  const el = {
+	    start: $('watchStartDate'),
+	    startTime: $('watchStartTime'),
+	    days: $('watchDays'),
+	    hours: $('watchHours'),
+	    utc: $('watchUtcOffset'),
     captain: $('watchCaptain'),
     mate: $('watchFirstMate'),
     crew: $('watchCrewInput'),
@@ -6601,13 +7792,34 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
-  const getPeople = () => uniq([
-    el.captain?.value,
-    el.mate?.value,
-    ...String(el.crew?.value || '').split(',')
-  ]);
+	  const getPeople = () => uniq([
+	    el.captain?.value,
+	    el.mate?.value,
+	    ...String(el.crew?.value || '').split(',')
+	  ]);
 
-  const parseManualTextDate = (text) => {
+	  const normalizedStartTime = () => (/^\d{2}:\d{2}$/.test(el.startTime?.value || '') ? el.startTime.value : '00:00');
+	  const totalDays = () => Math.max(0, Math.min(30, Number(el.days?.value || 0)));
+	  const extraHours = () => Math.max(0, Math.min(23, Number(el.hours?.value || 0)));
+	  const periodHours = () => Math.max(1, totalDays() * 24 + extraHours());
+	  const periodLabel = () => {
+	    const daysValue = totalDays();
+	    const hoursValue = extraHours();
+	    const parts = [];
+	    if (daysValue) parts.push(`${daysValue} дн.`);
+	    if (hoursValue) parts.push(`${hoursValue} ч`);
+	    return parts.join(' ') || '1 ч';
+	  };
+	  const declaredPeriod = () => {
+	    const startDate = new Date(`${el.start?.value || new Date().toISOString().slice(0,10)}T${normalizedStartTime()}:00`);
+	    return {
+	      start: startDate,
+	      end: addHours(startDate, periodHours()),
+	      hours: periodHours()
+	    };
+	  };
+
+	  const parseManualTextDate = (text) => {
     const year = (el.start?.value || new Date().toISOString().slice(0,10)).slice(0,4);
     const m = String(text || '').match(/(\d{2})\.(\d{2})(?:\.(\d{4}))?,?\s+(\d{2}):(\d{2})/);
     if (!m) return null;
@@ -6634,13 +7846,13 @@ document.addEventListener('DOMContentLoaded', () => {
         item.dataset.from = from.toISOString();
         item.dataset.to = to.toISOString();
 
-        return { item, index, from, to, leader, keepers };
+	        return { item, index, id: item.dataset.shiftId || `manual-dom-${from.getTime()}-${index}`, from, to, leader, keepers };
       })
       .filter(Boolean)
       .sort((a,b) => a.from - b.from);
   };
 
-  const validateManual = (shifts) => {
+	  const validateManual = (shifts, period = declaredPeriod()) => {
     const alerts = [];
     const errorItems = new Set();
     const warnItems = new Set();
@@ -6649,7 +7861,15 @@ document.addEventListener('DOMContentLoaded', () => {
       s.item.classList.remove('has-warning', 'has-error');
     });
 
-    for (let i = 0; i < shifts.length - 1; i++) {
+	    if (shifts.length && shifts[0].from > period.start) {
+	      warnItems.add(shifts[0].item);
+	      alerts.push({
+	        type: 'warning',
+	        text: `Дыра до первой смены: ${period.start.toLocaleString()} — ${shifts[0].from.toLocaleString()}`
+	      });
+	    }
+
+	    for (let i = 0; i < shifts.length - 1; i++) {
       const a = shifts[i];
       const b = shifts[i + 1];
 
@@ -6670,7 +7890,28 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    errorItems.forEach(item => item.classList.add('has-error'));
+		    if (shifts.length) {
+		      const last = shifts[shifts.length - 1];
+		      if (last.to < period.end) {
+		        warnItems.add(last.item);
+		        alerts.push({
+		          type: 'warning',
+		          text: `Дыра после последней смены: ${last.to.toLocaleString()} — ${period.end.toLocaleString()}`
+		        });
+		      }
+		    }
+
+	    shifts.forEach((s) => {
+	      if (s.from < period.start || s.to > period.end) {
+	        warnItems.add(s.item);
+	        alerts.push({
+	          type: 'warning',
+	          text: `Смена выходит за заявленный период перехода: ${s.from.toLocaleString()} — ${s.to.toLocaleString()}`
+	        });
+	      }
+	    });
+
+		    errorItems.forEach(item => item.classList.add('has-error'));
     warnItems.forEach(item => {
       if (!item.classList.contains('has-error')) item.classList.add('has-warning');
     });
@@ -6780,8 +8021,8 @@ document.addEventListener('DOMContentLoaded', () => {
           <h5>${esc(day)}</h5>
           <div class="navdesk-watch-shifts">
             ${groups[day].map(s => `
-              <article class="navdesk-watch-shift">
-                <time>${esc(fmt(s.from))} — ${esc(fmt(s.to))} LT</time>
+	              <article class="navdesk-watch-shift" data-shift-id="${esc(s.id || '')}" data-from="${esc(s.from.toISOString())}" data-to="${esc(s.to.toISOString())}" data-source="manual">
+	                <time>${esc(fmt(s.from))} — ${esc(fmt(s.to))} LT</time>
                 <p class="navdesk-watch-shift__utc">UTC ${esc(fmt(localToUtc(s.from)))} — ${esc(fmt(localToUtc(s.to)))}</p>
                 <p><strong>Старший:</strong> ${esc(s.leader)}</p>
                 <p><strong>Подвахтенный:</strong> ${esc((s.keepers || []).join(', ') || 'нет')}</p>
@@ -6855,12 +8096,12 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const period = manualPeriod(shifts);
-    const people = getPeople();
+	    const period = declaredPeriod();
+	    const people = getPeople();
 
-    el.summary.innerHTML = `
-      <strong>Ручной режим:</strong>
-      ${esc(fmt(period.start))} — ${esc(fmt(period.end))} ·
+	    el.summary.innerHTML = `
+	      <strong>Ручной режим:</strong>
+	      ${esc(fmt(period.start))} — ${esc(fmt(period.end))} (${esc(periodLabel())}) ·
       <strong>Смен:</strong> ${shifts.length} ·
       <strong>Людей:</strong> ${people.length} ·
       <strong>UTC:</strong> ${esc(el.utc?.value || '+00:00')}
@@ -6876,3 +8117,1269 @@ document.addEventListener('DOMContentLoaded', () => {
 
   apply.addEventListener('click', applyManual54);
 });
+
+/* === Watch log actions and local draft 20260525-01 === */
+document.addEventListener('DOMContentLoaded', () => {
+  const $ = (id) => document.getElementById(id);
+  const timeline = $('watchTimeline');
+  const entrySave = $('watchEntrySave');
+  const quickEntry = $('watchQuickEntry');
+
+  if (!timeline || !entrySave) return;
+
+  const STORE_KEY = 'navdesk_watch_log_state_v1';
+  const ENTRY_LIMIT = 200;
+
+	  const fields = {
+	    route: $('watchVoyageRoute'),
+	    start: $('watchStartDate'),
+	    startTime: $('watchStartTime'),
+	    days: $('watchDays'),
+	    hours: $('watchHours'),
+	    utc: $('watchUtcOffset'),
+    mode: $('watchScheduleMode'),
+    type: $('watchType'),
+    captain: $('watchCaptain'),
+    mate: $('watchFirstMate'),
+    crew: $('watchCrewInput'),
+    keeperMode: $('watchKeeperMode'),
+    keeperFrom: $('watchKeeperFrom'),
+    keeperTo: $('watchKeeperTo')
+  };
+
+  const entry = {
+    course: $('watchEntryCourse'),
+    speed: $('watchEntrySpeed'),
+    position: $('watchEntryPosition'),
+    weather: $('watchEntryWeather'),
+    text: $('watchEntryText')
+  };
+
+  const actions = document.querySelector('.navdesk-watch-actions--open');
+	  const saveButtons = [$('navdesk_watch_save'), $('navdesk_watch_save_closed')].filter(Boolean);
+	  const printBtn = $('navdesk_watch_print');
+	  const entriesPrintBtn = $('navdesk_watch_entries_print');
+	  const pdfBtn = $('navdesk_watch_pdf');
+	  const shareBtn = $('navdesk_watch_share');
+	  const gpsBtn = $('watchEntryGps');
+	  const gpsAutoBtn = $('watchEntryGpsAuto');
+	  const gpsStatus = $('watchGpsStatus');
+	  const reminderToggle = $('watchReminderToggle');
+	  const reminderStatus = $('watchReminderStatus');
+	  const signBtn = $('watchSignCurrent');
+	  const signedList = $('watchSignedWatches');
+	  const summary = $('watchSetupSummary');
+  const schedule = $('watchSchedulePreview');
+  const rest = $('watchRestReport');
+  const currentTime = $('watchCurrentTime');
+  const leaderOut = $('watchLeader');
+  const crewOut = $('watchCrew');
+
+	  let entries = [];
+	  let signedWatches = [];
+	  let restoredScheduleSnapshot = [];
+	  let lastGps = null;
+	  let gpsAuto = false;
+	  let gpsWatchId = null;
+	  let lastHourlyPositionKey = '';
+	  let reminderState = {
+	    enabled: false,
+	    lastNotifiedShiftId: ''
+	  };
+	  let saveTimer = null;
+
+  const esc = (value) => String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+  const plain = (value) => String(value ?? '').replace(/\s+/g, ' ').trim();
+
+  const stamp = (date = new Date()) => date.toLocaleString([], {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  const ensureStatus = () => {
+    let status = $('watchEntryStatus');
+    if (status) return status;
+
+    status = document.createElement('div');
+    status.id = 'watchEntryStatus';
+    status.className = 'navdesk-watch-status';
+    status.setAttribute('role', 'status');
+
+    if (actions) {
+      actions.appendChild(status);
+    } else if (timeline.parentNode) {
+      timeline.parentNode.insertBefore(status, timeline);
+    }
+
+    return status;
+  };
+
+  const setStatus = (text) => {
+    const status = ensureStatus();
+    status.textContent = text || '';
+  };
+
+	  const setSignStatus = (text) => {
+	    if (!signBtn) return;
+	    let status = $('watchSignStatus');
+	    if (!status) {
+	      status = document.createElement('p');
+	      status.id = 'watchSignStatus';
+	      status.className = 'navdesk-watch-mini-status navdesk-watch-sign-status';
+	      status.setAttribute('role', 'status');
+	      signBtn.closest('.navdesk-watch-current__actions')?.insertAdjacentElement('afterend', status);
+	    }
+	    status.textContent = text || '';
+	  };
+
+  const readFields = () => Object.fromEntries(
+    Object.entries(fields).map(([key, node]) => [key, node ? node.value : ''])
+  );
+
+  const writeFields = (values = {}) => {
+    Object.entries(fields).forEach(([key, node]) => {
+      if (!node || values[key] == null) return;
+      node.value = values[key];
+      node.dispatchEvent(new Event('input', { bubbles: true }));
+      node.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+  };
+
+	  const readEntryDraft = () => Object.fromEntries(
+	    Object.entries(entry).map(([key, node]) => [key, node ? node.value.trim() : ''])
+	  );
+
+	  const pad2 = (value) => String(value).padStart(2, '0');
+
+	  const localHourKey = (date = new Date()) => (
+	    `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}T${pad2(date.getHours())}`
+	  );
+
+	  const utcStamp = (value) => {
+	    const date = new Date(value);
+	    if (Number.isNaN(date.getTime())) return '-';
+	    return date.toISOString().slice(0, 16).replace('T', ' ');
+	  };
+
+	  const normalizeScheduleShift = (shift) => {
+	    const from = new Date(shift?.from);
+	    const to = new Date(shift?.to);
+	    if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime()) || to <= from) return null;
+	    return {
+	      id: shift.id || `shift-${from.getTime()}`,
+	      from,
+	      to,
+	      leader: plain(shift.leader || ''),
+	      keepers: Array.isArray(shift.keepers) ? shift.keepers.map(plain).filter(Boolean) : [],
+	      source: shift.source || ''
+	    };
+	  };
+
+	  const shiftOverlapsDailyWindow = (from, to, startMinutes, endMinutes) => {
+	    const start = new Date(from);
+	    const end = new Date(to);
+	    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) return false;
+
+	    const day = new Date(start);
+	    day.setHours(0, 0, 0, 0);
+
+	    while (day < end) {
+	      const windowStart = new Date(day);
+	      windowStart.setHours(Math.floor(startMinutes / 60), startMinutes % 60, 0, 0);
+
+	      const windowEnd = new Date(day);
+	      windowEnd.setHours(Math.floor(endMinutes / 60), endMinutes % 60, 0, 0);
+
+	      if (start < windowEnd && end > windowStart) return true;
+	      day.setDate(day.getDate() + 1);
+	    }
+
+	    return false;
+	  };
+
+	  const shiftTouchesNight = (shift) => (
+	    shiftOverlapsDailyWindow(shift.from, shift.to, 0, 6 * 60) ||
+	    shiftOverlapsDailyWindow(shift.from, shift.to, 22 * 60, 24 * 60)
+	  );
+
+	  const shiftTouchesPreDawnWatch = (shift) => (
+	    shiftOverlapsDailyWindow(shift.from, shift.to, 0, 4 * 60)
+	  );
+
+	  const shiftFlagLabels = (shift) => {
+	    const labels = [];
+	    if (shiftTouchesNight(shift) && !(shift.keepers || []).length) {
+	      labels.push('Ночь без подвахты');
+	    }
+	    return labels;
+	  };
+
+	  const shiftFlagClasses = (shift) => {
+	    const classes = [];
+	    if (shiftTouchesNight(shift) && !(shift.keepers || []).length) classes.push('is-night-solo');
+	    if (shiftTouchesPreDawnWatch(shift)) classes.push('is-pre-dawn-watch');
+	    return classes.join(' ');
+	  };
+
+	  const readDomSchedule = () => Array.from(document.querySelectorAll('#watchSchedulePreview .navdesk-watch-shift'))
+	    .map((shift, index) => {
+	      const from = shift.dataset.from ? new Date(shift.dataset.from) : null;
+	      const to = shift.dataset.to ? new Date(shift.dataset.to) : null;
+	      const paragraphs = Array.from(shift.querySelectorAll('p')).map((node) => plain(node.textContent));
+	      const leader = paragraphs.find((text) => text.startsWith('Старший:'))?.replace('Старший:', '').trim() || '';
+	      const keeper = paragraphs.find((text) => text.startsWith('Подвахтенный:'))?.replace('Подвахтенный:', '').trim() || '';
+
+	      if (!from || !to || Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) return null;
+
+	      return {
+	        id: shift.dataset.shiftId || `dom-${from.getTime()}-${index}`,
+	        from: from.toISOString(),
+	        to: to.toISOString(),
+	        leader,
+	        keepers: keeper && keeper !== 'нет' ? [keeper] : [],
+	        source: shift.dataset.source || 'dom'
+	      };
+	    })
+	    .filter(Boolean);
+
+	  const readScheduleSnapshot = () => {
+	    const publicSchedule = Array.isArray(window.navdeskWatchSchedule) ? window.navdeskWatchSchedule : [];
+	    const domSchedule = readDomSchedule();
+	    const storedSchedule = restoredScheduleSnapshot.length
+	      ? restoredScheduleSnapshot
+	      : (Array.isArray(readState().scheduleSnapshot) ? readState().scheduleSnapshot : []);
+	    const source = publicSchedule.length ? publicSchedule : (domSchedule.length ? domSchedule : storedSchedule);
+	    return source
+	      .map(normalizeScheduleShift)
+	      .filter(Boolean)
+	      .sort((a, b) => a.from - b.from);
+	  };
+
+	  const findShiftFor = (date = new Date()) => {
+	    const shifts = readScheduleSnapshot();
+	    return shifts.find((shift) => date >= shift.from && date < shift.to) || null;
+	  };
+
+	  const findNextShift = (date = new Date()) => (
+	    readScheduleSnapshot().find((shift) => shift.from > date) || null
+	  );
+
+	  const findLastShift = (date = new Date()) => {
+	    const shifts = readScheduleSnapshot().filter((shift) => shift.to <= date);
+	    return shifts[shifts.length - 1] || null;
+	  };
+
+	  const serializeScheduleSnapshot = () => readScheduleSnapshot().map((shift) => ({
+	    id: shift.id,
+	    from: shift.from.toISOString(),
+	    to: shift.to.toISOString(),
+	    leader: shift.leader,
+	    keepers: shift.keepers,
+	    source: shift.source
+	  }));
+
+  const readState = () => {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(STORE_KEY) || '{}');
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch (error) {
+      return {};
+    }
+  };
+
+	  const writeState = () => {
+	    const payload = {
+	      version: 2,
+	      updatedAt: new Date().toISOString(),
+	      fields: readFields(),
+	      draft: readEntryDraft(),
+	      entries: entries.slice(0, ENTRY_LIMIT),
+	      manualShifts: typeof window.navdeskWatchGetManualShifts === 'function'
+	        ? window.navdeskWatchGetManualShifts()
+	        : [],
+	      scheduleSnapshot: serializeScheduleSnapshot(),
+	      signedWatches: signedWatches.slice(0, 80),
+	      gps: {
+	        auto: gpsAuto,
+	        last: lastGps,
+	        lastHourlyPositionKey
+	      },
+	      reminder: reminderState
+	    };
+
+	    restoredScheduleSnapshot = payload.scheduleSnapshot;
+
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify(payload));
+      return true;
+    } catch (error) {
+      return false;
+	    }
+	  };
+
+	  const scheduleSave = () => {
+	    if (saveTimer) clearTimeout(saveTimer);
+	    saveTimer = setTimeout(() => {
+	      writeState();
+	    }, 350);
+	  };
+
+	  const renderTimeline = () => {
+    if (!entries.length) {
+      timeline.innerHTML = '<article><time>-</time><p>Журнал готов к первой записи.</p></article>';
+      return;
+    }
+
+    timeline.innerHTML = entries.slice(0, ENTRY_LIMIT).map((item) => {
+	      const meta = [
+	        item.type === 'hourly-gps' ? 'Часовая GPS отметка' : '',
+	        item.course ? `Курс ${item.course}` : '',
+	        item.speed ? `Скорость ${item.speed}` : '',
+	        item.position ? `Позиция ${item.position}` : '',
+	        item.weather ? item.weather : '',
+	        item.gps?.accuracy ? `GPS ±${Math.round(item.gps.accuracy)} м` : ''
+	      ].filter(Boolean);
+
+      return `
+        <article class="navdesk-watch-entry" data-watch-entry="${esc(item.id)}">
+          <time datetime="${esc(item.createdAt)}">${esc(stamp(new Date(item.createdAt)))} · Старший: ${esc(item.leader || 'не назначен')}</time>
+          <p>${esc(item.text || 'Без текстовой заметки.')}</p>
+          ${meta.length ? `<div class="navdesk-watch-entry__meta">${meta.map(value => `<span>${esc(value)}</span>`).join('')}</div>` : ''}
+        </article>
+      `;
+	    }).join('');
+	  };
+
+	  const renderSignedWatches = () => {
+	    if (!signedList) return;
+
+	    if (!signedWatches.length) {
+	      signedList.hidden = true;
+	      signedList.innerHTML = '';
+	      return;
+	    }
+
+	    signedList.hidden = false;
+	    signedList.innerHTML = `
+	      <p class="navdesk-watch-signed__title">Подписанные смены</p>
+	      ${signedWatches.slice(0, 4).map((item) => `
+	        <article>
+	          <time>${esc(stamp(new Date(item.signedAt)))}</time>
+	          <span>${esc(item.leader || 'Смена')} · ${esc(item.shiftLabel || '')}</span>
+	        </article>
+	      `).join('')}
+	    `;
+	  };
+
+	  const decorateScheduleFlags = () => {
+	    const shiftCards = Array.from(document.querySelectorAll('#watchSchedulePreview .navdesk-watch-shift'));
+	    shiftCards.forEach((card) => {
+	      const paragraphs = Array.from(card.querySelectorAll('p')).map((node) => plain(node.textContent));
+	      const keeper = paragraphs.find((text) => text.startsWith('Подвахтенный:'))?.replace('Подвахтенный:', '').trim() || '';
+	      const shift = normalizeScheduleShift({
+	        id: card.dataset.shiftId || '',
+	        from: card.dataset.from || '',
+	        to: card.dataset.to || '',
+	        keepers: keeper && keeper !== 'нет' ? [keeper] : [],
+	        source: card.dataset.source || ''
+	      });
+
+	      const previous = card.querySelector('.navdesk-watch-shift__badges');
+	      if (previous) previous.remove();
+
+	      card.classList.remove('is-night-solo', 'is-pre-dawn-watch');
+	      if (!shift) return;
+
+	      const classes = shiftFlagClasses(shift).split(' ').filter(Boolean);
+	      classes.forEach((className) => card.classList.add(className));
+
+	      const labels = shiftFlagLabels(shift);
+	      if (!labels.length) return;
+
+	      card.insertAdjacentHTML('beforeend', `
+	        <div class="navdesk-watch-shift__badges">
+	          ${labels.map((label) => `<span>${esc(label)}</span>`).join('')}
+	        </div>
+	      `);
+	    });
+	  };
+
+  const restoreState = () => {
+    const state = readState();
+    if (state.fields) writeFields(state.fields);
+
+	    restoredScheduleSnapshot = Array.isArray(state.scheduleSnapshot)
+	      ? state.scheduleSnapshot.filter((item) => item && item.from && item.to)
+	      : [];
+
+	    entries = Array.isArray(state.entries)
+	      ? state.entries.filter((item) => item && item.createdAt).slice(0, ENTRY_LIMIT)
+	      : [];
+
+	    signedWatches = Array.isArray(state.signedWatches)
+	      ? state.signedWatches.filter((item) => item && item.signedAt).slice(0, 80)
+	      : [];
+
+	    lastGps = state.gps?.last || null;
+	    lastHourlyPositionKey = state.gps?.lastHourlyPositionKey || '';
+	    reminderState = {
+	      enabled: !!state.reminder?.enabled,
+	      lastNotifiedShiftId: state.reminder?.lastNotifiedShiftId || ''
+	    };
+
+	    if (state.draft) {
+	      Object.entries(entry).forEach(([key, node]) => {
+	        if (node && state.draft[key] != null) node.value = state.draft[key];
+	      });
+	    }
+
+	    if (reminderToggle) reminderToggle.checked = reminderState.enabled;
+
+	    renderTimeline();
+	    renderSignedWatches();
+	    decorateScheduleFlags();
+	  };
+
+	  const collectEntry = () => {
+	    const draft = readEntryDraft();
+	    const hasText = Object.values(draft).some(Boolean);
+	    if (!hasText) return null;
+	    const now = new Date();
+	    const shift = findShiftFor(now);
+
+	    return {
+	      id: `watch-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+	      createdAt: now.toISOString(),
+	      type: 'manual',
+	      shiftId: shift?.id || '',
+	      watchTime: plain(currentTime?.textContent || ''),
+	      leader: plain(leaderOut?.textContent || ''),
+	      crew: plain(crewOut?.textContent || ''),
+	      gps: lastGps && draft.position === lastGps.label ? lastGps : null,
+	      ...draft
+	    };
+	  };
+
+  const saveDraft = (message = 'Черновик вахтенного журнала сохранен на этом устройстве.') => {
+    const ok = writeState();
+    setStatus(ok ? message : 'Не удалось сохранить черновик в localStorage.');
+    return ok;
+  };
+
+  const focusEntry = () => {
+    const target = entry.text || entry.position || entry.course;
+    target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(() => target?.focus({ preventScroll: true }), 260);
+  };
+
+  const clearTextAfterSave = () => {
+    if (entry.text) entry.text.value = '';
+    entry.text?.focus({ preventScroll: true });
+  };
+
+	  const addEntry = () => {
+	    const item = collectEntry();
+	    if (!item) {
+      setStatus('Запись пустая: добавьте курс, позицию, ветер или текст.');
+      focusEntry();
+      return;
+    }
+
+    entries.unshift(item);
+    entries = entries.slice(0, ENTRY_LIMIT);
+    renderTimeline();
+	    clearTextAfterSave();
+	    saveDraft('Запись добавлена в локальный вахтенный журнал.');
+	  };
+
+	  const formatCoordinate = (value, positive, negative, width) => {
+	    const hemisphere = value >= 0 ? positive : negative;
+	    const absolute = Math.abs(value);
+	    const degrees = Math.floor(absolute);
+	    const minutes = (absolute - degrees) * 60;
+	    return `${String(degrees).padStart(width, '0')}°${minutes.toFixed(3)}'${hemisphere}`;
+	  };
+
+	  const formatGpsLabel = (coords) => (
+	    `${formatCoordinate(coords.latitude, 'N', 'S', 2)} ${formatCoordinate(coords.longitude, 'E', 'W', 3)}`
+	  );
+
+	  const setGpsStatus = (text) => {
+	    if (gpsStatus) gpsStatus.textContent = text;
+	  };
+
+	  const applyGpsPosition = (position, source = 'geolocation') => {
+	    const coords = position.coords;
+	    const label = formatGpsLabel(coords);
+	    lastGps = {
+	      source,
+	      label,
+	      lat: Number(coords.latitude.toFixed(7)),
+	      lon: Number(coords.longitude.toFixed(7)),
+	      accuracy: Number.isFinite(coords.accuracy) ? Math.round(coords.accuracy) : null,
+	      at: new Date(position.timestamp || Date.now()).toISOString()
+	    };
+
+	    if (entry.position) entry.position.value = label;
+	    setGpsStatus(`GPS позиция обновлена: ${label}${lastGps.accuracy ? `, точность около ${lastGps.accuracy} м` : ''}.`);
+	    scheduleSave();
+	    maybeCreateHourlyGpsEntry();
+	  };
+
+	  const gpsErrorText = (error) => {
+	    if (error?.code === 1) return 'Доступ к геопозиции запрещен. Позицию можно ввести вручную.';
+	    if (error?.code === 2) return 'Устройство не смогло определить позицию.';
+	    if (error?.code === 3) return 'GPS не ответил вовремя.';
+	    return 'GPS недоступен в этом браузере.';
+	  };
+
+	  const requestGpsPosition = () => {
+	    if (!navigator.geolocation) {
+	      setGpsStatus('GPS недоступен в этом браузере. Позицию можно ввести вручную.');
+	      return;
+	    }
+
+	    setGpsStatus('Запрашиваю позицию устройства...');
+	    navigator.geolocation.getCurrentPosition(
+	      (position) => applyGpsPosition(position),
+	      (error) => setGpsStatus(gpsErrorText(error)),
+	      { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 }
+	    );
+	  };
+
+	  function maybeCreateHourlyGpsEntry() {
+	    if (!gpsAuto || !lastGps || !lastGps.label) return;
+
+	    const now = new Date();
+	    const key = localHourKey(now);
+	    if (lastHourlyPositionKey === key) return;
+
+	    const age = now.getTime() - new Date(lastGps.at).getTime();
+	    if (age > 20 * 60000) return;
+
+	    const shift = findShiftFor(now);
+	    const item = {
+	      id: `watch-gps-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+	      createdAt: now.toISOString(),
+	      type: 'hourly-gps',
+	      shiftId: shift?.id || '',
+	      watchTime: plain(currentTime?.textContent || ''),
+	      leader: plain(leaderOut?.textContent || shift?.leader || ''),
+	      crew: plain(crewOut?.textContent || shift?.keepers?.join(', ') || ''),
+	      course: entry.course?.value.trim() || '',
+	      speed: entry.speed?.value.trim() || '',
+	      position: lastGps.label,
+	      weather: entry.weather?.value.trim() || '',
+	      text: 'Часовая GPS отметка.',
+	      gps: lastGps
+	    };
+
+	    entries.unshift(item);
+	    entries = entries.slice(0, ENTRY_LIMIT);
+	    lastHourlyPositionKey = key;
+	    renderTimeline();
+	    saveDraft('Часовая GPS отметка добавлена в локальный журнал.');
+	  }
+
+	  const setGpsAuto = (enabled) => {
+	    gpsAuto = !!enabled;
+	    if (gpsAutoBtn) {
+	      gpsAutoBtn.classList.toggle('is-active', gpsAuto);
+	      gpsAutoBtn.setAttribute('aria-pressed', gpsAuto ? 'true' : 'false');
+	    }
+
+	    if (!gpsAuto) {
+	      if (gpsWatchId != null && navigator.geolocation?.clearWatch) {
+	        navigator.geolocation.clearWatch(gpsWatchId);
+	      }
+	      gpsWatchId = null;
+	      setGpsStatus('GPS авто выключен. Позиция вводится вручную или кнопкой GPS.');
+	      scheduleSave();
+	      return;
+	    }
+
+	    if (!navigator.geolocation) {
+	      gpsAuto = false;
+	      setGpsStatus('GPS авто недоступен в этом браузере.');
+	      return;
+	    }
+
+	    setGpsStatus('GPS авто включен. Часовые отметки будут добавляться локально.');
+	    requestGpsPosition();
+	    gpsWatchId = navigator.geolocation.watchPosition(
+	      (position) => applyGpsPosition(position),
+	      (error) => setGpsStatus(gpsErrorText(error)),
+	      { enableHighAccuracy: true, timeout: 20000, maximumAge: 60000 }
+	    );
+	    scheduleSave();
+	  };
+
+	  const updateReminderStatus = (text) => {
+	    if (reminderStatus) reminderStatus.textContent = text;
+	  };
+
+	  const requestNotificationPermission = async () => {
+	    if (!('Notification' in window)) return 'unsupported';
+	    if (Notification.permission !== 'default') return Notification.permission;
+	    try {
+	      return await Notification.requestPermission();
+	    } catch (error) {
+	      return Notification.permission;
+	    }
+	  };
+
+	  const showWatchReminder = (shift) => {
+	    const title = 'Вахта через 15 минут';
+	    const body = `${shift.leader || 'Смена'}${shift.keepers.length ? ` + ${shift.keepers.join(', ')}` : ''}, начало ${stamp(shift.from)}`;
+
+	    try {
+	      if ('Notification' in window && Notification.permission === 'granted') {
+	        new Notification(title, { body });
+	      }
+	    } catch (error) {}
+
+	    setStatus(`${title}: ${body}`);
+	  };
+
+	  const checkWatchReminder = () => {
+	    if (!reminderState.enabled) {
+	      updateReminderStatus('Напоминание выключено.');
+	      return;
+	    }
+
+	    const next = findNextShift();
+	    if (!next) {
+	      updateReminderStatus('Следующих смен в сформированном расписании нет.');
+	      return;
+	    }
+
+	    const ms = next.from - new Date();
+	    const minutes = Math.max(0, Math.ceil(ms / 60000));
+	    updateReminderStatus(`Следующая смена: ${stamp(next.from)}, осталось ${minutes} мин.`);
+
+	    if (ms <= 15 * 60000 && ms > 0 && reminderState.lastNotifiedShiftId !== next.id) {
+	      reminderState.lastNotifiedShiftId = next.id;
+	      showWatchReminder(next);
+	      writeState();
+	    }
+	  };
+
+	  const hashText = (text) => {
+	    let hash = 5381;
+	    for (let i = 0; i < text.length; i++) hash = ((hash << 5) + hash) ^ text.charCodeAt(i);
+	    return (hash >>> 0).toString(16).padStart(8, '0');
+	  };
+
+	  const signCurrentWatch = () => {
+	    const now = new Date();
+	    const shift = findShiftFor(now) || findLastShift(now);
+
+	    if (!shift) {
+	      const message = 'Сначала сформируйте расписание, затем подпишите текущую или последнюю смену.';
+	      setSignStatus(message);
+	      setStatus(message);
+	      return;
+	    }
+
+	    const shiftEntries = entries.filter((item) => {
+	      const entryDate = new Date(item.createdAt);
+	      return item.shiftId === shift.id || (entryDate >= shift.from && entryDate < shift.to);
+	    });
+
+	    const snapshot = {
+	      fields: readFields(),
+	      shift: {
+	        id: shift.id,
+	        from: shift.from.toISOString(),
+	        to: shift.to.toISOString(),
+	        leader: shift.leader,
+	        keepers: shift.keepers
+	      },
+	      entries: shiftEntries,
+	      signedAt: now.toISOString()
+	    };
+
+	    const signed = {
+	      id: `signed-${shift.id}-${Date.now()}`,
+	      signedAt: now.toISOString(),
+	      signedBy: plain(leaderOut?.textContent || shift.leader || ''),
+	      leader: shift.leader,
+	      shiftLabel: `${stamp(shift.from)} - ${stamp(shift.to)}`,
+	      entriesCount: shiftEntries.length,
+	      snapshotHash: hashText(JSON.stringify(snapshot)),
+	      snapshot
+	    };
+
+	    signedWatches.unshift(signed);
+	    signedWatches = signedWatches.slice(0, 80);
+	    renderSignedWatches();
+	    setSignStatus(`Смена подписана. Хеш: ${signed.snapshotHash}.`);
+	    saveDraft(`Смена подписана локально. Контрольный хеш: ${signed.snapshotHash}.`);
+	  };
+
+  const formatCellText = (value) => esc(plain(value)).replace(/\n/g, '<br>');
+
+  const formatPrintDateTime = (value) => {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '-';
+    return date.toLocaleString([], {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const modeLabel = (value) => {
+    if (value === 'manual') return 'Ручной';
+    if (value === 'auto') return 'Авто';
+    return value || '-';
+  };
+
+	  const typeLabel = (value) => {
+    const labels = {
+      recommended: 'Рекомендовать',
+      '3x3': '3 / 3',
+      '4x4': '4 / 4',
+      '4x8': '4 / 8',
+      '6x6': '6 / 6',
+      '2x2': '2 / 2'
+    };
+	    return labels[value] || value || '-';
+	  };
+
+	  const durationLabel = (fieldsValue = readFields()) => {
+	    const daysValue = Math.max(0, Math.min(30, Number(fieldsValue.days || 0)));
+	    const hoursValue = Math.max(0, Math.min(23, Number(fieldsValue.hours || 0)));
+	    const parts = [];
+	    if (daysValue) parts.push(`${daysValue} дн.`);
+	    if (hoursValue) parts.push(`${hoursValue} ч`);
+	    return parts.join(' ') || '1 ч';
+	  };
+
+  const buildJournalRows = () => {
+    const sortedEntries = entries
+      .slice(0, ENTRY_LIMIT)
+      .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+	    const rows = sortedEntries.map((item, index) => `
+	      <tr>
+	        <td class="num">${index + 1}</td>
+	        <td class="date">${esc(formatPrintDateTime(item.createdAt))}</td>
+	        <td class="date">${esc(utcStamp(item.createdAt))}</td>
+	        <td>${formatCellText(item.leader || '-')}</td>
+	        <td>${formatCellText(item.position || '-')}</td>
+	        <td class="narrow">${formatCellText(item.course || '-')}</td>
+	        <td class="narrow">${formatCellText(item.speed || '-')}</td>
+	        <td>${formatCellText(item.weather || '-')}</td>
+	        <td class="logtext">${formatCellText(item.text || 'Без текстовой заметки.')}${item.gps?.accuracy ? `<br><small>GPS ±${esc(item.gps.accuracy)} м</small>` : ''}</td>
+	        <td class="signature"></td>
+	      </tr>
+	    `);
+
+    const blankRows = Math.max(6, 14 - rows.length);
+    for (let i = 0; i < blankRows; i++) {
+      rows.push(`
+        <tr class="blank-row">
+          <td class="num">${sortedEntries.length + i + 1}</td>
+		          <td></td>
+		          <td></td>
+		          <td></td>
+		          <td></td>
+		          <td class="narrow"></td>
+	          <td class="narrow"></td>
+	          <td></td>
+          <td class="logtext"></td>
+          <td class="signature"></td>
+        </tr>
+      `);
+    }
+
+    return rows.join('');
+  };
+
+	  const formatPrintDate = (value) => {
+	    const date = new Date(value);
+	    if (Number.isNaN(date.getTime())) return '-';
+	    return date.toLocaleDateString([], {
+	      weekday: 'short',
+	      year: 'numeric',
+	      month: '2-digit',
+	      day: '2-digit'
+	    });
+	  };
+
+	  const formatPrintTime = (value) => {
+	    const date = new Date(value);
+	    if (Number.isNaN(date.getTime())) return '-';
+	    return date.toLocaleTimeString([], {
+	      hour: '2-digit',
+	      minute: '2-digit'
+	    });
+	  };
+
+	  const groupScheduleByDay = () => {
+	    const groups = {};
+	    readScheduleSnapshot().forEach((shift) => {
+	      const key = formatPrintDate(shift.from);
+	      if (!groups[key]) groups[key] = [];
+	      groups[key].push(shift);
+	    });
+	    return groups;
+	  };
+
+	  const buildScheduleDaySections = () => {
+	    const groups = groupScheduleByDay();
+	    const days = Object.keys(groups);
+
+	    if (!days.length) {
+	      return '<section class="watch-day"><p class="empty-line">Расписание не сформировано.</p></section>';
+	    }
+
+	    return days.map((day) => `
+	      <section class="watch-day">
+	        <div class="section-title">
+	          <h2>${esc(day)}</h2>
+	          <span>${groups[day].length} смен</span>
+	        </div>
+	        <table class="watch-table">
+	          <thead>
+	            <tr>
+	              <th class="num">№</th>
+	              <th class="time">LT</th>
+	              <th class="time">UTC</th>
+	              <th>Старший</th>
+	              <th>Подвахтенный</th>
+	              <th>Отметка</th>
+	              <th>Подпись</th>
+	            </tr>
+	          </thead>
+	          <tbody>
+	            ${groups[day].map((shift, index) => {
+	              const flags = shiftFlagLabels(shift);
+	              return `
+	                <tr class="${esc(shiftFlagClasses(shift))}">
+	                  <td class="num">${index + 1}</td>
+	                  <td>${formatCellText(`${formatPrintTime(shift.from)}\n${formatPrintTime(shift.to)}`)}</td>
+	                  <td>${formatCellText(`${utcStamp(shift.from)}\n${utcStamp(shift.to)}`)}</td>
+	                  <td>${formatCellText(shift.leader || '-')}</td>
+	                  <td>${formatCellText(shift.keepers.join(', ') || 'нет')}</td>
+	                  <td>${flags.length ? `<span class="flag-list">${flags.map((flag) => `<span>${esc(flag)}</span>`).join('')}</span>` : ''}</td>
+	                  <td></td>
+	                </tr>
+	              `;
+	            }).join('')}
+	          </tbody>
+	        </table>
+	      </section>
+	    `).join('');
+	  };
+
+	  const buildRestRows = () => {
+    const cards = Array.from(document.querySelectorAll('#watchRestReport .navdesk-watch-rest-card')).slice(0, 12);
+
+    if (!cards.length) {
+      return '<tr><td colspan="3">Расчет отдыха не сформирован.</td></tr>';
+    }
+
+    return cards.map((card) => {
+      const title = plain(card.querySelector('strong')?.textContent || '');
+      const details = Array.from(card.querySelectorAll('p')).map((node) => plain(node.textContent));
+      return `
+        <tr>
+          <td>${formatCellText(title || '-')}</td>
+          <td>${formatCellText(details[0] || '-')}</td>
+          <td>${formatCellText(details[1] || '-')}</td>
+        </tr>
+      `;
+	    }).join('');
+	  };
+
+	  const buildSignedRows = () => {
+	    if (!signedWatches.length) {
+	      return '<tr><td colspan="5">Подписанных смен пока нет.</td></tr>';
+	    }
+
+		    return signedWatches.slice(0, 80).map((item, index) => `
+		      <tr>
+		        <td class="num">${index + 1}</td>
+	        <td>${formatCellText(item.shiftLabel || '-')}</td>
+	        <td>${formatCellText(item.signedBy || item.leader || '-')}</td>
+	        <td>${formatCellText(item.entriesCount ?? 0)}</td>
+	        <td>${formatCellText(item.snapshotHash || '-')}</td>
+	      </tr>
+	    `).join('');
+	  };
+
+	  const buildVoyageStrip = () => {
+		    const fieldValues = readFields();
+		    const current = [
+	      ['Переход / маршрут', fieldValues.route],
+	      ['Старт LT', [fieldValues.start, fieldValues.startTime].filter(Boolean).join(' ')],
+	      ['Длительность', durationLabel(fieldValues)],
+	      ['UTC offset', fieldValues.utc],
+      ['Режим', modeLabel(fieldValues.mode)],
+      ['Тип вахты', typeLabel(fieldValues.type)],
+      ['Капитан', fieldValues.captain],
+      ['Первый помощник', fieldValues.mate],
+      ['Экипаж', fieldValues.crew],
+      ['Текущая вахта', plain(leaderOut?.textContent || '')],
+	      ['Состав', plain(crewOut?.textContent || '')]
+	    ].filter(([, value]) => value);
+
+	    return `
+	      <section class="voyage-strip">
+	        ${current.map(([label, value]) => `
+	          <div><span>${esc(label)}</span><strong>${esc(value)}</strong></div>
+	        `).join('')}
+	      </section>
+	      ${summary ? `<p class="summary-line">${esc(plain(summary.textContent))}</p>` : ''}
+	    `;
+	  };
+
+	  const buildEntriesPrintBody = () => {
+	    return `
+	      ${buildVoyageStrip()}
+	      <section class="ledger">
+		        <div class="section-title">
+		          <h2>Лист вахтенных записей</h2>
+		          <span>записи вахтенного</span>
+		        </div>
+		        <table class="journal-table">
+	          <colgroup>
+	            <col style="width:4%">
+	            <col style="width:11%">
+	            <col style="width:10%">
+	            <col style="width:9%">
+	            <col style="width:13%">
+	            <col style="width:6%">
+	            <col style="width:6%">
+	            <col style="width:11%">
+	            <col style="width:23%">
+	            <col style="width:7%">
+	          </colgroup>
+	          <thead>
+	            <tr>
+	              <th class="num">№</th>
+	              <th>Дата / время LT</th>
+	              <th>UTC</th>
+	              <th>Старший</th>
+	              <th>Позиция</th>
+	              <th>Курс</th>
+              <th>Скорость</th>
+              <th>Ветер / море</th>
+              <th>Запись</th>
+              <th>Подпись</th>
+            </tr>
+          </thead>
+          <tbody>${buildJournalRows()}</tbody>
+	        </table>
+	      </section>
+	    `;
+	  };
+
+	  const buildWatchPrintBody = () => {
+	    return `
+	      ${buildVoyageStrip()}
+	      <section class="ledger watch-ledger">
+	        <div class="section-title">
+	          <h2>Расписание вахт</h2>
+	          <span>линейно по суткам</span>
+	        </div>
+	        ${buildScheduleDaySections()}
+	      </section>
+	      <section class="appendix-grid">
+	        <div class="appendix">
+	          <div class="section-title">
+		            <h2>Подписанные смены</h2>
+		            <span>локальные снимки</span>
+		          </div>
+	          <table class="mini-table">
+	            <thead><tr><th>№</th><th>Смена</th><th>Подписал</th><th>Записей</th><th>Хеш</th></tr></thead>
+	            <tbody>${buildSignedRows()}</tbody>
+		          </table>
+		        </div>
+		        <div class="appendix">
+		          <div class="section-title">
+            <h2>Контроль отдыха</h2>
+            <span>по текущему расчету</span>
+          </div>
+          <table class="mini-table">
+            <thead><tr><th>Член экипажа</th><th>Работа / отдых</th><th>Комментарий</th></tr></thead>
+            <tbody>${buildRestRows()}</tbody>
+          </table>
+	        </div>
+	      </section>
+	    `;
+	  };
+
+	  const buildPrintDocument = ({
+	    title = 'Вахтенный журнал',
+	    formatLabel = 'watch schedule',
+	    pageSize = 'A4 portrait',
+	    bodyClass = 'is-portrait',
+	    bodyHtml = buildWatchPrintBody()
+	  } = {}) => {
+	    const logo = new URL('brand/logo-header-inline-light.png', window.location.href).href;
+	    return `<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>${esc(title)}</title>
+<style>
+  @page { size: ${pageSize}; margin: 9mm; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #fff; color: #10243a; }
+  body { font: 9.6px/1.32 Inter, Arial, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body.is-portrait { font-size: 9.8px; }
+  header { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: start; border-bottom: 2px solid #10243a; padding-bottom: 6px; margin-bottom: 7px; }
+  img { width: 158px; height: auto; display: block; }
+  h1 { margin: 0; font: 700 22px/1.05 Georgia, serif; letter-spacing: .01em; }
+  h2, p { margin: 0; }
+  .subtitle { margin-bottom: 2px; color: rgba(16,36,58,.66); font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: .16em; }
+  .print-meta { display: flex; gap: 12px; margin-top: 4px; color: rgba(16,36,58,.72); font-size: 8.8px; }
+  .voyage-strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-left: 1px solid #10243a; border-top: 1px solid #10243a; margin-bottom: 0; }
+  .is-landscape .voyage-strip { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .voyage-strip div { min-height: 31px; padding: 4px 6px; border-right: 1px solid rgba(16,36,58,.42); border-bottom: 1px solid rgba(16,36,58,.42); }
+  .voyage-strip span { display: block; margin-bottom: 2px; color: rgba(16,36,58,.58); font-size: 7.6px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
+  .voyage-strip strong { display: block; color: #10243a; font-size: 10px; line-height: 1.18; }
+  .summary-line { padding: 5px 6px; border: 1px solid #10243a; border-top: 0; margin-bottom: 7px; font-weight: 700; color: rgba(16,36,58,.78); }
+  .section-title { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 0 0 4px; }
+  .section-title h2 { font-size: 12px; line-height: 1.1; text-transform: uppercase; letter-spacing: .08em; }
+  .section-title span { color: rgba(16,36,58,.58); font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
+  table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+	  th, td { border: 1px solid #10243a; padding: 3px 4px; vertical-align: top; overflow-wrap: anywhere; }
+	  th { background: #e8edf2; font-size: 7.8px; line-height: 1.15; text-transform: uppercase; letter-spacing: .06em; text-align: left; }
+	  td { min-height: 26px; font-size: 8.8px; }
+	  small { color: rgba(16,36,58,.62); font-size: 7.5px; }
+  .empty-line { padding: 8px; border: 1px solid #10243a; font-weight: 700; }
+  .journal-table .num { width: 4%; text-align: center; }
+  .journal-table .signature { text-align: center; }
+  .journal-table tbody tr { height: 28px; }
+  .journal-table tbody tr.blank-row { height: 24px; }
+  .ledger { margin-bottom: 7px; }
+  .watch-day { margin-bottom: 7px; break-inside: avoid; page-break-inside: avoid; }
+  .watch-table .num { width: 5%; text-align: center; }
+  .watch-table .time { width: 16%; }
+  .watch-table tbody tr { height: 27px; }
+  .watch-table tr.is-night-solo td { background: #f6f0e5; }
+  .watch-table tr.is-pre-dawn-watch td { box-shadow: inset 3px 0 0 #8a6a35; }
+  .flag-list { display: flex; flex-wrap: wrap; gap: 2px; }
+  .flag-list span { display: inline-block; border: 1px solid rgba(16,36,58,.34); border-radius: 999px; padding: 1px 4px; font-size: 7.2px; font-weight: 800; white-space: nowrap; }
+	  .appendix-grid { display: grid; grid-template-columns: 1fr; gap: 8px; break-before: page; page-break-before: always; }
+  .is-landscape .appendix-grid { break-before: auto; page-break-before: auto; }
+  .mini-table th, .mini-table td { font-size: 8px; padding: 3px 4px; }
+  .mini-table th { background: #f2f5f7; }
+  footer { display: flex; justify-content: space-between; border-top: 1px solid rgba(16,36,58,.30); padding-top: 5px; margin-top: 7px; color: rgba(16,36,58,.64); font-size: 8px; }
+</style>
+</head>
+<body class="${esc(bodyClass)}">
+  <header>
+    <div>
+      <p class="subtitle">Vetus Nauta - Brkovic</p>
+      <h1>${esc(title)}</h1>
+      <div class="print-meta">
+        <span>Сформирован: ${esc(stamp())}</span>
+        <span>Формат: ${esc(formatLabel)}</span>
+      </div>
+    </div>
+    <img src="${esc(logo)}" alt="Vetus Nauta - Brkovic">
+  </header>
+  ${bodyHtml}
+  <footer><span>Vetus Nauta - Brkovic</span><span>Have a good watch Captain!</span></footer>
+  <script>
+    window.addEventListener('load', () => setTimeout(() => window.print(), 120));
+  </script>
+</body>
+</html>`;
+	  };
+
+  const openPrint = (message, options = {}) => {
+    saveDraft('');
+    const win = window.open('', '_blank', 'width=1320,height=980');
+    if (!win) {
+      setStatus('Браузер заблокировал окно печати.');
+      return;
+    }
+    win.document.open();
+    win.document.write(buildPrintDocument(options));
+    win.document.close();
+    try { win.focus(); } catch (error) {}
+    setStatus(message);
+  };
+
+  const buildShareText = () => {
+	    const fieldValues = readFields();
+	    const lines = [
+	      'Вахтенный журнал',
+	      `Переход: ${fieldValues.route || '-'}`,
+	      `Старт: ${[fieldValues.start, fieldValues.startTime].filter(Boolean).join(' ') || '-'}`,
+	      `Длительность: ${durationLabel(fieldValues)}`,
+	      `UTC: ${fieldValues.utc || '-'}`,
+	      `Капитан: ${fieldValues.captain || '-'}`,
+      `Текущая вахта: ${plain(leaderOut?.textContent || '-')}`,
+      `Состав: ${plain(crewOut?.textContent || '-')}`,
+      ''
+    ];
+
+    entries.slice(0, 12).forEach((item) => {
+      lines.push(`${stamp(new Date(item.createdAt))}: ${item.text || 'Без текстовой заметки.'}`);
+      const meta = [
+        item.course ? `курс ${item.course}` : '',
+        item.speed ? `скорость ${item.speed}` : '',
+        item.position ? `позиция ${item.position}` : '',
+        item.weather ? item.weather : ''
+      ].filter(Boolean).join(', ');
+      if (meta) lines.push(`  ${meta}`);
+    });
+
+    return lines.join('\n').trim();
+  };
+
+  const copyText = async (text) => {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch (error) {}
+
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'fixed';
+    textarea.style.left = '-999px';
+    document.body.appendChild(textarea);
+    textarea.select();
+    let ok = false;
+    try {
+      ok = document.execCommand('copy');
+    } catch (error) {
+      ok = false;
+    }
+    textarea.remove();
+    return ok;
+  };
+
+  saveButtons.forEach((button) => {
+    button.addEventListener('click', () => saveDraft());
+  });
+
+	  quickEntry?.addEventListener('click', () => {
+	    saveDraft('');
+	    focusEntry();
+	    setStatus('Форма быстрой записи готова.');
+	  });
+
+	  entrySave.addEventListener('click', addEntry);
+	  gpsBtn?.addEventListener('click', requestGpsPosition);
+	  gpsAutoBtn?.addEventListener('click', () => setGpsAuto(!gpsAuto));
+	  signBtn?.addEventListener('click', signCurrentWatch);
+
+	  reminderToggle?.addEventListener('change', async () => {
+	    reminderState.enabled = reminderToggle.checked;
+	    if (reminderState.enabled) {
+	      const permission = await requestNotificationPermission();
+	      updateReminderStatus(permission === 'denied'
+	        ? 'Браузерные уведомления запрещены, но экранное напоминание останется.'
+	        : 'Напоминание включено.');
+	    } else {
+	      updateReminderStatus('Напоминание выключено.');
+	    }
+	    checkWatchReminder();
+	    saveDraft('');
+	  });
+
+	  window.addEventListener('navdesk:watch-schedule', () => {
+	    decorateScheduleFlags();
+	    checkWatchReminder();
+	    scheduleSave();
+	  });
+
+	  schedule?.addEventListener('click', (event) => {
+	    if (!event.target.closest('[data-unified-view], [data-manual54-view]')) return;
+	    setTimeout(decorateScheduleFlags, 0);
+	  });
+
+  printBtn?.addEventListener('click', () => {
+    openPrint('A4 документ вахт подготовлен.', {
+      title: 'Вахтенный журнал',
+      formatLabel: 'watch schedule / signatures / rest control',
+      pageSize: 'A4 portrait',
+      bodyClass: 'is-portrait',
+      bodyHtml: buildWatchPrintBody()
+    });
+  });
+
+  entriesPrintBtn?.addEventListener('click', () => {
+    openPrint('Лист вахтенных записей подготовлен отдельно.', {
+      title: 'Лист вахтенных записей',
+      formatLabel: 'watch entries sheet',
+      pageSize: 'A4 landscape',
+      bodyClass: 'is-landscape',
+      bodyHtml: buildEntriesPrintBody()
+    });
+  });
+
+  pdfBtn?.addEventListener('click', () => {
+    openPrint('Для PDF выберите сохранение в PDF в окне печати.', {
+      title: 'Вахтенный журнал',
+      formatLabel: 'watch schedule / signatures / rest control',
+      pageSize: 'A4 portrait',
+      bodyClass: 'is-portrait',
+      bodyHtml: buildWatchPrintBody()
+    });
+  });
+
+  shareBtn?.addEventListener('click', async () => {
+    saveDraft('');
+    const text = buildShareText();
+
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: 'Вахтенный журнал', text });
+        setStatus('Данные переданы в системное меню.');
+        return;
+      }
+    } catch (error) {}
+
+    const ok = await copyText(text);
+    setStatus(ok ? 'Текст вахтенного журнала скопирован.' : 'Не удалось скопировать текст.');
+  });
+
+	  Object.values(entry).forEach((node) => {
+	    node?.addEventListener('input', () => {
+	      if (node === entry.position) lastGps = null;
+	      scheduleSave();
+	    });
+	  });
+
+	  Object.values(fields).forEach((node) => {
+	    node?.addEventListener('input', scheduleSave);
+	    node?.addEventListener('change', scheduleSave);
+	  });
+
+	  setInterval(() => {
+	    checkWatchReminder();
+	    maybeCreateHourlyGpsEntry();
+	  }, 60000);
+
+	  window.addEventListener('pagehide', () => writeState());
+	  document.addEventListener('visibilitychange', () => {
+	    if (document.visibilityState === 'hidden') writeState();
+	  });
+
+	  restoreState();
+	  checkWatchReminder();
+	});

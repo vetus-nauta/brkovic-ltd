@@ -56,6 +56,37 @@ function find_safe_windows(array $series): array {
     return $windows;
 }
 
+function is_local_request(): bool {
+    $host = strtolower((string)($_SERVER['HTTP_HOST'] ?? ''));
+    return str_starts_with($host, '127.0.0.1')
+        || str_starts_with($host, 'localhost')
+        || str_starts_with($host, '[::1]');
+}
+
+function build_mock_provider(string $date, float $lat, float $lon): array {
+    $tz = new DateTimeZone('Europe/Podgorica');
+    $start = new DateTimeImmutable($date . 'T00:00:00', $tz);
+    $heights = [];
+
+    for ($minutes = 0; $minutes <= 24 * 60; $minutes += 30) {
+        $dt = $start->modify('+' . $minutes . ' minutes');
+        $hours = $minutes / 60;
+        $height = 0.55 + 0.37 * cos(2 * M_PI * ($hours - 10.55) / 12.42);
+        $heights[] = [
+            'date' => $dt->format(DATE_ATOM),
+            'height' => round($height, 2),
+        ];
+    }
+
+    return [
+        'status' => 200,
+        'timezone' => 'Europe/Podgorica',
+        'responseLat' => $lat,
+        'responseLon' => $lon,
+        'heights' => $heights,
+    ];
+}
+
 $data = parse_json_body();
 
 $lang = trim((string)($data['lang'] ?? 'ru'));
@@ -76,82 +107,94 @@ if ($lat === null || $lon === null || $charted === null || $draft === null) {
     ]);
 }
 
-$configPath = '/home/brkovic/private/worldtides.php';
-if (!is_file($configPath)) {
-    respond(500, [
-        'ok' => false,
-        'error' => 'WorldTides config not found',
-    ]);
-}
-
-$config = require $configPath;
-$key = trim((string)($config['key'] ?? ''));
-if ($key === '' || $key === 'PASTE_YOUR_WORLDTIDES_KEY_HERE') {
-    respond(500, [
-        'ok' => false,
-        'error' => 'WorldTides key not configured',
-    ]);
-}
-
 $requiredDepth = $draft + $ukc;
+$configPath = '/home/brkovic/private/worldtides.php';
+$provider = null;
+$source = 'worldtides';
 
-$params = [
-    'heights'   => '',
-    'lat'       => (string)$lat,
-    'lon'       => (string)$lon,
-    'date'      => $date,
-    'days'      => '1',
-    'step'      => '1800',   // 30 min
-    'localtime' => '1',
-    'timezone'  => '',
-    'datum'     => 'CD',
-    'key'       => $key,
-];
+if (!is_file($configPath)) {
+    if (!is_local_request()) {
+        respond(500, [
+            'ok' => false,
+            'error' => 'WorldTides config not found',
+        ]);
+    }
 
-$url = 'https://www.worldtides.info/api/v3?' . http_build_query($params);
+    $provider = build_mock_provider($date, (float)$lat, (float)$lon);
+    $source = 'local-mock';
+} else {
+    $config = require $configPath;
+    $key = trim((string)($config['key'] ?? ''));
+    if ($key === '' || $key === 'PASTE_YOUR_WORLDTIDES_KEY_HERE') {
+        if (!is_local_request()) {
+            respond(500, [
+                'ok' => false,
+                'error' => 'WorldTides key not configured',
+            ]);
+        }
 
-$ch = curl_init($url);
-curl_setopt_array($ch, [
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_TIMEOUT => 20,
-    CURLOPT_CONNECTTIMEOUT => 10,
-    CURLOPT_HTTPHEADER => ['Accept: application/json'],
-]);
-$raw = curl_exec($ch);
-$curlErr = curl_error($ch);
-$httpCode = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
-curl_close($ch);
+        $provider = build_mock_provider($date, (float)$lat, (float)$lon);
+        $source = 'local-mock';
+    } else {
+        $params = [
+            'heights'   => '',
+            'lat'       => (string)$lat,
+            'lon'       => (string)$lon,
+            'date'      => $date,
+            'days'      => '1',
+            'step'      => '1800',
+            'localtime' => '1',
+            'timezone'  => '',
+            'datum'     => 'CD',
+            'key'       => $key,
+        ];
 
-if ($raw === false || $curlErr) {
-    respond(502, [
-        'ok' => false,
-        'error' => 'WorldTides request failed',
-        'details' => $curlErr,
-    ]);
-}
+        $url = 'https://www.worldtides.info/api/v3?' . http_build_query($params);
 
-$provider = json_decode($raw, true);
-if (!is_array($provider)) {
-    respond(502, [
-        'ok' => false,
-        'error' => 'Invalid WorldTides response',
-    ]);
-}
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 20,
+            CURLOPT_CONNECTTIMEOUT => 10,
+            CURLOPT_HTTPHEADER => ['Accept: application/json'],
+        ]);
+        $raw = curl_exec($ch);
+        $curlErr = curl_error($ch);
+        $httpCode = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+        curl_close($ch);
 
-if (($provider['status'] ?? 500) !== 200 || $httpCode >= 400) {
-    respond(502, [
-        'ok' => false,
-        'error' => 'WorldTides returned error',
-        'provider_status' => $provider['status'] ?? $httpCode,
-        'provider_error' => $provider['error'] ?? 'Unknown provider error',
-    ]);
+        if ($raw === false || $curlErr) {
+            respond(502, [
+                'ok' => false,
+                'error' => 'WorldTides request failed',
+                'details' => $curlErr,
+            ]);
+        }
+
+        $provider = json_decode($raw, true);
+        if (!is_array($provider)) {
+            respond(502, [
+                'ok' => false,
+                'error' => 'Invalid WorldTides response',
+            ]);
+        }
+
+        if (($provider['status'] ?? 500) !== 200 || $httpCode >= 400) {
+            respond(502, [
+                'ok' => false,
+                'error' => 'WorldTides returned error',
+                'provider_status' => $provider['status'] ?? $httpCode,
+                'provider_error' => $provider['error'] ?? 'Unknown provider error',
+            ]);
+        }
+    }
 }
 
 $heights = $provider['heights'] ?? [];
 if (!is_array($heights) || !$heights) {
     respond(200, [
         'ok' => true,
-        'source' => 'worldtides',
+        'source' => $source,
         'request' => [
             'date' => $date,
             'units' => $units,
@@ -225,7 +268,7 @@ foreach ($heights as $point) {
 if (!$selectedDaySeries) {
     respond(200, [
         'ok' => true,
-        'source' => 'worldtides',
+        'source' => $source,
         'location' => [
             'lat' => $provider['responseLat'] ?? $lat,
             'lon' => $provider['responseLon'] ?? $lon,
@@ -279,7 +322,7 @@ if (!$safeWindows) {
 
     respond(200, [
         'ok' => true,
-        'source' => 'worldtides',
+        'source' => $source,
         'location' => [
             'lat' => $provider['responseLat'] ?? $lat,
             'lon' => $provider['responseLon'] ?? $lon,
@@ -321,7 +364,7 @@ $windowEnd = $bestWindow[count($bestWindow) - 1]['time'];
 
 respond(200, [
     'ok' => true,
-    'source' => 'worldtides',
+    'source' => $source,
     'location' => [
         'lat' => $provider['responseLat'] ?? $lat,
         'lon' => $provider['responseLon'] ?? $lon,

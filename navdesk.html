@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" translate="no" class="notranslate">
+<html lang="en" translate="no" class="notranslate" data-i18n-title="navdesk_meta_title">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,17 +7,40 @@
   <meta name="google" content="notranslate" /><title>VETUS NAUTA — Brkovic | Штурманский стол</title>
   <meta name="description" content="VETUS NAUTA — Brkovic. Штурманский стол with practical tools for passage planning, fuel, ETA and tides." />
   <meta name="theme-color" content="#10243a" />
+  <script>
+    (function () {
+      var mode = 'day';
+      try {
+        mode = localStorage.getItem('navdesk_watch_theme_v1') === 'night' ? 'night' : 'day';
+      } catch (error) {}
+      window.__NAVDESK_BOOT_THEME = mode;
+      document.documentElement.classList.add('navdesk-boot-' + mode);
+      document.documentElement.style.colorScheme = mode === 'night' ? 'dark' : 'light';
+    }());
+  </script>
+  <style>
+    html.navdesk-boot-night,
+    html.navdesk-boot-night body { background: #071014; color-scheme: dark; }
+    html.navdesk-boot-day,
+    html.navdesk-boot-day body { background: #f7f4ec; color-scheme: light; }
+  </style>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cormorant+Garamond:wght@500;600;700&family=Marck+Script&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/variables.css" />
-  <link rel="stylesheet" href="css/main.css?v=20260520-footer-01" />
+  <link rel="stylesheet" href="css/main.css?v=20260528-language-access-01" />
   <link rel="stylesheet" href="css/responsive.css?v=20260520-footer-01" />
-  <link rel="stylesheet" href="css/navdesk.css?v=20260520-header-footer-03" />
+  <link rel="stylesheet" href="css/navdesk.css?v=20260528-navdesk-main-order-01" />
   <link rel="icon" type="image/png" href="favicons/favicon-clean.png?v=2" />
   <link rel="apple-touch-icon" href="favicons/apple-touch-icon-clean.png?v=2" />
 </head>
 <body>
+  <script>
+    (function () {
+      var mode = window.__NAVDESK_BOOT_THEME === 'night' ? 'night' : 'day';
+      document.body.classList.add('navdesk-theme-' + mode);
+    }());
+  </script>
   <div class="site-shell">
     <div class="navdesk-header-card">
       <header class="topbar">
@@ -31,9 +54,11 @@
           <a class="instagram-link" href="#" id="instagramTopLink" target="_blank" rel="noopener" aria-label="Instagram">
             <img src="images/icons/instagram.svg" alt="" />
           </a>
-          <div class="lang-switch" aria-label="Language switcher">
-            <button class="lang-switch__btn is-active" data-lang="en">EN</button>
-            <button class="lang-switch__btn" data-lang="ru">RU</button>
+          <div class="navdesk-header-theme navdesk-theme-compact" id="navdesk-theme-card">
+            <div class="navdesk-theme-switch" role="group" aria-label="Screen mode">
+              <button type="button" class="navdesk-theme-switch__btn is-active" data-navdesk-theme="day" aria-label="Дневной режим" title="Дневной режим">☀</button>
+              <button type="button" class="navdesk-theme-switch__btn" data-navdesk-theme="night" aria-label="Ночной режим" title="Ночной режим">☾</button>
+            </div>
           </div>
         </div>
       </header>
@@ -70,7 +95,47 @@
         </div>
       </section>
 
-            <section class="navdesk-watch-section">
+      <section class="section navdesk-dashboard" aria-labelledby="navdeskDashboardTitle">
+        <div class="section-heading section-heading--editorial navdesk-dashboard__heading">
+          <p class="section-heading__eyebrow">Рабочий пульт</p>
+          <h2 id="navdeskDashboardTitle">Инструменты штурманского стола</h2>
+          <p>Крупные инструменты вынесены на отдельные страницы. Быстрые функции остаются ниже.</p>
+        </div>
+
+        <div class="navdesk-tool-grid">
+          <a class="navdesk-tool-card navdesk-tool-card--simple" href="navdesk-ukv.html">
+            <span class="navdesk-tool-card__kicker">Связь</span>
+            <strong>УКВ и шаблоны сообщений</strong>
+            <span>Radio spelling, профиль судна и рабочие форматы радиообмена.</span>
+          </a>
+
+          <a class="navdesk-tool-card navdesk-tool-card--calc" href="navdesk-tides.html">
+            <span class="navdesk-tool-card__kicker">Вода</span>
+            <strong>Приливы и окно прохода</strong>
+            <span>Предварительный расчет глубин, прилива и безопасного времени прохода.</span>
+          </a>
+
+          <a class="navdesk-tool-card navdesk-tool-card--route-link" href="navdesk-route.html">
+            <span class="navdesk-tool-card__kicker">Маршрут</span>
+            <strong>Ортодромия и локсодромия</strong>
+            <span>Расстояния, истинные курсы и промежуточные координаты перехода.</span>
+          </a>
+
+          <a class="navdesk-tool-card navdesk-tool-card--operations" href="navdesk-watch.html">
+            <span class="navdesk-tool-card__kicker">Журнал</span>
+            <strong>Вахтенный журнал</strong>
+            <span>Расписание вахт, текущая смена и рабочие записи перехода.</span>
+          </a>
+
+          <a class="navdesk-tool-card navdesk-tool-card--learning" href="https://game.brkovic.ltd/">
+            <span class="navdesk-tool-card__kicker">Обучение</span>
+            <strong>Обучающие игры</strong>
+            <span>Морские игровые тренажёры для Sea Speak, УКВ, коротких вахт и работы над ошибками.</span>
+          </a>
+        </div>
+      </section>
+
+            <section class="navdesk-watch-section navdesk-landing-legacy-tool">
         <div class="section--paper navdesk-card navdesk-watch-card">
           <div class="navdesk-card-shell is-collapsed" id="navdesk-watch-card">
             <div class="navdesk-card-toolbar navdesk-watch-toolbar">
@@ -186,14 +251,14 @@
 
                 <section class="navdesk-watch-panel">
                   <p class="navdesk-watch-panel__eyebrow">Быстрая запись</p>
-                  <h3>Обстановка и счисление</h3>
-                  <div class="navdesk-watch-form">
-                    <label><span>Курс</span><input type="text" placeholder="135°" /></label>
-                    <label><span>Скорость</span><input type="text" placeholder="6.2 kn" /></label>
-                    <label><span>Позиция</span><input type="text" placeholder="42°25.4'N 018°41.2'E" /></label>
-                    <label><span>Ветер / море</span><input type="text" placeholder="NW 12 kn, sea slight" /></label>
-                    <label class="navdesk-watch-form__wide"><span>Запись</span><textarea rows="3" placeholder="Обстановка, трафик, действия, замечания..."></textarea></label>
-                  </div>
+                    <h3>Обстановка и счисление</h3>
+                    <div class="navdesk-watch-form">
+                      <label><span>Курс</span><input type="text" id="watchEntryCourse" placeholder="135°" /></label>
+                      <label><span>Скорость</span><input type="text" id="watchEntrySpeed" placeholder="6.2 kn" /></label>
+                      <label><span>Позиция</span><input type="text" id="watchEntryPosition" placeholder="42°25.4'N 018°41.2'E" /></label>
+                      <label><span>Ветер / море</span><input type="text" id="watchEntryWeather" placeholder="NW 12 kn, sea slight" /></label>
+                      <label class="navdesk-watch-form__wide"><span>Запись</span><textarea rows="3" id="watchEntryText" placeholder="Обстановка, трафик, действия, замечания..."></textarea></label>
+                    </div>
                   <button type="button" class="btn btn--primary" id="watchEntrySave">Записать</button>
                 </section>
 
@@ -210,24 +275,8 @@
         </div>
       </section>
 
-<section class="navdesk-layout">
+<section class="navdesk-layout navdesk-layout--compact">
         <aside class="navdesk-side">
-          <div class="section--paper navdesk-card">
-            <div class="navdesk-card-shell navdesk-theme-card" id="navdesk-theme-card">
-              <div class="section-heading section-heading--editorial">
-                <p class="section-heading__eyebrow">Режим экрана</p>
-                <h2>День / Ночь</h2>
-                <p>Приглушает свет интерфейса для ночной вахты и работы у штурманского стола.</p>
-              </div>
-
-              <div class="navdesk-theme-switch" role="group" aria-label="Screen mode">
-                <button type="button" class="navdesk-theme-switch__btn is-active" data-navdesk-theme="day">День</button>
-                <button type="button" class="navdesk-theme-switch__btn" data-navdesk-theme="night">Ночь</button>
-              </div>
-
-              <p class="navdesk-theme-card__note">Ночной режим снижает яркость фона и оставляет акценты в красном, зелёном и янтарном диапазоне.</p>
-            </div>
-          </div>
           <div class="section--paper navdesk-card">
             <div class="navdesk-card-shell is-collapsed" id="navdesk-passages-card">
               <div class="navdesk-card-toolbar">
@@ -377,7 +426,7 @@
 
         </aside>
 
-        <section class="navdesk-main">
+        <section class="navdesk-main navdesk-main--legacy">
           <div class="section--paper navdesk-card">
             <div class="navdesk-card-shell is-collapsed" id="navdesk-tides-card">
               <div class="navdesk-card-toolbar">
@@ -1274,9 +1323,9 @@
     </footer>
 
   <script src="js/config.js"></script>
-  <script src="js/language.js?v=20260519-01"></script>
-  <script src="js/main.js?v=20260519-01"></script>
-  <script src="js/navdesk.js?v=20260425-54"></script>
+  <script src="js/language.js?v=20260528-language-access-01"></script>
+  <script src="js/main.js?v=20260528-language-access-01"></script>
+  <script src="js/navdesk.js?v=20260527-theme-boot-01"></script>
 
   <div class="navdesk-modal" id="navdeskModal" aria-hidden="true">
     <div class="navdesk-modal__backdrop"></div>

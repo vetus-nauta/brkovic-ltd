@@ -31,7 +31,6 @@
   .brand__word { font-size: 2.08rem; }
   .topbar__actions { gap: 8px; }
   .instagram-link { width: 44px; height: 44px; }
-  .lang-switch__btn { padding: 10px 14px; }
 
   .hero__editorial,
   .hero__visual,
@@ -162,16 +161,6 @@
     border-radius: 16px;
   }
 
-  .lang-switch {
-    padding: 4px;
-  }
-
-  .lang-switch__btn {
-    min-width: 56px;
-    min-height: 46px;
-    padding: 0 14px;
-  }
-
   .section {
     padding: 16px 0;
     scroll-margin-top: 94px;
@@ -192,6 +181,9 @@
   .service-hero__copy,
   .service-hero__media,
   .service-panel,
+  .delivery-calc__form-panel,
+  .delivery-calc__result,
+  .delivery-term-card,
   .service-cta,
   .management-lead,
   .management-calculator,
@@ -840,7 +832,7 @@
   }
 
   .home-page #services .service-card--priority {
-    grid-column: span 2;
+    grid-column: auto;
   }
 }
 
@@ -1060,14 +1052,17 @@
 }
 
 .service-page--sailing-tours .topbar,
-.service-page--acceptance-delivery .topbar {
+.service-page--acceptance-delivery .topbar,
+.service-page--yacht-registration .topbar {
   justify-content: space-between !important;
 }
 
 .service-page--sailing-tours .brand.brand--image,
 .service-page--sailing-tours .brand,
 .service-page--acceptance-delivery .brand.brand--image,
-.service-page--acceptance-delivery .brand {
+.service-page--acceptance-delivery .brand,
+.service-page--yacht-registration .brand.brand--image,
+.service-page--yacht-registration .brand {
   flex: 0 1 auto !important;
   width: auto !important;
   margin: 0 auto 0 0 !important;
@@ -1076,12 +1071,14 @@
 }
 
 .service-page--sailing-tours .brand__picture--home,
-.service-page--acceptance-delivery .brand__picture--home {
+.service-page--acceptance-delivery .brand__picture--home,
+.service-page--yacht-registration .brand__picture--home {
   justify-content: flex-start !important;
 }
 
 .service-page--sailing-tours .brand__logo-image,
-.service-page--acceptance-delivery .brand__logo-image {
+.service-page--acceptance-delivery .brand__logo-image,
+.service-page--yacht-registration .brand__logo-image {
   margin: 0 !important;
   transform: none !important;
 }
@@ -1145,6 +1142,13 @@
   line-height: 1.5;
 }
 
+@media (max-width: 980px) {
+  .delivery-calc,
+  .delivery-terms {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 1120px) {
   .service-page .service-hero {
     grid-template-columns: 1fr !important;
@@ -1195,7 +1199,8 @@
   }
 
   .service-page--sailing-tours .topbar,
-  .service-page--acceptance-delivery .topbar {
+  .service-page--acceptance-delivery .topbar,
+  .service-page--yacht-registration .topbar {
     display: flex !important;
     flex-direction: row !important;
     align-items: center !important;
@@ -1206,7 +1211,9 @@
   .service-page--sailing-tours .brand.brand--image,
   .service-page--sailing-tours .brand,
   .service-page--acceptance-delivery .brand.brand--image,
-  .service-page--acceptance-delivery .brand {
+  .service-page--acceptance-delivery .brand,
+  .service-page--yacht-registration .brand.brand--image,
+  .service-page--yacht-registration .brand {
     flex: 0 1 auto !important;
     width: auto !important;
     min-width: 0 !important;
@@ -1218,25 +1225,29 @@
   }
 
   .service-page--sailing-tours .brand__logo-image,
-  .service-page--acceptance-delivery .brand__logo-image {
+  .service-page--acceptance-delivery .brand__logo-image,
+  .service-page--yacht-registration .brand__logo-image {
     max-width: min(58vw, 230px) !important;
     margin: 0 !important;
     transform: none !important;
   }
 
   .service-page--sailing-tours .brand__picture--home .brand__logo-image--desktop,
-  .service-page--acceptance-delivery .brand__picture--home .brand__logo-image--desktop {
+  .service-page--acceptance-delivery .brand__picture--home .brand__logo-image--desktop,
+  .service-page--yacht-registration .brand__picture--home .brand__logo-image--desktop {
     display: block !important;
     height: 54px !important;
   }
 
   .service-page--sailing-tours .brand__picture--home .brand__logo-image--mobile,
-  .service-page--acceptance-delivery .brand__picture--home .brand__logo-image--mobile {
+  .service-page--acceptance-delivery .brand__picture--home .brand__logo-image--mobile,
+  .service-page--yacht-registration .brand__picture--home .brand__logo-image--mobile {
     display: none !important;
   }
 
   .service-page--sailing-tours .topbar__actions,
-  .service-page--acceptance-delivery .topbar__actions {
+  .service-page--acceptance-delivery .topbar__actions,
+  .service-page--yacht-registration .topbar__actions {
     width: auto !important;
     margin: 0 0 0 auto !important;
     justify-content: flex-end !important;
@@ -1247,10 +1258,306 @@
     max-height: 480px;
     object-position: center 48%;
   }
+
+  .service-page--acceptance-delivery .service-quick,
+  .service-page--yacht-registration .service-quick {
+    display: block;
+    padding-top: 0;
+  }
+
+  .service-page--acceptance-delivery .service-hero,
+  .service-page--yacht-registration .service-hero {
+    gap: 12px;
+  }
+
+  .service-page--acceptance-delivery .service-hero__copy h1,
+  .service-page--yacht-registration .service-hero__copy h1 {
+    font-size: clamp(2.05rem, 12vw, 3.2rem);
+    margin-bottom: 12px;
+  }
+
+  .service-page--acceptance-delivery .service-hero__copy p,
+  .service-page--yacht-registration .service-hero__copy p {
+    line-height: 1.55;
+  }
+
+  .service-page--acceptance-delivery .service-hero__actions,
+  .service-page--yacht-registration .service-hero__actions {
+    margin-top: 18px;
+  }
+
+  .service-page--acceptance-delivery .service-hero__media img,
+  .service-page--yacht-registration .service-hero__media img {
+    min-height: 300px;
+    max-height: 390px;
+    object-position: center 52%;
+  }
+
+  .service-page--acceptance-delivery .service-content,
+  .service-page--yacht-registration .service-content {
+    gap: 10px;
+  }
+
+  .service-page--acceptance-delivery .service-panel--collapsible,
+  .service-page--yacht-registration .service-panel--collapsible,
+  .service-page--acceptance-delivery .delivery-term-card--collapsible {
+    padding: 0 !important;
+    border-radius: 20px;
+  }
+
+  .service-page--acceptance-delivery .service-panel__summary,
+  .service-page--yacht-registration .service-panel__summary,
+  .service-page--acceptance-delivery .delivery-term-card__summary {
+    min-height: 60px;
+    padding: 16px 18px;
+    align-items: center;
+  }
+
+  .service-page--acceptance-delivery .service-panel--collapsible[open] > .service-panel__summary,
+  .service-page--yacht-registration .service-panel--collapsible[open] > .service-panel__summary,
+  .service-page--acceptance-delivery .delivery-term-card--collapsible[open] > .delivery-term-card__summary {
+    padding-bottom: 10px;
+  }
+
+  .service-page--acceptance-delivery .service-panel__summary span,
+  .service-page--yacht-registration .service-panel__summary span,
+  .service-page--acceptance-delivery .delivery-term-card__summary span {
+    font-size: 1.45rem;
+  }
+
+  .service-page--acceptance-delivery .service-panel__body,
+  .service-page--yacht-registration .service-panel__body,
+  .service-page--acceptance-delivery .delivery-term-card__body {
+    padding: 0 18px 18px;
+  }
+
+  .service-page--acceptance-delivery .delivery-calc__action-cell {
+    order: 5;
+  }
+
+  .service-page--acceptance-delivery .delivery-calc__advanced-toggle {
+    display: flex;
+    order: 6;
+    min-height: 54px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    border: 1px solid rgba(16,36,58,.10);
+    border-radius: 16px;
+    background: rgba(16,36,58,.025);
+    padding: 0 14px;
+    color: var(--color-brand);
+    cursor: pointer;
+    font: inherit;
+    font-weight: 800;
+    text-align: left;
+  }
+
+  .service-page--acceptance-delivery .delivery-calc__advanced-toggle::after {
+    content: "";
+    width: .58rem;
+    height: .58rem;
+    flex: 0 0 auto;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(45deg);
+    transition: transform .18s ease;
+  }
+
+  .service-page--acceptance-delivery .delivery-calc__grid.is-advanced-open .delivery-calc__advanced-toggle::after {
+    transform: rotate(225deg);
+  }
+
+  .service-page--acceptance-delivery .delivery-calc__optional-field {
+    display: none;
+    order: 7;
+  }
+
+  .service-page--acceptance-delivery .delivery-calc__grid.is-advanced-open .delivery-calc__optional-field {
+    display: grid;
+  }
+
+  .delivery-calc__grid,
+  .delivery-calc__price-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .delivery-calc input,
+  .delivery-calc select {
+    min-height: 54px;
+    font-size: 16px;
+  }
 }
 
 @media (max-width: 520px) {
   .service-page--sailing-tours .service-hero__media--tours img {
     min-height: 310px;
+  }
+}
+
+/* Unified service-page behavior after delivery/registration pattern */
+.service-page .topbar {
+  justify-content: space-between !important;
+}
+
+.service-page .brand.brand--image,
+.service-page .brand {
+  flex: 0 1 auto !important;
+  width: auto !important;
+  margin: 0 auto 0 0 !important;
+  justify-content: flex-start !important;
+  text-align: left !important;
+}
+
+.service-page .brand__picture--home {
+  justify-content: flex-start !important;
+}
+
+.service-page .brand__logo-image {
+  margin: 0 !important;
+  transform: none !important;
+}
+
+@media (min-width: 721px) and (max-width: 1120px) {
+  .service-page .topbar {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 14px !important;
+    padding: 12px 14px !important;
+  }
+
+  .service-page .brand__logo-image {
+    height: 64px !important;
+    max-width: min(54vw, 350px) !important;
+  }
+
+  .service-page .topbar__actions {
+    width: auto !important;
+    margin: 0 0 0 auto !important;
+  }
+}
+
+@media (max-width: 720px) {
+  .service-page .topbar {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
+    padding: 10px 12px !important;
+  }
+
+  .service-page .brand.brand--image,
+  .service-page .brand {
+    flex: 0 1 auto !important;
+    width: auto !important;
+    min-width: 0 !important;
+    margin: 0 auto 0 0 !important;
+  }
+
+  .service-page .brand__logo-image {
+    max-width: min(58vw, 230px) !important;
+    margin: 0 !important;
+    transform: none !important;
+  }
+
+  .service-page .brand__picture--home .brand__logo-image--desktop {
+    display: block !important;
+    height: 54px !important;
+  }
+
+  .service-page .brand__picture--home .brand__logo-image--mobile {
+    display: none !important;
+  }
+
+  .service-page .topbar__actions {
+    width: auto !important;
+    margin: 0 0 0 auto !important;
+    justify-content: flex-end !important;
+  }
+
+  .service-page .service-quick {
+    display: block;
+    padding-top: 0;
+  }
+
+  .service-page .service-hero {
+    gap: 12px;
+  }
+
+  .service-page .service-hero__copy h1 {
+    font-size: clamp(2.05rem, 12vw, 3.2rem);
+    margin-bottom: 12px;
+  }
+
+  .service-page .service-hero__copy p {
+    line-height: 1.55;
+  }
+
+  .service-page .service-hero__actions {
+    margin-top: 18px;
+  }
+
+  .service-page .service-hero__media img {
+    min-height: 300px;
+    max-height: 390px;
+    object-position: center 52%;
+  }
+
+  .service-page .service-content,
+  .service-page .management-card-grid,
+  .service-page .management-layer-grid,
+  .service-page .management-proof-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px;
+  }
+
+  .service-page .management-card--wide {
+    grid-column: auto !important;
+  }
+
+  .service-page .management-base-scope-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .service-page .service-panel--collapsible,
+  .service-page .delivery-term-card--collapsible {
+    padding: 0 !important;
+    border-radius: 20px;
+  }
+
+  .service-page .service-panel__summary,
+  .service-page .delivery-term-card__summary {
+    min-height: 60px;
+    padding: 16px 18px;
+    align-items: center;
+  }
+
+  .service-page .service-panel--collapsible[open] > .service-panel__summary,
+  .service-page .delivery-term-card--collapsible[open] > .delivery-term-card__summary {
+    padding-bottom: 10px;
+  }
+
+  .service-page .service-panel__summary span,
+  .service-page .delivery-term-card__summary span {
+    font-size: 1.45rem;
+  }
+
+  .service-page .service-panel__body,
+  .service-page .delivery-term-card__body {
+    padding: 0 18px 18px;
+  }
+
+  .service-page .management-card {
+    padding: 18px;
+    border-radius: 18px;
+  }
+
+  .service-page .management-card__summary::after {
+    top: 22px;
+    right: 18px;
   }
 }

@@ -2,11 +2,17 @@
 /Thumbs.db
 
 # Local server/runtime files
+/.env
+/.env.*
+!/.env.example
+/openai.env
 /forms/config.php
 /forms/smtp-error.log
 /forms/form-security.log
 /forms/form-rate-limit.json
 /forms/form-rate-limit.lock
+/api/delivery-distance.config.php
+/api/openai.config.php
 /data/management-projects.json
 /error_log
 /.ftpquota
@@ -25,3 +31,8 @@
 /public_html_nested/
 /revoyacht/
 /yacht-flex-demo/
+/test-results/
+
+# Local Godot prototype export artifacts. Keep generated builds out of public/ and production paths.
+/game.brkovic.ltd/prototypes/watch-officer-godot/exports/
+/game.brkovic.ltd/private/config.php

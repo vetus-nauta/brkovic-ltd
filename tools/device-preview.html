@@ -84,12 +84,31 @@
     const params = new URLSearchParams(window.location.search);
     const device = params.get("device") === "tablet" ? "tablet" : "phone";
     const lang = params.get("lang");
-    const rawPath = params.get("path") || "/index.html";
+    const STORAGE_KEY = `brkovic_device_preview_path_${device}`;
+    const rawPath = params.get("path") || localStorage.getItem(STORAGE_KEY) || "/navdesk.html";
     const target = new URL(rawPath.startsWith("/") ? rawPath : `/${rawPath}`, window.location.origin);
+    const frame = document.getElementById("siteFrame");
+
+    function rememberFramePath() {
+      try {
+        const frameUrl = new URL(frame.contentWindow.location.href);
+        if (frameUrl.origin !== window.location.origin) return;
+        const path = `${frameUrl.pathname}${frameUrl.search}${frameUrl.hash}`;
+        const nextParams = new URLSearchParams(window.location.search);
+        localStorage.setItem(STORAGE_KEY, path);
+        nextParams.set("path", path);
+        nextParams.set("device", device);
+        window.history.replaceState(null, "", `${window.location.pathname}?${nextParams.toString()}`);
+      } catch (error) {
+        // The preview is same-origin during local work; ignore if a browser blocks access.
+      }
+    }
+
     if (lang === "ru" || lang === "en") target.searchParams.set("lang", lang);
     if (device === "tablet") document.getElementById("device").classList.add("device--tablet");
     document.title = device === "tablet" ? "BRKOVIC планшет" : "BRKOVIC мобила";
-    document.getElementById("siteFrame").src = target.toString();
+    frame.addEventListener("load", rememberFramePath);
+    frame.src = target.toString();
   </script>
 </body>
 </html>
