@@ -13,6 +13,8 @@ Expected first reports:
 - `openai-api-key-server-boundary-2026-05-27.md`
 - `openai-language-desk-implementation-notes-2026-05-27.md`
 - `backend-engineer-openai-language-desk-skeleton-2026-05-27.md`
+- `openai-live-key-health-2026-05-28.md`
+- `backend-engineer-openai-language-desk-local-skeleton-2026-05-28.md`
 - `navdesk-tides-audit-2026-05-27.md`
 - `localization-surface-inventory-2026-05-27.md`
 - `backend-admin-api-audit-2026-05-27.md`

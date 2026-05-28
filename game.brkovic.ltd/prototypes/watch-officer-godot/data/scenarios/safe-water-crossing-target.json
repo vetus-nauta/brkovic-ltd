@@ -1,0 +1,154 @@
+{
+  "schema_version": 1,
+  "scenario_id": "safe-water-crossing-target",
+  "scenario_version": "0.1.0",
+  "title_key": "scenario.safe_water_crossing_target.title",
+  "briefing_key": "scenario.safe_water_crossing_target.briefing",
+  "rule_review_status": "draft",
+  "training_claim_status": "draft_not_final_training_content",
+  "iala_region": "A",
+  "mode": {
+    "daylight": true,
+    "weather": "calm",
+    "visibility": "good"
+  },
+  "world": {
+    "units": "meters",
+    "origin": [0, 0],
+    "heading_reference": "degrees_true",
+    "bounds": [[-180, -80], [220, 560]]
+  },
+  "camera": {
+    "mode": "heading_up",
+    "ownship_screen_anchor": [0.5, 0.7],
+    "forward_view_ratio": 0.65,
+    "zoom_min": 0.9,
+    "zoom_max": 1.1
+  },
+  "ownship": {
+    "id": "ownship",
+    "type": "motor_yacht",
+    "spawn_position": [0, 0],
+    "spawn_heading_deg": 0,
+    "collision_radius_m": 6,
+    "grounding_radius_m": 5,
+    "speed_levels": [
+      { "id": "stop", "speed_mps": 0.0 },
+      { "id": "slow", "speed_mps": 2.5 },
+      { "id": "cruise", "speed_mps": 5.0 },
+      { "id": "fast", "speed_mps": 7.0 }
+    ],
+    "initial_speed_level": "slow",
+    "turn_rate_deg_per_sec": {
+      "slow": 8,
+      "cruise": 6,
+      "fast": 4
+    },
+    "speed_step_time_sec": 1.5
+  },
+  "target_vessels": [
+    {
+      "id": "target_01",
+      "type": "power_driven",
+      "spawn_position": [150, 260],
+      "spawn_heading_deg": 270,
+      "speed_mps": 4.2,
+      "collision_radius_m": 8,
+      "behaviour": "constant_course_speed",
+      "crossing_from": "starboard",
+      "ais": {
+        "label": "TGT 01",
+        "vector_horizon_sec": 90
+      }
+    }
+  ],
+  "marks": [
+    {
+      "id": "port_lateral_01",
+      "type": "lateral",
+      "side": "port",
+      "iala_region": "A",
+      "colour": "red",
+      "position": [-45, 180],
+      "visual_variant": "region_a_port_lateral_day",
+      "label_key": "mark.port_lateral.01",
+      "visibility_range_m": 450
+    },
+    {
+      "id": "starboard_lateral_01",
+      "type": "lateral",
+      "side": "starboard",
+      "iala_region": "A",
+      "colour": "green",
+      "position": [45, 180],
+      "visual_variant": "region_a_starboard_lateral_day",
+      "label_key": "mark.starboard_lateral.01",
+      "visibility_range_m": 450
+    }
+  ],
+  "geometry": {
+    "safe_corridor_polygon": [[-45, -40], [45, -40], [50, 500], [-50, 500]],
+    "shallow_zone_polygons": [
+      [[-180, -40], [-58, -40], [-62, 500], [-180, 500]],
+      [[58, -40], [220, -40], [220, 500], [62, 500]]
+    ],
+    "danger_polygons": [],
+    "caution_buffers": {
+      "safe_corridor_edge_m": 8,
+      "shallow_warning_m": 12,
+      "danger_warning_m": 0
+    },
+    "finish_gate": [[-45, 480], [45, 480]]
+  },
+  "encounter": {
+    "expected_initial_class": "crossing",
+    "expected_player_role": "give_way",
+    "classifier_thresholds": {
+      "head_on_relative_heading_deg": 15,
+      "crossing_min_bearing_deg": 15,
+      "crossing_max_bearing_deg": 112.5,
+      "overtaking_abaft_beam_deg": 112.5,
+      "ambiguous_margin_deg": 5
+    }
+  },
+  "cpa_tcpa": {
+    "qualitative_states": ["safe", "caution", "danger", "immediate"],
+    "horizon_sec": 180,
+    "safe_cpa_m": 80,
+    "caution_cpa_m": 55,
+    "danger_cpa_m": 35,
+    "immediate_cpa_m": 20,
+    "active_tcpa_max_sec": 150,
+    "numeric_debug_required": true
+  },
+  "vts": {
+    "enabled": false,
+    "prompts": []
+  },
+  "scoring": {
+    "success_requires": [
+      "safe_corridor_maintained",
+      "no_grounding",
+      "no_collision",
+      "safe_or_recovered_cpa",
+      "finish_gate_passed",
+      "no_critical_warning_at_finish"
+    ],
+    "reference_track": [[0, 0], [0, 160], [-15, 260], [0, 480]],
+    "expected_action_windows": [
+      {
+        "id": "give_way_action",
+        "start_sec": 20,
+        "end_sec": 75,
+        "preferred_actions": ["speed_down", "course_adjustment_to_pass_astern_if_safe_water_permits"]
+      }
+    ]
+  },
+  "replay": {
+    "seed": 1001,
+    "fixed_tick_hz": 20,
+    "event_timing_tolerance_ticks": 1,
+    "input_log_required": true,
+    "event_log_required": true
+  }
+}

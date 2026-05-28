@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "scenario_id": "head-on-port-to-port",
+  "scenario_version": "0.1.0",
+  "title_key": "scenario.head_on_port_to_port.title",
+  "briefing_key": "scenario.head_on_port_to_port.briefing",
+  "rule_review_status": "draft",
+  "training_claim_status": "draft_not_final_training_content",
+  "iala_region": "A",
+  "mode": {
+    "daylight": true,
+    "weather": "calm",
+    "visibility": "good"
+  },
+  "world": {
+    "units": "meters",
+    "origin": [0, 0],
+    "heading_reference": "degrees_true",
+    "bounds": [[-220, -100], [220, 620]]
+  },
+  "camera": {
+    "mode": "heading_up",
+    "ownship_screen_anchor": [0.5, 0.7],
+    "forward_view_ratio": 0.65,
+    "zoom_min": 0.9,
+    "zoom_max": 1.1
+  },
+  "ownship": {
+    "id": "ownship",
+    "type": "motor_yacht",
+    "spawn_position": [0, 0],
+    "spawn_heading_deg": 0,
+    "collision_radius_m": 6,
+    "grounding_radius_m": 5,
+    "speed_levels": [
+      { "id": "stop", "speed_mps": 0.0 },
+      { "id": "slow", "speed_mps": 2.5 },
+      { "id": "cruise", "speed_mps": 5.0 },
+      { "id": "fast", "speed_mps": 7.0 }
+    ],
+    "initial_speed_level": "slow",
+    "turn_rate_deg_per_sec": {
+      "slow": 8,
+      "cruise": 6,
+      "fast": 4
+    },
+    "speed_step_time_sec": 1.5
+  },
+  "target_vessels": [
+    {
+      "id": "target_01",
+      "type": "power_driven",
+      "spawn_position": [0, 360],
+      "spawn_heading_deg": 180,
+      "speed_mps": 4.0,
+      "collision_radius_m": 8,
+      "behaviour": "constant_course_speed",
+      "heading_relation": "reciprocal_or_nearly_reciprocal",
+      "ais": {
+        "label": "TGT 01",
+        "vector_horizon_sec": 90
+      }
+    }
+  ],
+  "marks": [],
+  "geometry": {
+    "safe_corridor_polygon": [[-140, -60], [140, -60], [140, 560], [-140, 560]],
+    "shallow_zone_polygons": [
+      [[-220, -60], [-150, -60], [-150, 560], [-220, 560]],
+      [[150, -60], [220, -60], [220, 560], [150, 560]]
+    ],
+    "danger_polygons": [],
+    "caution_buffers": {
+      "safe_corridor_edge_m": 10,
+      "shallow_warning_m": 15,
+      "danger_warning_m": 0
+    },
+    "finish_gate": [[-100, 520], [100, 520]]
+  },
+  "encounter": {
+    "expected_initial_class": "head_on",
+    "expected_player_role": "head_on_alter_starboard",
+    "classifier_thresholds": {
+      "head_on_relative_heading_deg": 15,
+      "head_on_bearing_ahead_tolerance_deg": 10,
+      "ambiguous_margin_deg": 5
+    }
+  },
+  "cpa_tcpa": {
+    "qualitative_states": ["safe", "caution", "danger", "immediate"],
+    "horizon_sec": 180,
+    "safe_cpa_m": 90,
+    "caution_cpa_m": 65,
+    "danger_cpa_m": 40,
+    "immediate_cpa_m": 22,
+    "active_tcpa_max_sec": 150,
+    "numeric_debug_required": true
+  },
+  "vts": {
+    "enabled": false,
+    "prompts": []
+  },
+  "scoring": {
+    "success_requires": [
+      "early_starboard_alteration",
+      "port_to_port_pass_achieved",
+      "safe_or_recovered_cpa",
+      "no_collision",
+      "finish_gate_passed",
+      "no_critical_warning_at_finish"
+    ],
+    "reference_track": [[0, 0], [0, 120], [35, 260], [55, 520]],
+    "expected_action_windows": [
+      {
+        "id": "early_starboard_alteration",
+        "start_sec": 8,
+        "end_sec": 55,
+        "preferred_actions": ["course_alteration_starboard_clear"]
+      }
+    ]
+  },
+  "replay": {
+    "seed": 2002,
+    "fixed_tick_hz": 20,
+    "event_timing_tolerance_ticks": 1,
+    "input_log_required": true,
+    "event_log_required": true
+  }
+}

@@ -15,10 +15,10 @@ The current Ship Journal public snapshot is a RU/EN legacy compatibility layer:
 - Every entry has 1 media item.
 - Media has only `altRu/altEn` fields in the snapshot; there are no caption fields.
 - 3 of 4 media items have both RU and EN alt text; 1 media item has no RU or EN alt text.
-- `js/language.js` supports only `ru` and `en`, hardcoded as `["ru", "en"]`.
+- `js/language.js` currently has real frontend files only for `en` and `ru`, with a roadmap for future languages.
 - `lang/ru.json` and `lang/en.json` are the current public interface language files.
 
-I did not find an explicit approved list of all future project target languages in the required project documents. Therefore no final target-language list is invented here. This is a Director/owner blocker before any translation generation package is created.
+Director update after owner clarification on 2026-05-28: the target language list is now explicit. English is the primary public site language. Additional targets are Russian, German, Italian, Spanish, regional Serbian/Montenegrin/Croatian, and Mandarin. Old handoff mention of French is superseded unless the owner reinstates it.
 
 Correct future destination remains `JournalTranslation` and `JournalMediaTranslation`, or a compatible entity/language row model. Do not add fields such as `titleFr`, `titleDe`, `altIt`, etc.
 
@@ -100,28 +100,36 @@ Current language versions already in the snapshot:
 
 ## Approved Target-Language Findings
 
-I found current implemented public languages: `ru` and `en`.
+I found current implemented public language files: `en` and `ru`.
 
-I did not find an explicit project document that says "all approved project languages are: ..." or gives a final ordered target-language list for future journal translation.
+Owner-approved target language model as of 2026-05-28:
+
+| Code | Language direction | Status | Notes |
+| --- | --- | --- | --- |
+| `en` | English | primary public language, available | Primary site language. Existing EN journal fields may need editorial/SEO review before treating them as final. |
+| `ru` | Russian | available, canonical authoring source for journal admin | Owner writes journal entries in Russian first. Russian copy is not rewritten without approval. |
+| `de` | German | target/planned | Needs translation storage, review gate, SEO fields and public URL decision before indexing. |
+| `it` | Italian | target/planned | Same gate requirements as `de`. |
+| `es` | Spanish | target/planned | Owner correction supersedes old unapproved `fr` note. |
+| `sr` | Serbian/Montenegrin/Croatian regional direction | target/planned placeholder | Final code/URL decision remains open: one regional version vs separate `sr`, `me`, `hr` variants. |
+| `zh` | Mandarin / Chinese | target/planned placeholder | Final locale/script decision remains open before URL/hreflang. |
 
 Relevant project-document findings:
 
-- Localization inventory asks: "Which languages are planned after RU/EN, and in what priority order?"
-- AI multilingual architecture uses "target language multi-select" and "many target languages", but does not name a final approved list.
-- Backend/Admin audit describes target language list input for a future server-side endpoint, but does not approve the list.
-- Project knowledge states that the journal will become multilingual through AI drafts, but does not name the languages.
+- Old handoff: current active languages were `ru/en`, future planned included `de/it/fr/sr/zh`.
+- Journal audit: current admin/content model is legacy RU/EN and must move to row-based translation tables.
+- Project knowledge: owner writes journal source in Russian; AI language desk creates reviewed drafts per target language.
+- 2026-05-28 owner correction: public language model is English primary plus `ru`, `de`, `it`, `es`, `srb/mne/hr`, Mandarin.
 
-## Blocker
+## Remaining Blockers
 
-**Blocker:** approved target-language list is missing.
+The target language list itself is no longer blocked. Remaining blockers before generation/publication:
 
-Director/owner must approve:
-
-- target language codes;
-- human-readable language names;
-- priority/order for first generation;
 - whether current EN is considered approved, legacy, needs review, or to be regenerated;
 - whether any language is public/indexable at launch or only internal draft.
+- final URL/locale decisions for `sr` regional and `zh` Mandarin;
+- backend/admin translation endpoints and review statuses;
+- SEO policy for crawlable URLs, canonical and hreflang.
 
 Until this is decided:
 

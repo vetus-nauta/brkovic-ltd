@@ -1,0 +1,5365 @@
+{
+  "version": 1,
+  "task_label": "2026-05-27-second-sea-speak-qa-pass",
+  "scope": "Captain Ether starter items, including Batch 001 core radio procedure, Batch 002 marina/harbour basics, and Batch 003 navigation reports after merge.",
+  "purpose": "Regression-oriented Sea Speak accept/reject pairs. These pairs protect against rejecting clear maritime meaning and against accepting changed maritime meaning.",
+  "dangerous_minimal_pairs": [
+    {
+      "pair": "port / starboard",
+      "items": [
+        "word_port_001",
+        "word_starboard_001"
+      ],
+      "must_accept": {
+        "word_port_001": [
+          "port",
+          "port side"
+        ],
+        "word_starboard_001": [
+          "starboard",
+          "starboard side"
+        ]
+      },
+      "must_reject": {
+        "word_port_001": [
+          "starboard",
+          "starboard side"
+        ],
+        "word_starboard_001": [
+          "port",
+          "port side"
+        ]
+      },
+      "reason": "Opposite vessel sides must never be accepted as typo-level variants."
+    },
+    {
+      "pair": "stern / astern",
+      "items": [
+        "word_stern_001",
+        "word_astarn_001"
+      ],
+      "must_accept": {
+        "word_stern_001": [
+          "stern",
+          "the stern"
+        ],
+        "word_astarn_001": [
+          "astern"
+        ]
+      },
+      "must_reject": {
+        "word_stern_001": [
+          "astern"
+        ],
+        "word_astarn_001": [
+          "stern"
+        ]
+      },
+      "reason": "Stern is a vessel part; astern is a relative position behind the vessel."
+    },
+    {
+      "pair": "over / out",
+      "items": [
+        "expr_over_001",
+        "expr_out_001",
+        "phrase_core_radio_check_over_001",
+        "expr_core_wait_out_001",
+        "phrase_core_wait_out_call_again_001"
+      ],
+      "must_accept": {
+        "expr_over_001": [
+          "over"
+        ],
+        "expr_out_001": [
+          "out"
+        ],
+        "phrase_core_radio_check_over_001": [
+          "radio check over"
+        ],
+        "expr_core_wait_out_001": [
+          "wait out"
+        ]
+      },
+      "must_reject": {
+        "expr_over_001": [
+          "out",
+          "over and out"
+        ],
+        "expr_out_001": [
+          "over",
+          "over and out"
+        ],
+        "phrase_core_radio_check_over_001": [
+          "radio check out",
+          "radio check over and out"
+        ],
+        "expr_core_wait_out_001": [
+          "out",
+          "wait over"
+        ]
+      },
+      "reason": "Over invites a reply; out closes the exchange. Batch 001: Over invites a reply; out closes or suspends the exchange. Wait out must not become out alone."
+    },
+    {
+      "pair": "roger / affirmative",
+      "items": [
+        "expr_roger_001",
+        "expr_affirmative_001"
+      ],
+      "must_accept": {
+        "expr_roger_001": [
+          "roger"
+        ],
+        "expr_affirmative_001": [
+          "affirmative"
+        ]
+      },
+      "must_reject": {
+        "expr_roger_001": [
+          "affirmative",
+          "yes"
+        ],
+        "expr_affirmative_001": [
+          "roger",
+          "yes"
+        ]
+      },
+      "reason": "Roger acknowledges receipt; affirmative means yes/confirmed."
+    },
+    {
+      "pair": "channel 72 / channel 71",
+      "items": [
+        "expr_switch_channel_001"
+      ],
+      "must_accept": {
+        "expr_switch_channel_001": [
+          "channel 72",
+          "channel seven two",
+          "channel seventy two"
+        ]
+      },
+      "must_reject": {
+        "expr_switch_channel_001": [
+          "channel 71",
+          "channel seven one",
+          "switch to channel seven one"
+        ]
+      },
+      "reason": "Adjacent channel numbers must not pass through fuzzy matching."
+    },
+    {
+      "pair": "090 / 90",
+      "items": [
+        "phrase_my_heading_001"
+      ],
+      "must_accept": {
+        "phrase_my_heading_001": [
+          "090",
+          "090 degrees",
+          "zero nine zero degrees"
+        ]
+      },
+      "must_reject": {
+        "phrase_my_heading_001": [
+          "90",
+          "90 degrees",
+          "heading 90 degrees"
+        ]
+      },
+      "reason": "Heading reports train the three-digit radio form; bare 90 is not equivalent for this item."
+    },
+    {
+      "pair": "1400 / 1500",
+      "items": [
+        "phrase_eta_001"
+      ],
+      "must_accept": {
+        "phrase_eta_001": [
+          "1400 UTC",
+          "1400Z",
+          "one four zero zero UTC"
+        ]
+      },
+      "must_reject": {
+        "phrase_eta_001": [
+          "1500 UTC",
+          "eta one five zero zero utc",
+          "1500Z"
+        ]
+      },
+      "reason": "ETA time digits must not be corrected by typo or semantic matching."
+    },
+    {
+      "pair": "say again / repeat",
+      "items": [
+        "expr_core_say_again_all_001",
+        "expr_core_say_again_all_after_001",
+        "expr_core_say_again_all_before_001",
+        "phrase_core_say_again_position_001"
+      ],
+      "must_accept": {
+        "phrase_core_say_again_position_001": [
+          "say again your position"
+        ]
+      },
+      "must_reject": {
+        "phrase_core_say_again_position_001": [
+          "repeat your position"
+        ],
+        "expr_core_say_again_all_001": [
+          "repeat all"
+        ]
+      },
+      "reason": "Repeat is not accepted as a substitute for say again in this Sea Speak training."
+    },
+    {
+      "pair": "roger / affirmative / correct",
+      "items": [
+        "expr_core_correct_001",
+        "phrase_core_answer_affirmative_001"
+      ],
+      "must_accept": {
+        "expr_core_correct_001": [
+          "correct"
+        ],
+        "phrase_core_answer_affirmative_001": [
+          "answer affirmative"
+        ]
+      },
+      "must_reject": {
+        "expr_core_correct_001": [
+          "affirmative",
+          "roger",
+          "yes"
+        ],
+        "phrase_core_answer_affirmative_001": [
+          "answer roger",
+          "answer yes"
+        ]
+      },
+      "reason": "Roger acknowledges receipt, affirmative means yes, and correct confirms accuracy."
+    },
+    {
+      "pair": "affirmative / negative",
+      "items": [
+        "phrase_core_answer_affirmative_001",
+        "phrase_core_answer_negative_001"
+      ],
+      "must_accept": {
+        "phrase_core_answer_affirmative_001": [
+          "answer affirmative"
+        ],
+        "phrase_core_answer_negative_001": [
+          "answer negative"
+        ]
+      },
+      "must_reject": {
+        "phrase_core_answer_affirmative_001": [
+          "answer negative"
+        ],
+        "phrase_core_answer_negative_001": [
+          "answer affirmative",
+          "answer no"
+        ]
+      },
+      "reason": "Answer value is operationally opposite and must not be fuzzed."
+    },
+    {
+      "pair": "read back / say again",
+      "items": [
+        "expr_core_read_back_my_message_001",
+        "phrase_core_read_back_channel_one_two_001",
+        "phrase_core_request_read_back_001",
+        "phrase_core_say_again_position_001"
+      ],
+      "must_accept": {
+        "phrase_core_read_back_channel_one_two_001": [
+          "read back channel one two"
+        ],
+        "phrase_core_say_again_position_001": [
+          "say again your position"
+        ]
+      },
+      "must_reject": {
+        "phrase_core_read_back_channel_one_two_001": [
+          "say again channel one two",
+          "repeat channel one two"
+        ],
+        "phrase_core_say_again_position_001": [
+          "read back your position",
+          "repeat your position"
+        ]
+      },
+      "reason": "Read back is receiver confirmation; say again asks the sender to retransmit."
+    },
+    {
+      "pair": "channel 12 / channel 13 / channel 16",
+      "items": [
+        "phrase_core_switch_channel_one_two_001",
+        "phrase_core_correction_channel_one_three_001",
+        "phrase_core_stand_by_channel_one_six_001"
+      ],
+      "must_accept": {
+        "phrase_core_switch_channel_one_two_001": [
+          "channel 12"
+        ],
+        "phrase_core_correction_channel_one_three_001": [
+          "correction channel 13"
+        ],
+        "phrase_core_stand_by_channel_one_six_001": [
+          "stand by channel 16"
+        ]
+      },
+      "must_reject": {
+        "phrase_core_switch_channel_one_two_001": [
+          "channel 13",
+          "channel 16"
+        ],
+        "phrase_core_correction_channel_one_three_001": [
+          "correction channel 12"
+        ],
+        "phrase_core_stand_by_channel_one_six_001": [
+          "stand by channel 12"
+        ]
+      },
+      "reason": "Channel digits must not be typo-corrected or semantically substituted."
+    },
+    {
+      "pair": "1500 / 1400",
+      "items": [
+        "phrase_core_correction_eta_1500_001"
+      ],
+      "must_accept": {
+        "phrase_core_correction_eta_1500_001": [
+          "correction ETA 1500 UTC",
+          "correction ETA 1500Z"
+        ]
+      },
+      "must_reject": {
+        "phrase_core_correction_eta_1500_001": [
+          "correction ETA 1400 UTC",
+          "correction ETA 1400Z"
+        ]
+      },
+      "reason": "ETA time digits must not be corrected by typo or semantic matching."
+    },
+    {
+      "pair": "Alfa / Alpha",
+      "items": [
+        "phrase_core_i_spell_aurora_001"
+      ],
+      "must_accept": {
+        "phrase_core_i_spell_aurora_001": [
+          "i spell aurora alfa uniform romeo oscar romeo alfa"
+        ]
+      },
+      "must_reject": {
+        "phrase_core_i_spell_aurora_001": [
+          "i spell aurora alpha uniform romeo oscar romeo alpha"
+        ]
+      },
+      "reason": "Confirmed: keep official ICAO/IMO spelling alphabet form Alfa; Alpha stays wrong for this training item."
+    },
+    {
+      "pair": "advice / advise",
+      "items": [
+        "word_core_advice_marker_001"
+      ],
+      "must_accept": {
+        "word_core_advice_marker_001": [
+          "advice"
+        ]
+      },
+      "must_reject": {
+        "word_core_advice_marker_001": [
+          "advise"
+        ]
+      },
+      "reason": "Advice is the message-marker noun; advise is a verb. The typo layer must not accept this one-letter grammatical change."
+    },
+    {
+      "pair": "berth / birth",
+      "items": [
+        "word_marina_berth_001",
+        "expr_marina_request_berth_001"
+      ],
+      "must_accept": {
+        "word_marina_berth_001": [
+          "berth"
+        ],
+        "expr_marina_request_berth_001": [
+          "request berth"
+        ]
+      },
+      "must_reject": {
+        "word_marina_berth_001": [
+          "birth"
+        ],
+        "expr_marina_request_berth_001": [
+          "request birth"
+        ]
+      },
+      "reason": "Berth is the harbour place; birth is an ordinary English word and must not pass through typo matching."
+    },
+    {
+      "pair": "berth / dock / quay / pier / slip",
+      "items": [
+        "word_marina_berth_001",
+        "phrase_marina_request_visitor_berth_001",
+        "phrase_marina_leaving_berth_001"
+      ],
+      "must_accept": {
+        "word_marina_berth_001": [
+          "berth"
+        ],
+        "phrase_marina_leaving_berth_001": [
+          "leaving the berth"
+        ]
+      },
+      "must_reject": {
+        "word_marina_berth_001": [
+          "dock",
+          "quay",
+          "pier",
+          "slip"
+        ],
+        "phrase_marina_leaving_berth_001": [
+          "leaving the dock"
+        ]
+      },
+      "reason": "Confirmed strict for Batch 002: berth stays separate from dock, quay, pier, and slip."
+    },
+    {
+      "pair": "moor / berth / anchor",
+      "items": [
+        "word_marina_mooring_001",
+        "phrase_marina_request_berth_one_night_001"
+      ],
+      "must_accept": {
+        "word_marina_mooring_001": [
+          "mooring"
+        ],
+        "phrase_marina_request_berth_one_night_001": [
+          "request berth for one night"
+        ]
+      },
+      "must_reject": {
+        "word_marina_mooring_001": [
+          "moor",
+          "berth",
+          "anchor"
+        ],
+        "phrase_marina_request_berth_one_night_001": [
+          "request mooring for one night"
+        ]
+      },
+      "reason": "Mooring, berthing, and anchoring are related but not interchangeable in this batch."
+    },
+    {
+      "pair": "line / rope",
+      "items": [
+        "word_marina_line_001",
+        "expr_marina_prepare_lines_001",
+        "phrase_marina_prepare_bow_stern_lines_001"
+      ],
+      "must_accept": {
+        "word_marina_line_001": [
+          "line"
+        ],
+        "expr_marina_prepare_lines_001": [
+          "prepare lines"
+        ]
+      },
+      "must_reject": {
+        "word_marina_line_001": [
+          "rope"
+        ],
+        "expr_marina_prepare_lines_001": [
+          "prepare ropes"
+        ],
+        "phrase_marina_prepare_bow_stern_lines_001": [
+          "prepare bow and stern ropes"
+        ]
+      },
+      "reason": "Line is the trained mooring term; rope remains wrong for these drills."
+    },
+    {
+      "pair": "fender / finder / bumper",
+      "items": [
+        "word_marina_fender_001",
+        "expr_marina_prepare_fenders_001",
+        "phrase_marina_prepare_fenders_port_001"
+      ],
+      "must_accept": {
+        "word_marina_fender_001": [
+          "fender"
+        ],
+        "expr_marina_prepare_fenders_001": [
+          "prepare fenders"
+        ]
+      },
+      "must_reject": {
+        "word_marina_fender_001": [
+          "finder",
+          "bumper"
+        ],
+        "expr_marina_prepare_fenders_001": [
+          "prepare finders",
+          "prepare bumpers"
+        ],
+        "phrase_marina_prepare_fenders_port_001": [
+          "prepare finders on port side",
+          "prepare bumpers on port side"
+        ]
+      },
+      "reason": "Finder is a one-letter ordinary word and bumper is marina slang; both must stay wrong for the trained Sea Speak fender term."
+    },
+    {
+      "pair": "port side to / starboard side to",
+      "items": [
+        "expr_marina_port_side_to_001",
+        "expr_marina_starboard_side_to_001",
+        "phrase_marina_berth_port_side_to_001",
+        "phrase_marina_berth_starboard_side_to_001",
+        "phrase_marina_proceed_berth_three_port_side_001"
+      ],
+      "must_accept": {
+        "expr_marina_port_side_to_001": [
+          "port side to"
+        ],
+        "expr_marina_starboard_side_to_001": [
+          "starboard side to"
+        ]
+      },
+      "must_reject": {
+        "expr_marina_port_side_to_001": [
+          "starboard side to",
+          "left side to"
+        ],
+        "expr_marina_starboard_side_to_001": [
+          "port side to",
+          "right side to"
+        ]
+      },
+      "reason": "Port and starboard side-to instructions are operationally opposite and must not be fuzzed or translated to left/right."
+    },
+    {
+      "pair": "ahead / astern / alongside / abeam",
+      "items": [
+        "word_marina_alongside_001",
+        "expr_marina_come_alongside_001",
+        "phrase_marina_come_alongside_slowly_001"
+      ],
+      "must_accept": {
+        "word_marina_alongside_001": [
+          "alongside"
+        ],
+        "expr_marina_come_alongside_001": [
+          "come alongside"
+        ]
+      },
+      "must_reject": {
+        "word_marina_alongside_001": [
+          "ahead",
+          "astern",
+          "abeam"
+        ],
+        "expr_marina_come_alongside_001": [
+          "come abeam",
+          "come astern"
+        ]
+      },
+      "reason": "Relative positions and alongside mooring language must stay distinct."
+    },
+    {
+      "pair": "stand by outside / wait out / do not answer",
+      "items": [
+        "expr_marina_stand_by_outside_001",
+        "phrase_marina_stand_by_outside_001",
+        "phrase_marina_stand_by_entrance_001",
+        "phrase_marina_stand_by_for_berth_assignment_001"
+      ],
+      "must_accept": {
+        "expr_marina_stand_by_outside_001": [
+          "stand by outside"
+        ],
+        "phrase_marina_stand_by_outside_001": [
+          "stand by outside the marina"
+        ]
+      },
+      "must_reject": {
+        "expr_marina_stand_by_outside_001": [
+          "wait out",
+          "do not answer",
+          "wait outside"
+        ],
+        "phrase_marina_stand_by_outside_001": [
+          "wait out outside the marina",
+          "do not answer outside the marina"
+        ]
+      },
+      "reason": "Stand by outside is a harbour waiting instruction, not wait out or do not answer."
+    },
+    {
+      "pair": "proceed / enter / approach / go ahead",
+      "items": [
+        "word_marina_approach_001",
+        "expr_marina_proceed_to_berth_001",
+        "expr_marina_approach_slowly_001",
+        "phrase_marina_proceed_berth_bravo_one_two_001"
+      ],
+      "must_accept": {
+        "expr_marina_proceed_to_berth_001": [
+          "proceed to berth"
+        ],
+        "expr_marina_approach_slowly_001": [
+          "approach slowly"
+        ]
+      },
+      "must_reject": {
+        "expr_marina_proceed_to_berth_001": [
+          "go ahead to berth",
+          "enter berth",
+          "approach berth"
+        ],
+        "expr_marina_approach_slowly_001": [
+          "proceed slowly",
+          "enter slowly",
+          "go ahead slowly"
+        ]
+      },
+      "reason": "Harbour movement verbs have different operational meanings; go ahead is a radio permission phrase, not a movement synonym here. Compact B12 is also rejected until alphanumeric berth formats receive matcher QA."
+    },
+    {
+      "pair": "request berth / need a berth",
+      "items": [
+        "expr_marina_request_berth_001",
+        "phrase_marina_request_berth_tonight_001",
+        "phrase_marina_request_visitor_berth_001"
+      ],
+      "must_accept": {
+        "expr_marina_request_berth_001": [
+          "request berth"
+        ],
+        "phrase_marina_request_berth_tonight_001": [
+          "request berth for tonight"
+        ]
+      },
+      "must_reject": {
+        "expr_marina_request_berth_001": [
+          "need a berth"
+        ],
+        "phrase_marina_request_berth_tonight_001": [
+          "need a berth tonight"
+        ]
+      },
+      "reason": "The draft trains formal request wording and rejects informal need phrasing."
+    },
+    {
+      "pair": "water / fuel / shore power",
+      "items": [
+        "expr_marina_request_water_001",
+        "expr_marina_request_fuel_berth_001",
+        "expr_marina_request_shore_power_001",
+        "phrase_marina_request_water_power_001"
+      ],
+      "must_accept": {
+        "expr_marina_request_water_001": [
+          "request water"
+        ],
+        "expr_marina_request_shore_power_001": [
+          "request shore power"
+        ]
+      },
+      "must_reject": {
+        "expr_marina_request_water_001": [
+          "request fuel",
+          "request shore power"
+        ],
+        "expr_marina_request_shore_power_001": [
+          "request water",
+          "request power"
+        ]
+      },
+      "reason": "Routine marina services must not substitute for each other."
+    },
+    {
+      "pair": "arrival / departure",
+      "items": [
+        "word_marina_departure_001",
+        "phrase_marina_arriving_from_south_001",
+        "phrase_marina_request_departure_permission_001"
+      ],
+      "must_accept": {
+        "word_marina_departure_001": [
+          "departure"
+        ],
+        "phrase_marina_arriving_from_south_001": [
+          "arriving from the south"
+        ]
+      },
+      "must_reject": {
+        "word_marina_departure_001": [
+          "arrival"
+        ],
+        "phrase_marina_arriving_from_south_001": [
+          "departing to the south"
+        ],
+        "phrase_marina_request_departure_permission_001": [
+          "permission to arrive"
+        ]
+      },
+      "reason": "Arrival and departure are opposite workflow states."
+    },
+    {
+      "pair": "heading / course / bearing",
+      "items": [
+        "word_nav_heading_001",
+        "word_nav_course_001",
+        "word_nav_bearing_001",
+        "phrase_nav_heading_090_001",
+        "phrase_nav_course_090_001",
+        "phrase_nav_bearing_to_marina_270_001"
+      ],
+      "must_accept": {
+        "word_nav_heading_001": [
+          "heading"
+        ],
+        "word_nav_course_001": [
+          "course"
+        ],
+        "word_nav_bearing_001": [
+          "bearing"
+        ],
+        "phrase_nav_heading_090_001": [
+          "heading 090 degrees"
+        ],
+        "phrase_nav_course_090_001": [
+          "course 090 degrees"
+        ]
+      },
+      "must_reject": {
+        "word_nav_heading_001": [
+          "course",
+          "bearing"
+        ],
+        "word_nav_course_001": [
+          "heading",
+          "bearing"
+        ],
+        "word_nav_bearing_001": [
+          "heading",
+          "course"
+        ],
+        "phrase_nav_heading_090_001": [
+          "course zero nine zero degrees",
+          "bearing zero nine zero degrees"
+        ],
+        "phrase_nav_course_090_001": [
+          "heading zero nine zero degrees",
+          "bearing zero nine zero degrees"
+        ]
+      },
+      "reason": "Heading, course, and bearing are related navigation terms but not interchangeable."
+    },
+    {
+      "pair": "position / destination / waypoint / reporting point",
+      "items": [
+        "word_nav_position_001",
+        "word_nav_reporting_point_001",
+        "phrase_nav_position_east_reporting_point_001",
+        "phrase_nav_report_at_point_alpha_001"
+      ],
+      "must_accept": {
+        "word_nav_position_001": [
+          "position"
+        ],
+        "word_nav_reporting_point_001": [
+          "reporting point"
+        ],
+        "phrase_nav_position_east_reporting_point_001": [
+          "position east of reporting point alpha"
+        ]
+      },
+      "must_reject": {
+        "word_nav_position_001": [
+          "destination",
+          "waypoint",
+          "reporting point"
+        ],
+        "word_nav_reporting_point_001": [
+          "position",
+          "waypoint",
+          "destination"
+        ],
+        "phrase_nav_position_east_reporting_point_001": [
+          "destination east of reporting point alpha",
+          "position east of waypoint alpha"
+        ]
+      },
+      "reason": "Current position, destination, waypoint, and reporting point carry different navigation meanings."
+    },
+    {
+      "pair": "ETA 1400 / ETA 1500",
+      "items": [
+        "expr_nav_eta_1400_utc_001",
+        "phrase_nav_eta_1400_001",
+        "phrase_nav_eta_update_1500_001",
+        "phrase_nav_correction_eta_1500_001"
+      ],
+      "must_accept": {
+        "expr_nav_eta_1400_utc_001": [
+          "ETA 1400 UTC"
+        ],
+        "phrase_nav_eta_1400_001": [
+          "ETA 1400Z"
+        ],
+        "phrase_nav_eta_update_1500_001": [
+          "ETA update 1500 UTC"
+        ],
+        "phrase_nav_correction_eta_1500_001": [
+          "correction ETA 1500Z"
+        ]
+      },
+      "must_reject": {
+        "expr_nav_eta_1400_utc_001": [
+          "ETA 1500 UTC"
+        ],
+        "phrase_nav_eta_1400_001": [
+          "ETA 1500Z"
+        ],
+        "phrase_nav_eta_update_1500_001": [
+          "ETA update 1400 UTC"
+        ],
+        "phrase_nav_correction_eta_1500_001": [
+          "correction ETA 1400Z"
+        ]
+      },
+      "reason": "ETA digits must not fuzz-match or be semantically substituted."
+    },
+    {
+      "pair": "1400 UTC / 1400Z / one four zero zero UTC",
+      "items": [
+        "expr_nav_eta_1400_utc_001",
+        "phrase_nav_eta_1400_001",
+        "phrase_nav_read_back_eta_position_001"
+      ],
+      "must_accept": {
+        "expr_nav_eta_1400_utc_001": [
+          "ETA one four zero zero UTC",
+          "ETA 1400 UTC",
+          "ETA 1400Z"
+        ],
+        "phrase_nav_eta_1400_001": [
+          "My ETA is one four zero zero UTC",
+          "ETA 1400 UTC"
+        ],
+        "phrase_nav_read_back_eta_position_001": [
+          "read back ETA 1400 UTC and position"
+        ]
+      },
+      "must_reject": {
+        "expr_nav_eta_1400_utc_001": [
+          "ETA 1400 local"
+        ],
+        "phrase_nav_eta_1400_001": [
+          "ETA 1400 local"
+        ],
+        "phrase_nav_read_back_eta_position_001": [
+          "read back ETA 1400 local and position"
+        ]
+      },
+      "reason": "UTC/Zulu/Z variants are item-local accepted forms; local time remains wrong."
+    },
+    {
+      "pair": "090 / 90",
+      "items": [
+        "phrase_nav_heading_090_001",
+        "phrase_nav_course_090_001",
+        "expr_nav_bearing_zero_nine_zero_001",
+        "phrase_nav_read_back_course_speed_001"
+      ],
+      "must_accept": {
+        "phrase_nav_heading_090_001": [
+          "090"
+        ],
+        "phrase_nav_course_090_001": [
+          "course 090 degrees"
+        ],
+        "expr_nav_bearing_zero_nine_zero_001": [
+          "bearing 090"
+        ],
+        "phrase_nav_read_back_course_speed_001": [
+          "read back course 090 and speed five knots"
+        ]
+      },
+      "must_reject": {
+        "phrase_nav_heading_090_001": [
+          "90",
+          "heading 90 degrees"
+        ],
+        "phrase_nav_course_090_001": [
+          "090",
+          "90",
+          "course 90 degrees"
+        ],
+        "expr_nav_bearing_zero_nine_zero_001": [
+          "bearing 90"
+        ],
+        "phrase_nav_read_back_course_speed_001": [
+          "read back course 90 and speed five knots"
+        ]
+      },
+      "reason": "Three-digit radio heading/course/bearing form must stay protected; bare 090 is heading-local and must not validate course reports."
+    },
+    {
+      "pair": "knots / nautical miles / cables",
+      "items": [
+        "expr_nav_speed_five_knots_001",
+        "expr_nav_distance_two_miles_001",
+        "expr_nav_distance_two_cables_001",
+        "phrase_nav_speed_six_knots_001",
+        "phrase_nav_distance_three_miles_001"
+      ],
+      "must_accept": {
+        "expr_nav_speed_five_knots_001": [
+          "speed five knots"
+        ],
+        "expr_nav_distance_two_miles_001": [
+          "distance two nautical miles"
+        ],
+        "expr_nav_distance_two_cables_001": [
+          "distance two cables"
+        ]
+      },
+      "must_reject": {
+        "expr_nav_speed_five_knots_001": [
+          "five nautical miles",
+          "five cables"
+        ],
+        "expr_nav_distance_two_miles_001": [
+          "two knots",
+          "two cables"
+        ],
+        "expr_nav_distance_two_cables_001": [
+          "two nautical miles",
+          "two knots"
+        ]
+      },
+      "reason": "Speed units and distance units must not substitute for each other."
+    },
+    {
+      "pair": "decimal / point / dot",
+      "items": [
+        "phrase_nav_distance_decimal_one_five_001",
+        "phrase_nav_position_west_point_distance_001"
+      ],
+      "must_accept": {
+        "phrase_nav_distance_decimal_one_five_001": [
+          "distance is one decimal five nautical miles to the reporting point"
+        ],
+        "phrase_nav_position_west_point_distance_001": [
+          "position is one decimal five nautical miles west of reporting point bravo"
+        ]
+      },
+      "must_reject": {
+        "phrase_nav_distance_decimal_one_five_001": [
+          "distance is one point five nautical miles to the reporting point",
+          "distance is one dot five nautical miles to the reporting point"
+        ],
+        "phrase_nav_position_west_point_distance_001": [
+          "position is one point five nautical miles west of reporting point bravo"
+        ]
+      },
+      "reason": "Batch 001 strictness keeps decimal as the trained radio form."
+    },
+    {
+      "pair": "north / south / east / west",
+      "items": [
+        "phrase_nav_position_north_marina_001",
+        "phrase_nav_position_south_breakwater_001",
+        "phrase_nav_position_east_reporting_point_001",
+        "phrase_nav_position_west_point_distance_001"
+      ],
+      "must_accept": {
+        "phrase_nav_position_north_marina_001": [
+          "position is two nautical miles north of the marina"
+        ],
+        "phrase_nav_position_south_breakwater_001": [
+          "position is one cable south of the breakwater"
+        ],
+        "phrase_nav_position_east_reporting_point_001": [
+          "position east of reporting point alpha"
+        ]
+      },
+      "must_reject": {
+        "phrase_nav_position_north_marina_001": [
+          "position is two nautical miles south of the marina"
+        ],
+        "phrase_nav_position_south_breakwater_001": [
+          "position is one cable north of the breakwater"
+        ],
+        "phrase_nav_position_east_reporting_point_001": [
+          "position west of reporting point alpha"
+        ],
+        "phrase_nav_position_west_point_distance_001": [
+          "position is one decimal five nautical miles east of reporting point bravo"
+        ]
+      },
+      "reason": "Cardinal directions are operationally different and must not fuzz-match."
+    },
+    {
+      "pair": "port / starboard inside navigation phrases",
+      "items": [
+        "phrase_nav_position_port_side_channel_001",
+        "phrase_nav_position_starboard_side_channel_001"
+      ],
+      "must_accept": {
+        "phrase_nav_position_port_side_channel_001": [
+          "position port side of the channel"
+        ],
+        "phrase_nav_position_starboard_side_channel_001": [
+          "position starboard side of the channel"
+        ]
+      },
+      "must_reject": {
+        "phrase_nav_position_port_side_channel_001": [
+          "position starboard side of the channel",
+          "position left side of the channel"
+        ],
+        "phrase_nav_position_starboard_side_channel_001": [
+          "position port side of the channel",
+          "position right side of the channel"
+        ]
+      },
+      "reason": "Port/starboard remain protected inside navigation position reports."
+    },
+    {
+      "pair": "say again position / read back position",
+      "items": [
+        "expr_nav_read_back_position_001",
+        "expr_nav_say_again_position_001",
+        "phrase_nav_read_back_position_001",
+        "phrase_nav_say_again_position_001"
+      ],
+      "must_accept": {
+        "expr_nav_read_back_position_001": [
+          "read back position"
+        ],
+        "expr_nav_say_again_position_001": [
+          "say again position"
+        ],
+        "phrase_nav_read_back_position_001": [
+          "read back my position"
+        ],
+        "phrase_nav_say_again_position_001": [
+          "say again your position"
+        ]
+      },
+      "must_reject": {
+        "expr_nav_read_back_position_001": [
+          "say again position"
+        ],
+        "expr_nav_say_again_position_001": [
+          "read back position"
+        ],
+        "phrase_nav_read_back_position_001": [
+          "say again my position"
+        ],
+        "phrase_nav_say_again_position_001": [
+          "read back your position"
+        ]
+      },
+      "reason": "Read back confirms received information; say again asks for retransmission."
+    },
+    {
+      "pair": "Securite / Sécurité / security",
+      "items": [
+        "expr_safety_securite_signal_001",
+        "phrase_safety_securite_three_times_001",
+        "phrase_safety_securite_nav_obstruction_alpha_001"
+      ],
+      "must_accept": {
+        "expr_safety_securite_signal_001": [
+          "Securite",
+          "Sécurité"
+        ],
+        "phrase_safety_securite_three_times_001": [
+          "Securite Securite Securite",
+          "Sécurité Sécurité Sécurité"
+        ]
+      },
+      "must_reject": {
+        "expr_safety_securite_signal_001": [
+          "security"
+        ],
+        "phrase_safety_securite_three_times_001": [
+          "security security security"
+        ],
+        "phrase_safety_securite_nav_obstruction_alpha_001": [
+          "security security security navigation warning obstruction two cables north of reporting point alpha"
+        ]
+      },
+      "reason": "Securite/Sécurité is the safety signal; ordinary English security must stay wrong."
+    },
+    {
+      "pair": "Securite / Pan-Pan / Mayday",
+      "items": [
+        "expr_safety_securite_signal_001",
+        "phrase_safety_securite_three_times_001"
+      ],
+      "must_accept": {
+        "phrase_safety_securite_three_times_001": [
+          "Securite Securite Securite"
+        ]
+      },
+      "must_reject": {
+        "expr_safety_securite_signal_001": [
+          "pan pan",
+          "mayday"
+        ],
+        "phrase_safety_securite_three_times_001": [
+          "pan pan pan pan pan pan",
+          "mayday mayday mayday"
+        ]
+      },
+      "reason": "Safety signal must not collapse into other radio signal families."
+    },
+    {
+      "pair": "safety / urgency / distress",
+      "items": [
+        "word_safety_safety_001",
+        "expr_safety_safety_warning_001"
+      ],
+      "must_accept": {
+        "word_safety_safety_001": [
+          "safety"
+        ],
+        "expr_safety_safety_warning_001": [
+          "safety warning"
+        ]
+      },
+      "must_reject": {
+        "word_safety_safety_001": [
+          "urgency",
+          "distress"
+        ],
+        "expr_safety_safety_warning_001": [
+          "urgency warning",
+          "distress warning"
+        ]
+      },
+      "reason": "Batch 004 is safety information only."
+    },
+    {
+      "pair": "warning / advice / information",
+      "items": [
+        "word_safety_warning_001",
+        "expr_safety_navigation_warning_001",
+        "phrase_safety_advice_received_001",
+        "phrase_safety_information_received_001"
+      ],
+      "must_accept": {
+        "word_safety_warning_001": [
+          "warning"
+        ],
+        "phrase_safety_advice_received_001": [
+          "safety advice received"
+        ],
+        "phrase_safety_information_received_001": [
+          "safety information received"
+        ]
+      },
+      "must_reject": {
+        "word_safety_warning_001": [
+          "advice",
+          "information"
+        ],
+        "expr_safety_navigation_warning_001": [
+          "navigation information",
+          "safety advice"
+        ],
+        "phrase_safety_advice_received_001": [
+          "safety warning received",
+          "safety information received"
+        ]
+      },
+      "reason": "Message category words carry different operational meaning."
+    },
+    {
+      "pair": "advice / advise",
+      "items": [
+        "phrase_safety_advice_received_001"
+      ],
+      "must_accept": {
+        "phrase_safety_advice_received_001": [
+          "safety advice received"
+        ]
+      },
+      "must_reject": {
+        "phrase_safety_advice_received_001": [
+          "safety advise received"
+        ]
+      },
+      "reason": "Advice is a noun; advise is a verb-form lookalike and must not pass typo matching."
+    },
+    {
+      "pair": "restricted visibility / poor visibility / reduced visibility / visibility good",
+      "items": [
+        "expr_safety_restricted_visibility_001",
+        "phrase_safety_restricted_visibility_marina_approach_001",
+        "phrase_safety_restricted_visibility_channel_until_1400_001"
+      ],
+      "must_accept": {
+        "expr_safety_restricted_visibility_001": [
+          "restricted visibility"
+        ],
+        "phrase_safety_restricted_visibility_marina_approach_001": [
+          "restricted visibility in the marina approach"
+        ]
+      },
+      "must_reject": {
+        "expr_safety_restricted_visibility_001": [
+          "poor visibility",
+          "reduced visibility",
+          "visibility good"
+        ],
+        "phrase_safety_restricted_visibility_marina_approach_001": [
+          "poor visibility in the marina approach",
+          "reduced visibility in the marina approach",
+          "visibility good in the marina approach"
+        ],
+        "phrase_safety_restricted_visibility_channel_until_1400_001": [
+          "navigation warning poor visibility in the approach channel until 1400 utc",
+          "navigation warning reduced visibility in the approach channel until 1400 utc"
+        ]
+      },
+      "reason": "Restricted visibility is the trained term and must not accept ordinary paraphrases or opposite visibility state."
+    },
+    {
+      "pair": "obstruction / obstacle",
+      "items": [
+        "word_safety_obstruction_001",
+        "expr_safety_obstruction_reported_001",
+        "phrase_safety_obstruction_reporting_point_alpha_001"
+      ],
+      "must_accept": {
+        "word_safety_obstruction_001": [
+          "obstruction"
+        ],
+        "expr_safety_obstruction_reported_001": [
+          "obstruction reported"
+        ],
+        "phrase_safety_obstruction_reporting_point_alpha_001": [
+          "obstruction near reporting point alpha"
+        ]
+      },
+      "must_reject": {
+        "word_safety_obstruction_001": [
+          "obstacle"
+        ],
+        "expr_safety_obstruction_reported_001": [
+          "obstacle reported"
+        ],
+        "phrase_safety_obstruction_reporting_point_alpha_001": [
+          "obstacle near reporting point alpha"
+        ]
+      },
+      "reason": "Obstacle is ordinary English but Batch 004 trains obstruction as the safety-warning report term."
+    },
+    {
+      "pair": "navigation warning / weather warning",
+      "items": [
+        "expr_safety_navigation_warning_001",
+        "expr_safety_weather_warning_001",
+        "phrase_safety_navigation_warning_obstruction_channel_001",
+        "phrase_safety_weather_warning_sea_state_rough_001"
+      ],
+      "must_accept": {
+        "expr_safety_navigation_warning_001": [
+          "navigation warning"
+        ],
+        "expr_safety_weather_warning_001": [
+          "weather warning"
+        ]
+      },
+      "must_reject": {
+        "expr_safety_navigation_warning_001": [
+          "weather warning"
+        ],
+        "expr_safety_weather_warning_001": [
+          "navigation warning"
+        ],
+        "phrase_safety_navigation_warning_obstruction_channel_001": [
+          "weather warning obstruction in the channel"
+        ],
+        "phrase_safety_weather_warning_sea_state_rough_001": [
+          "navigation warning sea state rough"
+        ]
+      },
+      "reason": "Navigation and weather warnings are separate safety-information categories."
+    },
+    {
+      "pair": "hazard / obstruction / danger",
+      "items": [
+        "word_safety_hazard_001",
+        "word_safety_obstruction_001",
+        "expr_safety_hazard_reported_001",
+        "expr_safety_obstruction_reported_001"
+      ],
+      "must_accept": {
+        "word_safety_hazard_001": [
+          "hazard"
+        ],
+        "word_safety_obstruction_001": [
+          "obstruction"
+        ],
+        "expr_safety_hazard_reported_001": [
+          "hazard reported"
+        ],
+        "expr_safety_obstruction_reported_001": [
+          "obstruction reported"
+        ]
+      },
+      "must_reject": {
+        "word_safety_hazard_001": [
+          "obstruction",
+          "danger"
+        ],
+        "word_safety_obstruction_001": [
+          "hazard",
+          "danger"
+        ],
+        "expr_safety_hazard_reported_001": [
+          "obstruction reported",
+          "danger reported"
+        ],
+        "expr_safety_obstruction_reported_001": [
+          "hazard reported",
+          "danger reported"
+        ]
+      },
+      "reason": "Hazard, obstruction, and ordinary danger wording are not interchangeable in this draft."
+    },
+    {
+      "pair": "wind / sea state / visibility",
+      "items": [
+        "word_safety_visibility_001",
+        "word_safety_weather_001",
+        "expr_safety_sea_state_001",
+        "phrase_safety_weather_warning_wind_sea_001"
+      ],
+      "must_accept": {
+        "word_safety_visibility_001": [
+          "visibility"
+        ],
+        "word_safety_weather_001": [
+          "weather"
+        ],
+        "expr_safety_sea_state_001": [
+          "sea state"
+        ]
+      },
+      "must_reject": {
+        "word_safety_visibility_001": [
+          "weather",
+          "sea state",
+          "wind"
+        ],
+        "word_safety_weather_001": [
+          "visibility",
+          "sea state",
+          "wind"
+        ],
+        "expr_safety_sea_state_001": [
+          "weather",
+          "wind",
+          "visibility"
+        ],
+        "phrase_safety_weather_warning_wind_sea_001": [
+          "securite weather warning visibility from north sea state rough"
+        ]
+      },
+      "reason": "Weather, wind, sea state, and visibility are related but distinct report elements."
+    },
+    {
+      "pair": "read back / say again",
+      "items": [
+        "expr_safety_read_back_warning_001",
+        "phrase_safety_read_back_navigation_warning_001",
+        "phrase_safety_read_back_warning_channel_time_001"
+      ],
+      "must_accept": {
+        "expr_safety_read_back_warning_001": [
+          "read back warning"
+        ],
+        "phrase_safety_read_back_navigation_warning_001": [
+          "read back navigation warning"
+        ],
+        "phrase_safety_read_back_warning_channel_time_001": [
+          "read back safety warning channel 16 1400 utc"
+        ]
+      },
+      "must_reject": {
+        "expr_safety_read_back_warning_001": [
+          "say again warning",
+          "repeat warning"
+        ],
+        "phrase_safety_read_back_navigation_warning_001": [
+          "say again navigation warning",
+          "repeat navigation warning"
+        ],
+        "phrase_safety_read_back_warning_channel_time_001": [
+          "say again safety warning channel one six one four zero zero utc"
+        ]
+      },
+      "reason": "Read back confirms received information; say again asks for retransmission."
+    },
+    {
+      "pair": "exact positions, channels, times, bearings, distances, directions",
+      "items": [
+        "phrase_safety_navigation_warning_channel_16_001",
+        "phrase_safety_hazard_two_cables_north_001",
+        "phrase_safety_hazard_bearing_distance_001",
+        "phrase_safety_information_valid_until_1400_001",
+        "phrase_safety_keep_listening_watch_until_1500_001"
+      ],
+      "must_accept": {
+        "phrase_safety_navigation_warning_channel_16_001": [
+          "securite navigation warning on channel 16"
+        ],
+        "phrase_safety_hazard_two_cables_north_001": [
+          "hazard 2 cables north of the marina"
+        ],
+        "phrase_safety_hazard_bearing_distance_001": [
+          "hazard bearing 090 distance 2 cables"
+        ],
+        "phrase_safety_information_valid_until_1400_001": [
+          "safety information valid until 1400 utc"
+        ],
+        "phrase_safety_keep_listening_watch_until_1500_001": [
+          "keep listening watch until 1500z"
+        ]
+      },
+      "must_reject": {
+        "phrase_safety_navigation_warning_channel_16_001": [
+          "securite navigation warning on channel 12"
+        ],
+        "phrase_safety_hazard_two_cables_north_001": [
+          "hazard two cables south of the marina",
+          "hazard two nautical miles north of the marina"
+        ],
+        "phrase_safety_hazard_bearing_distance_001": [
+          "hazard bearing 90 distance two cables",
+          "hazard bearing zero nine zero distance two nautical miles"
+        ],
+        "phrase_safety_information_valid_until_1400_001": [
+          "safety information valid until 1500 utc",
+          "safety information valid until 1400 local"
+        ],
+        "phrase_safety_keep_listening_watch_until_1500_001": [
+          "keep listening watch until 1400 utc"
+        ]
+      },
+      "reason": "Safety-warning numerics and directions must not be fuzzed or loosely substituted."
+    },
+    {
+      "pair": "Pan-Pan / Securite / Mayday",
+      "items": [
+        "expr_urgency_panpan_001",
+        "phrase_urgency_panpan_three_times_001",
+        "phrase_urgency_read_back_details_001"
+      ],
+      "must_accept": {
+        "expr_urgency_panpan_001": [
+          "Pan-Pan"
+        ],
+        "phrase_urgency_panpan_three_times_001": [
+          "Pan-Pan Pan-Pan Pan-Pan"
+        ],
+        "phrase_urgency_read_back_details_001": [
+          "Read back Pan-Pan details"
+        ]
+      },
+      "must_reject": {
+        "expr_urgency_panpan_001": [
+          "Mayday",
+          "Securite"
+        ],
+        "phrase_urgency_panpan_three_times_001": [
+          "Mayday Mayday Mayday",
+          "Securite Securite Securite"
+        ],
+        "phrase_urgency_read_back_details_001": [
+          "Read back Mayday details",
+          "Read back Securite details"
+        ]
+      },
+      "reason": "Urgency, safety, and distress signals must not collapse into one radio signal family."
+    },
+    {
+      "pair": "urgency / safety / distress",
+      "items": [
+        "word_urgency_urgency_001",
+        "expr_urgency_message_001",
+        "phrase_urgency_received_message_001"
+      ],
+      "must_accept": {
+        "word_urgency_urgency_001": [
+          "urgency"
+        ],
+        "expr_urgency_message_001": [
+          "urgency message"
+        ],
+        "phrase_urgency_received_message_001": [
+          "urgency message received"
+        ]
+      },
+      "must_reject": {
+        "word_urgency_urgency_001": [
+          "safety",
+          "distress"
+        ],
+        "expr_urgency_message_001": [
+          "safety message",
+          "distress message"
+        ],
+        "phrase_urgency_received_message_001": [
+          "safety message received",
+          "distress message received"
+        ]
+      },
+      "reason": "Operational message category changes the meaning of the call."
+    },
+    {
+      "pair": "engine failure / steering failure / power failure",
+      "items": [
+        "expr_urgency_engine_failure_001",
+        "expr_urgency_steering_failure_001",
+        "phrase_urgency_engine_failure_assistance_001"
+      ],
+      "must_accept": {
+        "expr_urgency_engine_failure_001": [
+          "engine failure"
+        ],
+        "expr_urgency_steering_failure_001": [
+          "steering failure"
+        ],
+        "phrase_urgency_engine_failure_assistance_001": [
+          "engine failure require assistance"
+        ]
+      },
+      "must_reject": {
+        "expr_urgency_engine_failure_001": [
+          "steering failure",
+          "power failure"
+        ],
+        "expr_urgency_steering_failure_001": [
+          "engine failure",
+          "power failure"
+        ],
+        "phrase_urgency_engine_failure_assistance_001": [
+          "steering failure require assistance"
+        ]
+      },
+      "reason": "Failure type changes vessel capability and the assistance needed."
+    },
+    {
+      "pair": "disabled vessel / not under command / restricted manoeuvrability",
+      "items": [
+        "word_urgency_disabled_001",
+        "phrase_urgency_disabled_vessel_001",
+        "phrase_urgency_disabled_position_channel_16_001"
+      ],
+      "must_accept": {
+        "word_urgency_disabled_001": [
+          "disabled"
+        ],
+        "phrase_urgency_disabled_vessel_001": [
+          "vessel disabled"
+        ],
+        "phrase_urgency_disabled_position_channel_16_001": [
+          "disabled vessel position on channel 16"
+        ]
+      },
+      "must_reject": {
+        "word_urgency_disabled_001": [
+          "distressed",
+          "aground"
+        ],
+        "phrase_urgency_disabled_vessel_001": [
+          "vessel not under command",
+          "vessel restricted in ability to manoeuvre"
+        ],
+        "phrase_urgency_disabled_position_channel_16_001": [
+          "distressed vessel position on channel 16"
+        ]
+      },
+      "reason": "Basic urgency disabled-vessel wording should not blur into distress or legal-status categories."
+    },
+    {
+      "pair": "medical assistance / medical advice / evacuation",
+      "items": [
+        "expr_urgency_medical_assistance_001",
+        "phrase_urgency_request_medical_assistance_001",
+        "phrase_urgency_medical_assistance_required_001"
+      ],
+      "must_accept": {
+        "expr_urgency_medical_assistance_001": [
+          "medical assistance"
+        ],
+        "phrase_urgency_request_medical_assistance_001": [
+          "request medical assistance"
+        ],
+        "phrase_urgency_medical_assistance_required_001": [
+          "medical assistance required for one person"
+        ]
+      },
+      "must_reject": {
+        "expr_urgency_medical_assistance_001": [
+          "medical advice",
+          "evacuation"
+        ],
+        "phrase_urgency_request_medical_assistance_001": [
+          "request medical advice",
+          "request evacuation"
+        ],
+        "phrase_urgency_medical_assistance_required_001": [
+          "medical advice required for one person",
+          "medical assistance required for two persons"
+        ]
+      },
+      "reason": "Medical assistance, advice, evacuation, and person counts must stay item-specific."
+    },
+    {
+      "pair": "towing assistance / rescue / tug assistance",
+      "items": [
+        "word_urgency_tow_001",
+        "expr_urgency_towing_assistance_001",
+        "phrase_urgency_request_towing_assistance_001"
+      ],
+      "must_accept": {
+        "word_urgency_tow_001": [
+          "tow"
+        ],
+        "expr_urgency_towing_assistance_001": [
+          "towing assistance"
+        ],
+        "phrase_urgency_request_towing_assistance_001": [
+          "request towing assistance",
+          "request tow"
+        ]
+      },
+      "must_reject": {
+        "word_urgency_tow_001": [
+          "tug",
+          "rescue"
+        ],
+        "expr_urgency_towing_assistance_001": [
+          "rescue assistance",
+          "tug assistance"
+        ],
+        "phrase_urgency_request_towing_assistance_001": [
+          "request rescue assistance",
+          "request tug assistance"
+        ]
+      },
+      "reason": "Towage support must not imply rescue, SAR, tug operations, or pilot service."
+    },
+    {
+      "pair": "stand by / keep listening watch / go ahead",
+      "items": [
+        "expr_urgency_keep_listening_watch_001",
+        "phrase_urgency_stand_by_channel_16_001",
+        "phrase_urgency_read_back_details_001"
+      ],
+      "must_accept": {
+        "expr_urgency_keep_listening_watch_001": [
+          "keep listening watch"
+        ],
+        "phrase_urgency_stand_by_channel_16_001": [
+          "stand by on channel 16"
+        ],
+        "phrase_urgency_read_back_details_001": [
+          "read back Pan-Pan details"
+        ]
+      },
+      "must_reject": {
+        "expr_urgency_keep_listening_watch_001": [
+          "stand by",
+          "go ahead"
+        ],
+        "phrase_urgency_stand_by_channel_16_001": [
+          "keep listening watch on channel 16",
+          "go ahead on channel 16"
+        ],
+        "phrase_urgency_read_back_details_001": [
+          "say again Pan-Pan details"
+        ]
+      },
+      "reason": "Procedure words carry different radio actions and should remain strict."
+    },
+    {
+      "pair": "exact channels, times, positions, directions, distances, and counts",
+      "items": [
+        "phrase_urgency_position_north_marina_001",
+        "phrase_urgency_disabled_position_channel_16_001",
+        "phrase_urgency_eta_harbour_1400_001",
+        "phrase_urgency_drifting_east_001",
+        "phrase_urgency_medical_assistance_required_001"
+      ],
+      "must_accept": {
+        "phrase_urgency_position_north_marina_001": [
+          "position two nautical miles north of the marina"
+        ],
+        "phrase_urgency_disabled_position_channel_16_001": [
+          "disabled vessel position on channel 16"
+        ],
+        "phrase_urgency_eta_harbour_1400_001": [
+          "ETA harbour 1400 UTC",
+          "ETA harbour 1400 Zulu"
+        ],
+        "phrase_urgency_drifting_east_001": [
+          "drifting east"
+        ],
+        "phrase_urgency_medical_assistance_required_001": [
+          "medical assistance required for one person"
+        ]
+      },
+      "must_reject": {
+        "phrase_urgency_position_north_marina_001": [
+          "position two nautical miles south of the marina",
+          "position two cables north of the marina"
+        ],
+        "phrase_urgency_disabled_position_channel_16_001": [
+          "disabled vessel position on channel 12"
+        ],
+        "phrase_urgency_eta_harbour_1400_001": [
+          "ETA harbour 1500 UTC",
+          "ETA marina 1400 UTC"
+        ],
+        "phrase_urgency_drifting_east_001": [
+          "drifting west"
+        ],
+        "phrase_urgency_medical_assistance_required_001": [
+          "medical assistance required for two persons"
+        ]
+      },
+      "reason": "Urgency details are operationally significant and must not be fuzzed or loosely substituted."
+    }
+  ],
+  "items": [
+    {
+      "id": "word_port_001",
+      "target_text": "port",
+      "should_accept": [
+        "port",
+        "port side",
+        "the port side"
+      ],
+      "should_reject": [
+        "starboard",
+        "left side",
+        "harbour"
+      ]
+    },
+    {
+      "id": "word_starboard_001",
+      "target_text": "starboard",
+      "should_accept": [
+        "starboard",
+        "starboard side",
+        "the starboard side"
+      ],
+      "should_reject": [
+        "port",
+        "right side",
+        "starboard bow"
+      ]
+    },
+    {
+      "id": "word_astarn_001",
+      "target_text": "astern",
+      "should_accept": [
+        "astern",
+        "ASTERN",
+        "astarn"
+      ],
+      "should_reject": [
+        "stern",
+        "aft",
+        "behind"
+      ]
+    },
+    {
+      "id": "expr_say_again_001",
+      "target_text": "say again",
+      "should_accept": [
+        "say again",
+        "please say again",
+        "say again please"
+      ],
+      "should_reject": [
+        "repeat",
+        "please repeat",
+        "again"
+      ]
+    },
+    {
+      "id": "expr_stand_by_001",
+      "target_text": "stand by",
+      "should_accept": [
+        "stand by",
+        "please stand by",
+        "STAND BY"
+      ],
+      "should_reject": [
+        "wait",
+        "hold on",
+        "standing by"
+      ]
+    },
+    {
+      "id": "expr_keep_clear_001",
+      "target_text": "keep clear",
+      "should_accept": [
+        "keep clear",
+        "keep clear of me",
+        "please keep well clear"
+      ],
+      "should_reject": [
+        "stay away",
+        "move away",
+        "avoid me"
+      ]
+    },
+    {
+      "id": "phrase_this_is_aurora_001",
+      "target_text": "This is sailing yacht Aurora.",
+      "should_accept": [
+        "This is sailing yacht Aurora.",
+        "S/Y Aurora",
+        "this is sy aurora"
+      ],
+      "should_reject": [
+        "Aurora",
+        "this is motor yacht Aurora",
+        "Aurora here"
+      ]
+    },
+    {
+      "id": "phrase_require_assistance_001",
+      "target_text": "I require assistance.",
+      "should_accept": [
+        "I require assistance.",
+        "I need help",
+        "assistance required"
+      ],
+      "should_reject": [
+        "mayday",
+        "I want service",
+        "I am in distress"
+      ]
+    },
+    {
+      "id": "phrase_position_is_001",
+      "target_text": "My position is two cables south of the marina.",
+      "should_accept": [
+        "My position is two cables south of the marina.",
+        "position is two cable lengths south of the marina",
+        "my position is two cable south of the marina"
+      ],
+      "should_reject": [
+        "near the marina",
+        "two miles south of the marina",
+        "my position is two cables north of the marina"
+      ]
+    },
+    {
+      "id": "expr_switch_channel_001",
+      "target_text": "switch to channel seven two",
+      "should_accept": [
+        "switch to channel seven two",
+        "channel 72",
+        "channel seventy two"
+      ],
+      "should_reject": [
+        "channel 71",
+        "channel seven one",
+        "switch off channel seven two"
+      ]
+    },
+    {
+      "id": "phrase_altering_course_001",
+      "target_text": "I am altering course to starboard.",
+      "should_accept": [
+        "I am altering course to starboard.",
+        "alter course starboard",
+        "I am changing course starboard"
+      ],
+      "should_reject": [
+        "altering course to port",
+        "turn right",
+        "changing channel to starboard"
+      ]
+    },
+    {
+      "id": "phrase_request_berth_001",
+      "target_text": "Requesting berth.",
+      "should_accept": [
+        "Requesting berth.",
+        "requesting a berth",
+        "I request a berth"
+      ],
+      "should_reject": [
+        "request mooring",
+        "request dock",
+        "berth confirmed"
+      ]
+    },
+    {
+      "id": "phrase_restricted_visibility_001",
+      "target_text": "I am navigating in restricted visibility.",
+      "should_accept": [
+        "I am navigating in restricted visibility.",
+        "restricted visibility",
+        "proceeding in restricted visibility"
+      ],
+      "should_reject": [
+        "poor visibility",
+        "reduced visibility",
+        "fog"
+      ]
+    },
+    {
+      "id": "phrase_man_overboard_001",
+      "target_text": "Man overboard.",
+      "should_accept": [
+        "Man overboard.",
+        "person overboard",
+        "M.O.B."
+      ],
+      "should_reject": [
+        "man on board",
+        "man aboard",
+        "crew missing"
+      ]
+    },
+    {
+      "id": "word_bow_001",
+      "target_text": "bow",
+      "should_accept": [
+        "bow",
+        "BOW",
+        "the bow"
+      ],
+      "should_reject": [
+        "front",
+        "ahead",
+        "bow line"
+      ]
+    },
+    {
+      "id": "word_stern_001",
+      "target_text": "stern",
+      "should_accept": [
+        "stern",
+        "STERN",
+        "the stern"
+      ],
+      "should_reject": [
+        "astern",
+        "aft",
+        "back"
+      ]
+    },
+    {
+      "id": "word_ahead_001",
+      "target_text": "ahead",
+      "should_accept": [
+        "ahead",
+        "AHEAD",
+        "ahead."
+      ],
+      "should_reject": [
+        "bow",
+        "forward",
+        "in front"
+      ]
+    },
+    {
+      "id": "word_abeam_001",
+      "target_text": "abeam",
+      "should_accept": [
+        "abeam",
+        "on the beam",
+        "ABEAM"
+      ],
+      "should_reject": [
+        "alongside",
+        "beside",
+        "beam"
+      ]
+    },
+    {
+      "id": "expr_over_001",
+      "target_text": "over",
+      "should_accept": [
+        "over",
+        "OVER",
+        "over."
+      ],
+      "should_reject": [
+        "out",
+        "over and out",
+        "finished"
+      ]
+    },
+    {
+      "id": "expr_out_001",
+      "target_text": "out",
+      "should_accept": [
+        "out",
+        "OUT",
+        "out."
+      ],
+      "should_reject": [
+        "over",
+        "over and out",
+        "bye"
+      ]
+    },
+    {
+      "id": "expr_roger_001",
+      "target_text": "roger",
+      "should_accept": [
+        "roger",
+        "ROGER",
+        "roger."
+      ],
+      "should_reject": [
+        "affirmative",
+        "yes",
+        "wilco"
+      ]
+    },
+    {
+      "id": "expr_affirmative_001",
+      "target_text": "affirmative",
+      "should_accept": [
+        "affirmative",
+        "AFFIRMATIVE",
+        "affirmativ"
+      ],
+      "should_reject": [
+        "roger",
+        "yes",
+        "confirmed"
+      ]
+    },
+    {
+      "id": "expr_negative_001",
+      "target_text": "negative",
+      "should_accept": [
+        "negative",
+        "NEGATIVE",
+        "negetive"
+      ],
+      "should_reject": [
+        "no",
+        "affirmative",
+        "not correct"
+      ]
+    },
+    {
+      "id": "expr_go_ahead_001",
+      "target_text": "go ahead",
+      "should_accept": [
+        "go ahead",
+        "please go ahead",
+        "go-ahead"
+      ],
+      "should_reject": [
+        "continue",
+        "go forward",
+        "ahead"
+      ]
+    },
+    {
+      "id": "expr_read_back_001",
+      "target_text": "read back",
+      "should_accept": [
+        "read back",
+        "readback",
+        "read it back"
+      ],
+      "should_reject": [
+        "say again",
+        "repeat",
+        "roger"
+      ]
+    },
+    {
+      "id": "phrase_call_marina_001",
+      "target_text": "Marina Control, this is sailing yacht Aurora.",
+      "should_accept": [
+        "Marina Control, this is sailing yacht Aurora.",
+        "Marina Control S/Y Aurora",
+        "Marina Control this is S/Y Aurora"
+      ],
+      "should_reject": [
+        "Aurora to Marina Control",
+        "Marina Control this is motor yacht Aurora",
+        "Marina Control Aurora"
+      ]
+    },
+    {
+      "id": "phrase_my_heading_001",
+      "target_text": "My heading is zero nine zero degrees.",
+      "should_accept": [
+        "My heading is zero nine zero degrees.",
+        "heading zero nine zero deg",
+        "090"
+      ],
+      "should_reject": [
+        "heading 90 degrees",
+        "course zero nine zero",
+        "bearing zero nine zero"
+      ]
+    },
+    {
+      "id": "phrase_my_speed_001",
+      "target_text": "My speed is five knots.",
+      "should_accept": [
+        "My speed is five knots.",
+        "5 kts",
+        "speed five kts"
+      ],
+      "should_reject": [
+        "five miles",
+        "five knot wind",
+        "slow speed"
+      ]
+    },
+    {
+      "id": "phrase_request_fuel_001",
+      "target_text": "Requesting fuel berth.",
+      "should_accept": [
+        "Requesting fuel berth.",
+        "request fuel berth",
+        "I request a fuel berth"
+      ],
+      "should_reject": [
+        "request fuel",
+        "request berth",
+        "fuel station"
+      ]
+    },
+    {
+      "id": "phrase_eta_001",
+      "target_text": "My ETA is one four zero zero UTC.",
+      "should_accept": [
+        "My ETA is one four zero zero UTC.",
+        "1400Z",
+        "14:00 UTC"
+      ],
+      "should_reject": [
+        "eta one five zero zero utc",
+        "1500 UTC",
+        "1500Z"
+      ]
+    },
+    {
+      "id": "phrase_reduce_speed_001",
+      "target_text": "I am reducing speed.",
+      "should_accept": [
+        "I am reducing speed.",
+        "reduce speed",
+        "reducing my speed"
+      ],
+      "should_reject": [
+        "reduced speed",
+        "increase speed",
+        "stop engine"
+      ]
+    },
+    {
+      "id": "phrase_will_pass_astern_001",
+      "target_text": "I will pass astern of you.",
+      "should_accept": [
+        "I will pass astern of you.",
+        "pass astern of you",
+        "passing astern of your vessel"
+      ],
+      "should_reject": [
+        "pass ahead of you",
+        "pass behind you",
+        "pass astern"
+      ]
+    },
+    {
+      "id": "phrase_traffic_information_001",
+      "target_text": "Request traffic information.",
+      "should_accept": [
+        "Request traffic information.",
+        "request traffic info",
+        "request information on traffic"
+      ],
+      "should_reject": [
+        "request weather information",
+        "traffic advisory",
+        "report traffic"
+      ]
+    },
+    {
+      "id": "phrase_pan_pan_001",
+      "target_text": "Pan-Pan, Pan-Pan, Pan-Pan.",
+      "should_accept": [
+        "Pan-Pan, Pan-Pan, Pan-Pan.",
+        "pan pan pan pan pan pan",
+        "panpan panpan panpan"
+      ],
+      "should_reject": [
+        "pan-pan pan-pan",
+        "mayday mayday mayday",
+        "securite securite securite"
+      ]
+    },
+    {
+      "id": "phrase_securite_001",
+      "target_text": "Securite, Securite, Securite.",
+      "should_accept": [
+        "Securite, Securite, Securite.",
+        "Sécurité Sécurité Sécurité",
+        "SECURITE SECURITE SECURITE"
+      ],
+      "should_reject": [
+        "securite securite",
+        "pan-pan pan-pan pan-pan",
+        "security security security"
+      ]
+    },
+    {
+      "id": "phrase_mayday_001",
+      "target_text": "Mayday, Mayday, Mayday.",
+      "should_accept": [
+        "Mayday, Mayday, Mayday.",
+        "mayday mayday mayday",
+        "may-day may-day may-day"
+      ],
+      "should_reject": [
+        "mayday mayday",
+        "pan-pan pan-pan pan-pan",
+        "mayday relay"
+      ]
+    },
+    {
+      "id": "phrase_engine_failure_001",
+      "target_text": "I have engine failure.",
+      "should_accept": [
+        "I have engine failure.",
+        "engine failed",
+        "my engine has failed"
+      ],
+      "should_reject": [
+        "engine trouble",
+        "out of fuel",
+        "propeller fouled"
+      ]
+    },
+    {
+      "id": "phrase_taking_water_001",
+      "target_text": "I am taking on water.",
+      "should_accept": [
+        "I am taking on water.",
+        "taking in water",
+        "water ingress"
+      ],
+      "should_reject": [
+        "leaking",
+        "sinking",
+        "water on board"
+      ]
+    },
+    {
+      "id": "phrase_not_under_command_001",
+      "target_text": "I am not under command.",
+      "should_accept": [
+        "I am not under command.",
+        "N.U.C.",
+        "vessel not under command"
+      ],
+      "should_reject": [
+        "not in command",
+        "not under control",
+        "restricted in ability to manoeuvre"
+      ]
+    },
+    {
+      "id": "phrase_risk_collision_001",
+      "target_text": "There is risk of collision.",
+      "should_accept": [
+        "There is risk of collision.",
+        "collision risk",
+        "there is a collision risk"
+      ],
+      "should_reject": [
+        "danger of collision",
+        "collision happened",
+        "near miss"
+      ]
+    },
+    {
+      "id": "word_core_question_marker_001",
+      "target_text": "question",
+      "should_accept": [
+        "question",
+        "QUESTION",
+        "question."
+      ],
+      "should_reject": [
+        "answer",
+        "request",
+        "inquiry"
+      ]
+    },
+    {
+      "id": "word_core_answer_marker_001",
+      "target_text": "answer",
+      "should_accept": [
+        "answer",
+        "ANSWER",
+        "answer."
+      ],
+      "should_reject": [
+        "question",
+        "reply",
+        "response"
+      ]
+    },
+    {
+      "id": "word_core_information_marker_001",
+      "target_text": "information",
+      "should_accept": [
+        "information",
+        "INFORMATION",
+        "information."
+      ],
+      "should_reject": [
+        "info",
+        "warning",
+        "advice"
+      ]
+    },
+    {
+      "id": "word_core_warning_marker_001",
+      "target_text": "warning",
+      "should_accept": [
+        "warning",
+        "WARNING",
+        "warning."
+      ],
+      "should_reject": [
+        "information",
+        "advice",
+        "danger"
+      ]
+    },
+    {
+      "id": "word_core_instruction_marker_001",
+      "target_text": "instruction",
+      "should_accept": [
+        "instruction",
+        "INSTRUCTION",
+        "instruction."
+      ],
+      "should_reject": [
+        "advice",
+        "request",
+        "order"
+      ]
+    },
+    {
+      "id": "word_core_advice_marker_001",
+      "target_text": "advice",
+      "should_accept": [
+        "advice",
+        "ADVICE",
+        "advice."
+      ],
+      "should_reject": [
+        "advise",
+        "instruction",
+        "warning"
+      ]
+    },
+    {
+      "id": "word_core_request_marker_001",
+      "target_text": "request",
+      "should_accept": [
+        "request",
+        "REQUEST",
+        "request."
+      ],
+      "should_reject": [
+        "question",
+        "instruction",
+        "demand"
+      ]
+    },
+    {
+      "id": "word_core_intention_marker_001",
+      "target_text": "intention",
+      "should_accept": [
+        "intention",
+        "INTENTION",
+        "intention."
+      ],
+      "should_reject": [
+        "intend",
+        "instruction",
+        "information"
+      ]
+    },
+    {
+      "id": "word_core_correction_marker_001",
+      "target_text": "correction",
+      "should_accept": [
+        "correction",
+        "CORRECTION",
+        "correction."
+      ],
+      "should_reject": [
+        "correct",
+        "wrong",
+        "mistake"
+      ]
+    },
+    {
+      "id": "word_core_figures_001",
+      "target_text": "figures",
+      "should_accept": [
+        "figures",
+        "FIGURES",
+        "figures."
+      ],
+      "should_reject": [
+        "numbers",
+        "digits",
+        "figures follow"
+      ]
+    },
+    {
+      "id": "word_core_spell_001",
+      "target_text": "spell",
+      "should_accept": [
+        "spell",
+        "SPELL",
+        "spell."
+      ],
+      "should_reject": [
+        "spelling",
+        "say again",
+        "repeat"
+      ]
+    },
+    {
+      "id": "word_core_wait_001",
+      "target_text": "wait",
+      "should_accept": [
+        "wait",
+        "WAIT",
+        "wait."
+      ],
+      "should_reject": [
+        "stand by",
+        "wait out",
+        "out"
+      ]
+    },
+    {
+      "id": "word_core_resume_001",
+      "target_text": "resume",
+      "should_accept": [
+        "resume",
+        "RESUME",
+        "resume."
+      ],
+      "should_reject": [
+        "continue",
+        "go ahead",
+        "again"
+      ]
+    },
+    {
+      "id": "word_core_decimal_001",
+      "target_text": "decimal",
+      "should_accept": [
+        "decimal",
+        "DECIMAL",
+        "decimal."
+      ],
+      "should_reject": [
+        "point",
+        "dot",
+        "comma"
+      ]
+    },
+    {
+      "id": "word_core_niner_001",
+      "target_text": "niner",
+      "should_accept": [
+        "niner",
+        "NINER",
+        "niner."
+      ],
+      "should_reject": [
+        "nine",
+        "ninety",
+        "number nine"
+      ]
+    },
+    {
+      "id": "expr_core_radio_check_001",
+      "target_text": "radio check",
+      "should_accept": [
+        "radio check",
+        "RADIO CHECK",
+        "radio-check"
+      ],
+      "should_reject": [
+        "check radio",
+        "how do you read me",
+        "roger"
+      ]
+    },
+    {
+      "id": "expr_core_this_is_001",
+      "target_text": "this is",
+      "should_accept": [
+        "this is",
+        "THIS IS",
+        "this-is"
+      ],
+      "should_reject": [
+        "here is",
+        "from",
+        "calling"
+      ]
+    },
+    {
+      "id": "expr_core_calling_001",
+      "target_text": "calling",
+      "should_accept": [
+        "calling",
+        "CALLING",
+        "calling."
+      ],
+      "should_reject": [
+        "this is",
+        "called",
+        "call me"
+      ]
+    },
+    {
+      "id": "expr_core_say_again_all_001",
+      "target_text": "say again all",
+      "should_accept": [
+        "say again all",
+        "please say again all",
+        "SAY AGAIN ALL"
+      ],
+      "should_reject": [
+        "repeat all",
+        "again all",
+        "read back all"
+      ]
+    },
+    {
+      "id": "expr_core_stand_by_one_minute_001",
+      "target_text": "stand by one minute",
+      "should_accept": [
+        "stand by one minute",
+        "stand by 1 minute",
+        "please stand by for one minute"
+      ],
+      "should_reject": [
+        "wait one minute",
+        "wait out one minute",
+        "standing by one minute"
+      ]
+    },
+    {
+      "id": "expr_core_read_back_my_message_001",
+      "target_text": "read back my message",
+      "should_accept": [
+        "read back my message",
+        "read back the message",
+        "read it back"
+      ],
+      "should_reject": [
+        "say again my message",
+        "repeat my message",
+        "roger my message"
+      ]
+    },
+    {
+      "id": "expr_core_wrong_001",
+      "target_text": "wrong",
+      "should_accept": [
+        "wrong",
+        "WRONG",
+        "wrong."
+      ],
+      "should_reject": [
+        "negative",
+        "incorrect",
+        "correction"
+      ]
+    },
+    {
+      "id": "expr_core_correct_001",
+      "target_text": "correct",
+      "should_accept": [
+        "correct",
+        "that is correct",
+        "CORRECT"
+      ],
+      "should_reject": [
+        "affirmative",
+        "roger",
+        "yes"
+      ]
+    },
+    {
+      "id": "expr_core_figures_follow_001",
+      "target_text": "figures follow",
+      "should_accept": [
+        "figures follow",
+        "FIGURES FOLLOW",
+        "figures-follow"
+      ],
+      "should_reject": [
+        "numbers follow",
+        "digits follow",
+        "figures"
+      ]
+    },
+    {
+      "id": "expr_core_say_again_all_after_001",
+      "target_text": "say again all after",
+      "should_accept": [
+        "say again all after",
+        "please say again all after",
+        "SAY AGAIN ALL AFTER"
+      ],
+      "should_reject": [
+        "repeat all after",
+        "read back all after",
+        "say again all before"
+      ]
+    },
+    {
+      "id": "expr_core_say_again_all_before_001",
+      "target_text": "say again all before",
+      "should_accept": [
+        "say again all before",
+        "please say again all before",
+        "SAY AGAIN ALL BEFORE"
+      ],
+      "should_reject": [
+        "repeat all before",
+        "read back all before",
+        "say again all after"
+      ]
+    },
+    {
+      "id": "expr_core_do_not_answer_001",
+      "target_text": "do not answer",
+      "should_accept": [
+        "do not answer",
+        "do not reply",
+        "DO NOT ANSWER"
+      ],
+      "should_reject": [
+        "stand by",
+        "wait",
+        "go ahead"
+      ]
+    },
+    {
+      "id": "expr_core_resume_communication_001",
+      "target_text": "resume communication",
+      "should_accept": [
+        "resume communication",
+        "resume communications",
+        "RESUME COMMUNICATION"
+      ],
+      "should_reject": [
+        "go ahead",
+        "continue",
+        "answer now"
+      ]
+    },
+    {
+      "id": "expr_core_i_spell_001",
+      "target_text": "I spell",
+      "should_accept": [
+        "I spell",
+        "i spell",
+        "I SPELL"
+      ],
+      "should_reject": [
+        "spell",
+        "spelling",
+        "I repeat"
+      ]
+    },
+    {
+      "id": "expr_core_wait_out_001",
+      "target_text": "wait out",
+      "should_accept": [
+        "wait out",
+        "WAIT OUT",
+        "wait-out"
+      ],
+      "should_reject": [
+        "wait",
+        "out",
+        "stand by"
+      ]
+    },
+    {
+      "id": "phrase_core_radio_check_over_001",
+      "target_text": "Radio check, over.",
+      "should_accept": [
+        "Radio check, over.",
+        "radio check over",
+        "RADIO CHECK OVER"
+      ],
+      "should_reject": [
+        "radio check out",
+        "radio check over and out",
+        "how do you read me over"
+      ]
+    },
+    {
+      "id": "phrase_core_how_read_me_001",
+      "target_text": "How do you read me?",
+      "should_accept": [
+        "How do you read me?",
+        "how do you read me",
+        "how do you read"
+      ],
+      "should_reject": [
+        "radio check",
+        "do you read me",
+        "can you hear me"
+      ]
+    },
+    {
+      "id": "phrase_core_read_loud_clear_001",
+      "target_text": "I read you loud and clear.",
+      "should_accept": [
+        "I read you loud and clear.",
+        "read you loud and clear",
+        "loud and clear"
+      ],
+      "should_reject": [
+        "roger",
+        "affirmative",
+        "I hear you"
+      ]
+    },
+    {
+      "id": "phrase_core_call_orion_001",
+      "target_text": "Aurora, this is sailing yacht Orion.",
+      "should_accept": [
+        "Aurora, this is sailing yacht Orion.",
+        "Aurora this is S/Y Orion",
+        "Aurora sailing yacht Orion"
+      ],
+      "should_reject": [
+        "Orion this is Aurora",
+        "Aurora to Orion",
+        "this is motor yacht Orion"
+      ]
+    },
+    {
+      "id": "phrase_core_marina_aurora_calling_001",
+      "target_text": "Marina Control, Aurora calling.",
+      "should_accept": [
+        "Marina Control, Aurora calling.",
+        "Marina Control S/Y Aurora calling",
+        "Marina Control sailing yacht Aurora calling"
+      ],
+      "should_reject": [
+        "Aurora Marina Control calling",
+        "Aurora to Marina Control",
+        "Marina Control this is motor yacht Aurora"
+      ]
+    },
+    {
+      "id": "phrase_core_switch_channel_one_two_001",
+      "target_text": "Switch to channel one two.",
+      "should_accept": [
+        "Switch to channel one two.",
+        "channel 12",
+        "change to channel one two"
+      ],
+      "should_reject": [
+        "channel 13",
+        "channel 16",
+        "switch off channel one two"
+      ]
+    },
+    {
+      "id": "phrase_core_read_back_channel_one_two_001",
+      "target_text": "Read back channel one two.",
+      "should_accept": [
+        "Read back channel one two.",
+        "readback channel 12",
+        "read back channel 12"
+      ],
+      "should_reject": [
+        "say again channel one two",
+        "repeat channel one two",
+        "read back channel two one"
+      ]
+    },
+    {
+      "id": "phrase_core_correction_channel_one_three_001",
+      "target_text": "Correction, channel one three.",
+      "should_accept": [
+        "Correction, channel one three.",
+        "correction channel 13",
+        "correction channel one three"
+      ],
+      "should_reject": [
+        "channel one three",
+        "correction channel one two",
+        "wrong channel one three"
+      ]
+    },
+    {
+      "id": "phrase_core_question_underway_001",
+      "target_text": "Question, are you underway?",
+      "should_accept": [
+        "Question, are you underway?",
+        "question are you under way",
+        "question are you underway"
+      ],
+      "should_reject": [
+        "answer are you underway",
+        "request are you underway",
+        "are you underway"
+      ]
+    },
+    {
+      "id": "phrase_core_answer_affirmative_001",
+      "target_text": "Answer, affirmative.",
+      "should_accept": [
+        "Answer, affirmative.",
+        "answer affirmative",
+        "answer is affirmative"
+      ],
+      "should_reject": [
+        "affirmative",
+        "answer yes",
+        "answer negative"
+      ]
+    },
+    {
+      "id": "phrase_core_answer_negative_001",
+      "target_text": "Answer, negative.",
+      "should_accept": [
+        "Answer, negative.",
+        "answer negative",
+        "answer is negative"
+      ],
+      "should_reject": [
+        "negative",
+        "answer no",
+        "answer affirmative"
+      ]
+    },
+    {
+      "id": "phrase_core_request_read_back_001",
+      "target_text": "Request read back.",
+      "should_accept": [
+        "Request read back.",
+        "request you read back",
+        "I request read back"
+      ],
+      "should_reject": [
+        "read back",
+        "please read back",
+        "say again"
+      ]
+    },
+    {
+      "id": "phrase_core_say_again_position_001",
+      "target_text": "Say again your position.",
+      "should_accept": [
+        "Say again your position.",
+        "please say again your position",
+        "say again position"
+      ],
+      "should_reject": [
+        "repeat your position",
+        "read back your position",
+        "say again your heading"
+      ]
+    },
+    {
+      "id": "phrase_core_stand_by_channel_one_six_001",
+      "target_text": "Stand by on channel one six.",
+      "should_accept": [
+        "Stand by on channel one six.",
+        "stand by channel 16",
+        "stand by on channel 16"
+      ],
+      "should_reject": [
+        "switch to channel one six",
+        "wait on channel one six",
+        "stand by on channel one two"
+      ]
+    },
+    {
+      "id": "phrase_core_do_not_answer_until_called_001",
+      "target_text": "Do not answer until called.",
+      "should_accept": [
+        "Do not answer until called.",
+        "do not reply until called"
+      ],
+      "should_reject": [
+        "stand by until called",
+        "wait until called",
+        "answer when called"
+      ]
+    },
+    {
+      "id": "phrase_core_resume_communication_now_001",
+      "target_text": "Resume communication now.",
+      "should_accept": [
+        "Resume communication now.",
+        "resume communications now"
+      ],
+      "should_reject": [
+        "go ahead now",
+        "continue now",
+        "answer now"
+      ]
+    },
+    {
+      "id": "phrase_core_wait_out_call_again_001",
+      "target_text": "Wait out, I will call you again.",
+      "should_accept": [
+        "Wait out, I will call you again.",
+        "wait out will call you again"
+      ],
+      "should_reject": [
+        "wait over i will call you again",
+        "stand by i will call you again",
+        "out i will call you again"
+      ]
+    },
+    {
+      "id": "phrase_core_correction_eta_1500_001",
+      "target_text": "Correction, my ETA is one five zero zero UTC.",
+      "should_accept": [
+        "Correction, my ETA is one five zero zero UTC.",
+        "correction ETA 1500 UTC",
+        "correction ETA 1500Z"
+      ],
+      "should_reject": [
+        "correction eta 1400 utc",
+        "eta 1500 utc",
+        "correction my eta is one four zero zero utc"
+      ]
+    },
+    {
+      "id": "phrase_core_spell_call_sign_001",
+      "target_text": "Spell your call sign.",
+      "should_accept": [
+        "Spell your call sign.",
+        "spell your callsign",
+        "spell call sign"
+      ],
+      "should_reject": [
+        "say again your call sign",
+        "repeat your call sign",
+        "what is your call sign"
+      ]
+    },
+    {
+      "id": "phrase_core_i_spell_aurora_001",
+      "target_text": "I spell Aurora: Alfa Uniform Romeo Oscar Romeo Alfa.",
+      "should_accept": [
+        "I spell Aurora: Alfa Uniform Romeo Oscar Romeo Alfa.",
+        "i spell alfa uniform romeo oscar romeo alfa",
+        "Aurora Alfa Uniform Romeo Oscar Romeo Alfa"
+      ],
+      "should_reject": [
+        "i spell aurora alpha uniform romeo oscar romeo alpha",
+        "i repeat aurora alfa uniform romeo oscar romeo alfa",
+        "aurora"
+      ]
+    },
+    {
+      "id": "word_marina_berth_001",
+      "target_text": "berth",
+      "should_accept": [
+        "berth",
+        "BERTH",
+        "berth."
+      ],
+      "should_reject": [
+        "birth",
+        "dock",
+        "quay",
+        "pier",
+        "slip"
+      ]
+    },
+    {
+      "id": "word_marina_fuel_berth_001",
+      "target_text": "fuel berth",
+      "should_accept": [
+        "fuel berth",
+        "FUEL BERTH",
+        "fuel-berth"
+      ],
+      "should_reject": [
+        "fuel",
+        "berth",
+        "fuel dock",
+        "fuel pier"
+      ]
+    },
+    {
+      "id": "word_marina_water_001",
+      "target_text": "water",
+      "should_accept": [
+        "water",
+        "WATER",
+        "water."
+      ],
+      "should_reject": [
+        "fuel",
+        "shore power",
+        "fresh water hose"
+      ]
+    },
+    {
+      "id": "word_marina_shore_power_001",
+      "target_text": "shore power",
+      "should_accept": [
+        "shore power",
+        "SHORE POWER",
+        "shore-power"
+      ],
+      "should_reject": [
+        "power",
+        "electricity",
+        "water",
+        "charger"
+      ]
+    },
+    {
+      "id": "word_marina_fender_001",
+      "target_text": "fender",
+      "should_accept": [
+        "fender",
+        "FENDER",
+        "fender."
+      ],
+      "should_reject": [
+        "finder",
+        "bumper",
+        "line"
+      ]
+    },
+    {
+      "id": "word_marina_line_001",
+      "target_text": "line",
+      "should_accept": [
+        "line",
+        "LINE",
+        "line."
+      ],
+      "should_reject": [
+        "rope",
+        "fender",
+        "cable"
+      ]
+    },
+    {
+      "id": "word_marina_alongside_001",
+      "target_text": "alongside",
+      "should_accept": [
+        "alongside",
+        "ALONGSIDE",
+        "alongside."
+      ],
+      "should_reject": [
+        "abeam",
+        "astern",
+        "ahead"
+      ]
+    },
+    {
+      "id": "word_marina_approach_001",
+      "target_text": "approach",
+      "should_accept": [
+        "approach",
+        "APPROACH",
+        "approach."
+      ],
+      "should_reject": [
+        "enter",
+        "proceed",
+        "go ahead"
+      ]
+    },
+    {
+      "id": "word_marina_departure_001",
+      "target_text": "departure",
+      "should_accept": [
+        "departure",
+        "DEPARTURE",
+        "departure."
+      ],
+      "should_reject": [
+        "arrival",
+        "depart",
+        "leaving"
+      ]
+    },
+    {
+      "id": "word_marina_mooring_001",
+      "target_text": "mooring",
+      "should_accept": [
+        "mooring",
+        "MOORING",
+        "mooring."
+      ],
+      "should_reject": [
+        "moor",
+        "berth",
+        "anchor"
+      ]
+    },
+    {
+      "id": "expr_marina_request_berth_001",
+      "target_text": "request berth",
+      "should_accept": [
+        "request berth",
+        "request a berth",
+        "REQUEST BERTH"
+      ],
+      "should_reject": [
+        "need a berth",
+        "request dock",
+        "request mooring",
+        "request birth"
+      ]
+    },
+    {
+      "id": "expr_marina_request_fuel_berth_001",
+      "target_text": "request fuel berth",
+      "should_accept": [
+        "request fuel berth",
+        "request a fuel berth",
+        "REQUEST FUEL BERTH"
+      ],
+      "should_reject": [
+        "request fuel",
+        "request fuel dock",
+        "need fuel",
+        "request berth"
+      ]
+    },
+    {
+      "id": "expr_marina_request_water_001",
+      "target_text": "request water",
+      "should_accept": [
+        "request water",
+        "request fresh water",
+        "REQUEST WATER"
+      ],
+      "should_reject": [
+        "need water",
+        "request fuel",
+        "request shore power"
+      ]
+    },
+    {
+      "id": "expr_marina_request_shore_power_001",
+      "target_text": "request shore power",
+      "should_accept": [
+        "request shore power",
+        "REQUEST SHORE POWER",
+        "request shore-power"
+      ],
+      "should_reject": [
+        "request power",
+        "request electricity",
+        "need shore power",
+        "request water"
+      ]
+    },
+    {
+      "id": "expr_marina_stand_by_outside_001",
+      "target_text": "stand by outside",
+      "should_accept": [
+        "stand by outside",
+        "STAND BY OUTSIDE",
+        "stand-by outside"
+      ],
+      "should_reject": [
+        "wait out",
+        "do not answer",
+        "wait outside",
+        "go ahead outside"
+      ]
+    },
+    {
+      "id": "expr_marina_proceed_to_berth_001",
+      "target_text": "proceed to berth",
+      "should_accept": [
+        "proceed to berth",
+        "proceed to the berth",
+        "PROCEED TO BERTH"
+      ],
+      "should_reject": [
+        "go ahead to berth",
+        "enter berth",
+        "approach berth",
+        "proceed to dock"
+      ]
+    },
+    {
+      "id": "expr_marina_come_alongside_001",
+      "target_text": "come alongside",
+      "should_accept": [
+        "come alongside",
+        "COME ALONGSIDE",
+        "come-alongside"
+      ],
+      "should_reject": [
+        "alongside",
+        "come abeam",
+        "come astern",
+        "moor alongside"
+      ]
+    },
+    {
+      "id": "expr_marina_port_side_to_001",
+      "target_text": "port side to",
+      "should_accept": [
+        "port side to",
+        "PORT SIDE TO",
+        "port-side-to"
+      ],
+      "should_reject": [
+        "starboard side to",
+        "port side",
+        "left side to"
+      ]
+    },
+    {
+      "id": "expr_marina_starboard_side_to_001",
+      "target_text": "starboard side to",
+      "should_accept": [
+        "starboard side to",
+        "STARBOARD SIDE TO",
+        "starboard-side-to"
+      ],
+      "should_reject": [
+        "port side to",
+        "starboard side",
+        "right side to"
+      ]
+    },
+    {
+      "id": "expr_marina_prepare_fenders_001",
+      "target_text": "prepare fenders",
+      "should_accept": [
+        "prepare fenders",
+        "PREPARE FENDERS",
+        "prepare-fenders"
+      ],
+      "should_reject": [
+        "fenders ready",
+        "prepare finders",
+        "prepare lines",
+        "prepare bumpers"
+      ]
+    },
+    {
+      "id": "expr_marina_prepare_lines_001",
+      "target_text": "prepare lines",
+      "should_accept": [
+        "prepare lines",
+        "PREPARE LINES",
+        "prepare-lines"
+      ],
+      "should_reject": [
+        "lines ready",
+        "prepare ropes",
+        "prepare fenders",
+        "lines secured"
+      ]
+    },
+    {
+      "id": "expr_marina_request_departure_001",
+      "target_text": "request departure",
+      "should_accept": [
+        "request departure",
+        "request permission to depart",
+        "REQUEST DEPARTURE"
+      ],
+      "should_reject": [
+        "departing now",
+        "request arrival",
+        "leaving now"
+      ]
+    },
+    {
+      "id": "expr_marina_approach_slowly_001",
+      "target_text": "approach slowly",
+      "should_accept": [
+        "approach slowly",
+        "APPROACH SLOWLY",
+        "approach-slowly"
+      ],
+      "should_reject": [
+        "proceed slowly",
+        "enter slowly",
+        "go ahead slowly"
+      ]
+    },
+    {
+      "id": "expr_marina_lines_ready_001",
+      "target_text": "lines ready",
+      "should_accept": [
+        "lines ready",
+        "LINES READY",
+        "lines-ready"
+      ],
+      "should_reject": [
+        "ropes ready",
+        "fenders ready",
+        "lines secured"
+      ]
+    },
+    {
+      "id": "phrase_marina_call_orion_001",
+      "target_text": "Marina Control, this is sailing yacht Orion.",
+      "should_accept": [
+        "Marina Control, this is sailing yacht Orion.",
+        "Marina Control this is S/Y Orion",
+        "Marina Control sailing yacht Orion"
+      ],
+      "should_reject": [
+        "Orion to Marina Control",
+        "Marina Control this is motor yacht Orion",
+        "Marina Control Orion"
+      ]
+    },
+    {
+      "id": "phrase_marina_request_berth_tonight_001",
+      "target_text": "Request berth for tonight.",
+      "should_accept": [
+        "Request berth for tonight.",
+        "request a berth for tonight",
+        "requesting berth for tonight"
+      ],
+      "should_reject": [
+        "need a berth tonight",
+        "request dock for tonight",
+        "request berth for tomorrow"
+      ]
+    },
+    {
+      "id": "phrase_marina_stand_by_outside_001",
+      "target_text": "Stand by outside the marina.",
+      "should_accept": [
+        "Stand by outside the marina.",
+        "stand by outside marina"
+      ],
+      "should_reject": [
+        "wait out outside the marina",
+        "do not answer outside the marina",
+        "go ahead outside the marina"
+      ]
+    },
+    {
+      "id": "phrase_marina_arriving_from_south_001",
+      "target_text": "I am arriving from the south.",
+      "should_accept": [
+        "I am arriving from the south.",
+        "arriving from the south",
+        "arriving from south"
+      ],
+      "should_reject": [
+        "i am departing to the south",
+        "i am arriving from the north",
+        "i am south of marina"
+      ]
+    },
+    {
+      "id": "phrase_marina_request_visitor_berth_001",
+      "target_text": "Request visitor berth.",
+      "should_accept": [
+        "Request visitor berth.",
+        "request a visitor berth",
+        "requesting visitor berth"
+      ],
+      "should_reject": [
+        "need visitor berth",
+        "request visitor dock",
+        "request resident berth"
+      ]
+    },
+    {
+      "id": "phrase_marina_request_berth_one_night_001",
+      "target_text": "Request berth for one night.",
+      "should_accept": [
+        "Request berth for one night.",
+        "request a berth for one night",
+        "requesting berth for one night"
+      ],
+      "should_reject": [
+        "request berth for two nights",
+        "need a berth for one night",
+        "request mooring for one night"
+      ]
+    },
+    {
+      "id": "phrase_marina_request_fuel_berth_arrival_001",
+      "target_text": "Request fuel berth on arrival.",
+      "should_accept": [
+        "Request fuel berth on arrival.",
+        "request a fuel berth on arrival",
+        "requesting fuel berth on arrival"
+      ],
+      "should_reject": [
+        "request fuel on arrival",
+        "request fuel dock on arrival",
+        "request berth on arrival"
+      ]
+    },
+    {
+      "id": "phrase_marina_request_fresh_water_001",
+      "target_text": "Request fresh water.",
+      "should_accept": [
+        "Request fresh water.",
+        "request water"
+      ],
+      "should_reject": [
+        "need fresh water",
+        "request fuel",
+        "request shore power"
+      ]
+    },
+    {
+      "id": "phrase_marina_request_shore_power_001",
+      "target_text": "Request shore power.",
+      "should_accept": [
+        "Request shore power.",
+        "request shore-power",
+        "REQUEST SHORE POWER"
+      ],
+      "should_reject": [
+        "request power",
+        "request electricity",
+        "need shore power"
+      ]
+    },
+    {
+      "id": "phrase_marina_request_water_power_001",
+      "target_text": "Request water and shore power.",
+      "should_accept": [
+        "Request water and shore power.",
+        "request fresh water and shore power"
+      ],
+      "should_reject": [
+        "request water",
+        "request shore power",
+        "need water and power"
+      ]
+    },
+    {
+      "id": "phrase_marina_proceed_berth_bravo_one_two_001",
+      "target_text": "Proceed to berth Bravo one two.",
+      "should_accept": [
+        "Proceed to berth Bravo one two.",
+        "proceed to the berth Bravo one two"
+      ],
+      "should_reject": [
+        "proceed to berth bravo two one",
+        "proceed to berth B12",
+        "B12",
+        "go ahead to berth bravo one two",
+        "proceed to dock bravo one two"
+      ]
+    },
+    {
+      "id": "phrase_marina_approach_slow_speed_001",
+      "target_text": "Approach at slow speed.",
+      "should_accept": [
+        "Approach at slow speed.",
+        "approach slowly"
+      ],
+      "should_reject": [
+        "proceed at slow speed",
+        "enter at slow speed",
+        "reduce speed"
+      ]
+    },
+    {
+      "id": "phrase_marina_stand_by_entrance_001",
+      "target_text": "Stand by outside the harbour entrance.",
+      "should_accept": [
+        "Stand by outside the harbour entrance.",
+        "stand by outside harbour entrance"
+      ],
+      "should_reject": [
+        "wait out outside the harbour entrance",
+        "enter the harbour entrance",
+        "stand by inside the harbour entrance"
+      ]
+    },
+    {
+      "id": "phrase_marina_berth_port_side_to_001",
+      "target_text": "Berth port side to.",
+      "should_accept": [
+        "Berth port side to.",
+        "port side to"
+      ],
+      "should_reject": [
+        "berth starboard side to",
+        "berth left side to",
+        "port side"
+      ]
+    },
+    {
+      "id": "phrase_marina_berth_starboard_side_to_001",
+      "target_text": "Berth starboard side to.",
+      "should_accept": [
+        "Berth starboard side to.",
+        "starboard side to"
+      ],
+      "should_reject": [
+        "berth port side to",
+        "berth right side to",
+        "starboard side"
+      ]
+    },
+    {
+      "id": "phrase_marina_prepare_fenders_port_001",
+      "target_text": "Prepare fenders on port side.",
+      "should_accept": [
+        "Prepare fenders on port side.",
+        "fenders on port side",
+        "prepare port side fenders"
+      ],
+      "should_reject": [
+        "prepare fenders on starboard side",
+        "prepare finders on port side",
+        "prepare bumpers on port side"
+      ]
+    },
+    {
+      "id": "phrase_marina_prepare_bow_stern_lines_001",
+      "target_text": "Prepare bow and stern lines.",
+      "should_accept": [
+        "Prepare bow and stern lines.",
+        "prepare bow line and stern line"
+      ],
+      "should_reject": [
+        "bow and stern lines ready",
+        "prepare bow and stern ropes",
+        "prepare fenders",
+        "prepare spring lines"
+      ]
+    },
+    {
+      "id": "phrase_marina_come_alongside_slowly_001",
+      "target_text": "Come alongside slowly.",
+      "should_accept": [
+        "Come alongside slowly.",
+        "COME ALONGSIDE SLOWLY"
+      ],
+      "should_reject": [
+        "come abeam slowly",
+        "come astern slowly",
+        "go alongside quickly"
+      ]
+    },
+    {
+      "id": "phrase_marina_request_departure_permission_001",
+      "target_text": "Request permission to depart.",
+      "should_accept": [
+        "Request permission to depart.",
+        "request departure permission",
+        "request departure"
+      ],
+      "should_reject": [
+        "departing now",
+        "permission to arrive",
+        "request permission to enter"
+      ]
+    },
+    {
+      "id": "phrase_marina_ready_to_depart_001",
+      "target_text": "I am ready to depart.",
+      "should_accept": [
+        "I am ready to depart.",
+        "ready to depart"
+      ],
+      "should_reject": [
+        "i am departing",
+        "i am ready to arrive",
+        "ready to enter"
+      ]
+    },
+    {
+      "id": "phrase_marina_leaving_berth_001",
+      "target_text": "I am leaving the berth.",
+      "should_accept": [
+        "I am leaving the berth.",
+        "leaving the berth",
+        "leaving berth"
+      ],
+      "should_reject": [
+        "i am leaving the dock",
+        "i am arriving at the berth",
+        "i need a berth"
+      ]
+    },
+    {
+      "id": "phrase_marina_stand_by_for_berth_assignment_001",
+      "target_text": "Stand by outside the marina entrance for berth assignment.",
+      "should_accept": [
+        "Stand by outside the marina entrance for berth assignment.",
+        "stand by outside marina entrance for berth assignment"
+      ],
+      "should_reject": [
+        "wait out outside the marina entrance for berth assignment",
+        "enter the marina entrance for berth assignment",
+        "stand by inside the marina entrance for berth assignment"
+      ]
+    },
+    {
+      "id": "phrase_marina_proceed_berth_three_port_side_001",
+      "target_text": "Proceed to berth three, port side to.",
+      "should_accept": [
+        "Proceed to berth three, port side to.",
+        "proceed to the berth three port side to"
+      ],
+      "should_reject": [
+        "proceed to berth three starboard side to",
+        "go ahead to berth three port side to",
+        "proceed to dock three port side to"
+      ]
+    },
+    {
+      "id": "phrase_marina_after_fuel_proceed_berth_001",
+      "target_text": "After taking fuel, proceed to your berth.",
+      "should_accept": [
+        "After taking fuel, proceed to your berth.",
+        "after fuel proceed to your berth"
+      ],
+      "should_reject": [
+        "after taking water proceed to your berth",
+        "after taking fuel go ahead to your berth",
+        "after taking fuel proceed to your dock"
+      ]
+    },
+    {
+      "id": "phrase_marina_depart_when_fairway_clear_001",
+      "target_text": "Depart when the fairway is clear.",
+      "should_accept": [
+        "Depart when the fairway is clear.",
+        "depart when fairway is clear"
+      ],
+      "should_reject": [
+        "depart now",
+        "depart when the berth is clear",
+        "enter when the fairway is clear"
+      ]
+    },
+    {
+      "id": "phrase_marina_approach_keep_fenders_ready_001",
+      "target_text": "Approach slowly and keep fenders ready.",
+      "should_accept": [
+        "Approach slowly and keep fenders ready.",
+        "approach slowly keep fenders ready"
+      ],
+      "should_reject": [
+        "proceed slowly and keep fenders ready",
+        "approach slowly and keep lines ready",
+        "approach quickly and keep fenders ready"
+      ]
+    },
+    {
+      "id": "word_nav_position_001",
+      "target_text": "position",
+      "should_accept": [
+        "position",
+        "POSITION",
+        "position."
+      ],
+      "should_reject": [
+        "destination",
+        "waypoint",
+        "reporting point"
+      ]
+    },
+    {
+      "id": "word_nav_heading_001",
+      "target_text": "heading",
+      "should_accept": [
+        "heading",
+        "HEADING",
+        "heading."
+      ],
+      "should_reject": [
+        "course",
+        "bearing",
+        "direction"
+      ]
+    },
+    {
+      "id": "word_nav_course_001",
+      "target_text": "course",
+      "should_accept": [
+        "course",
+        "COURSE",
+        "course."
+      ],
+      "should_reject": [
+        "heading",
+        "bearing",
+        "route"
+      ]
+    },
+    {
+      "id": "word_nav_bearing_001",
+      "target_text": "bearing",
+      "should_accept": [
+        "bearing",
+        "BEARING",
+        "bearing."
+      ],
+      "should_reject": [
+        "heading",
+        "course",
+        "direction"
+      ]
+    },
+    {
+      "id": "word_nav_speed_001",
+      "target_text": "speed",
+      "should_accept": [
+        "speed",
+        "SPEED",
+        "speed."
+      ],
+      "should_reject": [
+        "distance",
+        "knots",
+        "course"
+      ]
+    },
+    {
+      "id": "word_nav_distance_001",
+      "target_text": "distance",
+      "should_accept": [
+        "distance",
+        "DISTANCE",
+        "distance."
+      ],
+      "should_reject": [
+        "speed",
+        "destination",
+        "range"
+      ]
+    },
+    {
+      "id": "word_nav_eta_001",
+      "target_text": "ETA",
+      "should_accept": [
+        "ETA",
+        "eta",
+        "E.T.A."
+      ],
+      "should_reject": [
+        "arrival",
+        "time",
+        "local time"
+      ]
+    },
+    {
+      "id": "word_nav_reporting_point_001",
+      "target_text": "reporting point",
+      "should_accept": [
+        "reporting point",
+        "REPORTING POINT",
+        "reporting-point"
+      ],
+      "should_reject": [
+        "waypoint",
+        "position",
+        "destination"
+      ]
+    },
+    {
+      "id": "expr_nav_my_position_001",
+      "target_text": "my position",
+      "should_accept": [
+        "my position",
+        "position",
+        "MY POSITION"
+      ],
+      "should_reject": [
+        "my destination",
+        "my waypoint",
+        "my reporting point"
+      ]
+    },
+    {
+      "id": "expr_nav_my_heading_001",
+      "target_text": "my heading",
+      "should_accept": [
+        "my heading",
+        "heading",
+        "MY HEADING"
+      ],
+      "should_reject": [
+        "my course",
+        "my bearing",
+        "my direction"
+      ]
+    },
+    {
+      "id": "expr_nav_my_course_001",
+      "target_text": "my course",
+      "should_accept": [
+        "my course",
+        "course",
+        "MY COURSE"
+      ],
+      "should_reject": [
+        "my heading",
+        "my bearing",
+        "my route"
+      ]
+    },
+    {
+      "id": "expr_nav_speed_five_knots_001",
+      "target_text": "speed five knots",
+      "should_accept": [
+        "speed five knots",
+        "speed five kts",
+        "5 knots"
+      ],
+      "should_reject": [
+        "distance five knots",
+        "five nautical miles",
+        "five cables"
+      ]
+    },
+    {
+      "id": "expr_nav_eta_1400_utc_001",
+      "target_text": "ETA one four zero zero UTC",
+      "should_accept": [
+        "ETA one four zero zero UTC",
+        "ETA 1400 UTC",
+        "ETA 1400Z"
+      ],
+      "should_reject": [
+        "eta one five zero zero utc",
+        "eta 1500 utc",
+        "eta 1400 local"
+      ]
+    },
+    {
+      "id": "expr_nav_abeam_reporting_point_001",
+      "target_text": "abeam reporting point",
+      "should_accept": [
+        "abeam reporting point",
+        "abeam the reporting point"
+      ],
+      "should_reject": [
+        "alongside reporting point",
+        "astern reporting point",
+        "abeam waypoint"
+      ]
+    },
+    {
+      "id": "expr_nav_bearing_zero_nine_zero_001",
+      "target_text": "bearing zero nine zero",
+      "should_accept": [
+        "bearing zero nine zero",
+        "bearing 090",
+        "bearing 090 degrees"
+      ],
+      "should_reject": [
+        "heading zero nine zero",
+        "course zero nine zero",
+        "bearing 90"
+      ]
+    },
+    {
+      "id": "expr_nav_course_zero_nine_zero_001",
+      "target_text": "course zero nine zero",
+      "should_accept": [
+        "course zero nine zero",
+        "course 090",
+        "course 090 degrees"
+      ],
+      "should_reject": [
+        "heading zero nine zero",
+        "bearing zero nine zero",
+        "course 90"
+      ]
+    },
+    {
+      "id": "expr_nav_distance_two_miles_001",
+      "target_text": "distance two nautical miles",
+      "should_accept": [
+        "distance two nautical miles",
+        "2 nautical miles",
+        "distance is two nautical miles"
+      ],
+      "should_reject": [
+        "speed two knots",
+        "two cables",
+        "two miles"
+      ]
+    },
+    {
+      "id": "expr_nav_distance_two_cables_001",
+      "target_text": "distance two cables",
+      "should_accept": [
+        "distance two cables",
+        "2 cables",
+        "distance is two cables"
+      ],
+      "should_reject": [
+        "two nautical miles",
+        "two knots",
+        "distance two miles"
+      ]
+    },
+    {
+      "id": "expr_nav_read_back_position_001",
+      "target_text": "read back position",
+      "should_accept": [
+        "read back position",
+        "readback position",
+        "read back the position"
+      ],
+      "should_reject": [
+        "say again position",
+        "repeat position",
+        "read back heading"
+      ]
+    },
+    {
+      "id": "expr_nav_say_again_position_001",
+      "target_text": "say again position",
+      "should_accept": [
+        "say again position",
+        "say again your position",
+        "please say again position"
+      ],
+      "should_reject": [
+        "read back position",
+        "repeat position",
+        "say again heading"
+      ]
+    },
+    {
+      "id": "phrase_nav_position_north_marina_001",
+      "target_text": "My position is two nautical miles north of the marina.",
+      "should_accept": [
+        "My position is two nautical miles north of the marina.",
+        "position is 2 nautical miles north of the marina",
+        "my position two nautical miles north of the marina"
+      ],
+      "should_reject": [
+        "my position is two nautical miles south of the marina",
+        "my destination is two nautical miles north of the marina",
+        "my position is two cables north of the marina"
+      ]
+    },
+    {
+      "id": "phrase_nav_position_south_breakwater_001",
+      "target_text": "My position is one cable south of the breakwater.",
+      "should_accept": [
+        "My position is one cable south of the breakwater.",
+        "position is 1 cable south of the breakwater"
+      ],
+      "should_reject": [
+        "my position is one cable north of the breakwater",
+        "my position is one nautical mile south of the breakwater",
+        "my destination is one cable south of the breakwater"
+      ]
+    },
+    {
+      "id": "phrase_nav_position_east_reporting_point_001",
+      "target_text": "My position is east of reporting point Alpha.",
+      "should_accept": [
+        "My position is east of reporting point Alpha.",
+        "position east of reporting point Alpha"
+      ],
+      "should_reject": [
+        "my position is west of reporting point alpha",
+        "my position is east of waypoint alpha",
+        "my destination is east of reporting point alpha"
+      ]
+    },
+    {
+      "id": "phrase_nav_passing_reporting_point_alpha_001",
+      "target_text": "I am passing reporting point Alpha.",
+      "should_accept": [
+        "I am passing reporting point Alpha.",
+        "passing reporting point Alpha",
+        "pass reporting point Alpha"
+      ],
+      "should_reject": [
+        "i am passing waypoint alpha",
+        "i am passing destination alpha",
+        "i am passing reporting point bravo"
+      ]
+    },
+    {
+      "id": "phrase_nav_abeam_reporting_point_bravo_001",
+      "target_text": "I am abeam reporting point Bravo.",
+      "should_accept": [
+        "I am abeam reporting point Bravo.",
+        "abeam reporting point Bravo",
+        "abeam the reporting point Bravo"
+      ],
+      "should_reject": [
+        "i am alongside reporting point bravo",
+        "i am astern reporting point bravo",
+        "i am abeam waypoint bravo"
+      ]
+    },
+    {
+      "id": "phrase_nav_heading_090_001",
+      "target_text": "My heading is zero nine zero degrees.",
+      "should_accept": [
+        "My heading is zero nine zero degrees.",
+        "heading 090 degrees",
+        "090"
+      ],
+      "should_reject": [
+        "my course is zero nine zero degrees",
+        "my bearing is zero nine zero degrees",
+        "heading 90 degrees"
+      ]
+    },
+    {
+      "id": "phrase_nav_course_090_001",
+      "target_text": "My course is zero nine zero degrees.",
+      "should_accept": [
+        "My course is zero nine zero degrees.",
+        "course 090 degrees",
+        "course zero nine zero"
+      ],
+      "should_reject": [
+        "my heading is zero nine zero degrees",
+        "my bearing is zero nine zero degrees",
+        "090",
+        "course 90 degrees"
+      ]
+    },
+    {
+      "id": "phrase_nav_heading_080_001",
+      "target_text": "My heading is zero eight zero degrees.",
+      "should_accept": [
+        "My heading is zero eight zero degrees.",
+        "heading 080 degrees",
+        "080"
+      ],
+      "should_reject": [
+        "my course is zero eight zero degrees",
+        "my bearing is zero eight zero degrees",
+        "heading 80 degrees"
+      ]
+    },
+    {
+      "id": "phrase_nav_bearing_to_marina_270_001",
+      "target_text": "Bearing to marina is two seven zero degrees.",
+      "should_accept": [
+        "Bearing to marina is two seven zero degrees.",
+        "bearing to the marina 270 degrees"
+      ],
+      "should_reject": [
+        "heading to marina is two seven zero degrees",
+        "bearing to marina is 2700 degrees",
+        "bearing to marina is zero nine zero degrees"
+      ]
+    },
+    {
+      "id": "phrase_nav_course_speed_090_five_knots_001",
+      "target_text": "My course is zero nine zero, speed five knots.",
+      "should_accept": [
+        "My course is zero nine zero, speed five knots.",
+        "course 090 speed 5 knots"
+      ],
+      "should_reject": [
+        "my heading is zero nine zero speed five knots",
+        "my course is zero nine zero distance five nautical miles",
+        "course 90 speed five knots"
+      ]
+    },
+    {
+      "id": "phrase_nav_speed_six_knots_001",
+      "target_text": "My speed is six knots.",
+      "should_accept": [
+        "My speed is six knots.",
+        "speed 6 knots",
+        "6 kts"
+      ],
+      "should_reject": [
+        "my distance is six knots",
+        "six nautical miles",
+        "six cables"
+      ]
+    },
+    {
+      "id": "phrase_nav_distance_three_miles_001",
+      "target_text": "Distance is three nautical miles to the marina.",
+      "should_accept": [
+        "Distance is three nautical miles to the marina.",
+        "distance 3 nautical miles to the marina"
+      ],
+      "should_reject": [
+        "distance is three cables to the marina",
+        "speed is three knots to the marina",
+        "distance is three miles to the marina"
+      ]
+    },
+    {
+      "id": "phrase_nav_distance_decimal_one_five_001",
+      "target_text": "Distance is one decimal five nautical miles to the reporting point.",
+      "should_accept": [
+        "Distance is one decimal five nautical miles to the reporting point.",
+        "distance 1 decimal 5 nautical miles to the reporting point"
+      ],
+      "should_reject": [
+        "distance is one point five nautical miles to the reporting point",
+        "distance is one dot five nautical miles to the reporting point",
+        "distance is one decimal five cables to the reporting point"
+      ]
+    },
+    {
+      "id": "phrase_nav_eta_1400_001",
+      "target_text": "My ETA is one four zero zero UTC.",
+      "should_accept": [
+        "My ETA is one four zero zero UTC.",
+        "ETA 1400 UTC",
+        "ETA 1400Z"
+      ],
+      "should_reject": [
+        "my eta is one five zero zero utc",
+        "eta 1500z",
+        "eta 1400 local"
+      ]
+    },
+    {
+      "id": "phrase_nav_eta_update_1500_001",
+      "target_text": "ETA update: one five zero zero UTC.",
+      "should_accept": [
+        "ETA update: one five zero zero UTC.",
+        "ETA update 1500 UTC",
+        "ETA update 1500Z"
+      ],
+      "should_reject": [
+        "eta update one four zero zero utc",
+        "eta 1500 utc",
+        "eta update 1500 local"
+      ]
+    },
+    {
+      "id": "phrase_nav_eta_reporting_point_alpha_001",
+      "target_text": "ETA at reporting point Alpha is one four three zero UTC.",
+      "should_accept": [
+        "ETA at reporting point Alpha is one four three zero UTC.",
+        "ETA reporting point Alpha 1430 UTC"
+      ],
+      "should_reject": [
+        "eta at waypoint alpha is 1430 utc",
+        "eta at reporting point bravo is 1430 utc",
+        "eta at reporting point alpha is 1400 utc"
+      ]
+    },
+    {
+      "id": "phrase_nav_report_at_point_alpha_001",
+      "target_text": "I will report at reporting point Alpha.",
+      "should_accept": [
+        "I will report at reporting point Alpha.",
+        "will report at reporting point Alpha"
+      ],
+      "should_reject": [
+        "i will report at waypoint alpha",
+        "i will report at destination alpha",
+        "i will report at reporting point bravo"
+      ]
+    },
+    {
+      "id": "phrase_nav_read_back_position_001",
+      "target_text": "Read back my position.",
+      "should_accept": [
+        "Read back my position.",
+        "readback my position",
+        "read back the position"
+      ],
+      "should_reject": [
+        "say again my position",
+        "repeat my position",
+        "read back my heading"
+      ]
+    },
+    {
+      "id": "phrase_nav_say_again_position_001",
+      "target_text": "Say again your position.",
+      "should_accept": [
+        "Say again your position.",
+        "say again position",
+        "please say again your position"
+      ],
+      "should_reject": [
+        "read back your position",
+        "repeat your position",
+        "say again your course"
+      ]
+    },
+    {
+      "id": "phrase_nav_correction_heading_080_001",
+      "target_text": "Correction, heading zero eight zero.",
+      "should_accept": [
+        "Correction, heading zero eight zero.",
+        "correction heading 080"
+      ],
+      "should_reject": [
+        "heading zero eight zero",
+        "correction course zero eight zero",
+        "correction heading 80"
+      ]
+    },
+    {
+      "id": "phrase_nav_correction_eta_1500_001",
+      "target_text": "Correction, ETA one five zero zero UTC.",
+      "should_accept": [
+        "Correction, ETA one five zero zero UTC.",
+        "correction ETA 1500 UTC",
+        "correction ETA 1500Z"
+      ],
+      "should_reject": [
+        "eta one five zero zero utc",
+        "correction eta one four zero zero utc",
+        "correction eta 1500 local"
+      ]
+    },
+    {
+      "id": "phrase_nav_position_port_side_channel_001",
+      "target_text": "My position is on the port side of the channel.",
+      "should_accept": [
+        "My position is on the port side of the channel.",
+        "position port side of the channel"
+      ],
+      "should_reject": [
+        "my position is on the starboard side of the channel",
+        "my position is on the left side of the channel",
+        "my destination is on the port side of the channel"
+      ]
+    },
+    {
+      "id": "phrase_nav_position_starboard_side_channel_001",
+      "target_text": "My position is on the starboard side of the channel.",
+      "should_accept": [
+        "My position is on the starboard side of the channel.",
+        "position starboard side of the channel"
+      ],
+      "should_reject": [
+        "my position is on the port side of the channel",
+        "my position is on the right side of the channel",
+        "my destination is on the starboard side of the channel"
+      ]
+    },
+    {
+      "id": "phrase_nav_position_west_point_distance_001",
+      "target_text": "My position is one decimal five nautical miles west of reporting point Bravo.",
+      "should_accept": [
+        "My position is one decimal five nautical miles west of reporting point Bravo.",
+        "position is 1 decimal 5 nautical miles west of reporting point Bravo"
+      ],
+      "should_reject": [
+        "my position is one point five nautical miles west of reporting point bravo",
+        "my position is one decimal five nautical miles east of reporting point bravo",
+        "my position is one decimal five nautical miles west of waypoint bravo"
+      ]
+    },
+    {
+      "id": "phrase_nav_read_back_course_speed_001",
+      "target_text": "Read back course zero nine zero and speed five knots.",
+      "should_accept": [
+        "Read back course zero nine zero and speed five knots.",
+        "readback course 090 and speed five knots"
+      ],
+      "should_reject": [
+        "say again course zero nine zero and speed five knots",
+        "read back heading zero nine zero and speed five knots",
+        "read back course 90 and speed five knots"
+      ]
+    },
+    {
+      "id": "phrase_nav_read_back_eta_position_001",
+      "target_text": "Read back ETA one four zero zero UTC and position.",
+      "should_accept": [
+        "Read back ETA one four zero zero UTC and position.",
+        "readback ETA 1400 UTC and position"
+      ],
+      "should_reject": [
+        "say again eta one four zero zero utc and position",
+        "read back eta one five zero zero utc and position",
+        "read back eta 1400 local and position"
+      ]
+    },
+    {
+      "id": "phrase_nav_correction_position_north_001",
+      "target_text": "Correction, position two cables north of the marina.",
+      "should_accept": [
+        "Correction, position two cables north of the marina.",
+        "correction position 2 cables north of the marina"
+      ],
+      "should_reject": [
+        "position two cables north of the marina",
+        "correction position two cables south of the marina",
+        "correction destination two cables north of the marina"
+      ]
+    },
+    {
+      "id": "phrase_nav_correction_course_090_speed_5_001",
+      "target_text": "Correction, course zero nine zero, speed five knots.",
+      "should_accept": [
+        "Correction, course zero nine zero, speed five knots.",
+        "correction course 090 speed 5 knots"
+      ],
+      "should_reject": [
+        "course zero nine zero speed five knots",
+        "correction heading zero nine zero speed five knots",
+        "correction course 90 speed five knots"
+      ]
+    },
+    {
+      "id": "phrase_nav_update_eta_due_speed_001",
+      "target_text": "ETA update: one five zero zero UTC, speed five knots.",
+      "should_accept": [
+        "ETA update: one five zero zero UTC, speed five knots.",
+        "ETA update 1500 UTC speed 5 knots"
+      ],
+      "should_reject": [
+        "eta one five zero zero utc speed five knots",
+        "eta update 1400 utc speed five knots",
+        "eta update 1500 utc distance five nautical miles"
+      ]
+    },
+    {
+      "id": "phrase_nav_report_position_course_speed_001",
+      "target_text": "Report: position reporting point Alpha, course zero nine zero, speed five knots.",
+      "should_accept": [
+        "Report: position reporting point Alpha, course zero nine zero, speed five knots.",
+        "report position at reporting point Alpha course 090 speed 5 knots"
+      ],
+      "should_reject": [
+        "report destination reporting point alpha course zero nine zero speed five knots",
+        "report position waypoint alpha course zero nine zero speed five knots",
+        "report position reporting point alpha heading zero nine zero speed five knots"
+      ]
+    },
+    {
+      "id": "word_safety_safety_001",
+      "target_text": "safety",
+      "should_accept": [
+        "safety",
+        "SAFETY",
+        "safety."
+      ],
+      "should_reject": [
+        "urgency",
+        "distress",
+        "security"
+      ]
+    },
+    {
+      "id": "word_safety_warning_001",
+      "target_text": "warning",
+      "should_accept": [
+        "warning",
+        "WARNING",
+        "warning."
+      ],
+      "should_reject": [
+        "advice",
+        "information",
+        "danger"
+      ]
+    },
+    {
+      "id": "word_safety_hazard_001",
+      "target_text": "hazard",
+      "should_accept": [
+        "hazard",
+        "HAZARD",
+        "hazard."
+      ],
+      "should_reject": [
+        "obstruction",
+        "danger",
+        "warning"
+      ]
+    },
+    {
+      "id": "word_safety_visibility_001",
+      "target_text": "visibility",
+      "should_accept": [
+        "visibility",
+        "VISIBILITY",
+        "visibility."
+      ],
+      "should_reject": [
+        "weather",
+        "sea state",
+        "wind"
+      ]
+    },
+    {
+      "id": "word_safety_weather_001",
+      "target_text": "weather",
+      "should_accept": [
+        "weather",
+        "WEATHER",
+        "weather."
+      ],
+      "should_reject": [
+        "sea state",
+        "visibility",
+        "wind"
+      ]
+    },
+    {
+      "id": "word_safety_obstruction_001",
+      "target_text": "obstruction",
+      "should_accept": [
+        "obstruction",
+        "OBSTRUCTION",
+        "obstruction."
+      ],
+      "should_reject": [
+        "hazard",
+        "danger",
+        "obstacle"
+      ]
+    },
+    {
+      "id": "expr_safety_securite_signal_001",
+      "target_text": "Securite",
+      "should_accept": [
+        "Securite",
+        "Sécurité",
+        "SECURITE"
+      ],
+      "should_reject": [
+        "security",
+        "pan pan",
+        "mayday"
+      ]
+    },
+    {
+      "id": "expr_safety_safety_warning_001",
+      "target_text": "safety warning",
+      "should_accept": [
+        "safety warning",
+        "SAFETY WARNING",
+        "safety-warning"
+      ],
+      "should_reject": [
+        "security warning",
+        "urgency warning",
+        "distress warning"
+      ]
+    },
+    {
+      "id": "expr_safety_navigation_warning_001",
+      "target_text": "navigation warning",
+      "should_accept": [
+        "navigation warning",
+        "NAVIGATION WARNING",
+        "navigation-warning"
+      ],
+      "should_reject": [
+        "weather warning",
+        "safety advice",
+        "navigation information"
+      ]
+    },
+    {
+      "id": "expr_safety_weather_warning_001",
+      "target_text": "weather warning",
+      "should_accept": [
+        "weather warning",
+        "WEATHER WARNING",
+        "weather-warning"
+      ],
+      "should_reject": [
+        "navigation warning",
+        "weather information",
+        "wind warning"
+      ]
+    },
+    {
+      "id": "expr_safety_restricted_visibility_001",
+      "target_text": "restricted visibility",
+      "should_accept": [
+        "restricted visibility",
+        "RESTRICTED VISIBILITY",
+        "restricted-visibility"
+      ],
+      "should_reject": [
+        "poor visibility",
+        "reduced visibility",
+        "visibility good"
+      ]
+    },
+    {
+      "id": "expr_safety_sea_state_001",
+      "target_text": "sea state",
+      "should_accept": [
+        "sea state",
+        "SEA STATE",
+        "sea-state"
+      ],
+      "should_reject": [
+        "weather",
+        "wind",
+        "visibility"
+      ]
+    },
+    {
+      "id": "expr_safety_keep_listening_watch_001",
+      "target_text": "keep listening watch",
+      "should_accept": [
+        "keep listening watch",
+        "keep a listening watch",
+        "KEEP LISTENING WATCH"
+      ],
+      "should_reject": [
+        "keep watch",
+        "stand by",
+        "do not answer"
+      ]
+    },
+    {
+      "id": "expr_safety_hazard_reported_001",
+      "target_text": "hazard reported",
+      "should_accept": [
+        "hazard reported",
+        "HAZARD REPORTED",
+        "hazard-reported"
+      ],
+      "should_reject": [
+        "danger reported",
+        "obstruction reported",
+        "warning reported"
+      ]
+    },
+    {
+      "id": "expr_safety_obstruction_reported_001",
+      "target_text": "obstruction reported",
+      "should_accept": [
+        "obstruction reported",
+        "OBSTRUCTION REPORTED",
+        "obstruction-reported"
+      ],
+      "should_reject": [
+        "hazard reported",
+        "danger reported",
+        "obstacle reported"
+      ]
+    },
+    {
+      "id": "expr_safety_read_back_warning_001",
+      "target_text": "read back warning",
+      "should_accept": [
+        "read back warning",
+        "readback warning",
+        "read back the warning"
+      ],
+      "should_reject": [
+        "say again warning",
+        "repeat warning",
+        "roger warning"
+      ]
+    },
+    {
+      "id": "phrase_safety_securite_three_times_001",
+      "target_text": "Securite, Securite, Securite.",
+      "should_accept": [
+        "Securite, Securite, Securite.",
+        "Sécurité Sécurité Sécurité"
+      ],
+      "should_reject": [
+        "security security security",
+        "pan pan pan pan pan pan",
+        "mayday mayday mayday"
+      ]
+    },
+    {
+      "id": "phrase_safety_navigation_warning_channel_16_001",
+      "target_text": "Securite, navigation warning on channel one six.",
+      "should_accept": [
+        "Securite, navigation warning on channel one six.",
+        "Sécurité navigation warning on channel 16"
+      ],
+      "should_reject": [
+        "security navigation warning on channel one six",
+        "securite weather warning on channel one six",
+        "securite navigation warning on channel one two"
+      ]
+    },
+    {
+      "id": "phrase_safety_weather_warning_north_wind_001",
+      "target_text": "Securite, weather warning: strong wind from north.",
+      "should_accept": [
+        "Securite, weather warning: strong wind from north.",
+        "Sécurité weather warning strong wind from north"
+      ],
+      "should_reject": [
+        "securite navigation warning strong wind from north",
+        "securite weather warning strong wind from south",
+        "security weather warning strong wind from north"
+      ]
+    },
+    {
+      "id": "phrase_safety_sea_state_moderate_001",
+      "target_text": "Sea state is moderate.",
+      "should_accept": [
+        "Sea state is moderate.",
+        "sea state moderate"
+      ],
+      "should_reject": [
+        "sea state is rough",
+        "weather is moderate",
+        "visibility is moderate"
+      ]
+    },
+    {
+      "id": "phrase_safety_restricted_visibility_marina_approach_001",
+      "target_text": "Restricted visibility in the marina approach.",
+      "should_accept": [
+        "Restricted visibility in the marina approach.",
+        "restricted visibility marina approach"
+      ],
+      "should_reject": [
+        "poor visibility in the marina approach",
+        "reduced visibility in the marina approach",
+        "visibility good in the marina approach",
+        "restricted visibility in the harbour entrance"
+      ]
+    },
+    {
+      "id": "phrase_safety_obstruction_reporting_point_alpha_001",
+      "target_text": "Obstruction near reporting point Alpha.",
+      "should_accept": [
+        "Obstruction near reporting point Alpha.",
+        "obstruction near the reporting point Alpha"
+      ],
+      "should_reject": [
+        "hazard near reporting point alpha",
+        "obstacle near reporting point alpha",
+        "obstruction near waypoint alpha",
+        "obstruction near reporting point bravo"
+      ]
+    },
+    {
+      "id": "phrase_safety_hazard_two_cables_north_001",
+      "target_text": "Hazard two cables north of the marina.",
+      "should_accept": [
+        "Hazard two cables north of the marina.",
+        "hazard 2 cables north of the marina"
+      ],
+      "should_reject": [
+        "danger two cables north of the marina",
+        "hazard two cables south of the marina",
+        "hazard two nautical miles north of the marina"
+      ]
+    },
+    {
+      "id": "phrase_safety_navigation_warning_obstruction_channel_001",
+      "target_text": "Navigation warning: obstruction in the channel.",
+      "should_accept": [
+        "Navigation warning: obstruction in the channel.",
+        "navigation warning obstruction channel"
+      ],
+      "should_reject": [
+        "weather warning obstruction in the channel",
+        "navigation information obstruction in the channel",
+        "navigation warning hazard in the channel"
+      ]
+    },
+    {
+      "id": "phrase_safety_weather_warning_sea_state_rough_001",
+      "target_text": "Weather warning: sea state rough.",
+      "should_accept": [
+        "Weather warning: sea state rough.",
+        "weather warning sea state is rough"
+      ],
+      "should_reject": [
+        "navigation warning sea state rough",
+        "weather warning sea state moderate",
+        "weather information sea state rough"
+      ]
+    },
+    {
+      "id": "phrase_safety_keep_listening_watch_channel_16_001",
+      "target_text": "Keep listening watch on channel one six.",
+      "should_accept": [
+        "Keep listening watch on channel one six.",
+        "keep listening watch on channel 16"
+      ],
+      "should_reject": [
+        "keep listening watch on channel one two",
+        "stand by on channel one six",
+        "do not answer on channel one six"
+      ]
+    },
+    {
+      "id": "phrase_safety_read_back_navigation_warning_001",
+      "target_text": "Read back navigation warning.",
+      "should_accept": [
+        "Read back navigation warning.",
+        "readback navigation warning",
+        "read back the navigation warning"
+      ],
+      "should_reject": [
+        "say again navigation warning",
+        "repeat navigation warning",
+        "read back weather warning"
+      ]
+    },
+    {
+      "id": "phrase_safety_information_received_001",
+      "target_text": "Safety information received.",
+      "should_accept": [
+        "Safety information received.",
+        "received safety information"
+      ],
+      "should_reject": [
+        "roger",
+        "security information received",
+        "safety warning received"
+      ]
+    },
+    {
+      "id": "phrase_safety_advice_received_001",
+      "target_text": "Safety advice received.",
+      "should_accept": [
+        "Safety advice received.",
+        "received safety advice"
+      ],
+      "should_reject": [
+        "safety advise received",
+        "safety warning received",
+        "safety information received"
+      ]
+    },
+    {
+      "id": "phrase_safety_information_valid_until_1400_001",
+      "target_text": "Safety information valid until one four zero zero UTC.",
+      "should_accept": [
+        "Safety information valid until one four zero zero UTC.",
+        "safety information valid until 1400 UTC",
+        "safety information valid until 1400Z"
+      ],
+      "should_reject": [
+        "safety information valid until 1500 utc",
+        "safety information valid until 1400 local",
+        "security information valid until 1400 utc"
+      ]
+    },
+    {
+      "id": "phrase_safety_obstruction_east_breakwater_001",
+      "target_text": "Warning: obstruction east of the breakwater.",
+      "should_accept": [
+        "Warning: obstruction east of the breakwater.",
+        "warning obstruction east breakwater"
+      ],
+      "should_reject": [
+        "warning obstruction west of the breakwater",
+        "warning hazard east of the breakwater",
+        "advice obstruction east of the breakwater"
+      ]
+    },
+    {
+      "id": "phrase_safety_visibility_less_two_miles_001",
+      "target_text": "Visibility less than two nautical miles.",
+      "should_accept": [
+        "Visibility less than two nautical miles.",
+        "visibility less than 2 nautical miles"
+      ],
+      "should_reject": [
+        "visibility good two nautical miles",
+        "visibility less than two cables",
+        "weather less than two nautical miles"
+      ]
+    },
+    {
+      "id": "phrase_safety_securite_nav_obstruction_alpha_001",
+      "target_text": "Securite, Securite, Securite, navigation warning: obstruction two cables north of reporting point Alpha.",
+      "should_accept": [
+        "Securite, Securite, Securite, navigation warning: obstruction two cables north of reporting point Alpha.",
+        "Sécurité Sécurité Sécurité navigation warning obstruction 2 cables north of reporting point Alpha"
+      ],
+      "should_reject": [
+        "security security security navigation warning obstruction two cables north of reporting point alpha",
+        "securite securite securite weather warning obstruction two cables north of reporting point alpha",
+        "securite securite securite navigation warning obstruction two cables south of reporting point alpha"
+      ]
+    },
+    {
+      "id": "phrase_safety_weather_warning_wind_sea_001",
+      "target_text": "Securite, weather warning: strong wind from north, sea state rough.",
+      "should_accept": [
+        "Securite, weather warning: strong wind from north, sea state rough.",
+        "Sécurité weather warning strong wind from north sea state rough"
+      ],
+      "should_reject": [
+        "security weather warning strong wind from north sea state rough",
+        "securite navigation warning strong wind from north sea state rough",
+        "securite weather warning strong wind from south sea state rough"
+      ]
+    },
+    {
+      "id": "phrase_safety_restricted_visibility_channel_until_1400_001",
+      "target_text": "Navigation warning: restricted visibility in the approach channel until one four zero zero UTC.",
+      "should_accept": [
+        "Navigation warning: restricted visibility in the approach channel until one four zero zero UTC.",
+        "navigation warning restricted visibility in the approach channel until 1400Z"
+      ],
+      "should_reject": [
+        "navigation warning poor visibility in the approach channel until 1400 utc",
+        "navigation warning reduced visibility in the approach channel until 1400 utc",
+        "navigation warning restricted visibility in the approach channel until 1500 utc",
+        "weather warning restricted visibility in the approach channel until 1400 utc"
+      ]
+    },
+    {
+      "id": "phrase_safety_hazard_bearing_distance_001",
+      "target_text": "Hazard: bearing zero nine zero, distance two cables.",
+      "should_accept": [
+        "Hazard: bearing zero nine zero, distance two cables.",
+        "hazard bearing 090 distance 2 cables"
+      ],
+      "should_reject": [
+        "danger bearing zero nine zero distance two cables",
+        "hazard bearing 90 distance two cables",
+        "hazard bearing zero nine zero distance two nautical miles"
+      ]
+    },
+    {
+      "id": "phrase_safety_read_back_warning_channel_time_001",
+      "target_text": "Read back safety warning, channel one six, one four zero zero UTC.",
+      "should_accept": [
+        "Read back safety warning, channel one six, one four zero zero UTC.",
+        "readback safety warning channel 16 1400 UTC"
+      ],
+      "should_reject": [
+        "say again safety warning channel one six one four zero zero utc",
+        "read back safety warning channel one two one four zero zero utc",
+        "read back safety warning channel one six one five zero zero utc"
+      ]
+    },
+    {
+      "id": "phrase_safety_correction_obstruction_east_001",
+      "target_text": "Correction, obstruction two cables east of the breakwater.",
+      "should_accept": [
+        "Correction, obstruction two cables east of the breakwater.",
+        "correction obstruction 2 cables east of the breakwater"
+      ],
+      "should_reject": [
+        "obstruction two cables east of the breakwater",
+        "correction obstruction two cables west of the breakwater",
+        "correction hazard two cables east of the breakwater"
+      ]
+    },
+    {
+      "id": "phrase_safety_keep_listening_watch_until_1500_001",
+      "target_text": "Keep listening watch until one five zero zero UTC.",
+      "should_accept": [
+        "Keep listening watch until one five zero zero UTC.",
+        "keep listening watch until 1500Z"
+      ],
+      "should_reject": [
+        "keep listening watch until 1400 utc",
+        "stand by until 1500 utc",
+        "keep watch until 1500 utc"
+      ]
+    },
+    {
+      "id": "phrase_safety_warning_read_back_complete_001",
+      "target_text": "Safety warning read back complete.",
+      "should_accept": [
+        "Safety warning read back complete.",
+        "safety warning readback complete",
+        "read back of safety warning complete"
+      ],
+      "should_reject": [
+        "security warning read back complete",
+        "safety warning say again complete",
+        "navigation warning read back complete"
+      ]
+    },
+    {
+      "id": "word_urgency_urgency_001",
+      "target_text": "urgency",
+      "should_accept": [
+        "urgency",
+        "URGENCY",
+        "urgency."
+      ],
+      "should_reject": [
+        "safety",
+        "distress",
+        "emergency"
+      ]
+    },
+    {
+      "id": "word_urgency_assistance_001",
+      "target_text": "assistance",
+      "should_accept": [
+        "assistance",
+        "ASSISTANCE",
+        "assistance.",
+        "help"
+      ],
+      "should_reject": [
+        "advice",
+        "rescue"
+      ]
+    },
+    {
+      "id": "word_urgency_disabled_001",
+      "target_text": "disabled",
+      "should_accept": [
+        "disabled",
+        "DISABLED",
+        "disabled."
+      ],
+      "should_reject": [
+        "adrift",
+        "aground",
+        "distressed"
+      ]
+    },
+    {
+      "id": "word_urgency_tow_001",
+      "target_text": "tow",
+      "should_accept": [
+        "tow",
+        "TOW",
+        "tow."
+      ],
+      "should_reject": [
+        "tug",
+        "rescue",
+        "pilot"
+      ]
+    },
+    {
+      "id": "expr_urgency_panpan_001",
+      "target_text": "Pan-Pan",
+      "should_accept": [
+        "Pan-Pan",
+        "pan pan",
+        "PAN-PAN"
+      ],
+      "should_reject": [
+        "Mayday",
+        "Securite",
+        "security"
+      ]
+    },
+    {
+      "id": "expr_urgency_message_001",
+      "target_text": "urgency message",
+      "should_accept": [
+        "urgency message",
+        "URGENCY MESSAGE",
+        "urgency message."
+      ],
+      "should_reject": [
+        "safety message",
+        "distress message",
+        "urgency call"
+      ]
+    },
+    {
+      "id": "expr_urgency_engine_failure_001",
+      "target_text": "engine failure",
+      "should_accept": [
+        "engine failure",
+        "ENGINE FAILURE",
+        "engine failure."
+      ],
+      "should_reject": [
+        "steering failure",
+        "power failure",
+        "engine problem"
+      ]
+    },
+    {
+      "id": "expr_urgency_steering_failure_001",
+      "target_text": "steering failure",
+      "should_accept": [
+        "steering failure",
+        "STEERING FAILURE",
+        "steering failure."
+      ],
+      "should_reject": [
+        "engine failure",
+        "rudder failure",
+        "power failure"
+      ]
+    },
+    {
+      "id": "expr_urgency_medical_assistance_001",
+      "target_text": "medical assistance",
+      "should_accept": [
+        "medical assistance",
+        "MEDICAL ASSISTANCE",
+        "medical assistance."
+      ],
+      "should_reject": [
+        "medical advice",
+        "medical emergency",
+        "evacuation"
+      ]
+    },
+    {
+      "id": "expr_urgency_towing_assistance_001",
+      "target_text": "towing assistance",
+      "should_accept": [
+        "towing assistance",
+        "TOWING ASSISTANCE",
+        "towing assistance."
+      ],
+      "should_reject": [
+        "rescue assistance",
+        "tug assistance",
+        "request tow"
+      ]
+    },
+    {
+      "id": "expr_urgency_keep_listening_watch_001",
+      "target_text": "keep listening watch",
+      "should_accept": [
+        "keep listening watch",
+        "keep a listening watch",
+        "KEEP LISTENING WATCH"
+      ],
+      "should_reject": [
+        "stand by",
+        "wait out",
+        "go ahead"
+      ]
+    },
+    {
+      "id": "phrase_urgency_panpan_three_times_001",
+      "target_text": "Pan-Pan Pan-Pan Pan-Pan",
+      "should_accept": [
+        "Pan-Pan Pan-Pan Pan-Pan",
+        "pan pan pan pan pan pan",
+        "PAN-PAN PAN-PAN PAN-PAN"
+      ],
+      "should_reject": [
+        "Pan-Pan",
+        "Securite Securite Securite",
+        "Mayday Mayday Mayday"
+      ]
+    },
+    {
+      "id": "phrase_urgency_engine_failure_assistance_001",
+      "target_text": "Engine failure require assistance",
+      "should_accept": [
+        "Engine failure require assistance",
+        "engine failure request assistance",
+        "ENGINE FAILURE REQUIRE ASSISTANCE"
+      ],
+      "should_reject": [
+        "Steering failure require assistance",
+        "Engine failure require rescue",
+        "Engine problem require assistance"
+      ]
+    },
+    {
+      "id": "phrase_urgency_disabled_vessel_001",
+      "target_text": "Vessel disabled",
+      "should_accept": [
+        "Vessel disabled",
+        "disabled vessel",
+        "VESSEL DISABLED"
+      ],
+      "should_reject": [
+        "Vessel not under command",
+        "Vessel restricted in ability to manoeuvre",
+        "Vessel aground"
+      ]
+    },
+    {
+      "id": "phrase_urgency_request_medical_assistance_001",
+      "target_text": "Request medical assistance",
+      "should_accept": [
+        "Request medical assistance",
+        "require medical assistance",
+        "REQUEST MEDICAL ASSISTANCE"
+      ],
+      "should_reject": [
+        "Request medical advice",
+        "Request evacuation",
+        "Mayday medical emergency"
+      ]
+    },
+    {
+      "id": "phrase_urgency_medical_assistance_required_001",
+      "target_text": "Medical assistance required for one person",
+      "should_accept": [
+        "Medical assistance required for one person",
+        "medical assistance required one person",
+        "MEDICAL ASSISTANCE REQUIRED FOR ONE PERSON"
+      ],
+      "should_reject": [
+        "Medical advice required for one person",
+        "Medical assistance required for two persons",
+        "Person overboard"
+      ]
+    },
+    {
+      "id": "phrase_urgency_request_towing_assistance_001",
+      "target_text": "Request towing assistance",
+      "should_accept": [
+        "Request towing assistance",
+        "require towing assistance",
+        "request tow",
+        "require tow",
+        "REQUEST TOWING ASSISTANCE"
+      ],
+      "should_reject": [
+        "Request rescue assistance",
+        "Request tug assistance",
+        "Request pilot"
+      ]
+    },
+    {
+      "id": "phrase_urgency_position_north_marina_001",
+      "target_text": "Position two nautical miles north of the marina",
+      "should_accept": [
+        "Position two nautical miles north of the marina",
+        "position 2 nautical miles north of the marina",
+        "POSITION TWO NAUTICAL MILES NORTH OF THE MARINA"
+      ],
+      "should_reject": [
+        "Position two nautical miles south of the marina",
+        "Position two cables north of the marina",
+        "Destination two nautical miles north of the marina"
+      ]
+    },
+    {
+      "id": "phrase_urgency_disabled_position_channel_16_001",
+      "target_text": "Disabled vessel position on channel 16",
+      "should_accept": [
+        "Disabled vessel position on channel 16",
+        "vessel disabled position on channel one six",
+        "DISABLED VESSEL POSITION ON CHANNEL 16"
+      ],
+      "should_reject": [
+        "Disabled vessel position on channel 12",
+        "Distressed vessel position on channel 16",
+        "Disabled vessel destination on channel 16"
+      ]
+    },
+    {
+      "id": "phrase_urgency_eta_harbour_1400_001",
+      "target_text": "ETA harbour 1400 UTC",
+      "should_accept": [
+        "ETA harbour 1400 UTC",
+        "eta harbour 1400z",
+        "ETA harbour 1400 Zulu",
+        "ETA harbour one four zero zero UTC",
+        "ETA harbour one four zero zero Zulu"
+      ],
+      "should_reject": [
+        "ETA harbour 1500 UTC",
+        "ETA marina 1400 UTC",
+        "Position harbour 1400 UTC"
+      ]
+    },
+    {
+      "id": "phrase_urgency_drifting_east_001",
+      "target_text": "Drifting east",
+      "should_accept": [
+        "Drifting east",
+        "DRIFTING EAST",
+        "drifting east."
+      ],
+      "should_reject": [
+        "Drifting west",
+        "Proceeding east",
+        "Adrift east"
+      ]
+    },
+    {
+      "id": "phrase_urgency_reduced_power_harbour_001",
+      "target_text": "Proceeding to harbour under reduced power",
+      "should_accept": [
+        "Proceeding to harbour under reduced power",
+        "proceeding to the harbour under reduced power",
+        "PROCEEDING TO HARBOUR UNDER REDUCED POWER"
+      ],
+      "should_reject": [
+        "Proceeding to marina under reduced power",
+        "Proceeding to harbour without power",
+        "Requesting harbour under reduced power"
+      ]
+    },
+    {
+      "id": "phrase_urgency_received_message_001",
+      "target_text": "Urgency message received",
+      "should_accept": [
+        "Urgency message received",
+        "received urgency message",
+        "URGENCY MESSAGE RECEIVED"
+      ],
+      "should_reject": [
+        "Safety message received",
+        "Distress message received",
+        "Urgency call received"
+      ]
+    },
+    {
+      "id": "phrase_urgency_stand_by_channel_16_001",
+      "target_text": "Stand by on channel 16",
+      "should_accept": [
+        "Stand by on channel 16",
+        "stand by on channel one six",
+        "STAND BY ON CHANNEL 16"
+      ],
+      "should_reject": [
+        "Stand by on channel 12",
+        "Keep listening watch on channel 16",
+        "Go ahead on channel 16"
+      ]
+    },
+    {
+      "id": "phrase_urgency_read_back_details_001",
+      "target_text": "Read back Pan-Pan details",
+      "should_accept": [
+        "Read back Pan-Pan details",
+        "readback pan pan details",
+        "READ BACK PAN-PAN DETAILS"
+      ],
+      "should_reject": [
+        "Say again Pan-Pan details",
+        "Read back Mayday details",
+        "Read back Securite details"
+      ]
+    }
+  ],
+  "matcher_suggestions": [
+    "Use this file as a regression seed: every should_accept answer should be correct and every should_reject answer should be wrong.",
+    "Keep dangerous minimal pairs in explicit tests whenever alias or typo logic changes.",
+    "Do not add global aliases that collapse Sea Speak distinctions, especially port/starboard, stern/astern, over/out, roger/affirmative, channel digits, heading digits, or ETA digits.",
+    "The typo layer should reject tokens containing digits when the expected token also contains digits but is not identical, for example 1500Z versus 1400Z.",
+    "The safety signal Securite/Sécurité should not accept the ordinary English word security as a spelling variant.",
+    "Marker nouns must not accept verb-form lookalikes through typo matching, for example advice versus advise.",
+    "Harbour lookalikes must not pass through typo matching: berth versus birth, fender versus finder, and fenders versus finders.",
+    "Keep compact berth identifiers such as B12 rejected until alphanumeric berth matching is intentionally designed and regression-tested.",
+    "Navigation reports must keep heading/course/bearing, ETA values, radio numeric forms, units, decimal wording, cardinal directions, port/starboard, and say again/read back boundaries protected."
+  ],
+  "current_matcher_findings": [],
+  "resolved_matcher_findings": [
+    {
+      "item_id": "phrase_securite_001",
+      "answer": "security security security",
+      "observed_match_type": "spelling",
+      "expected": "wrong",
+      "resolved_in": "public/api/captain-ether/_answer-matching.php",
+      "reason": "Security is ordinary English and not the Sea Speak safety signal Securite/Sécurité."
+    },
+    {
+      "item_id": "phrase_eta_001",
+      "answer": "1500Z",
+      "observed_match_type": "spelling",
+      "expected": "wrong",
+      "resolved_in": "public/api/captain-ether/_answer-matching.php",
+      "reason": "1500Z changes the ETA from 1400Z; alphanumeric time tokens must not be fuzzy-matched."
+    },
+    {
+      "item_id": "word_core_advice_marker_001",
+      "answer": "advise",
+      "observed_match_type": "spelling",
+      "expected": "wrong",
+      "resolved_in": "public/api/captain-ether/_answer-matching.php",
+      "reason": "Advice is the message-marker noun; advise is a verb-form lookalike and must not pass through typo matching."
+    },
+    {
+      "item_id": "word_marina_berth_001",
+      "answer": "birth",
+      "observed_match_type": "spelling",
+      "expected": "wrong",
+      "resolved_in": "public/api/captain-ether/_answer-matching.php",
+      "reason": "Berth is a marina place; birth is an unrelated ordinary English word."
+    },
+    {
+      "item_id": "expr_marina_request_berth_001",
+      "answer": "request birth",
+      "observed_match_type": "spelling",
+      "expected": "wrong",
+      "resolved_in": "public/api/captain-ether/_answer-matching.php",
+      "reason": "Request birth changes the trained berth-request meaning."
+    },
+    {
+      "item_id": "word_marina_fender_001",
+      "answer": "finder",
+      "observed_match_type": "spelling",
+      "expected": "wrong",
+      "resolved_in": "public/api/captain-ether/_answer-matching.php",
+      "reason": "Fender is the trained mooring equipment; finder is an unrelated word."
+    },
+    {
+      "item_id": "expr_marina_prepare_fenders_001",
+      "answer": "prepare finders",
+      "observed_match_type": "spelling",
+      "expected": "wrong",
+      "resolved_in": "public/api/captain-ether/_answer-matching.php",
+      "reason": "Finders changes the trained fenders equipment term."
+    },
+    {
+      "item_id": "phrase_marina_prepare_fenders_port_001",
+      "answer": "prepare finders on port side",
+      "observed_match_type": "spelling",
+      "expected": "wrong",
+      "resolved_in": "public/api/captain-ether/_answer-matching.php",
+      "reason": "Finders changes the trained fenders equipment term."
+    }
+  ]
+}

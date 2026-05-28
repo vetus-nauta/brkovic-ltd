@@ -47,6 +47,8 @@ Repository files are the source of truth. Chat history is dispatch, not memory.
 
 This phase is MVP stabilization, not redesign. Interface changes require Director/owner approval. UX may report and propose corrections, but must not independently rework the interface. Functional completion work before release starts only inside NavDesk tools/functions unless a new Director task says otherwise.
 
+Background agents must run under Director watcher control: every active agent is recorded, checked on a timer during the chat turn, and closed only after its report is inspected.
+
 ```text
 docs/brkovic_ltd_project_office/director-reports/2026-05-27-mvp-stabilization-order.md
 ```

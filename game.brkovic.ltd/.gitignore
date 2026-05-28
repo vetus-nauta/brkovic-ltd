@@ -1,0 +1,4 @@
+private/config.php
+storage/*
+!storage/.gitkeep
+

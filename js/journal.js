@@ -41,6 +41,12 @@ let lightboxJustClosedAt = 0;
     return tr[key] || fallback || key;
   }
 
+  function tf(key, fallback, values = {}) {
+    return t(key, fallback).replace(/\{([a-zA-Z0-9_]+)\}/g, (match, name) => {
+      return Object.prototype.hasOwnProperty.call(values, name) ? String(values[name]) : match;
+    });
+  }
+
   function readJson(key, fallback) {
     try {
       return JSON.parse(localStorage.getItem(key)) || fallback;
@@ -539,22 +545,22 @@ let lightboxJustClosedAt = 0;
     if (title) {
       title.textContent = singleMode
         ? (singleModeKind === 'collection'
-          ? (getLang() === 'ru' ? 'Многостраничная запись' : 'Multi-page entry')
-          : (getLang() === 'ru' ? 'Запись судового журнала' : 'Journal entry'))
-        : (getLang() === 'ru' ? 'Заметки с морей' : 'Notes from the seas');
+          ? t('journal_single_collection_title', 'Multi-page entry')
+          : t('journal_single_entry_title', 'Journal entry'))
+        : t('journal_feed_title', 'Notes from the seas');
     }
 
     if (eyebrow) {
       eyebrow.textContent = singleMode
         ? (singleModeKind === 'collection'
-          ? (getLang() === 'ru' ? 'Серия' : 'Series')
-          : (getLang() === 'ru' ? 'Запись' : 'Entry'))
-        : (getLang() === 'ru' ? 'Судовой журнал' : 'Deck Log');
+          ? t('journal_single_collection_eyebrow', 'Series')
+          : t('journal_single_entry_eyebrow', 'Entry'))
+        : t('journal_feed_eyebrow', 'Deck Log');
     }
 
     const backLink = document.querySelector('#journalSingleBack a');
     if (backLink) {
-      backLink.textContent = getLang() === 'ru' ? '← Назад в журнал' : '← Back to journal';
+      backLink.textContent = t('journal_back_to_journal', '← Back to journal');
     }
   }
 
@@ -566,23 +572,23 @@ let lightboxJustClosedAt = 0;
   }
 
   function fixJournalUiLabels(singleMode) {
-    if (getLang() !== 'ru') return;
-
     const title = document.getElementById('journalFeedTitle');
     const eyebrow = document.getElementById('journalFeedEyebrow');
 
     if (title) {
       title.textContent = singleMode
         ? (singleModeKind === 'collection'
-          ? '\u041c\u043d\u043e\u0433\u043e\u0441\u0442\u0440\u0430\u043d\u0438\u0447\u043d\u0430\u044f \u0437\u0430\u043f\u0438\u0441\u044c'
-          : '\u0417\u0430\u043f\u0438\u0441\u044c \u0441\u0443\u0434\u043e\u0432\u043e\u0433\u043e \u0436\u0443\u0440\u043d\u0430\u043b\u0430')
-        : '\u0417\u0430\u043c\u0435\u0442\u043a\u0438 \u0441 \u043c\u043e\u0440\u0435\u0439';
+          ? t('journal_single_collection_title', 'Multi-page entry')
+          : t('journal_single_entry_title', 'Journal entry'))
+        : t('journal_feed_title', 'Notes from the seas');
     }
 
     if (eyebrow) {
       eyebrow.textContent = singleMode
-        ? (singleModeKind === 'collection' ? '\u0421\u0435\u0440\u0438\u044f' : '\u0417\u0430\u043f\u0438\u0441\u044c')
-        : '\u0421\u0443\u0434\u043e\u0432\u043e\u0439 \u0436\u0443\u0440\u043d\u0430\u043b';
+        ? (singleModeKind === 'collection'
+          ? t('journal_single_collection_eyebrow', 'Series')
+          : t('journal_single_entry_eyebrow', 'Entry'))
+        : t('journal_feed_eyebrow', 'Deck Log');
     }
   }
 
@@ -594,10 +600,9 @@ let lightboxJustClosedAt = 0;
   }
 
   function groupNavMarkup(total, position) {
-    const isRu = getLang() === 'ru';
-    const progress = isRu ? `Часть 1 из ${total}` : `Part 1 of ${total}`;
-    const prev = isRu ? 'Начало записи' : 'Start of entry';
-    const next = isRu ? 'Продолжить запись: часть 2' : 'Continue entry: part 2';
+    const progress = tf('journal_group_progress_template', 'Part {current} of {total}', { current: 1, total });
+    const prev = t('journal_group_start', 'Start of entry');
+    const next = tf('journal_group_continue_part_template', 'Continue entry: part {part}', { part: 2 });
 
     return `
       <div class="journal-group-card__nav journal-group-card__nav--${position}" data-group-nav>
@@ -689,15 +694,14 @@ let lightboxJustClosedAt = 0;
 
       const labelForState = (index) => {
         const total = slides.length;
-        const isRu = getLang() === 'ru';
         return {
-          progress: isRu ? `Часть ${index + 1} из ${total}` : `Part ${index + 1} of ${total}`,
+          progress: tf('journal_group_progress_template', 'Part {current} of {total}', { current: index + 1, total }),
           prev: index > 0
-            ? (isRu ? `К части ${index}` : `Back to part ${index}`)
-            : (isRu ? 'Начало записи' : 'Start of entry'),
+            ? tf('journal_group_back_part_template', 'Back to part {part}', { part: index })
+            : t('journal_group_start', 'Start of entry'),
           next: index < total - 1
-            ? (isRu ? `Продолжить запись: часть ${index + 2}` : `Continue entry: part ${index + 2}`)
-            : (isRu ? 'Продолжение прочитано' : 'Continuation read')
+            ? tf('journal_group_continue_part_template', 'Continue entry: part {part}', { part: index + 2 })
+            : t('journal_group_read', 'Continuation read')
         };
       };
 
@@ -795,19 +799,19 @@ let lightboxJustClosedAt = 0;
     root.hidden = true;
     root.innerHTML = `
       <div class="journal-lightbox__backdrop" data-lightbox-close="true"></div>
-      <div class="journal-lightbox__dialog" role="dialog" aria-modal="true" aria-label="Image viewer">
+      <div class="journal-lightbox__dialog" role="dialog" aria-modal="true" aria-label="${escapeHtml(t('journal_lightbox_label', 'Image viewer'))}">
         <div class="journal-lightbox__topbar">
           <div>
             <div class="journal-lightbox__counter" id="journalLightboxCounter"></div>
             <div class="journal-lightbox__caption" id="journalLightboxCaption"></div>
           </div>
-          <button class="journal-lightbox__close" type="button" id="journalLightboxClose" aria-label="Close">×</button>
+          <button class="journal-lightbox__close" type="button" id="journalLightboxClose" aria-label="${escapeHtml(t('a11y_close', 'Close'))}">×</button>
         </div>
         <div class="journal-lightbox__frame">
           <img class="journal-lightbox__image" id="journalLightboxImage" alt="" />
           <div class="journal-lightbox__controls">
-            <button class="journal-lightbox__nav journal-lightbox__nav--prev" type="button" id="journalLightboxPrev" aria-label="Previous">‹</button>
-            <button class="journal-lightbox__nav journal-lightbox__nav--next" type="button" id="journalLightboxNext" aria-label="Next">›</button>
+            <button class="journal-lightbox__nav journal-lightbox__nav--prev" type="button" id="journalLightboxPrev" aria-label="${escapeHtml(t('journal_lightbox_previous', 'Previous'))}">‹</button>
+            <button class="journal-lightbox__nav journal-lightbox__nav--next" type="button" id="journalLightboxNext" aria-label="${escapeHtml(t('journal_lightbox_next', 'Next'))}">›</button>
           </div>
         </div>
       </div>
@@ -999,7 +1003,7 @@ let lightboxJustClosedAt = 0;
     card.innerHTML = `
       <div class="journal-post__meta">
         <div>
-          <p class="journal-post__eyebrow">${escapeHtml(lang === 'ru' ? 'Многостраничная запись' : 'Multi-page entry')}</p>
+          <p class="journal-post__eyebrow">${escapeHtml(t('journal_single_collection_title', 'Multi-page entry'))}</p>
           <h3 class="journal-post__title">
             <a href="journal.html?collection=${encodeURIComponent(collection.slug)}">${escapeHtml(title)}</a>
           </h3>
@@ -1016,11 +1020,11 @@ let lightboxJustClosedAt = 0;
       ` : ''}
       <div class="journal-post__actions">
         <div class="journal-post__left">
-          <span class="journal-collection-cover__count">${escapeHtml(lang === 'ru' ? `Глав: ${collection.pagesCount || pages.length}` : `Chapters: ${collection.pagesCount || pages.length}`)}</span>
+          <span class="journal-collection-cover__count">${escapeHtml(tf('journal_collection_chapters_count_template', 'Chapters: {count}', { count: collection.pagesCount || pages.length }))}</span>
         </div>
         <div class="journal-post__right">
           <a class="journal-action journal-collection-cover__open" href="journal.html?collection=${encodeURIComponent(collection.slug)}">
-            ${escapeHtml(lang === 'ru' ? 'Открыть главы' : 'Open chapters')}
+            ${escapeHtml(t('journal_collection_open_chapters', 'Open chapters'))}
           </a>
         </div>
       </div>
@@ -1135,16 +1139,26 @@ let lightboxJustClosedAt = 0;
 
   function renderCollectionBookPage(page, index, total, lang) {
     const partLabel = page.partTotal > 1
-      ? (lang === 'ru' ? ` · лист ${page.partIndex + 1}/${page.partTotal}` : ` · sheet ${page.partIndex + 1}/${page.partTotal}`)
+      ? tf('journal_collection_part_label_template', ' · sheet {current}/{total}', {
+        current: page.partIndex + 1,
+        total: page.partTotal
+      })
       : '';
-    const progressLabel = lang === 'ru'
-      ? `Часть ${page.chapterIndex + 1}${partLabel} · ${index + 2} из ${total + 1}`
-      : `Part ${page.chapterIndex + 1}${partLabel} · ${index + 2} of ${total + 1}`;
+    const progressLabel = tf('journal_collection_page_progress_template', 'Part {chapter}{partLabel} · {page} of {total}', {
+      chapter: page.chapterIndex + 1,
+      partLabel,
+      page: index + 2,
+      total: total + 1
+    });
+    const partTitle = tf('journal_collection_part_title_template', 'Part {chapter}{partLabel}', {
+      chapter: page.chapterIndex + 1,
+      partLabel
+    });
 
     return `
       <section class="journal-collection-page" id="chapter-${page.chapterIndex + 1}-${page.partIndex + 1}" data-collection-page data-book-label="${escapeHtml(progressLabel)}">
         <div class="journal-collection-page__head">
-          <p class="journal-post__eyebrow">${escapeHtml(lang === 'ru' ? `Часть ${page.chapterIndex + 1}${partLabel}` : `Part ${page.chapterIndex + 1}${partLabel}`)}</p>
+          <p class="journal-post__eyebrow">${escapeHtml(partTitle)}</p>
           <h4>${escapeHtml(page.title)}</h4>
           ${page.date ? `<time>${escapeHtml(formatDate(page.date))}</time>` : ''}
         </div>
@@ -1157,7 +1171,7 @@ let lightboxJustClosedAt = 0;
   function collectionCoverArtMarkup(collection, title, excerpt, lang) {
     const image = (collection.media || []).find((item) => item.type === 'image' && item.src);
     const author = collection.authorLine || 'Vetus Nauta - Brkovic';
-    const kicker = lang === 'ru' ? 'Многостраничная запись' : 'Multi-page entry';
+    const kicker = t('journal_single_collection_title', 'Multi-page entry');
     const date = collection.date ? formatDate(collection.date) : '';
 
     return `
@@ -1192,9 +1206,7 @@ let lightboxJustClosedAt = 0;
       return `<li><span>${escapeHtml(String(index + 1))}</span>${escapeHtml(pageTitle)}</li>`;
     }).join('');
     const totalBookPages = bookPages.length + 1;
-    const firstProgress = lang === 'ru'
-      ? `Обложка · 1 из ${totalBookPages}`
-      : `Cover · 1 of ${totalBookPages}`;
+    const firstProgress = tf('journal_collection_cover_progress_template', 'Cover · 1 of {total}', { total: totalBookPages });
     const coverArt = collectionCoverArtMarkup(collection, title, excerpt, lang);
 
     const article = document.createElement('article');
@@ -1206,11 +1218,11 @@ let lightboxJustClosedAt = 0;
         <div class="journal-collection-book__nav">
           <button class="journal-collection-book__button" type="button" data-collection-step="-1" disabled>
             <span aria-hidden="true">‹</span>
-            ${escapeHtml(lang === 'ru' ? 'Назад' : 'Back')}
+            ${escapeHtml(t('journal_collection_back', 'Back'))}
           </button>
           <div class="journal-collection-book__progress" data-collection-progress>${escapeHtml(firstProgress)}</div>
           <button class="journal-collection-book__button" type="button" data-collection-step="1">
-            ${escapeHtml(lang === 'ru' ? 'Дальше' : 'Next')}
+            ${escapeHtml(t('journal_collection_next', 'Next'))}
             <span aria-hidden="true">›</span>
           </button>
         </div>
@@ -1220,7 +1232,7 @@ let lightboxJustClosedAt = 0;
               ${coverArt}
               <div class="journal-collection-cover-index">
                 <div class="journal-collection-single__meta">
-                  <span>${escapeHtml(lang === 'ru' ? `Глав: ${collection.pagesCount || collection.pages?.length || 0}` : `Chapters: ${collection.pagesCount || collection.pages?.length || 0}`)}</span>
+                  <span>${escapeHtml(tf('journal_collection_chapters_count_template', 'Chapters: {count}', { count: collection.pagesCount || collection.pages?.length || 0 }))}</span>
                 </div>
                 ${pageList ? `
                   <ol class="journal-collection-cover__pages journal-collection-cover__pages--book">
@@ -1339,7 +1351,7 @@ let lightboxJustClosedAt = 0;
             ${(() => {
               const noteNumber = getPostNumberBySlug(entries, entry.slug);
               return noteNumber
-                ? `<div class="journal-note-number"><span>${escapeHtml(getLang() === 'ru' ? 'Заметка' : 'Note')}</span><span class="journal-note-number__value">№ ${noteNumber}</span></div>`
+                ? `<div class="journal-note-number"><span>${escapeHtml(t('journal_note_label', 'Note'))}</span><span class="journal-note-number__value">№ ${noteNumber}</span></div>`
                 : `<p class="journal-post__eyebrow">${escapeHtml(t('journal_post_meta', 'Ship log entry'))}</p>`;
             })()}
             <h3 class="journal-post__title">
@@ -1386,7 +1398,7 @@ let lightboxJustClosedAt = 0;
       const noteValueNode = card.querySelector('.journal-note-number__value');
       const noteNumber = getPostNumberBySlug(entries, entry.slug);
       if (noteLabelNode) {
-        noteLabelNode.textContent = getLang() === 'ru' ? '\u0417\u0430\u043c\u0435\u0442\u043a\u0430' : 'Note';
+        noteLabelNode.textContent = t('journal_note_label', 'Note');
       }
       if (noteValueNode && noteNumber) {
         noteValueNode.textContent = `\u2116 ${noteNumber}`;
@@ -1786,9 +1798,9 @@ let lightboxJustClosedAt = 0;
         if (!authorName || !content || !slug) return;
 
         if (statusNode) {
-          statusNode.textContent = getLang() === 'ru'
+          statusNode.textContent = t('journal_comment_submitting', getLang() === 'ru'
             ? 'Отправка комментария...'
-            : 'Submitting comment...';
+            : 'Submitting comment...');
         }
 
         try {
@@ -1801,15 +1813,11 @@ let lightboxJustClosedAt = 0;
           form.reset();
 
           if (statusNode) {
-            statusNode.textContent = getLang() === 'ru'
-              ? 'Комментарий отправлен и ожидает модерации.'
-              : 'Comment submitted and awaiting moderation.';
+            statusNode.textContent = t('journal_comment_submitted', 'Comment submitted and awaiting moderation.');
           }
         } catch (error) {
           if (statusNode) {
-            statusNode.textContent = getLang() === 'ru'
-              ? 'Не удалось отправить комментарий.'
-              : 'Failed to submit comment.';
+            statusNode.textContent = t('journal_comment_failed', 'Failed to submit comment.');
           }
         }
       };
@@ -1888,6 +1896,14 @@ let lightboxJustClosedAt = 0;
     return document.documentElement.lang === 'ru';
   }
 
+  function tUi(key, fallback) {
+    if (window.BRKOVIC_LANGUAGE && typeof window.BRKOVIC_LANGUAGE.t === 'function') {
+      const value = window.BRKOVIC_LANGUAGE.t(key, fallback);
+      if (value && value !== key) return value;
+    }
+    return (window.__BRKOVIC_TRANSLATIONS && window.__BRKOVIC_TRANSLATIONS[key]) || fallback;
+  }
+
   function polishNavDeskCard() {
     const navCard = document.querySelector('.journal-card--navdesk');
     if (!navCard) return;
@@ -1900,14 +1916,17 @@ let lightboxJustClosedAt = 0;
     navCard.removeAttribute('role');
     navCard.removeAttribute('tabindex');
     navCard.removeAttribute('aria-expanded');
-    navCard.setAttribute('aria-label', isRu() ? 'Открыть штурманский стол' : 'Open Nav Desk');
+    navCard.setAttribute('aria-label', tUi('journal_navdesk_cta', isRu() ? 'Открыть штурманский стол' : 'Open Nav Desk'));
 
-    if (navEyebrow) navEyebrow.textContent = isRu() ? 'Штурманский стол' : 'Nav Desk';
-    if (navTitle) navTitle.textContent = isRu() ? 'Практические инструменты' : 'Practical tools';
+    if (navEyebrow) navEyebrow.textContent = tUi('journal_navdesk_eyebrow', isRu() ? 'Штурманский стол' : 'Nav Desk');
+    if (navTitle) navTitle.textContent = tUi('journal_navdesk_title', isRu() ? 'Практические инструменты' : 'Practical tools');
     if (navIntro) {
-      navIntro.textContent = isRu()
-        ? 'Расчёты для перехода, топлива, времени, приливов и навигационного планирования.'
-        : 'Calculations for passage, fuel, timing, tides and navigation planning.';
+      navIntro.textContent = tUi(
+        'journal_navdesk_intro',
+        isRu()
+          ? 'Расчёты для перехода, топлива, времени, приливов и навигационного планирования.'
+          : 'Calculations for passage, fuel, timing, tides and navigation planning.'
+      );
     }
   }
 

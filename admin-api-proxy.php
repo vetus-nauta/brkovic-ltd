@@ -38,6 +38,8 @@ $allowed = [
     '#^/admin/posts(?:/[^?]*)?$#',
     '#^/admin/journal-groups(?:/[^?]*)?$#',
     '#^/admin/journal-collections(?:/[^?]*)?$#',
+    '#^/admin/posts/[^/]+/translations(?:/.+)?$#',
+    '#^/admin/journal-collections/[^/]+/translations(?:/.+)?$#',
     '#^/admin/comments(?:/[^?]*)?$#',
     '#^/admin/gps/rebuild$#',
 ];

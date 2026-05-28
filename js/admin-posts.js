@@ -2,9 +2,7 @@
   const IS_LOCAL = ['brkovic-local.local', '127.0.0.1', 'localhost'].includes(window.location.hostname);
   const API_ORIGIN = IS_LOCAL ? 'https://brkovic.ltd' : '';
   const API_BASE = IS_LOCAL ? '/admin-api-proxy.php?path=' : '/api';
-  const STORAGE_TRANSLATIONS = 'brkovic_admin_translations_v1';
   const STORAGE_ADVANCED_OPEN = 'brkovic_admin_posts_advanced_open_v1';
-  const TRANSLATE_CHUNK_LIMIT = 450;
   const COLLECTION_AUTHOR_DEFAULT = 'Vetus Nauta - Brkovic';
 
   let isLoggedIn = false;
@@ -17,8 +15,11 @@
   let groupSelect = null;
   let groupOrderInput = null;
   let collectionsCache = [];
+  let postTranslationRows = [];
+  let collectionTranslationRows = [];
   let currentCollectionId = '';
   let collectionSlugTouched = false;
+  let isAiGenerationRouteEnabled = true;
 
   const statusNode = document.getElementById('adminPostsStatus');
   const postsListNode = document.getElementById('adminPostsList');
@@ -31,7 +32,12 @@
   const mediaStatusNode = document.getElementById('mediaUploadStatus');
   const mediaListNode = document.getElementById('mediaList');
   const openPublicLink = document.getElementById('openPublicPostLink');
-  const generateEnBtn = document.getElementById('generateEnBtn');
+  const generateAiPostTranslationsBtn = document.getElementById('generateAiPostTranslationsBtn');
+  const generateAiPostMissingTranslationsBtn = document.getElementById('generateAiPostMissingTranslationsBtn');
+  const postAiTranslationStatus = document.getElementById('postAiTranslationStatus');
+  const refreshPostAiTranslationStatusBtn = document.getElementById('refreshPostAiTranslationStatusBtn');
+  const postIncludeSeoInput = document.getElementById('postTranslationIncludeSeo');
+  const postIncludeMediaInput = document.getElementById('postTranslationIncludeMedia');
   const slugInput = document.getElementById('slug');
   const titleRuInput = document.getElementById('titleRu');
   const advancedToggleBtn = document.getElementById('toggleAdvancedFields');
@@ -46,6 +52,12 @@
   const collectionSlugInput = document.getElementById('collectionSlug');
   const saveCollectionBtn = document.getElementById('saveCollectionBtn');
   const openPublicCollectionLink = document.getElementById('openPublicCollectionLink');
+  const generateAiCollectionTranslationsBtn = document.getElementById('generateAiCollectionTranslationsBtn');
+  const generateAiMissingCollectionTranslationsBtn = document.getElementById('generateAiMissingCollectionTranslationsBtn');
+  const collectionAiTranslationStatus = document.getElementById('collectionAiTranslationStatus');
+  const refreshCollectionAiTranslationStatusBtn = document.getElementById('refreshCollectionAiTranslationStatusBtn');
+  const collectionIncludeSeoInput = document.getElementById('collectionTranslationIncludeSeo');
+  const collectionIncludeMediaInput = document.getElementById('collectionTranslationIncludeMedia');
 
   let archiveToggleBtn = document.getElementById('toggleArchiveBtn');
 
@@ -83,6 +95,181 @@
       collectionsStatusNode.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     }
   }
+  function setTranslationStatusNode(node, text, tone = 'info') {
+    if (!node) return;
+
+    node.classList.remove(
+      'translation-status--success',
+      'translation-status--warning',
+      'translation-status--error',
+      'translation-status--info',
+    );
+
+    if (!text) {
+      node.textContent = '';
+      return;
+    }
+
+    const toneClass = `translation-status--${tone === 'error' ? 'error' : tone === 'warning' ? 'warning' : tone === 'success' ? 'success' : 'info'}`;
+    node.classList.add(toneClass);
+
+    const icon = tone === 'success' ? '✅ '
+      : tone === 'warning' ? '⚠️ '
+      : tone === 'error' ? '❌ '
+      : 'ℹ️ ';
+    node.textContent = `${icon}${text || ''}`;
+  }
+  function setAiGenerationUnavailableStatus(message) {
+    const text = message
+      || 'Backend API сейчас не поддерживает AI-генерацию локализаций. Ожидает backend-интеграции.';
+
+    isAiGenerationRouteEnabled = false;
+    setPostTranslationStatus(text, 'error');
+    setCollectionTranslationStatus(text, 'error');
+    updateTranslationStatusButtonStates();
+  }
+  function isAiGenerationRouteError(error) {
+    const message = String(error?.message || '').toLowerCase();
+    const status = Number(error?.status || 0);
+    return status === 404
+      || message.includes('cannot get /api/admin/posts/')
+      || message.includes('cannot get /api/admin/journal-collections/')
+      || message.includes('cannot post /api/admin/posts/')
+      || message.includes('cannot post /api/admin/journal-collections/')
+      || message.includes('cannot post /api/admin/journal-ai/translations/generate');
+  }
+  function setPostTranslationStatus(text, tone = 'info') {
+    setTranslationStatusNode(postAiTranslationStatus, text, tone);
+  }
+  function setCollectionTranslationStatus(text, tone = 'info') {
+    setTranslationStatusNode(collectionAiTranslationStatus, text, tone);
+  }
+  function updateTranslationStatusButtonStates() {
+    const disabledByBackend = !isAiGenerationRouteEnabled;
+    if (refreshPostAiTranslationStatusBtn) {
+      refreshPostAiTranslationStatusBtn.disabled = !isLoggedIn || !currentPostId;
+    }
+    if (generateAiPostMissingTranslationsBtn) {
+      generateAiPostMissingTranslationsBtn.disabled = !isLoggedIn || !currentPostId || disabledByBackend;
+      if (generateAiPostTranslationsBtn) {
+        generateAiPostTranslationsBtn.disabled = !isLoggedIn || !currentPostId || disabledByBackend;
+      }
+    }
+    if (refreshCollectionAiTranslationStatusBtn) {
+      refreshCollectionAiTranslationStatusBtn.disabled = !isLoggedIn || !currentCollectionId;
+    }
+    if (generateAiMissingCollectionTranslationsBtn) {
+      generateAiMissingCollectionTranslationsBtn.disabled = !isLoggedIn || !currentCollectionId || disabledByBackend;
+      if (generateAiCollectionTranslationsBtn) {
+        generateAiCollectionTranslationsBtn.disabled = !isLoggedIn || !currentCollectionId || disabledByBackend;
+      }
+    }
+  }
+  function mapTranslationStatus(status) {
+    const normalized = (status || 'DRAFT').toUpperCase();
+    if (normalized === 'NEEDS_REVIEW') return 'на проверке';
+    if (normalized === 'PUBLISHED') return 'опубликован';
+    if (normalized === 'DRAFT') return 'черновик';
+    if (normalized === 'MISSING') return 'нет локализации';
+    if (normalized === 'FAILED') return 'ошибка';
+    return normalized.toLowerCase();
+  }
+
+  function normalizeStatusValue(status) {
+    return (status || 'DRAFT').toString().trim().toUpperCase();
+  }
+
+  function translationRowTone(translations) {
+    if (!Array.isArray(translations) || !translations.length) {
+      return 'info';
+    }
+
+    const hasFailed = translations.some((item) => normalizeStatusValue(item?.status) === 'FAILED');
+    const hasMissing = translations.some((item) => {
+      const status = normalizeStatusValue(item?.status);
+      return status === 'MISSING';
+    });
+
+    if (hasFailed) return 'error';
+    if (hasMissing) return 'warning';
+    return 'success';
+  }
+
+  function translationGenerationTone(items) {
+    if (!Array.isArray(items) || !items.length) {
+      return 'warning';
+    }
+
+    const hasFailed = items.some((item) => item?.status && normalizeStatusValue(item.status) === 'FAILED');
+    const hasError = items.some((item) => item?.error);
+    if (hasError || hasFailed) return 'error';
+
+    const allSkipped = items.every((item) => item?.skipped);
+    if (allSkipped) return 'warning';
+    return 'success';
+  }
+
+  function normalizeLanguage(value) {
+    return (value || '').toString().trim().toLowerCase();
+  }
+
+  function getTargetLanguagesFromSelection(scopeName) {
+    return collectCheckedLanguages(scopeName);
+  }
+
+  function getExistingTranslationMap(existingTranslations) {
+    const byLanguage = new Map();
+    if (!Array.isArray(existingTranslations)) return byLanguage;
+
+    existingTranslations.forEach((translation) => {
+      const lang = normalizeLanguage(translation?.language);
+      if (!lang) return;
+      byLanguage.set(lang, translation?.status || 'DRAFT');
+    });
+    return byLanguage;
+  }
+
+  function buildTranslationStatusSummary(translations) {
+    if (!Array.isArray(translations) || !translations.length) {
+      return 'Локализации пока не создавались.';
+    }
+
+    const parts = translations
+      .map((item) => `${item.language?.trim() || '—'}:${mapTranslationStatus(item.status)}`)
+      .filter((line) => line && line !== '—:нет локализации')
+      .sort((a, b) => a.localeCompare(b));
+
+    if (!parts.length) {
+      return 'Локализации пока не создавались.';
+    }
+
+    const publishedCount = translations.filter((item) => (item?.status || '').toUpperCase() === 'PUBLISHED').length;
+    const draftCount = translations.filter((item) => (item?.status || '').toUpperCase() === 'DRAFT').length;
+    const reviewCount = translations.filter((item) => (item?.status || '').toUpperCase() === 'NEEDS_REVIEW').length;
+    const failedCount = translations.filter((item) => (item?.status || '').toUpperCase() === 'FAILED').length;
+
+    const totals = [];
+    if (publishedCount) totals.push(`опубликовано ${publishedCount}`);
+    if (reviewCount) totals.push(`на проверке ${reviewCount}`);
+    if (draftCount) totals.push(`черновики ${draftCount}`);
+    if (failedCount) totals.push(`ошибки ${failedCount}`);
+    const total = totals.length ? ` (${totals.join(', ')})` : '';
+
+    return `Локализации${total}: ${parts.join(', ')}`;
+  }
+
+  function filterLanguagesForMissingOnly(selectedLanguages, existingTranslations = []) {
+    const selected = Array.isArray(selectedLanguages)
+      ? selectedLanguages
+      : getTargetLanguagesFromSelection(selectedLanguages);
+    if (!Array.isArray(existingTranslations) || !existingTranslations.length) return selected;
+
+    const statusByLanguage = getExistingTranslationMap(existingTranslations);
+    return selected.filter((language) => {
+      const normalized = normalizeLanguage(language);
+      return statusByLanguage.get(normalized)?.toUpperCase() !== 'PUBLISHED';
+    });
+  }
 
   function setCollectionSaving(isSaving) {
     if (!saveCollectionBtn) return;
@@ -92,6 +279,7 @@
   function setLoggedInUI(loggedIn) {
     isLoggedIn = loggedIn;
     if (loginForm) loginForm.style.display = loggedIn ? 'none' : '';
+    updateTranslationStatusButtonStates();
   }
 
   function advancedValuesFromForm() {
@@ -156,8 +344,6 @@
     try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch { return fallback; }
   }
   function writeJson(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
-  function getTranslationsCache() { return readJson(STORAGE_TRANSLATIONS, {}); }
-  function saveTranslationsCache(value) { writeJson(STORAGE_TRANSLATIONS, value); }
 
   function translitRuToLatin(value) {
     const map = { а:'a', б:'b', в:'v', г:'g', д:'d', е:'e', ё:'e', ж:'zh', з:'z', и:'i', й:'y', к:'k', л:'l', м:'m', н:'n', о:'o', п:'p', р:'r', с:'s', т:'t', у:'u', ф:'f', х:'h', ц:'ts', ч:'ch', ш:'sh', щ:'sch', ъ:'', ы:'y', ь:'', э:'e', ю:'yu', я:'ya' };
@@ -187,143 +373,58 @@
     return status || '';
   }
 
-  async function translateFree(text, targetLang) {
-    const normalized = (text || '').trim();
-    if (!normalized) return '';
-    const cacheKey = `${targetLang}::${normalized}`;
-    const cache = getTranslationsCache();
-    if (cache[cacheKey]) return cache[cacheKey];
-
-    const attempts = [
-      () => fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(normalized)}&langpair=ru|${targetLang}`)
-        .then((r) => r.ok ? r.json() : Promise.reject()).then((data) => data?.responseData?.translatedText || ''),
-      () => fetch('https://libretranslate.de/translate', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ q: normalized, source: 'ru', target: targetLang, format: 'text' })
-      }).then((r) => r.ok ? r.json() : Promise.reject()).then((data) => data?.translatedText || ''),
-      () => fetch('https://translate.argosopentech.com/translate', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ q: normalized, source: 'ru', target: targetLang, format: 'text' })
-      }).then((r) => r.ok ? r.json() : Promise.reject()).then((data) => data?.translatedText || '')
-    ];
-
-    for (const attempt of attempts) {
-      try {
-        const result = (await attempt()).trim();
-        if (result) {
-          cache[cacheKey] = result;
-          saveTranslationsCache(cache);
-          return result;
-        }
-      } catch {}
-    }
-    return normalized;
+  function collectCheckedLanguages(scopeName) {
+    return Array.from(document.querySelectorAll(`input[name="${scopeName}"]`))
+      .filter((checkbox) => checkbox.checked)
+      .map((checkbox) => checkbox.value.toLowerCase().trim())
+      .filter((value, index, all) => value && all.indexOf(value) === index);
   }
 
-  function splitTextIntoChunks(text, limit = TRANSLATE_CHUNK_LIMIT) {
-    const input = (text || '').trim();
-    if (!input) return [];
-    const paragraphs = input.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
-    const chunks = [];
+  function collectAiTranslationPayload(scopeName, includeSeoCheckbox, includeMediaCheckbox) {
+    const targetLanguages = collectCheckedLanguages(scopeName);
+    return {
+      sourceLanguage: 'ru',
+      targetLanguages,
+      includeMedia: includeMediaCheckbox?.checked !== false,
+      includeSeo: includeSeoCheckbox?.checked !== false,
+    };
+  }
 
-    function splitLongParagraph(paragraph) {
-      const sentences = paragraph.match(/[^.!?\n]+[.!?\n]?/g) || [paragraph];
-      const localChunks = [];
-      let current = '';
-
-      for (const sentenceRaw of sentences) {
-        const sentence = sentenceRaw.trim();
-        if (!sentence) continue;
-
-        if (!current) {
-          if (sentence.length <= limit) current = sentence;
-          else {
-            const words = sentence.split(/\s+/);
-            let part = '';
-            for (const word of words) {
-              const candidate = part ? `${part} ${word}` : word;
-              if (candidate.length <= limit) part = candidate;
-              else { if (part) localChunks.push(part); part = word; }
-            }
-            if (part) localChunks.push(part);
-            current = '';
-          }
-          continue;
-        }
-
-        const candidate = `${current} ${sentence}`;
-        if (candidate.length <= limit) current = candidate;
-        else {
-          localChunks.push(current);
-          if (sentence.length <= limit) current = sentence;
-          else {
-            const words = sentence.split(/\s+/);
-            let part = '';
-            for (const word of words) {
-              const nextCandidate = part ? `${part} ${word}` : word;
-              if (nextCandidate.length <= limit) part = nextCandidate;
-              else { if (part) localChunks.push(part); part = word; }
-            }
-            current = part;
-          }
-        }
+  function summarizeTranslationResult(items = []) {
+    if (!Array.isArray(items) || !items.length) {
+      return 'Нет языков для генерации или изменений не применено.';
+    }
+    const lines = items.map((item) => {
+      if (item?.skipped) {
+        return `${item.language}: пропущен (${item.reason || 'не применено'})`;
       }
-
-      if (current) localChunks.push(current);
-      return localChunks;
-    }
-
-    for (const paragraph of paragraphs) {
-      if (paragraph.length <= limit) chunks.push(paragraph);
-      else chunks.push(...splitLongParagraph(paragraph));
-    }
-    return chunks;
+      return `${item.language}: ${item.status || 'обновлено'}`;
+    });
+    return `Результат: ${lines.join(', ')}`;
   }
 
-  async function translateLongText(text, targetLang, progressLabel) {
-    const normalized = (text || '').trim();
-    if (!normalized) return '';
-    const chunks = splitTextIntoChunks(normalized, TRANSLATE_CHUNK_LIMIT);
-    if (!chunks.length) return '';
-
-    const translated = [];
-    for (let i = 0; i < chunks.length; i += 1) {
-      setStatus(`${progressLabel}: часть ${i + 1} из ${chunks.length}...`);
-      translated.push(await translateFree(chunks[i], targetLang));
-    }
-    return translated.join('\n\n');
+  function summarizeAndTone(items = []) {
+    const text = summarizeTranslationResult(items);
+    return {
+      text,
+      tone: translationGenerationTone(items),
+    };
   }
 
-  async function generateEnglishFields() {
-    const titleRu = document.getElementById('titleRu').value.trim();
-    const excerptRu = document.getElementById('excerptRu').value.trim();
-    const contentRu = document.getElementById('contentRu').value.trim();
-    const seoTitleRu = document.getElementById('seoTitleRu').value.trim();
-    const seoDescriptionRu = document.getElementById('seoDescriptionRu').value.trim();
-
-    if (!titleRu && !excerptRu && !contentRu && !seoTitleRu && !seoDescriptionRu) {
-      throw new Error('Сначала заполните русские поля.');
+  function setBusy(btn, busy, text) {
+    if (!btn) return;
+    btn.disabled = busy;
+    if (text) {
+      btn.dataset.originalText = text;
     }
-
-    if (titleRu) {
-      setStatus('Переводим заголовок...');
-      document.getElementById('titleEn').value = await translateFree(titleRu, 'en');
+    if (!btn.dataset.originalText) {
+      btn.dataset.originalText = btn.textContent || '';
     }
-    if (excerptRu) {
-      setStatus('Переводим краткое описание...');
-      document.getElementById('excerptEn').value = await translateLongText(excerptRu, 'en', 'Переводим краткое описание');
-    }
-    if (contentRu) {
-      setStatus('Переводим основной текст...');
-      document.getElementById('contentEn').value = await translateLongText(contentRu, 'en', 'Переводим основной текст');
-    }
-    if (seoTitleRu) {
-      setStatus('Переводим SEO Title...');
-      document.getElementById('seoTitleEn').value = await translateFree(seoTitleRu, 'en');
-    }
-    if (seoDescriptionRu) {
-      setStatus('Переводим SEO Description...');
-      document.getElementById('seoDescriptionEn').value = await translateLongText(seoDescriptionRu, 'en', 'Переводим SEO Description');
+    if (busy) {
+      btn.textContent = 'Обрабатываем...';
+    } else {
+      btn.textContent = btn.dataset.originalText;
+      delete btn.dataset.originalText;
     }
   }
 
@@ -336,7 +437,13 @@
 
     const contentType = res.headers.get('content-type') || '';
     const data = contentType.includes('application/json') ? await res.json().catch(() => ({})) : {};
-    if (!res.ok) throw new Error(data?.error?.message || 'Ошибка запроса');
+    if (!res.ok) {
+      const error = new Error(data?.error?.message || `Ошибка запроса (${res.status})`);
+      error.status = res.status;
+      error.path = path;
+      error.body = data;
+      throw error;
+    }
     return data?.data?.data || data?.data || data;
   }
 
@@ -360,6 +467,22 @@
   async function listPosts() { return api('/admin/posts'); }
   async function listGroups() { return api('/admin/journal-groups'); }
   async function listCollections() { return api('/admin/journal-collections'); }
+  async function listPostTranslations(id) { return api(`/admin/posts/${encodeURIComponent(id)}/translations`); }
+  async function listCollectionTranslations(id) { return api(`/admin/journal-collections/${encodeURIComponent(id)}/translations`); }
+  async function generatePostTranslations(id, payload) {
+    return api(`/admin/posts/${encodeURIComponent(id)}/translations/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+  }
+  async function generateCollectionTranslations(id, payload) {
+    return api(`/admin/journal-collections/${encodeURIComponent(id)}/translations/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+  }
   async function createGroup(payload) {
     return api('/admin/journal-groups', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
   }
@@ -553,6 +676,58 @@
       .filter((page) => page.postId);
   }
 
+  async function refreshPostTranslationStatus(postId) {
+    if (!postId || !isLoggedIn) {
+      postTranslationRows = [];
+      setPostTranslationStatus('', 'info');
+      return [];
+    }
+
+    try {
+      const payload = await listPostTranslations(postId);
+      const translations = Array.isArray(payload?.translations) ? payload.translations : [];
+      postTranslationRows = translations;
+      setPostTranslationStatus(
+        buildTranslationStatusSummary(translations),
+        translationRowTone(translations),
+      );
+      return translations;
+    } catch (error) {
+      if (isAiGenerationRouteError(error)) {
+        setAiGenerationUnavailableStatus();
+      }
+      postTranslationRows = [];
+      setPostTranslationStatus('Не удалось загрузить статусы локализаций.', 'error');
+      return [];
+    }
+  }
+
+  async function refreshCollectionTranslationStatus(collectionId) {
+    if (!collectionId || !isLoggedIn) {
+      collectionTranslationRows = [];
+      setCollectionTranslationStatus('', 'info');
+      return [];
+    }
+
+    try {
+      const payload = await listCollectionTranslations(collectionId);
+      const translations = Array.isArray(payload?.translations) ? payload.translations : [];
+      collectionTranslationRows = translations;
+      setCollectionTranslationStatus(
+        buildTranslationStatusSummary(translations),
+        translationRowTone(translations),
+      );
+      return translations;
+    } catch (error) {
+      if (isAiGenerationRouteError(error)) {
+        setAiGenerationUnavailableStatus();
+      }
+      collectionTranslationRows = [];
+      setCollectionTranslationStatus('Не удалось загрузить статусы локализаций.', 'error');
+      return [];
+    }
+  }
+
   function collectCollectionPages() {
     if (!collectionPagesPicker) return [];
 
@@ -650,11 +825,14 @@
         ? `journal.html?collection=${encodeURIComponent(collection.slug)}`
         : 'journal.html';
     }
+    void refreshCollectionTranslationStatus(collection?.id);
+    updateTranslationStatusButtonStates();
   }
 
   function clearCollectionForm() {
     currentCollectionId = '';
     collectionSlugTouched = false;
+    collectionTranslationRows = [];
     collectionForm?.reset();
     document.getElementById('collectionId').value = '';
     document.getElementById('collectionStatus').value = 'DRAFT';
@@ -664,6 +842,8 @@
     document.getElementById('collectionAuthorLine').value = COLLECTION_AUTHOR_DEFAULT;
     renderCollectionPagesPicker([]);
     renderCollectionsList();
+    setCollectionTranslationStatus('');
+    updateTranslationStatusButtonStates();
     if (openPublicCollectionLink) openPublicCollectionLink.href = 'journal.html';
   }
 
@@ -852,6 +1032,8 @@
     }
 
     renderMediaList(post?.media || []);
+    void refreshPostTranslationStatus(post?.id);
+    updateTranslationStatusButtonStates();
     renderPostsList(postsCache);
   }
 
@@ -859,6 +1041,7 @@
     currentPostId = '';
     slugTouched = false;
     currentMediaItems = [];
+    postTranslationRows = [];
     form.reset();
     document.getElementById('postId').value = '';
     document.getElementById('status').value = 'DRAFT';
@@ -874,6 +1057,8 @@
     if (groupOrderInput) groupOrderInput.value = '0';
     mediaListNode.innerHTML = '<div class="admin-post-meta">Сначала сохраните пост, потом загружайте медиа.</div>';
     openPublicLink.href = 'journal.html';
+    setPostTranslationStatus('');
+    updateTranslationStatusButtonStates();
     renderPostsList(postsCache);
   }
 
@@ -925,6 +1110,7 @@
     setStatus('Входим...');
     try {
       await login(email, password);
+      isAiGenerationRouteEnabled = true;
       setLoggedInUI(true);
       setStatus('Вход выполнен. Загружаем посты...');
       await refreshGroups();
@@ -932,6 +1118,12 @@
       updateArchiveButtonLabel();
       renderPostsList(postsCache);
       await refreshCollections(null, { silent: true });
+      if (currentPostId) {
+        void refreshPostTranslationStatus(currentPostId);
+      }
+      if (currentCollectionId) {
+        void refreshCollectionTranslationStatus(currentCollectionId);
+      }
       clearFormForNewPost();
       setStatus('Вы вошли. Можно работать с постами.');
     } catch (error) {
@@ -1007,18 +1199,201 @@
     setAdvancedFieldsExpanded(next);
   });
 
-  generateEnBtn?.addEventListener('click', async () => {
+  generateAiPostTranslationsBtn?.addEventListener('click', async () => {
+    if (!currentPostId) {
+      setStatus('Сначала откройте или создайте пост.');
+      return;
+    }
+
+    const payload = collectAiTranslationPayload(
+      'postTranslationLanguage',
+      postIncludeSeoInput,
+      postIncludeMediaInput,
+    );
+
+    if (!payload.targetLanguages.length) {
+      setStatus('Выберите хотя бы один язык.');
+      setPostTranslationStatus('Не выбраны языки.', 'warning');
+      return;
+    }
+
     try {
-      setStatus('Генерируем английскую версию...');
-      setAdvancedFieldsExpanded(true);
-      generateEnBtn.disabled = true;
-      await generateEnglishFields();
-      updateAdvancedFieldsSummary(true);
-      setStatus('Поля EN сгенерированы из RU.');
+      setBusy(generateAiPostTranslationsBtn, true, generateAiPostTranslationsBtn.textContent);
+      setPostTranslationStatus('Инициируем AI-перевод...', 'info');
+      const response = await generatePostTranslations(currentPostId, payload);
+      const { text, tone } = summarizeAndTone(response?.items || []);
+      setPostTranslationStatus(text, tone);
+      setStatus(`AI-перевод на пост завершен. ${text}`);
+      await refreshPostTranslationStatus(currentPostId);
     } catch (error) {
-      setStatus(error.message || 'Не удалось сгенерировать EN.');
+      if (isAiGenerationRouteError(error)) {
+        setAiGenerationUnavailableStatus();
+      }
+      setPostTranslationStatus(error.message || 'Не удалось сгенерировать локализации.', 'error');
+      setStatus(error.message || 'Не удалось сгенерировать локализации.');
     } finally {
-      generateEnBtn.disabled = false;
+      setBusy(generateAiPostTranslationsBtn, false);
+    }
+  });
+
+  refreshPostAiTranslationStatusBtn?.addEventListener('click', async () => {
+    if (!currentPostId) {
+      setPostTranslationStatus('Сначала откройте пост.');
+      return;
+    }
+
+    try {
+      setBusy(refreshPostAiTranslationStatusBtn, true, refreshPostAiTranslationStatusBtn.textContent);
+      setPostTranslationStatus('Проверяем локализации...', 'info');
+      await refreshPostTranslationStatus(currentPostId);
+    } catch (error) {
+      setPostTranslationStatus(error.message || 'Не удалось обновить статусы локализаций.', 'error');
+    } finally {
+      setBusy(refreshPostAiTranslationStatusBtn, false);
+    }
+  });
+
+  generateAiCollectionTranslationsBtn?.addEventListener('click', async () => {
+    if (!currentCollectionId) {
+      setCollectionsStatus('Сначала откройте или сохраните многостраничную запись.');
+      return;
+    }
+
+    const payload = collectAiTranslationPayload(
+      'collectionTranslationLanguage',
+      collectionIncludeSeoInput,
+      collectionIncludeMediaInput,
+    );
+
+    if (!payload.targetLanguages.length) {
+      setCollectionTranslationStatus('Не выбраны языки.', 'warning');
+      setCollectionsStatus('Не выбраны языки.');
+      return;
+    }
+
+    try {
+      setBusy(generateAiCollectionTranslationsBtn, true, generateAiCollectionTranslationsBtn.textContent);
+      setCollectionTranslationStatus('Инициируем AI-перевод...', 'info');
+      const response = await generateCollectionTranslations(currentCollectionId, payload);
+      const { text, tone } = summarizeAndTone(response?.items || []);
+      setCollectionTranslationStatus(text, tone);
+      setCollectionsStatus(`AI-перевод на многoстраничную запись завершен. ${text}`, true);
+      await refreshCollectionTranslationStatus(currentCollectionId);
+    } catch (error) {
+      if (isAiGenerationRouteError(error)) {
+        setAiGenerationUnavailableStatus();
+      }
+      setCollectionTranslationStatus(error.message || 'Не удалось сгенерировать локализации.', 'error');
+      setCollectionsStatus(error.message || 'Не удалось сгенерировать локализации.', true);
+    } finally {
+      setBusy(generateAiCollectionTranslationsBtn, false);
+    }
+  });
+
+  refreshCollectionAiTranslationStatusBtn?.addEventListener('click', async () => {
+    if (!currentCollectionId) {
+      setCollectionTranslationStatus('Сначала откройте многостраничную запись.');
+      return;
+    }
+
+    try {
+      setBusy(refreshCollectionAiTranslationStatusBtn, true, refreshCollectionAiTranslationStatusBtn.textContent);
+      setCollectionTranslationStatus('Проверяем локализации...', 'info');
+      await refreshCollectionTranslationStatus(currentCollectionId);
+    } catch (error) {
+      setCollectionTranslationStatus(error.message || 'Не удалось обновить статусы локализаций.', 'error');
+    } finally {
+      setBusy(refreshCollectionAiTranslationStatusBtn, false);
+    }
+  });
+
+  generateAiPostMissingTranslationsBtn?.addEventListener('click', async () => {
+    if (!currentPostId) {
+      setPostTranslationStatus('Сначала откройте пост.');
+      setStatus('Сначала откройте пост.');
+      return;
+    }
+
+    try {
+      const translations = postTranslationRows?.length ? postTranslationRows : await refreshPostTranslationStatus(currentPostId);
+      const selectedLanguages = getTargetLanguagesFromSelection('postTranslationLanguage');
+      const targetLanguages = filterLanguagesForMissingOnly(selectedLanguages, translations);
+
+      if (!targetLanguages.length) {
+        const message = 'Нет языков для генерации: выбранные уже переведены и опубликованы.';
+        setPostTranslationStatus(message, 'warning');
+        setStatus(message);
+        return;
+      }
+
+      const payload = collectAiTranslationPayload(
+        'postTranslationLanguage',
+        postIncludeSeoInput,
+        postIncludeMediaInput,
+      );
+      payload.targetLanguages = targetLanguages;
+
+      setBusy(generateAiPostMissingTranslationsBtn, true, generateAiPostMissingTranslationsBtn.textContent);
+      setPostTranslationStatus('Инициируем AI-перевод для отсутствующих языков...', 'info');
+      const response = await generatePostTranslations(currentPostId, payload);
+      const { text, tone } = summarizeAndTone(response?.items || []);
+      setPostTranslationStatus(text, tone);
+      setStatus(`AI-перевод для отсутствующих языков запущен. ${text}`);
+      await refreshPostTranslationStatus(currentPostId);
+    } catch (error) {
+      if (isAiGenerationRouteError(error)) {
+        setAiGenerationUnavailableStatus();
+      }
+      setPostTranslationStatus(error.message || 'Не удалось сгенерировать локализации.', 'error');
+      setStatus(error.message || 'Не удалось сгенерировать локализации.');
+    } finally {
+      setBusy(generateAiPostMissingTranslationsBtn, false);
+    }
+  });
+
+  generateAiMissingCollectionTranslationsBtn?.addEventListener('click', async () => {
+    if (!currentCollectionId) {
+      setCollectionTranslationStatus('Сначала откройте многостраничную запись.');
+      setCollectionsStatus('Сначала откройте многостраничную запись.');
+      return;
+    }
+
+    try {
+      const translations = collectionTranslationRows?.length
+        ? collectionTranslationRows
+        : await refreshCollectionTranslationStatus(currentCollectionId);
+      const selectedLanguages = getTargetLanguagesFromSelection('collectionTranslationLanguage');
+      const targetLanguages = filterLanguagesForMissingOnly(selectedLanguages, translations);
+
+      if (!targetLanguages.length) {
+        const message = 'Нет языков для генерации: выбранные уже переведены и опубликованы.';
+        setCollectionTranslationStatus(message, 'warning');
+        setCollectionsStatus(message, true);
+        return;
+      }
+
+      const payload = collectAiTranslationPayload(
+        'collectionTranslationLanguage',
+        collectionIncludeSeoInput,
+        collectionIncludeMediaInput,
+      );
+      payload.targetLanguages = targetLanguages;
+
+      setBusy(generateAiMissingCollectionTranslationsBtn, true, generateAiMissingCollectionTranslationsBtn.textContent);
+      setCollectionTranslationStatus('Инициируем AI-перевод для отсутствующих языков...', 'info');
+      const response = await generateCollectionTranslations(currentCollectionId, payload);
+      const { text, tone } = summarizeAndTone(response?.items || []);
+      setCollectionTranslationStatus(text, tone);
+      setCollectionsStatus(`AI-перевод для отсутствующих языков запущен. ${text}`, true);
+      await refreshCollectionTranslationStatus(currentCollectionId);
+    } catch (error) {
+      if (isAiGenerationRouteError(error)) {
+        setAiGenerationUnavailableStatus();
+      }
+      setCollectionTranslationStatus(error.message || 'Не удалось сгенерировать локализации.', 'error');
+      setCollectionsStatus(error.message || 'Не удалось сгенерировать локализации.', true);
+    } finally {
+      setBusy(generateAiMissingCollectionTranslationsBtn, false);
     }
   });
 

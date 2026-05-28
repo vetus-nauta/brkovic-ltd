@@ -1,0 +1,375 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game.brkovic.ltd/schemas/watch-officer/scenario.schema.json",
+  "title": "Watch Officer MVP Scenario",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "scenario_id",
+    "scenario_version",
+    "title_key",
+    "briefing_key",
+    "rule_review_status",
+    "training_claim_status",
+    "iala_region",
+    "mode",
+    "world",
+    "camera",
+    "ownship",
+    "target_vessels",
+    "marks",
+    "geometry",
+    "encounter",
+    "cpa_tcpa",
+    "vts",
+    "scoring",
+    "replay"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "scenario_id": { "enum": ["safe-water-crossing-target", "head-on-port-to-port"] },
+    "scenario_version": { "type": "string", "minLength": 1 },
+    "title_key": { "type": "string", "minLength": 1 },
+    "briefing_key": { "type": "string", "minLength": 1 },
+    "rule_review_status": { "enum": ["draft", "needs_changes", "approved"] },
+    "training_claim_status": { "const": "draft_not_final_training_content" },
+    "iala_region": { "const": "A" },
+    "mode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["daylight", "weather", "visibility"],
+      "properties": {
+        "daylight": { "const": true },
+        "weather": { "const": "calm" },
+        "visibility": { "const": "good" }
+      }
+    },
+    "world": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["units", "origin", "heading_reference", "bounds"],
+      "properties": {
+        "units": { "const": "meters" },
+        "origin": { "$ref": "#/$defs/point" },
+        "heading_reference": { "const": "degrees_true" },
+        "bounds": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": { "$ref": "#/$defs/point" }
+        }
+      }
+    },
+    "camera": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "ownship_screen_anchor", "forward_view_ratio", "zoom_min", "zoom_max"],
+      "properties": {
+        "mode": { "const": "heading_up" },
+        "ownship_screen_anchor": { "$ref": "#/$defs/point" },
+        "forward_view_ratio": { "type": "number", "minimum": 0.5, "maximum": 0.8 },
+        "zoom_min": { "type": "number", "exclusiveMinimum": 0 },
+        "zoom_max": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    },
+    "ownship": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "spawn_position",
+        "spawn_heading_deg",
+        "collision_radius_m",
+        "grounding_radius_m",
+        "speed_levels",
+        "initial_speed_level",
+        "turn_rate_deg_per_sec",
+        "speed_step_time_sec"
+      ],
+      "properties": {
+        "id": { "const": "ownship" },
+        "type": { "const": "motor_yacht" },
+        "spawn_position": { "$ref": "#/$defs/point" },
+        "spawn_heading_deg": { "type": "number", "minimum": 0, "maximum": 360 },
+        "collision_radius_m": { "type": "number", "exclusiveMinimum": 0 },
+        "grounding_radius_m": { "type": "number", "exclusiveMinimum": 0 },
+        "speed_levels": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "speed_mps"],
+            "properties": {
+              "id": { "enum": ["stop", "slow", "cruise", "fast"] },
+              "speed_mps": { "type": "number", "minimum": 0 }
+            }
+          }
+        },
+        "initial_speed_level": { "enum": ["stop", "slow", "cruise", "fast"] },
+        "turn_rate_deg_per_sec": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["slow", "cruise", "fast"],
+          "properties": {
+            "slow": { "type": "number", "exclusiveMinimum": 0 },
+            "cruise": { "type": "number", "exclusiveMinimum": 0 },
+            "fast": { "type": "number", "exclusiveMinimum": 0 }
+          }
+        },
+        "speed_step_time_sec": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    },
+    "target_vessels": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "type",
+          "spawn_position",
+          "spawn_heading_deg",
+          "speed_mps",
+          "collision_radius_m",
+          "behaviour",
+          "ais"
+        ],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "type": { "const": "power_driven" },
+          "spawn_position": { "$ref": "#/$defs/point" },
+          "spawn_heading_deg": { "type": "number", "minimum": 0, "maximum": 360 },
+          "speed_mps": { "type": "number", "exclusiveMinimum": 0 },
+          "collision_radius_m": { "type": "number", "exclusiveMinimum": 0 },
+          "behaviour": { "const": "constant_course_speed" },
+          "crossing_from": { "const": "starboard" },
+          "heading_relation": { "const": "reciprocal_or_nearly_reciprocal" },
+          "ais": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["label", "vector_horizon_sec"],
+            "properties": {
+              "label": { "type": "string", "minLength": 1 },
+              "vector_horizon_sec": { "type": "number", "exclusiveMinimum": 0 }
+            }
+          }
+        }
+      }
+    },
+    "marks": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "type",
+          "side",
+          "iala_region",
+          "colour",
+          "position",
+          "visual_variant",
+          "label_key",
+          "visibility_range_m"
+        ],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "type": { "const": "lateral" },
+          "side": { "enum": ["port", "starboard"] },
+          "iala_region": { "const": "A" },
+          "colour": { "enum": ["red", "green"] },
+          "position": { "$ref": "#/$defs/point" },
+          "visual_variant": { "type": "string", "minLength": 1 },
+          "label_key": { "type": "string", "minLength": 1 },
+          "visibility_range_m": { "type": "number", "exclusiveMinimum": 0 }
+        }
+      }
+    },
+    "geometry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "safe_corridor_polygon",
+        "shallow_zone_polygons",
+        "danger_polygons",
+        "caution_buffers",
+        "finish_gate"
+      ],
+      "properties": {
+        "safe_corridor_polygon": { "$ref": "#/$defs/polygon" },
+        "shallow_zone_polygons": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/polygon" }
+        },
+        "danger_polygons": {
+          "type": "array",
+          "maxItems": 0,
+          "items": { "$ref": "#/$defs/polygon" }
+        },
+        "caution_buffers": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["safe_corridor_edge_m", "shallow_warning_m", "danger_warning_m"],
+          "properties": {
+            "safe_corridor_edge_m": { "type": "number", "minimum": 0 },
+            "shallow_warning_m": { "type": "number", "minimum": 0 },
+            "danger_warning_m": { "const": 0 }
+          }
+        },
+        "finish_gate": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": { "$ref": "#/$defs/point" }
+        }
+      }
+    },
+    "encounter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["expected_initial_class", "expected_player_role", "classifier_thresholds"],
+      "properties": {
+        "expected_initial_class": { "enum": ["crossing", "head_on"] },
+        "expected_player_role": { "enum": ["give_way", "head_on_alter_starboard"] },
+        "classifier_thresholds": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["head_on_relative_heading_deg", "ambiguous_margin_deg"],
+          "properties": {
+            "head_on_relative_heading_deg": { "type": "number", "minimum": 0, "maximum": 180 },
+            "head_on_bearing_ahead_tolerance_deg": { "type": "number", "minimum": 0, "maximum": 180 },
+            "crossing_min_bearing_deg": { "type": "number", "minimum": 0, "maximum": 180 },
+            "crossing_max_bearing_deg": { "type": "number", "minimum": 0, "maximum": 180 },
+            "overtaking_abaft_beam_deg": { "type": "number", "minimum": 0, "maximum": 180 },
+            "ambiguous_margin_deg": { "type": "number", "minimum": 0, "maximum": 45 }
+          }
+        }
+      }
+    },
+    "cpa_tcpa": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "qualitative_states",
+        "horizon_sec",
+        "safe_cpa_m",
+        "caution_cpa_m",
+        "danger_cpa_m",
+        "immediate_cpa_m",
+        "active_tcpa_max_sec",
+        "numeric_debug_required"
+      ],
+      "properties": {
+        "qualitative_states": {
+          "type": "array",
+          "prefixItems": [
+            { "const": "safe" },
+            { "const": "caution" },
+            { "const": "danger" },
+            { "const": "immediate" }
+          ],
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "horizon_sec": { "type": "number", "exclusiveMinimum": 0 },
+        "safe_cpa_m": { "type": "number", "exclusiveMinimum": 0 },
+        "caution_cpa_m": { "type": "number", "exclusiveMinimum": 0 },
+        "danger_cpa_m": { "type": "number", "exclusiveMinimum": 0 },
+        "immediate_cpa_m": { "type": "number", "exclusiveMinimum": 0 },
+        "active_tcpa_max_sec": { "type": "number", "exclusiveMinimum": 0 },
+        "numeric_debug_required": { "const": true }
+      }
+    },
+    "vts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled", "prompts"],
+      "properties": {
+        "enabled": { "const": false },
+        "prompts": {
+          "type": "array",
+          "maxItems": 0
+        }
+      }
+    },
+    "scoring": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["success_requires", "reference_track", "expected_action_windows"],
+      "properties": {
+        "success_requires": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "reference_track": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "$ref": "#/$defs/point" }
+        },
+        "expected_action_windows": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "start_sec", "end_sec", "preferred_actions"],
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "start_sec": { "type": "number", "minimum": 0 },
+              "end_sec": { "type": "number", "minimum": 0 },
+              "preferred_actions": {
+                "type": "array",
+                "minItems": 1,
+                "items": { "type": "string", "minLength": 1 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "replay": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "seed",
+        "fixed_tick_hz",
+        "event_timing_tolerance_ticks",
+        "input_log_required",
+        "event_log_required"
+      ],
+      "properties": {
+        "seed": { "type": "integer" },
+        "fixed_tick_hz": { "type": "integer", "minimum": 1 },
+        "event_timing_tolerance_ticks": { "const": 1 },
+        "input_log_required": { "const": true },
+        "event_log_required": { "const": true }
+      }
+    }
+  },
+  "$defs": {
+    "point": {
+      "type": "array",
+      "prefixItems": [
+        { "type": "number" },
+        { "type": "number" }
+      ],
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "polygon": {
+      "type": "array",
+      "minItems": 3,
+      "items": { "$ref": "#/$defs/point" }
+    }
+  }
+}

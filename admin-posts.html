@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="css/variables.css" />
   <link rel="stylesheet" href="css/main.css" />
   <link rel="stylesheet" href="css/responsive.css" />
-  <link rel="stylesheet" href="css/admin-posts.css?v=20260525-journal-multipage-03" />
+  <link rel="stylesheet" href="css/admin-posts.css?v=20260528-locale-status-ui-01" />
 </head>
 <body>
   <div class="site-shell">
@@ -163,10 +163,23 @@
               </label>
 
               <div class="post-editor-actions">
-                <button type="button" id="generateEnBtn" class="btn btn--secondary">Сгенерировать EN из RU</button>
+                <button type="button" id="generateAiPostTranslationsBtn" class="btn btn--secondary">Сгенерировать локализации (AI)</button>
+                <button type="button" id="generateAiPostMissingTranslationsBtn" class="btn btn--secondary">Сгенерировать отсутствующие локализации</button>
+                <button type="button" id="refreshPostAiTranslationStatusBtn" class="btn btn--secondary">Проверить статусы локализаций</button>
                 <button type="submit" class="btn btn--primary">Сохранить пост</button>
                 <a id="openPublicPostLink" class="btn btn--secondary" href="journal.html" target="_blank" rel="noopener">Открыть публикацию</a>
               </div>
+              <div id="postAiTranslationOptions" class="admin-translation-options" aria-label="Параметры AI-перевода">
+                <label><input type="checkbox" name="postTranslationLanguage" value="en" checked /> en</label>
+                <label><input type="checkbox" name="postTranslationLanguage" value="de" checked /> de</label>
+                <label><input type="checkbox" name="postTranslationLanguage" value="it" checked /> it</label>
+                <label><input type="checkbox" name="postTranslationLanguage" value="es" checked /> es</label>
+                <label><input type="checkbox" name="postTranslationLanguage" value="sr" checked /> sr</label>
+                <label><input type="checkbox" name="postTranslationLanguage" value="zh" checked /> zh</label>
+                <label><input type="checkbox" id="postTranslationIncludeSeo" checked /> SEO</label>
+                <label><input type="checkbox" id="postTranslationIncludeMedia" checked /> ALT/Caption</label>
+              </div>
+              <div id="postAiTranslationStatus" class="admin-post-meta"></div>
             </form>
 
             <section class="media-upload-card">
@@ -258,9 +271,23 @@
               </div>
 
               <div class="post-editor-actions">
+                <button type="button" id="generateAiCollectionTranslationsBtn" class="btn btn--secondary">Сгенерировать локализации (AI)</button>
+                <button type="button" id="generateAiMissingCollectionTranslationsBtn" class="btn btn--secondary">Сгенерировать отсутствующие локализации</button>
+                <button type="button" id="refreshCollectionAiTranslationStatusBtn" class="btn btn--secondary">Проверить статусы локализаций</button>
                 <button type="submit" id="saveCollectionBtn" class="btn btn--primary">Сохранить многостраничную запись</button>
                 <a id="openPublicCollectionLink" class="btn btn--secondary" href="journal.html" target="_blank" rel="noopener">Открыть</a>
               </div>
+              <div id="collectionAiTranslationOptions" class="admin-translation-options" aria-label="Параметры AI-перевода">
+                <label><input type="checkbox" name="collectionTranslationLanguage" value="en" checked /> en</label>
+                <label><input type="checkbox" name="collectionTranslationLanguage" value="de" checked /> de</label>
+                <label><input type="checkbox" name="collectionTranslationLanguage" value="it" checked /> it</label>
+                <label><input type="checkbox" name="collectionTranslationLanguage" value="es" checked /> es</label>
+                <label><input type="checkbox" name="collectionTranslationLanguage" value="sr" checked /> sr</label>
+                <label><input type="checkbox" name="collectionTranslationLanguage" value="zh" checked /> zh</label>
+                <label><input type="checkbox" id="collectionTranslationIncludeSeo" checked /> SEO</label>
+                <label><input type="checkbox" id="collectionTranslationIncludeMedia" checked /> ALT/Caption</label>
+              </div>
+              <div id="collectionAiTranslationStatus" class="admin-post-meta"></div>
             </form>
 
             <div id="journalCollectionsList" class="journal-collections-list"></div>
@@ -270,6 +297,6 @@
     </main>
   </div>
 
-  <script src="js/admin-posts.js?v=20260525-journal-multipage-03"></script>
+  <script src="js/admin-posts.js?v=20260528-locale-status-refresh-05"></script>
 </body>
 </html>

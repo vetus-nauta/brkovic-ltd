@@ -286,7 +286,47 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  const t = (key) => dict[getLang()][key] || '';
+  const navdeskSmallCalcAliases = {
+    idle: 'journal_calc_status_idle',
+    notEnough: 'journal_calc_status_not_enough',
+    done: 'journal_calc_status_done',
+    invalid: 'journal_calc_status_invalid',
+    copyDone: 'journal_calc_copy_done',
+    copyEmpty: 'journal_calc_copy_empty',
+    time: 'journal_calc_summary_time',
+    days: 'journal_calc_summary_days',
+    hours: 'journal_calc_summary_hours',
+    minutes: 'journal_calc_summary_minutes',
+    distance: 'journal_calc_summary_distance',
+    fuel: 'journal_calc_summary_fuel',
+    withReserve: 'journal_calc_summary_with_reserve',
+    tideWindow: 'navdesk_window_intro',
+    tideWindowStatusIdle: 'navdesk_window_status_idle',
+    tideNoData: 'navdesk_table_empty',
+    tidePlaceholder: 'navdesk_tides_placeholder'
+  };
+
+  const t = (key) => {
+    const alias = navdeskSmallCalcAliases[key] || key;
+    try {
+      if (typeof window.t === 'function') {
+        const value = window.t(alias);
+        if (value && value !== alias) return value;
+      }
+      const translations = window.__BRKOVIC_TRANSLATIONS || {};
+      if (translations[alias]) return translations[alias];
+    } catch (e) {}
+    return dict[getLang()][key] || dict[getLang()][alias] || '';
+  };
+  const tUi = (key, fallback = '') => {
+    try {
+      if (typeof window.t === 'function') {
+        const value = window.t(key, fallback);
+        if (value && value !== key) return value;
+      }
+    } catch (e) {}
+    return fallback || t(key);
+  };
 
 const setWindowCardState = (state) => {
     if (!tideWindowCard) return;
@@ -452,11 +492,12 @@ const setWindowCardState = (state) => {
     tideActiveSuggestionIndex = -1;
     if (tidePlaceInput) tidePlaceInput.removeAttribute('aria-activedescendant');
 
-    if (options.message) {
+    const suggestionMessage = options.message || (normalizedItems.length ? tUi('navdesk_tides_suggestion_hint') : '');
+    if (suggestionMessage) {
       const row = document.createElement('div');
       row.className = `navdesk-suggestion-state is-${options.state || 'idle'}`;
       row.setAttribute('role', 'status');
-      row.textContent = options.message;
+      row.textContent = suggestionMessage;
       tideSuggestions.appendChild(row);
     }
 
@@ -499,6 +540,13 @@ const setWindowCardState = (state) => {
     tideActiveSuggestionIndex = -1;
     if (tidePlaceInput) tidePlaceInput.removeAttribute('aria-activedescendant');
   };
+
+  const syncTideUiLabels = () => {
+    if (tideTrend) tideTrend.setAttribute('aria-label', tUi('navdesk_tides_trend_label', 'Trend'));
+    if (tideSuggestions) tideSuggestions.setAttribute('aria-label', tUi('navdesk_tides_suggestion_hint', 'Select a place from the list.'));
+  };
+  syncTideUiLabels();
+  document.addEventListener('languageChanged', syncTideUiLabels);
 
   const getSuggestionButtons = () => (
     tideSuggestions ? Array.from(tideSuggestions.querySelectorAll('.navdesk-suggestion')) : []
@@ -3367,6 +3415,16 @@ Out.`
     return 'en';
   };
 
+  const tUkvUi = (key, fallback = '') => {
+    try {
+      if (typeof window.t === 'function') {
+        const value = window.t(key, fallback);
+        if (value && value !== key) return value;
+      }
+    } catch (e) {}
+    return fallback || key;
+  };
+
   const getUkvTrafficLabel = (traffic) => {
     if (traffic === 'mayday') return 'Mayday';
     if (traffic === 'panpan') return 'Pan-Pan';
@@ -3408,7 +3466,16 @@ Out.`
     fillUkvPhraseMenu('additionalInfo');
   };
 
+  const syncUkvPickHints = () => {
+    const hint = tUkvUi('navdesk_ukv_phrase_pick_hint', 'You can choose a ready-made phrase from the list or edit it manually.');
+    document.querySelectorAll('[data-pick-toggle]').forEach((btn) => {
+      btn.setAttribute('title', hint);
+    });
+  };
+
   renderUkvPhraseMenus();
+  syncUkvPickHints();
+  document.addEventListener('languageChanged', syncUkvPickHints);
 
   document.querySelectorAll('[data-pick-toggle]').forEach((btn) => {
     btn.addEventListener('click', (event) => {
@@ -3914,6 +3981,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (mode) node.classList.add(mode);
   };
 
+  const selectedResultText = (selected) => {
+    if (!selected) return '';
+    const prefix = tSafe('navdesk_route_search_result_prefix', 'Coordinates');
+    return `${selected.name} · ${prefix}: ${formatActive(selected.lat, selected.lon)}`;
+  };
+
   const setRoutePoint = (prefix, lat, lon) => {
     const latM = toMarineParts(lat, true);
     const lonM = toMarineParts(lon, false);
@@ -4015,7 +4088,7 @@ document.addEventListener('DOMContentLoaded', () => {
     st.selected = { name: shortName(item), lat, lon };
     input.value = st.selected.name;
     setRoutePoint(prefix, lat, lon);
-    setResult(result, `${st.selected.name} · ${formatActive(lat, lon)}`, 'is-ok');
+    setResult(result, `${tSafe('navdesk_route_search_status_inserted_short', 'Coordinates inserted')}: ${selectedResultText(st.selected)}`, 'is-ok');
     closeDropdown(dropdown, st);
   };
 
@@ -4028,7 +4101,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!query) {
       closeDropdown(dropdown, st);
-      setResult(result, '');
+      setResult(result, tSafe('navdesk_route_search_status_idle_inline', 'Enter a place'));
       return;
     }
 
@@ -4125,7 +4198,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const st = state[kind];
       const result = kind === 'from' ? fromResult : toResult;
       if (st.selected) {
-        setResult(result, `${st.selected.name} · ${formatActive(st.selected.lat, st.selected.lon)}`, 'is-ok');
+        setResult(result, selectedResultText(st.selected), 'is-ok');
       }
     });
   };

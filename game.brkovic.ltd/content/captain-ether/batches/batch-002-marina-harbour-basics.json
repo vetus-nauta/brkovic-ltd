@@ -1,0 +1,2539 @@
+{
+  "version": 1,
+  "batch_id": "batch-002-marina-harbour-basics",
+  "status": "merged",
+  "date": "2026-05-27",
+  "branch": "marina_harbour",
+  "scope": "Marina and harbour basics batch merged into starter.json after Content Producer draft, Sea Speak Linguist review, Director-Engineer matcher fix, and QA acceptance.",
+  "items": [
+    {
+      "id": "word_marina_berth_001",
+      "type": "word",
+      "level": "beginner",
+      "difficulty_score": 5,
+      "topic": "berth_request",
+      "branch": "marina_harbour",
+      "module": "berth_request",
+      "source_language": "ru",
+      "source_text": "Место у причала",
+      "target_language": "en",
+      "target_text": "berth",
+      "accepted_answers": [
+        "berth"
+      ],
+      "hint_beginner": "b____",
+      "hint_intermediate": "be...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "berth",
+          "BERTH",
+          "berth."
+        ],
+        "should_reject": [
+          "birth",
+          "dock",
+          "quay",
+          "pier",
+          "slip"
+        ],
+        "dangerous_minimal_pairs": [
+          "berth / birth",
+          "berth / dock / quay / pier / slip"
+        ],
+        "linguist_note": "Confirmed strict: keep berth separate from dock, quay, pier, and slip across Batch 002."
+      }
+    },
+    {
+      "id": "word_marina_fuel_berth_001",
+      "type": "word",
+      "level": "beginner",
+      "difficulty_score": 6,
+      "topic": "fuel_water_power",
+      "branch": "marina_harbour",
+      "module": "fuel_water_power",
+      "source_language": "ru",
+      "source_text": "Топливный причал",
+      "target_language": "en",
+      "target_text": "fuel berth",
+      "accepted_answers": [
+        "fuel berth"
+      ],
+      "hint_beginner": "fuel b____",
+      "hint_intermediate": "fuel...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "fuel berth",
+          "FUEL BERTH",
+          "fuel-berth"
+        ],
+        "should_reject": [
+          "fuel",
+          "berth",
+          "fuel dock",
+          "fuel pier"
+        ],
+        "dangerous_minimal_pairs": [
+          "fuel berth / berth",
+          "berth / dock / pier"
+        ],
+        "linguist_note": "Draft keeps fuel berth as the formal target and rejects fuel dock/pier."
+      }
+    },
+    {
+      "id": "word_marina_water_001",
+      "type": "word",
+      "level": "beginner",
+      "difficulty_score": 5,
+      "topic": "fuel_water_power",
+      "branch": "marina_harbour",
+      "module": "fuel_water_power",
+      "source_language": "ru",
+      "source_text": "Вода",
+      "target_language": "en",
+      "target_text": "water",
+      "accepted_answers": [
+        "water"
+      ],
+      "hint_beginner": "w____",
+      "hint_intermediate": "wa...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "water",
+          "WATER",
+          "water."
+        ],
+        "should_reject": [
+          "fuel",
+          "shore power",
+          "fresh water hose"
+        ],
+        "dangerous_minimal_pairs": [
+          "water / fuel",
+          "water / shore power"
+        ],
+        "linguist_note": "Word item trains the service noun. Phrase items handle fresh-water wording."
+      }
+    },
+    {
+      "id": "word_marina_shore_power_001",
+      "type": "word",
+      "level": "beginner",
+      "difficulty_score": 7,
+      "topic": "fuel_water_power",
+      "branch": "marina_harbour",
+      "module": "fuel_water_power",
+      "source_language": "ru",
+      "source_text": "Береговое электропитание",
+      "target_language": "en",
+      "target_text": "shore power",
+      "accepted_answers": [
+        "shore power"
+      ],
+      "hint_beginner": "shore p____",
+      "hint_intermediate": "shore...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "shore power",
+          "SHORE POWER",
+          "shore-power"
+        ],
+        "should_reject": [
+          "power",
+          "electricity",
+          "water",
+          "charger"
+        ],
+        "dangerous_minimal_pairs": [
+          "shore power / power",
+          "shore power / water"
+        ],
+        "linguist_note": "Electricity is intentionally rejected as ordinary paraphrase."
+      }
+    },
+    {
+      "id": "word_marina_fender_001",
+      "type": "word",
+      "level": "beginner",
+      "difficulty_score": 6,
+      "topic": "mooring",
+      "branch": "marina_harbour",
+      "module": "mooring_alongside",
+      "source_language": "ru",
+      "source_text": "Кранец",
+      "target_language": "en",
+      "target_text": "fender",
+      "accepted_answers": [
+        "fender"
+      ],
+      "hint_beginner": "f_____",
+      "hint_intermediate": "fen...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "fender",
+          "FENDER",
+          "fender."
+        ],
+        "should_reject": [
+          "finder",
+          "bumper",
+          "line"
+        ],
+        "dangerous_minimal_pairs": [
+          "fender / finder",
+          "fender / bumper",
+          "fender / line"
+        ],
+        "linguist_note": "Confirmed strict: fender is the trained Sea Speak term. Finder and bumper must stay wrong."
+      }
+    },
+    {
+      "id": "word_marina_line_001",
+      "type": "word",
+      "level": "beginner",
+      "difficulty_score": 6,
+      "topic": "mooring",
+      "branch": "marina_harbour",
+      "module": "mooring_alongside",
+      "source_language": "ru",
+      "source_text": "Швартов",
+      "target_language": "en",
+      "target_text": "line",
+      "accepted_answers": [
+        "line"
+      ],
+      "hint_beginner": "l___",
+      "hint_intermediate": "li...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "line",
+          "LINE",
+          "line."
+        ],
+        "should_reject": [
+          "rope",
+          "fender",
+          "cable"
+        ],
+        "dangerous_minimal_pairs": [
+          "line / rope",
+          "line / fender"
+        ],
+        "linguist_note": "Reject rope for this Sea Speak drill; line is the trained mooring term."
+      }
+    },
+    {
+      "id": "word_marina_alongside_001",
+      "type": "word",
+      "level": "beginner",
+      "difficulty_score": 7,
+      "topic": "mooring",
+      "branch": "marina_harbour",
+      "module": "mooring_alongside",
+      "source_language": "ru",
+      "source_text": "Лагом / у борта",
+      "target_language": "en",
+      "target_text": "alongside",
+      "accepted_answers": [
+        "alongside"
+      ],
+      "hint_beginner": "a________",
+      "hint_intermediate": "along...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "alongside",
+          "ALONGSIDE",
+          "alongside."
+        ],
+        "should_reject": [
+          "abeam",
+          "astern",
+          "ahead"
+        ],
+        "dangerous_minimal_pairs": [
+          "alongside / abeam",
+          "alongside / astern",
+          "alongside / ahead"
+        ],
+        "linguist_note": "Alongside means next to berth/vessel, not merely abeam."
+      }
+    },
+    {
+      "id": "word_marina_approach_001",
+      "type": "word",
+      "level": "beginner",
+      "difficulty_score": 7,
+      "topic": "approach",
+      "branch": "marina_harbour",
+      "module": "approach_instructions",
+      "source_language": "ru",
+      "source_text": "Подход",
+      "target_language": "en",
+      "target_text": "approach",
+      "accepted_answers": [
+        "approach"
+      ],
+      "hint_beginner": "a_______",
+      "hint_intermediate": "app...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "approach",
+          "APPROACH",
+          "approach."
+        ],
+        "should_reject": [
+          "enter",
+          "proceed",
+          "go ahead"
+        ],
+        "dangerous_minimal_pairs": [
+          "approach / enter",
+          "approach / proceed",
+          "approach / go ahead"
+        ],
+        "linguist_note": "Keep movement verbs separate for early harbour drills."
+      }
+    },
+    {
+      "id": "word_marina_departure_001",
+      "type": "word",
+      "level": "intermediate",
+      "difficulty_score": 18,
+      "topic": "departure",
+      "branch": "marina_harbour",
+      "module": "departure_basic",
+      "source_language": "ru",
+      "source_text": "Отход / отправление",
+      "target_language": "en",
+      "target_text": "departure",
+      "accepted_answers": [
+        "departure"
+      ],
+      "hint_beginner": "d________",
+      "hint_intermediate": "dep...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "departure",
+          "DEPARTURE",
+          "departure."
+        ],
+        "should_reject": [
+          "arrival",
+          "depart",
+          "leaving"
+        ],
+        "dangerous_minimal_pairs": [
+          "departure / arrival",
+          "departure / depart"
+        ],
+        "linguist_note": "Depart is a verb; this word item trains the noun departure."
+      }
+    },
+    {
+      "id": "word_marina_mooring_001",
+      "type": "word",
+      "level": "intermediate",
+      "difficulty_score": 18,
+      "topic": "mooring",
+      "branch": "marina_harbour",
+      "module": "mooring_alongside",
+      "source_language": "ru",
+      "source_text": "Швартовка",
+      "target_language": "en",
+      "target_text": "mooring",
+      "accepted_answers": [
+        "mooring"
+      ],
+      "hint_beginner": "m______",
+      "hint_intermediate": "moor...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "mooring",
+          "MOORING",
+          "mooring."
+        ],
+        "should_reject": [
+          "moor",
+          "berth",
+          "anchor"
+        ],
+        "dangerous_minimal_pairs": [
+          "moor / berth / anchor",
+          "mooring / berth"
+        ],
+        "linguist_note": "Mooring, berth, and anchor are kept separate in this routine harbour draft."
+      }
+    },
+    {
+      "id": "expr_marina_request_berth_001",
+      "type": "short_expression",
+      "level": "beginner",
+      "difficulty_score": 9,
+      "topic": "berth_request",
+      "branch": "marina_harbour",
+      "module": "berth_request",
+      "source_language": "ru",
+      "source_text": "Запросите место у причала",
+      "target_language": "en",
+      "target_text": "request berth",
+      "accepted_answers": [
+        "request berth",
+        "request a berth"
+      ],
+      "hint_beginner": "request b____",
+      "hint_intermediate": "request...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "request berth",
+          "request a berth",
+          "REQUEST BERTH"
+        ],
+        "should_reject": [
+          "need a berth",
+          "request dock",
+          "request mooring",
+          "request birth"
+        ],
+        "dangerous_minimal_pairs": [
+          "request berth / need a berth",
+          "berth / birth",
+          "berth / dock"
+        ],
+        "linguist_note": "Confirmed safe item-local variant: request a berth preserves formal berth-request meaning. Informal need a berth stays wrong."
+      }
+    },
+    {
+      "id": "expr_marina_request_fuel_berth_001",
+      "type": "short_expression",
+      "level": "beginner",
+      "difficulty_score": 10,
+      "topic": "fuel_water_power",
+      "branch": "marina_harbour",
+      "module": "fuel_water_power",
+      "source_language": "ru",
+      "source_text": "Запросите топливный причал",
+      "target_language": "en",
+      "target_text": "request fuel berth",
+      "accepted_answers": [
+        "request fuel berth",
+        "request a fuel berth"
+      ],
+      "hint_beginner": "request fuel...",
+      "hint_intermediate": "fuel berth",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "request fuel berth",
+          "request a fuel berth",
+          "REQUEST FUEL BERTH"
+        ],
+        "should_reject": [
+          "request fuel",
+          "request fuel dock",
+          "need fuel",
+          "request berth"
+        ],
+        "dangerous_minimal_pairs": [
+          "fuel berth / fuel",
+          "berth / dock"
+        ],
+        "linguist_note": "Fuel berth remains distinct from generic fuel request or ordinary dock wording."
+      }
+    },
+    {
+      "id": "expr_marina_request_water_001",
+      "type": "short_expression",
+      "level": "beginner",
+      "difficulty_score": 10,
+      "topic": "fuel_water_power",
+      "branch": "marina_harbour",
+      "module": "fuel_water_power",
+      "source_language": "ru",
+      "source_text": "Запросите воду",
+      "target_language": "en",
+      "target_text": "request water",
+      "accepted_answers": [
+        "request water",
+        "request fresh water"
+      ],
+      "hint_beginner": "request w____",
+      "hint_intermediate": "request water",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "request water",
+          "request fresh water",
+          "REQUEST WATER"
+        ],
+        "should_reject": [
+          "need water",
+          "request fuel",
+          "request shore power"
+        ],
+        "dangerous_minimal_pairs": [
+          "water / fuel",
+          "water / shore power",
+          "request / need"
+        ],
+        "linguist_note": "Confirmed safe item-local water-service variant: request fresh water may answer request water. Fuel and shore power stay wrong."
+      }
+    },
+    {
+      "id": "expr_marina_request_shore_power_001",
+      "type": "short_expression",
+      "level": "beginner",
+      "difficulty_score": 11,
+      "topic": "fuel_water_power",
+      "branch": "marina_harbour",
+      "module": "fuel_water_power",
+      "source_language": "ru",
+      "source_text": "Запросите береговое питание",
+      "target_language": "en",
+      "target_text": "request shore power",
+      "accepted_answers": [
+        "request shore power"
+      ],
+      "hint_beginner": "request shore...",
+      "hint_intermediate": "shore power",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "request shore power",
+          "REQUEST SHORE POWER",
+          "request shore-power"
+        ],
+        "should_reject": [
+          "request power",
+          "request electricity",
+          "need shore power",
+          "request water"
+        ],
+        "dangerous_minimal_pairs": [
+          "shore power / power",
+          "shore power / water",
+          "request / need"
+        ],
+        "linguist_note": "Draft rejects power/electricity as loose paraphrases."
+      }
+    },
+    {
+      "id": "expr_marina_stand_by_outside_001",
+      "type": "short_expression",
+      "level": "beginner",
+      "difficulty_score": 11,
+      "topic": "approach",
+      "branch": "marina_harbour",
+      "module": "approach_instructions",
+      "source_language": "ru",
+      "source_text": "Ожидайте снаружи",
+      "target_language": "en",
+      "target_text": "stand by outside",
+      "accepted_answers": [
+        "stand by outside"
+      ],
+      "hint_beginner": "stand by o______",
+      "hint_intermediate": "stand by...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "stand by outside",
+          "STAND BY OUTSIDE",
+          "stand-by outside"
+        ],
+        "should_reject": [
+          "wait out",
+          "do not answer",
+          "wait outside",
+          "go ahead outside"
+        ],
+        "dangerous_minimal_pairs": [
+          "stand by outside / wait out",
+          "stand by outside / do not answer"
+        ],
+        "linguist_note": "Keep stand by outside separate from wait out and do not answer."
+      }
+    },
+    {
+      "id": "expr_marina_proceed_to_berth_001",
+      "type": "short_expression",
+      "level": "beginner",
+      "difficulty_score": 12,
+      "topic": "approach",
+      "branch": "marina_harbour",
+      "module": "approach_instructions",
+      "source_language": "ru",
+      "source_text": "Следуйте к месту у причала",
+      "target_language": "en",
+      "target_text": "proceed to berth",
+      "accepted_answers": [
+        "proceed to berth",
+        "proceed to the berth"
+      ],
+      "hint_beginner": "proceed to...",
+      "hint_intermediate": "proceed...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "proceed to berth",
+          "proceed to the berth",
+          "PROCEED TO BERTH"
+        ],
+        "should_reject": [
+          "go ahead to berth",
+          "enter berth",
+          "approach berth",
+          "proceed to dock"
+        ],
+        "dangerous_minimal_pairs": [
+          "proceed / enter / approach / go ahead",
+          "berth / dock"
+        ],
+        "linguist_note": "Confirmed safe item-local variant: optional the preserves meaning. Do not accept go ahead as a movement instruction here."
+      }
+    },
+    {
+      "id": "expr_marina_come_alongside_001",
+      "type": "short_expression",
+      "level": "beginner",
+      "difficulty_score": 12,
+      "topic": "mooring",
+      "branch": "marina_harbour",
+      "module": "mooring_alongside",
+      "source_language": "ru",
+      "source_text": "Подойдите лагом",
+      "target_language": "en",
+      "target_text": "come alongside",
+      "accepted_answers": [
+        "come alongside"
+      ],
+      "hint_beginner": "come a________",
+      "hint_intermediate": "alongside",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "come alongside",
+          "COME ALONGSIDE",
+          "come-alongside"
+        ],
+        "should_reject": [
+          "alongside",
+          "come abeam",
+          "come astern",
+          "moor alongside"
+        ],
+        "dangerous_minimal_pairs": [
+          "alongside / abeam",
+          "alongside / astern",
+          "come alongside / moor alongside"
+        ],
+        "linguist_note": "Alongside alone is a word item; this expression requires the action come alongside."
+      }
+    },
+    {
+      "id": "expr_marina_port_side_to_001",
+      "type": "short_expression",
+      "level": "intermediate",
+      "difficulty_score": 20,
+      "topic": "mooring",
+      "branch": "marina_harbour",
+      "module": "mooring_alongside",
+      "source_language": "ru",
+      "source_text": "Левым бортом к причалу",
+      "target_language": "en",
+      "target_text": "port side to",
+      "accepted_answers": [
+        "port side to"
+      ],
+      "hint_beginner": "port side...",
+      "hint_intermediate": "port side to",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "port side to",
+          "PORT SIDE TO",
+          "port-side-to"
+        ],
+        "should_reject": [
+          "starboard side to",
+          "port side",
+          "left side to"
+        ],
+        "dangerous_minimal_pairs": [
+          "port side to / starboard side to",
+          "port / starboard"
+        ],
+        "linguist_note": "Do not accept left side to; Sea Speak side term must be trained."
+      }
+    },
+    {
+      "id": "expr_marina_starboard_side_to_001",
+      "type": "short_expression",
+      "level": "intermediate",
+      "difficulty_score": 20,
+      "topic": "mooring",
+      "branch": "marina_harbour",
+      "module": "mooring_alongside",
+      "source_language": "ru",
+      "source_text": "Правым бортом к причалу",
+      "target_language": "en",
+      "target_text": "starboard side to",
+      "accepted_answers": [
+        "starboard side to"
+      ],
+      "hint_beginner": "starboard side...",
+      "hint_intermediate": "starboard side to",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "starboard side to",
+          "STARBOARD SIDE TO",
+          "starboard-side-to"
+        ],
+        "should_reject": [
+          "port side to",
+          "starboard side",
+          "right side to"
+        ],
+        "dangerous_minimal_pairs": [
+          "starboard side to / port side to",
+          "starboard / port"
+        ],
+        "linguist_note": "Do not accept right side to; Sea Speak side term must be trained."
+      }
+    },
+    {
+      "id": "expr_marina_prepare_fenders_001",
+      "type": "short_expression",
+      "level": "intermediate",
+      "difficulty_score": 21,
+      "topic": "mooring",
+      "branch": "marina_harbour",
+      "module": "mooring_alongside",
+      "source_language": "ru",
+      "source_text": "Подготовьте кранцы",
+      "target_language": "en",
+      "target_text": "prepare fenders",
+      "accepted_answers": [
+        "prepare fenders"
+      ],
+      "hint_beginner": "prepare f______",
+      "hint_intermediate": "fenders...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "prepare fenders",
+          "PREPARE FENDERS",
+          "prepare-fenders"
+        ],
+        "should_reject": [
+          "fenders ready",
+          "prepare finders",
+          "prepare lines",
+          "prepare bumpers"
+        ],
+        "dangerous_minimal_pairs": [
+          "prepare fenders / fenders ready",
+          "fender / finder",
+          "fender / bumper",
+          "fender / line"
+        ],
+        "linguist_note": "Confirmed strict: prepare fenders is an instruction; fenders ready is a status report and must stay wrong for this item."
+      }
+    },
+    {
+      "id": "expr_marina_prepare_lines_001",
+      "type": "short_expression",
+      "level": "intermediate",
+      "difficulty_score": 21,
+      "topic": "mooring",
+      "branch": "marina_harbour",
+      "module": "mooring_alongside",
+      "source_language": "ru",
+      "source_text": "Подготовьте швартовы",
+      "target_language": "en",
+      "target_text": "prepare lines",
+      "accepted_answers": [
+        "prepare lines"
+      ],
+      "hint_beginner": "prepare l____",
+      "hint_intermediate": "lines...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "prepare lines",
+          "PREPARE LINES",
+          "prepare-lines"
+        ],
+        "should_reject": [
+          "lines ready",
+          "prepare ropes",
+          "prepare fenders",
+          "lines secured"
+        ],
+        "dangerous_minimal_pairs": [
+          "prepare lines / lines ready",
+          "line / rope",
+          "line / fender"
+        ],
+        "linguist_note": "Confirmed strict: prepare lines is an instruction; lines ready is a status report and must stay wrong for this item."
+      }
+    },
+    {
+      "id": "expr_marina_request_departure_001",
+      "type": "short_expression",
+      "level": "intermediate",
+      "difficulty_score": 22,
+      "topic": "departure",
+      "branch": "marina_harbour",
+      "module": "departure_basic",
+      "source_language": "ru",
+      "source_text": "Запросите отход",
+      "target_language": "en",
+      "target_text": "request departure",
+      "accepted_answers": [
+        "request departure",
+        "request permission to depart"
+      ],
+      "hint_beginner": "request d________",
+      "hint_intermediate": "request departure",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "request departure",
+          "request permission to depart",
+          "REQUEST DEPARTURE"
+        ],
+        "should_reject": [
+          "departing now",
+          "request arrival",
+          "leaving now"
+        ],
+        "dangerous_minimal_pairs": [
+          "departure / arrival",
+          "request departure / departing now"
+        ],
+        "linguist_note": "Confirmed safe item-local departure-request variant: request permission to depart preserves routine marina departure meaning."
+      }
+    },
+    {
+      "id": "expr_marina_approach_slowly_001",
+      "type": "short_expression",
+      "level": "intermediate",
+      "difficulty_score": 22,
+      "topic": "approach",
+      "branch": "marina_harbour",
+      "module": "approach_instructions",
+      "source_language": "ru",
+      "source_text": "Подходите медленно",
+      "target_language": "en",
+      "target_text": "approach slowly",
+      "accepted_answers": [
+        "approach slowly"
+      ],
+      "hint_beginner": "approach s_____",
+      "hint_intermediate": "approach...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "approach slowly",
+          "APPROACH SLOWLY",
+          "approach-slowly"
+        ],
+        "should_reject": [
+          "proceed slowly",
+          "enter slowly",
+          "go ahead slowly"
+        ],
+        "dangerous_minimal_pairs": [
+          "approach / proceed",
+          "approach / enter",
+          "approach / go ahead"
+        ],
+        "linguist_note": "Keep approach/proceed/enter distinct unless linguist approves item-local variants."
+      }
+    },
+    {
+      "id": "expr_marina_lines_ready_001",
+      "type": "short_expression",
+      "level": "intermediate",
+      "difficulty_score": 23,
+      "topic": "mooring",
+      "branch": "marina_harbour",
+      "module": "mooring_alongside",
+      "source_language": "ru",
+      "source_text": "Швартовы готовы",
+      "target_language": "en",
+      "target_text": "lines ready",
+      "accepted_answers": [
+        "lines ready"
+      ],
+      "hint_beginner": "lines r____",
+      "hint_intermediate": "lines...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "lines ready",
+          "LINES READY",
+          "lines-ready"
+        ],
+        "should_reject": [
+          "ropes ready",
+          "fenders ready",
+          "lines secured"
+        ],
+        "dangerous_minimal_pairs": [
+          "line / rope",
+          "lines ready / fenders ready",
+          "ready / secured"
+        ],
+        "linguist_note": "Lines secured reports a different state after mooring; keep wrong for this preparatory expression."
+      }
+    },
+    {
+      "id": "phrase_marina_call_orion_001",
+      "type": "phrase",
+      "level": "beginner",
+      "difficulty_score": 12,
+      "topic": "arrival_call",
+      "branch": "marina_harbour",
+      "module": "arrival_call",
+      "source_language": "ru",
+      "source_text": "Marina Control, это парусная яхта Orion.",
+      "target_language": "en",
+      "target_text": "Marina Control, this is sailing yacht Orion.",
+      "accepted_answers": [
+        "marina control this is sailing yacht orion",
+        "marina control this is sy orion",
+        "marina control this is s y orion",
+        "marina control sailing yacht orion"
+      ],
+      "grammar_pattern": "marina_arrival_call_basic",
+      "hint_beginner": "Marina Control, this is...",
+      "hint_intermediate": "Marina Control...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Marina Control, this is sailing yacht Orion.",
+          "Marina Control this is S/Y Orion",
+          "Marina Control sailing yacht Orion"
+        ],
+        "should_reject": [
+          "Orion to Marina Control",
+          "Marina Control this is motor yacht Orion",
+          "Marina Control Orion"
+        ],
+        "dangerous_minimal_pairs": [
+          "called station / calling station",
+          "sailing yacht / motor yacht"
+        ],
+        "linguist_note": "Follows starter called-station-first policy. S/Y variants follow Batch 001 precedent."
+      }
+    },
+    {
+      "id": "phrase_marina_request_berth_tonight_001",
+      "type": "phrase",
+      "level": "beginner",
+      "difficulty_score": 13,
+      "topic": "berth_request",
+      "branch": "marina_harbour",
+      "module": "berth_request",
+      "source_language": "ru",
+      "source_text": "Запрашиваю место у причала на сегодня вечером.",
+      "target_language": "en",
+      "target_text": "Request berth for tonight.",
+      "accepted_answers": [
+        "request berth for tonight",
+        "request a berth for tonight",
+        "requesting berth for tonight",
+        "requesting a berth for tonight"
+      ],
+      "grammar_pattern": "marina_berth_request_with_duration",
+      "hint_beginner": "Request berth...",
+      "hint_intermediate": "for tonight",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Request berth for tonight.",
+          "request a berth for tonight",
+          "requesting berth for tonight"
+        ],
+        "should_reject": [
+          "need a berth tonight",
+          "request dock for tonight",
+          "request berth for tomorrow"
+        ],
+        "dangerous_minimal_pairs": [
+          "request berth / need a berth",
+          "berth / dock",
+          "tonight / tomorrow"
+        ],
+        "linguist_note": "Confirmed safe item-local variants: requesting and optional article follow starter berth-request style."
+      }
+    },
+    {
+      "id": "phrase_marina_stand_by_outside_001",
+      "type": "phrase",
+      "level": "beginner",
+      "difficulty_score": 14,
+      "topic": "approach",
+      "branch": "marina_harbour",
+      "module": "approach_instructions",
+      "source_language": "ru",
+      "source_text": "Ожидайте снаружи марины.",
+      "target_language": "en",
+      "target_text": "Stand by outside the marina.",
+      "accepted_answers": [
+        "stand by outside the marina",
+        "stand by outside marina"
+      ],
+      "grammar_pattern": "marina_stand_by_location",
+      "hint_beginner": "Stand by outside...",
+      "hint_intermediate": "outside the marina",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Stand by outside the marina.",
+          "stand by outside marina"
+        ],
+        "should_reject": [
+          "wait out outside the marina",
+          "do not answer outside the marina",
+          "go ahead outside the marina"
+        ],
+        "dangerous_minimal_pairs": [
+          "stand by outside / wait out",
+          "stand by outside / do not answer"
+        ],
+        "linguist_note": "Optional the is safe; wait out and do not answer must remain wrong."
+      }
+    },
+    {
+      "id": "phrase_marina_arriving_from_south_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 20,
+      "topic": "arrival_call",
+      "branch": "marina_harbour",
+      "module": "arrival_call",
+      "source_language": "ru",
+      "source_text": "Я подхожу с юга.",
+      "target_language": "en",
+      "target_text": "I am arriving from the south.",
+      "accepted_answers": [
+        "i am arriving from the south",
+        "arriving from the south",
+        "i am arriving from south",
+        "arriving from south"
+      ],
+      "grammar_pattern": "marina_arrival_direction",
+      "hint_beginner": "I am arriving...",
+      "hint_intermediate": "from the south",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "I am arriving from the south.",
+          "arriving from the south",
+          "arriving from south"
+        ],
+        "should_reject": [
+          "i am departing to the south",
+          "i am arriving from the north",
+          "i am south of marina"
+        ],
+        "dangerous_minimal_pairs": [
+          "arrival / departure",
+          "south / north"
+        ],
+        "linguist_note": "Missing article before south is accepted as a small grammar slip; direction must stay exact."
+      }
+    },
+    {
+      "id": "phrase_marina_request_visitor_berth_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 21,
+      "topic": "berth_request",
+      "branch": "marina_harbour",
+      "module": "berth_request",
+      "source_language": "ru",
+      "source_text": "Запрашиваю гостевое место у причала.",
+      "target_language": "en",
+      "target_text": "Request visitor berth.",
+      "accepted_answers": [
+        "request visitor berth",
+        "request a visitor berth",
+        "requesting visitor berth",
+        "requesting a visitor berth"
+      ],
+      "grammar_pattern": "marina_berth_request_type",
+      "hint_beginner": "Request visitor...",
+      "hint_intermediate": "visitor berth",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Request visitor berth.",
+          "request a visitor berth",
+          "requesting visitor berth"
+        ],
+        "should_reject": [
+          "need visitor berth",
+          "request visitor dock",
+          "request resident berth"
+        ],
+        "dangerous_minimal_pairs": [
+          "request berth / need a berth",
+          "berth / dock",
+          "visitor / resident"
+        ],
+        "linguist_note": "Visitor berth is distinct from resident berth; reject dock wording."
+      }
+    },
+    {
+      "id": "phrase_marina_request_berth_one_night_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 21,
+      "topic": "berth_request",
+      "branch": "marina_harbour",
+      "module": "berth_request",
+      "source_language": "ru",
+      "source_text": "Запрашиваю место у причала на одну ночь.",
+      "target_language": "en",
+      "target_text": "Request berth for one night.",
+      "accepted_answers": [
+        "request berth for one night",
+        "request a berth for one night",
+        "requesting berth for one night",
+        "requesting a berth for one night"
+      ],
+      "grammar_pattern": "marina_berth_request_with_duration",
+      "hint_beginner": "Request berth for...",
+      "hint_intermediate": "one night",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Request berth for one night.",
+          "request a berth for one night",
+          "requesting berth for one night"
+        ],
+        "should_reject": [
+          "request berth for two nights",
+          "need a berth for one night",
+          "request mooring for one night"
+        ],
+        "dangerous_minimal_pairs": [
+          "one night / two nights",
+          "berth / mooring",
+          "request / need"
+        ],
+        "linguist_note": "Duration must remain one night. Mooring is not accepted as berth here."
+      }
+    },
+    {
+      "id": "phrase_marina_request_fuel_berth_arrival_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 22,
+      "topic": "fuel_water_power",
+      "branch": "marina_harbour",
+      "module": "fuel_water_power",
+      "source_language": "ru",
+      "source_text": "Запрашиваю топливный причал при прибытии.",
+      "target_language": "en",
+      "target_text": "Request fuel berth on arrival.",
+      "accepted_answers": [
+        "request fuel berth on arrival",
+        "request a fuel berth on arrival",
+        "requesting fuel berth on arrival",
+        "requesting a fuel berth on arrival"
+      ],
+      "grammar_pattern": "marina_service_request_on_arrival",
+      "hint_beginner": "Request fuel berth...",
+      "hint_intermediate": "on arrival",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Request fuel berth on arrival.",
+          "request a fuel berth on arrival",
+          "requesting fuel berth on arrival"
+        ],
+        "should_reject": [
+          "request fuel on arrival",
+          "request fuel dock on arrival",
+          "request berth on arrival"
+        ],
+        "dangerous_minimal_pairs": [
+          "fuel berth / fuel",
+          "fuel berth / berth",
+          "berth / dock"
+        ],
+        "linguist_note": "Keeps fuel berth distinct from generic fuel and normal berth."
+      }
+    },
+    {
+      "id": "phrase_marina_request_fresh_water_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 22,
+      "topic": "fuel_water_power",
+      "branch": "marina_harbour",
+      "module": "fuel_water_power",
+      "source_language": "ru",
+      "source_text": "Запрашиваю пресную воду.",
+      "target_language": "en",
+      "target_text": "Request fresh water.",
+      "accepted_answers": [
+        "request fresh water",
+        "request water"
+      ],
+      "grammar_pattern": "marina_service_request_basic",
+      "hint_beginner": "Request fresh...",
+      "hint_intermediate": "fresh water",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Request fresh water.",
+          "request water"
+        ],
+        "should_reject": [
+          "need fresh water",
+          "request fuel",
+          "request shore power"
+        ],
+        "dangerous_minimal_pairs": [
+          "water / fuel",
+          "water / shore power",
+          "request / need"
+        ],
+        "linguist_note": "Confirmed safe item-local water-service variant: request water may answer request fresh water in this routine marina context."
+      }
+    },
+    {
+      "id": "phrase_marina_request_shore_power_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 23,
+      "topic": "fuel_water_power",
+      "branch": "marina_harbour",
+      "module": "fuel_water_power",
+      "source_language": "ru",
+      "source_text": "Запрашиваю береговое электропитание.",
+      "target_language": "en",
+      "target_text": "Request shore power.",
+      "accepted_answers": [
+        "request shore power"
+      ],
+      "grammar_pattern": "marina_service_request_basic",
+      "hint_beginner": "Request shore...",
+      "hint_intermediate": "shore power",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Request shore power.",
+          "request shore-power",
+          "REQUEST SHORE POWER"
+        ],
+        "should_reject": [
+          "request power",
+          "request electricity",
+          "need shore power"
+        ],
+        "dangerous_minimal_pairs": [
+          "shore power / power",
+          "request / need"
+        ],
+        "linguist_note": "Draft rejects power/electricity as too loose for this service term."
+      }
+    },
+    {
+      "id": "phrase_marina_request_water_power_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 24,
+      "topic": "fuel_water_power",
+      "branch": "marina_harbour",
+      "module": "fuel_water_power",
+      "source_language": "ru",
+      "source_text": "Запрашиваю воду и береговое питание.",
+      "target_language": "en",
+      "target_text": "Request water and shore power.",
+      "accepted_answers": [
+        "request water and shore power",
+        "request fresh water and shore power"
+      ],
+      "grammar_pattern": "marina_combined_service_request",
+      "hint_beginner": "Request water and...",
+      "hint_intermediate": "shore power",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Request water and shore power.",
+          "request fresh water and shore power"
+        ],
+        "should_reject": [
+          "request water",
+          "request shore power",
+          "need water and power"
+        ],
+        "dangerous_minimal_pairs": [
+          "water and shore power / water",
+          "shore power / power",
+          "request / need"
+        ],
+        "linguist_note": "Requires both services. Adding fresh before water is safe here because both water and shore power remain present."
+      }
+    },
+    {
+      "id": "phrase_marina_proceed_berth_bravo_one_two_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 24,
+      "topic": "approach",
+      "branch": "marina_harbour",
+      "module": "approach_instructions",
+      "source_language": "ru",
+      "source_text": "Следуйте к месту Bravo one two.",
+      "target_language": "en",
+      "target_text": "Proceed to berth Bravo one two.",
+      "accepted_answers": [
+        "proceed to berth bravo one two",
+        "proceed to the berth bravo one two"
+      ],
+      "grammar_pattern": "marina_proceed_to_named_berth",
+      "hint_beginner": "Proceed to berth...",
+      "hint_intermediate": "Bravo one two",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Proceed to berth Bravo one two.",
+          "proceed to the berth Bravo one two"
+        ],
+        "should_reject": [
+          "proceed to berth bravo two one",
+          "proceed to berth B12",
+          "B12",
+          "go ahead to berth bravo one two",
+          "proceed to dock bravo one two"
+        ],
+        "dangerous_minimal_pairs": [
+          "Bravo one two / Bravo two one",
+          "Bravo one two / B12",
+          "proceed / go ahead",
+          "berth / dock"
+        ],
+        "linguist_note": "Confirmed strict for Batch 002: keep spoken-form Bravo one two only. Compact B12/B-12 needs Director-Engineer matcher QA before acceptance."
+      }
+    },
+    {
+      "id": "phrase_marina_approach_slow_speed_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 25,
+      "topic": "approach",
+      "branch": "marina_harbour",
+      "module": "approach_instructions",
+      "source_language": "ru",
+      "source_text": "Подходите малым ходом.",
+      "target_language": "en",
+      "target_text": "Approach at slow speed.",
+      "accepted_answers": [
+        "approach at slow speed",
+        "approach slowly"
+      ],
+      "grammar_pattern": "marina_approach_speed",
+      "hint_beginner": "Approach at...",
+      "hint_intermediate": "slow speed",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Approach at slow speed.",
+          "approach slowly"
+        ],
+        "should_reject": [
+          "proceed at slow speed",
+          "enter at slow speed",
+          "reduce speed"
+        ],
+        "dangerous_minimal_pairs": [
+          "approach / proceed",
+          "approach / enter"
+        ],
+        "linguist_note": "Confirmed safe item-local variant: approach slowly preserves the slow-speed approach instruction. Reduce speed remains a different instruction."
+      }
+    },
+    {
+      "id": "phrase_marina_stand_by_entrance_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 25,
+      "topic": "approach",
+      "branch": "marina_harbour",
+      "module": "approach_instructions",
+      "source_language": "ru",
+      "source_text": "Ожидайте снаружи входа в гавань.",
+      "target_language": "en",
+      "target_text": "Stand by outside the harbour entrance.",
+      "accepted_answers": [
+        "stand by outside the harbour entrance",
+        "stand by outside harbour entrance"
+      ],
+      "grammar_pattern": "marina_stand_by_location",
+      "hint_beginner": "Stand by outside...",
+      "hint_intermediate": "harbour entrance",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Stand by outside the harbour entrance.",
+          "stand by outside harbour entrance"
+        ],
+        "should_reject": [
+          "wait out outside the harbour entrance",
+          "enter the harbour entrance",
+          "stand by inside the harbour entrance"
+        ],
+        "dangerous_minimal_pairs": [
+          "stand by outside / wait out",
+          "outside / inside",
+          "stand by / enter"
+        ],
+        "linguist_note": "Location outside/inside must remain exact."
+      }
+    },
+    {
+      "id": "phrase_marina_berth_port_side_to_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 26,
+      "topic": "mooring",
+      "branch": "marina_harbour",
+      "module": "mooring_alongside",
+      "source_language": "ru",
+      "source_text": "Швартуйтесь левым бортом к причалу.",
+      "target_language": "en",
+      "target_text": "Berth port side to.",
+      "accepted_answers": [
+        "berth port side to",
+        "port side to"
+      ],
+      "grammar_pattern": "marina_side_to_berth",
+      "hint_beginner": "Berth port...",
+      "hint_intermediate": "port side to",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Berth port side to.",
+          "port side to"
+        ],
+        "should_reject": [
+          "berth starboard side to",
+          "berth left side to",
+          "port side"
+        ],
+        "dangerous_minimal_pairs": [
+          "port side to / starboard side to",
+          "port / starboard"
+        ],
+        "linguist_note": "Accepting short port side to is risky but practical; left side to stays wrong."
+      }
+    },
+    {
+      "id": "phrase_marina_berth_starboard_side_to_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 26,
+      "topic": "mooring",
+      "branch": "marina_harbour",
+      "module": "mooring_alongside",
+      "source_language": "ru",
+      "source_text": "Швартуйтесь правым бортом к причалу.",
+      "target_language": "en",
+      "target_text": "Berth starboard side to.",
+      "accepted_answers": [
+        "berth starboard side to",
+        "starboard side to"
+      ],
+      "grammar_pattern": "marina_side_to_berth",
+      "hint_beginner": "Berth starboard...",
+      "hint_intermediate": "starboard side to",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Berth starboard side to.",
+          "starboard side to"
+        ],
+        "should_reject": [
+          "berth port side to",
+          "berth right side to",
+          "starboard side"
+        ],
+        "dangerous_minimal_pairs": [
+          "starboard side to / port side to",
+          "starboard / port"
+        ],
+        "linguist_note": "Accepting short starboard side to is risky but practical; right side to stays wrong."
+      }
+    },
+    {
+      "id": "phrase_marina_prepare_fenders_port_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 27,
+      "topic": "mooring",
+      "branch": "marina_harbour",
+      "module": "mooring_alongside",
+      "source_language": "ru",
+      "source_text": "Подготовьте кранцы по левому борту.",
+      "target_language": "en",
+      "target_text": "Prepare fenders on port side.",
+      "accepted_answers": [
+        "prepare fenders on port side",
+        "fenders on port side",
+        "prepare port side fenders"
+      ],
+      "grammar_pattern": "marina_prepare_fenders_side",
+      "hint_beginner": "Prepare fenders...",
+      "hint_intermediate": "port side",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Prepare fenders on port side.",
+          "fenders on port side",
+          "prepare port side fenders"
+        ],
+        "should_reject": [
+          "prepare fenders on starboard side",
+          "prepare finders on port side",
+          "prepare bumpers on port side"
+        ],
+        "dangerous_minimal_pairs": [
+          "port / starboard",
+          "fender / finder",
+          "fender / bumper"
+        ],
+        "linguist_note": "Bumpers remains rejected. Side must not be fuzzed."
+      }
+    },
+    {
+      "id": "phrase_marina_prepare_bow_stern_lines_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 27,
+      "topic": "mooring",
+      "branch": "marina_harbour",
+      "module": "mooring_alongside",
+      "source_language": "ru",
+      "source_text": "Подготовьте носовой и кормовой швартовы.",
+      "target_language": "en",
+      "target_text": "Prepare bow and stern lines.",
+      "accepted_answers": [
+        "prepare bow and stern lines",
+        "prepare bow line and stern line"
+      ],
+      "grammar_pattern": "marina_prepare_lines_position",
+      "hint_beginner": "Prepare bow and...",
+      "hint_intermediate": "stern lines",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Prepare bow and stern lines.",
+          "prepare bow line and stern line"
+        ],
+        "should_reject": [
+          "bow and stern lines ready",
+          "prepare bow and stern ropes",
+          "prepare fenders",
+          "prepare spring lines"
+        ],
+        "dangerous_minimal_pairs": [
+          "prepare lines / lines ready",
+          "line / rope",
+          "bow and stern / spring"
+        ],
+        "linguist_note": "Confirmed strict: this item is an instruction to prepare lines. Bow and stern lines ready is a status report and stays wrong."
+      }
+    },
+    {
+      "id": "phrase_marina_come_alongside_slowly_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 28,
+      "topic": "mooring",
+      "branch": "marina_harbour",
+      "module": "mooring_alongside",
+      "source_language": "ru",
+      "source_text": "Подходите лагом медленно.",
+      "target_language": "en",
+      "target_text": "Come alongside slowly.",
+      "accepted_answers": [
+        "come alongside slowly"
+      ],
+      "grammar_pattern": "marina_come_alongside",
+      "hint_beginner": "Come alongside...",
+      "hint_intermediate": "slowly",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Come alongside slowly.",
+          "COME ALONGSIDE SLOWLY"
+        ],
+        "should_reject": [
+          "come abeam slowly",
+          "come astern slowly",
+          "go alongside quickly"
+        ],
+        "dangerous_minimal_pairs": [
+          "alongside / abeam",
+          "alongside / astern",
+          "slowly / quickly"
+        ],
+        "linguist_note": "Alongside and speed adverb must remain exact."
+      }
+    },
+    {
+      "id": "phrase_marina_request_departure_permission_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 28,
+      "topic": "departure",
+      "branch": "marina_harbour",
+      "module": "departure_basic",
+      "source_language": "ru",
+      "source_text": "Запрашиваю разрешение на отход.",
+      "target_language": "en",
+      "target_text": "Request permission to depart.",
+      "accepted_answers": [
+        "request permission to depart",
+        "request departure permission",
+        "request departure"
+      ],
+      "grammar_pattern": "marina_departure_request",
+      "hint_beginner": "Request permission...",
+      "hint_intermediate": "to depart",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Request permission to depart.",
+          "request departure permission",
+          "request departure"
+        ],
+        "should_reject": [
+          "departing now",
+          "permission to arrive",
+          "request permission to enter"
+        ],
+        "dangerous_minimal_pairs": [
+          "departure / arrival",
+          "depart / enter",
+          "request / report"
+        ],
+        "linguist_note": "Confirmed safe item-local variants: request departure and request departure permission preserve the routine departure-permission request."
+      }
+    },
+    {
+      "id": "phrase_marina_ready_to_depart_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 29,
+      "topic": "departure",
+      "branch": "marina_harbour",
+      "module": "departure_basic",
+      "source_language": "ru",
+      "source_text": "Я готов к отходу.",
+      "target_language": "en",
+      "target_text": "I am ready to depart.",
+      "accepted_answers": [
+        "i am ready to depart",
+        "ready to depart"
+      ],
+      "grammar_pattern": "marina_departure_readiness",
+      "hint_beginner": "I am ready...",
+      "hint_intermediate": "to depart",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "I am ready to depart.",
+          "ready to depart"
+        ],
+        "should_reject": [
+          "i am departing",
+          "i am ready to arrive",
+          "ready to enter"
+        ],
+        "dangerous_minimal_pairs": [
+          "ready to depart / departing",
+          "depart / arrive",
+          "depart / enter"
+        ],
+        "linguist_note": "Ready to depart is a readiness report, not an actual departure report."
+      }
+    },
+    {
+      "id": "phrase_marina_leaving_berth_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 30,
+      "topic": "departure",
+      "branch": "marina_harbour",
+      "module": "departure_basic",
+      "source_language": "ru",
+      "source_text": "Я отхожу от места у причала.",
+      "target_language": "en",
+      "target_text": "I am leaving the berth.",
+      "accepted_answers": [
+        "i am leaving the berth",
+        "leaving the berth",
+        "i am leaving berth",
+        "leaving berth"
+      ],
+      "grammar_pattern": "marina_departure_from_berth",
+      "hint_beginner": "I am leaving...",
+      "hint_intermediate": "the berth",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "I am leaving the berth.",
+          "leaving the berth",
+          "leaving berth"
+        ],
+        "should_reject": [
+          "i am leaving the dock",
+          "i am arriving at the berth",
+          "i need a berth"
+        ],
+        "dangerous_minimal_pairs": [
+          "berth / dock",
+          "leaving / arriving",
+          "berth request / berth departure"
+        ],
+        "linguist_note": "Dock remains rejected to preserve berth terminology."
+      }
+    },
+    {
+      "id": "phrase_marina_stand_by_for_berth_assignment_001",
+      "type": "phrase",
+      "level": "advanced",
+      "difficulty_score": 36,
+      "topic": "approach",
+      "branch": "marina_harbour",
+      "module": "approach_instructions",
+      "source_language": "ru",
+      "source_text": "Ожидайте снаружи входа в марину для назначения места.",
+      "target_language": "en",
+      "target_text": "Stand by outside the marina entrance for berth assignment.",
+      "accepted_answers": [
+        "stand by outside the marina entrance for berth assignment",
+        "stand by outside marina entrance for berth assignment"
+      ],
+      "grammar_pattern": "marina_stand_by_for_assignment",
+      "hint_beginner": "Stand by outside...",
+      "hint_intermediate": "berth assignment",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Stand by outside the marina entrance for berth assignment.",
+          "stand by outside marina entrance for berth assignment"
+        ],
+        "should_reject": [
+          "wait out outside the marina entrance for berth assignment",
+          "enter the marina entrance for berth assignment",
+          "stand by inside the marina entrance for berth assignment"
+        ],
+        "dangerous_minimal_pairs": [
+          "stand by outside / wait out",
+          "outside / inside",
+          "stand by / enter"
+        ],
+        "linguist_note": "Advanced only because of phrase density. No port-control authority language intended."
+      }
+    },
+    {
+      "id": "phrase_marina_proceed_berth_three_port_side_001",
+      "type": "phrase",
+      "level": "advanced",
+      "difficulty_score": 38,
+      "topic": "approach",
+      "branch": "marina_harbour",
+      "module": "approach_instructions",
+      "source_language": "ru",
+      "source_text": "Следуйте к месту три, левым бортом к причалу.",
+      "target_language": "en",
+      "target_text": "Proceed to berth three, port side to.",
+      "accepted_answers": [
+        "proceed to berth three port side to",
+        "proceed to the berth three port side to"
+      ],
+      "grammar_pattern": "marina_proceed_to_berth_side_to",
+      "hint_beginner": "Proceed to berth...",
+      "hint_intermediate": "port side to",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Proceed to berth three, port side to.",
+          "proceed to the berth three port side to"
+        ],
+        "should_reject": [
+          "proceed to berth three starboard side to",
+          "go ahead to berth three port side to",
+          "proceed to dock three port side to"
+        ],
+        "dangerous_minimal_pairs": [
+          "port side to / starboard side to",
+          "proceed / go ahead",
+          "berth / dock"
+        ],
+        "linguist_note": "Combines berth number and side-to instruction; side and proceed verb must remain strict."
+      }
+    },
+    {
+      "id": "phrase_marina_after_fuel_proceed_berth_001",
+      "type": "phrase",
+      "level": "advanced",
+      "difficulty_score": 39,
+      "topic": "fuel_water_power",
+      "branch": "marina_harbour",
+      "module": "fuel_water_power",
+      "source_language": "ru",
+      "source_text": "После получения топлива следуйте к вашему месту у причала.",
+      "target_language": "en",
+      "target_text": "After taking fuel, proceed to your berth.",
+      "accepted_answers": [
+        "after taking fuel proceed to your berth",
+        "after fuel proceed to your berth"
+      ],
+      "grammar_pattern": "marina_service_then_berth",
+      "hint_beginner": "After taking fuel...",
+      "hint_intermediate": "proceed to your berth",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "After taking fuel, proceed to your berth.",
+          "after fuel proceed to your berth"
+        ],
+        "should_reject": [
+          "after taking water proceed to your berth",
+          "after taking fuel go ahead to your berth",
+          "after taking fuel proceed to your dock"
+        ],
+        "dangerous_minimal_pairs": [
+          "fuel / water",
+          "proceed / go ahead",
+          "berth / dock"
+        ],
+        "linguist_note": "After fuel is accepted as a shortened form; service type and berth terminology remain strict."
+      }
+    },
+    {
+      "id": "phrase_marina_depart_when_fairway_clear_001",
+      "type": "phrase",
+      "level": "advanced",
+      "difficulty_score": 40,
+      "topic": "departure",
+      "branch": "marina_harbour",
+      "module": "departure_basic",
+      "source_language": "ru",
+      "source_text": "Отходите, когда проход будет свободен.",
+      "target_language": "en",
+      "target_text": "Depart when the fairway is clear.",
+      "accepted_answers": [
+        "depart when the fairway is clear",
+        "depart when fairway is clear"
+      ],
+      "grammar_pattern": "marina_departure_condition",
+      "hint_beginner": "Depart when...",
+      "hint_intermediate": "fairway is clear",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Depart when the fairway is clear.",
+          "depart when fairway is clear"
+        ],
+        "should_reject": [
+          "depart now",
+          "depart when the berth is clear",
+          "enter when the fairway is clear"
+        ],
+        "dangerous_minimal_pairs": [
+          "fairway / berth",
+          "depart / enter",
+          "condition / immediate action"
+        ],
+        "linguist_note": "Confirmed appropriate for routine marina scope: a conditional fairway-clear departure instruction, not distress or VTS authority language."
+      }
+    },
+    {
+      "id": "phrase_marina_approach_keep_fenders_ready_001",
+      "type": "phrase",
+      "level": "advanced",
+      "difficulty_score": 42,
+      "topic": "approach",
+      "branch": "marina_harbour",
+      "module": "mooring_alongside",
+      "source_language": "ru",
+      "source_text": "Подходите медленно и держите кранцы готовыми.",
+      "target_language": "en",
+      "target_text": "Approach slowly and keep fenders ready.",
+      "accepted_answers": [
+        "approach slowly and keep fenders ready",
+        "approach slowly keep fenders ready"
+      ],
+      "grammar_pattern": "marina_approach_with_mooring_preparation",
+      "hint_beginner": "Approach slowly...",
+      "hint_intermediate": "fenders ready",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Approach slowly and keep fenders ready.",
+          "approach slowly keep fenders ready"
+        ],
+        "should_reject": [
+          "proceed slowly and keep fenders ready",
+          "approach slowly and keep lines ready",
+          "approach quickly and keep fenders ready"
+        ],
+        "dangerous_minimal_pairs": [
+          "approach / proceed",
+          "fenders / lines",
+          "slowly / quickly"
+        ],
+        "linguist_note": "Combined phrase ties approach and mooring prep. Reject proceed unless linguist approves as item-local variant."
+      }
+    }
+  ],
+  "grammar_patterns": [
+    {
+      "id": "marina_arrival_call_basic",
+      "level": "beginner",
+      "topic": "arrival_call",
+      "pattern": "Marina station + this is + vessel name",
+      "slots": [
+        "station",
+        "vessel_name"
+      ],
+      "examples": [
+        "Marina Control, this is sailing yacht Orion."
+      ]
+    },
+    {
+      "id": "marina_berth_request_with_duration",
+      "level": "beginner",
+      "topic": "berth_request",
+      "pattern": "Request berth + duration",
+      "slots": [
+        "duration"
+      ],
+      "examples": [
+        "Request berth for tonight.",
+        "Request berth for one night."
+      ]
+    },
+    {
+      "id": "marina_stand_by_location",
+      "level": "beginner",
+      "topic": "approach",
+      "pattern": "Stand by outside + location",
+      "slots": [
+        "location"
+      ],
+      "examples": [
+        "Stand by outside the marina.",
+        "Stand by outside the harbour entrance."
+      ]
+    },
+    {
+      "id": "marina_arrival_direction",
+      "level": "intermediate",
+      "topic": "arrival_call",
+      "pattern": "I am arriving from + direction",
+      "slots": [
+        "direction"
+      ],
+      "examples": [
+        "I am arriving from the south."
+      ]
+    },
+    {
+      "id": "marina_berth_request_type",
+      "level": "intermediate",
+      "topic": "berth_request",
+      "pattern": "Request + berth type",
+      "slots": [
+        "berth_type"
+      ],
+      "examples": [
+        "Request visitor berth."
+      ]
+    },
+    {
+      "id": "marina_service_request_basic",
+      "level": "intermediate",
+      "topic": "fuel_water_power",
+      "pattern": "Request + harbour service",
+      "slots": [
+        "service"
+      ],
+      "examples": [
+        "Request fresh water.",
+        "Request shore power."
+      ]
+    },
+    {
+      "id": "marina_service_request_on_arrival",
+      "level": "intermediate",
+      "topic": "fuel_water_power",
+      "pattern": "Request + service + on arrival",
+      "slots": [
+        "service"
+      ],
+      "examples": [
+        "Request fuel berth on arrival."
+      ]
+    },
+    {
+      "id": "marina_combined_service_request",
+      "level": "intermediate",
+      "topic": "fuel_water_power",
+      "pattern": "Request + service one + and + service two",
+      "slots": [
+        "service_one",
+        "service_two"
+      ],
+      "examples": [
+        "Request water and shore power."
+      ]
+    },
+    {
+      "id": "marina_proceed_to_named_berth",
+      "level": "intermediate",
+      "topic": "approach",
+      "pattern": "Proceed to berth + berth identifier",
+      "slots": [
+        "berth_identifier"
+      ],
+      "examples": [
+        "Proceed to berth Bravo one two."
+      ]
+    },
+    {
+      "id": "marina_approach_speed",
+      "level": "intermediate",
+      "topic": "approach",
+      "pattern": "Approach + speed condition",
+      "slots": [
+        "speed_condition"
+      ],
+      "examples": [
+        "Approach at slow speed."
+      ]
+    },
+    {
+      "id": "marina_side_to_berth",
+      "level": "intermediate",
+      "topic": "mooring",
+      "pattern": "Berth + side + side to",
+      "slots": [
+        "side"
+      ],
+      "examples": [
+        "Berth port side to.",
+        "Berth starboard side to."
+      ]
+    },
+    {
+      "id": "marina_prepare_fenders_side",
+      "level": "intermediate",
+      "topic": "mooring",
+      "pattern": "Prepare fenders on + side",
+      "slots": [
+        "side"
+      ],
+      "examples": [
+        "Prepare fenders on port side."
+      ]
+    },
+    {
+      "id": "marina_prepare_lines_position",
+      "level": "intermediate",
+      "topic": "mooring",
+      "pattern": "Prepare + line positions + lines",
+      "slots": [
+        "line_positions"
+      ],
+      "examples": [
+        "Prepare bow and stern lines."
+      ]
+    },
+    {
+      "id": "marina_come_alongside",
+      "level": "intermediate",
+      "topic": "mooring",
+      "pattern": "Come alongside + manner",
+      "slots": [
+        "manner"
+      ],
+      "examples": [
+        "Come alongside slowly."
+      ]
+    },
+    {
+      "id": "marina_departure_request",
+      "level": "intermediate",
+      "topic": "departure",
+      "pattern": "Request permission to depart",
+      "slots": [],
+      "examples": [
+        "Request permission to depart."
+      ]
+    },
+    {
+      "id": "marina_departure_readiness",
+      "level": "intermediate",
+      "topic": "departure",
+      "pattern": "I am ready to depart",
+      "slots": [],
+      "examples": [
+        "I am ready to depart."
+      ]
+    },
+    {
+      "id": "marina_departure_from_berth",
+      "level": "intermediate",
+      "topic": "departure",
+      "pattern": "I am leaving + berth",
+      "slots": [
+        "berth"
+      ],
+      "examples": [
+        "I am leaving the berth."
+      ]
+    },
+    {
+      "id": "marina_stand_by_for_assignment",
+      "level": "advanced",
+      "topic": "approach",
+      "pattern": "Stand by outside + location + for berth assignment",
+      "slots": [
+        "location"
+      ],
+      "examples": [
+        "Stand by outside the marina entrance for berth assignment."
+      ]
+    },
+    {
+      "id": "marina_proceed_to_berth_side_to",
+      "level": "advanced",
+      "topic": "approach",
+      "pattern": "Proceed to berth + berth number + side to",
+      "slots": [
+        "berth_number",
+        "side"
+      ],
+      "examples": [
+        "Proceed to berth three, port side to."
+      ]
+    },
+    {
+      "id": "marina_service_then_berth",
+      "level": "advanced",
+      "topic": "fuel_water_power",
+      "pattern": "After service + proceed to berth",
+      "slots": [
+        "service"
+      ],
+      "examples": [
+        "After taking fuel, proceed to your berth."
+      ]
+    },
+    {
+      "id": "marina_departure_condition",
+      "level": "advanced",
+      "topic": "departure",
+      "pattern": "Depart when + condition",
+      "slots": [
+        "condition"
+      ],
+      "examples": [
+        "Depart when the fairway is clear."
+      ]
+    },
+    {
+      "id": "marina_approach_with_mooring_preparation",
+      "level": "advanced",
+      "topic": "approach",
+      "pattern": "Approach + manner + and keep + mooring item + ready",
+      "slots": [
+        "manner",
+        "mooring_item"
+      ],
+      "examples": [
+        "Approach slowly and keep fenders ready."
+      ]
+    }
+  ],
+  "dangerous_minimal_pairs": [
+    {
+      "pair": "berth / birth",
+      "items": [
+        "word_marina_berth_001",
+        "expr_marina_request_berth_001"
+      ],
+      "must_accept": {
+        "word_marina_berth_001": [
+          "berth"
+        ],
+        "expr_marina_request_berth_001": [
+          "request berth"
+        ]
+      },
+      "must_reject": {
+        "word_marina_berth_001": [
+          "birth"
+        ],
+        "expr_marina_request_berth_001": [
+          "request birth"
+        ]
+      },
+      "reason": "Berth is the harbour place; birth is an ordinary English word and must not pass through typo matching."
+    },
+    {
+      "pair": "berth / dock / quay / pier / slip",
+      "items": [
+        "word_marina_berth_001",
+        "phrase_marina_request_visitor_berth_001",
+        "phrase_marina_leaving_berth_001"
+      ],
+      "must_accept": {
+        "word_marina_berth_001": [
+          "berth"
+        ],
+        "phrase_marina_leaving_berth_001": [
+          "leaving the berth"
+        ]
+      },
+      "must_reject": {
+        "word_marina_berth_001": [
+          "dock",
+          "quay",
+          "pier",
+          "slip"
+        ],
+        "phrase_marina_leaving_berth_001": [
+          "leaving the dock"
+        ]
+      },
+      "reason": "Confirmed strict for Batch 002: berth stays separate from dock, quay, pier, and slip."
+    },
+    {
+      "pair": "moor / berth / anchor",
+      "items": [
+        "word_marina_mooring_001",
+        "phrase_marina_request_berth_one_night_001"
+      ],
+      "must_accept": {
+        "word_marina_mooring_001": [
+          "mooring"
+        ],
+        "phrase_marina_request_berth_one_night_001": [
+          "request berth for one night"
+        ]
+      },
+      "must_reject": {
+        "word_marina_mooring_001": [
+          "moor",
+          "berth",
+          "anchor"
+        ],
+        "phrase_marina_request_berth_one_night_001": [
+          "request mooring for one night"
+        ]
+      },
+      "reason": "Mooring, berthing, and anchoring are related but not interchangeable in this batch."
+    },
+    {
+      "pair": "line / rope",
+      "items": [
+        "word_marina_line_001",
+        "expr_marina_prepare_lines_001",
+        "phrase_marina_prepare_bow_stern_lines_001"
+      ],
+      "must_accept": {
+        "word_marina_line_001": [
+          "line"
+        ],
+        "expr_marina_prepare_lines_001": [
+          "prepare lines"
+        ]
+      },
+      "must_reject": {
+        "word_marina_line_001": [
+          "rope"
+        ],
+        "expr_marina_prepare_lines_001": [
+          "prepare ropes"
+        ],
+        "phrase_marina_prepare_bow_stern_lines_001": [
+          "prepare bow and stern ropes"
+        ]
+      },
+      "reason": "Line is the trained mooring term; rope remains wrong for these drills."
+    },
+    {
+      "pair": "fender / finder / bumper",
+      "items": [
+        "word_marina_fender_001",
+        "expr_marina_prepare_fenders_001",
+        "phrase_marina_prepare_fenders_port_001"
+      ],
+      "must_accept": {
+        "word_marina_fender_001": [
+          "fender"
+        ],
+        "expr_marina_prepare_fenders_001": [
+          "prepare fenders"
+        ]
+      },
+      "must_reject": {
+        "word_marina_fender_001": [
+          "finder",
+          "bumper"
+        ],
+        "expr_marina_prepare_fenders_001": [
+          "prepare finders",
+          "prepare bumpers"
+        ],
+        "phrase_marina_prepare_fenders_port_001": [
+          "prepare finders on port side",
+          "prepare bumpers on port side"
+        ]
+      },
+      "reason": "Finder is a one-letter ordinary word and bumper is marina slang; both must stay wrong for the trained Sea Speak fender term."
+    },
+    {
+      "pair": "port side to / starboard side to",
+      "items": [
+        "expr_marina_port_side_to_001",
+        "expr_marina_starboard_side_to_001",
+        "phrase_marina_berth_port_side_to_001",
+        "phrase_marina_berth_starboard_side_to_001",
+        "phrase_marina_proceed_berth_three_port_side_001"
+      ],
+      "must_accept": {
+        "expr_marina_port_side_to_001": [
+          "port side to"
+        ],
+        "expr_marina_starboard_side_to_001": [
+          "starboard side to"
+        ]
+      },
+      "must_reject": {
+        "expr_marina_port_side_to_001": [
+          "starboard side to",
+          "left side to"
+        ],
+        "expr_marina_starboard_side_to_001": [
+          "port side to",
+          "right side to"
+        ]
+      },
+      "reason": "Port and starboard side-to instructions are operationally opposite and must not be fuzzed or translated to left/right."
+    },
+    {
+      "pair": "ahead / astern / alongside / abeam",
+      "items": [
+        "word_marina_alongside_001",
+        "expr_marina_come_alongside_001",
+        "phrase_marina_come_alongside_slowly_001"
+      ],
+      "must_accept": {
+        "word_marina_alongside_001": [
+          "alongside"
+        ],
+        "expr_marina_come_alongside_001": [
+          "come alongside"
+        ]
+      },
+      "must_reject": {
+        "word_marina_alongside_001": [
+          "ahead",
+          "astern",
+          "abeam"
+        ],
+        "expr_marina_come_alongside_001": [
+          "come abeam",
+          "come astern"
+        ]
+      },
+      "reason": "Relative positions and alongside mooring language must stay distinct."
+    },
+    {
+      "pair": "stand by outside / wait out / do not answer",
+      "items": [
+        "expr_marina_stand_by_outside_001",
+        "phrase_marina_stand_by_outside_001",
+        "phrase_marina_stand_by_entrance_001",
+        "phrase_marina_stand_by_for_berth_assignment_001"
+      ],
+      "must_accept": {
+        "expr_marina_stand_by_outside_001": [
+          "stand by outside"
+        ],
+        "phrase_marina_stand_by_outside_001": [
+          "stand by outside the marina"
+        ]
+      },
+      "must_reject": {
+        "expr_marina_stand_by_outside_001": [
+          "wait out",
+          "do not answer",
+          "wait outside"
+        ],
+        "phrase_marina_stand_by_outside_001": [
+          "wait out outside the marina",
+          "do not answer outside the marina"
+        ]
+      },
+      "reason": "Stand by outside is a harbour waiting instruction, not wait out or do not answer."
+    },
+    {
+      "pair": "proceed / enter / approach / go ahead",
+      "items": [
+        "word_marina_approach_001",
+        "expr_marina_proceed_to_berth_001",
+        "expr_marina_approach_slowly_001",
+        "phrase_marina_proceed_berth_bravo_one_two_001"
+      ],
+      "must_accept": {
+        "expr_marina_proceed_to_berth_001": [
+          "proceed to berth"
+        ],
+        "expr_marina_approach_slowly_001": [
+          "approach slowly"
+        ]
+      },
+      "must_reject": {
+        "expr_marina_proceed_to_berth_001": [
+          "go ahead to berth",
+          "enter berth",
+          "approach berth"
+        ],
+        "expr_marina_approach_slowly_001": [
+          "proceed slowly",
+          "enter slowly",
+          "go ahead slowly"
+        ]
+      },
+      "reason": "Harbour movement verbs have different operational meanings; go ahead is a radio permission phrase, not a movement synonym here. Compact B12 is also rejected until alphanumeric berth formats receive matcher QA."
+    },
+    {
+      "pair": "request berth / need a berth",
+      "items": [
+        "expr_marina_request_berth_001",
+        "phrase_marina_request_berth_tonight_001",
+        "phrase_marina_request_visitor_berth_001"
+      ],
+      "must_accept": {
+        "expr_marina_request_berth_001": [
+          "request berth"
+        ],
+        "phrase_marina_request_berth_tonight_001": [
+          "request berth for tonight"
+        ]
+      },
+      "must_reject": {
+        "expr_marina_request_berth_001": [
+          "need a berth"
+        ],
+        "phrase_marina_request_berth_tonight_001": [
+          "need a berth tonight"
+        ]
+      },
+      "reason": "The draft trains formal request wording and rejects informal need phrasing."
+    },
+    {
+      "pair": "water / fuel / shore power",
+      "items": [
+        "expr_marina_request_water_001",
+        "expr_marina_request_fuel_berth_001",
+        "expr_marina_request_shore_power_001",
+        "phrase_marina_request_water_power_001"
+      ],
+      "must_accept": {
+        "expr_marina_request_water_001": [
+          "request water"
+        ],
+        "expr_marina_request_shore_power_001": [
+          "request shore power"
+        ]
+      },
+      "must_reject": {
+        "expr_marina_request_water_001": [
+          "request fuel",
+          "request shore power"
+        ],
+        "expr_marina_request_shore_power_001": [
+          "request water",
+          "request power"
+        ]
+      },
+      "reason": "Routine marina services must not substitute for each other."
+    },
+    {
+      "pair": "arrival / departure",
+      "items": [
+        "word_marina_departure_001",
+        "phrase_marina_arriving_from_south_001",
+        "phrase_marina_request_departure_permission_001"
+      ],
+      "must_accept": {
+        "word_marina_departure_001": [
+          "departure"
+        ],
+        "phrase_marina_arriving_from_south_001": [
+          "arriving from the south"
+        ]
+      },
+      "must_reject": {
+        "word_marina_departure_001": [
+          "arrival"
+        ],
+        "phrase_marina_arriving_from_south_001": [
+          "departing to the south"
+        ],
+        "phrase_marina_request_departure_permission_001": [
+          "permission to arrive"
+        ]
+      },
+      "reason": "Arrival and departure are opposite workflow states."
+    }
+  ],
+  "producer_notes": [
+    {
+      "area": "accepted_variants_for_linguist",
+      "note": "Linguist decisions: request a berth/requesting berth are safe item-local variants; request fresh water and request water are mutually safe only for water-service items; fenders ready and lines ready are status reports and were removed from prepare-command items; request departure permission/request departure are safe item-local departure-request variants; approach slowly and after fuel remain safe item-local shortenings."
+    },
+    {
+      "area": "intentionally_rejected_harbour_synonyms",
+      "note": "Confirmed rejected across Batch 002 unless a future Director-Engineer task says otherwise: dock, quay, pier, slip, rope, bumper, electricity, power, need a berth, left side to, right side to, and compact B12 berth identifiers."
+    },
+    {
+      "area": "matcher_risks",
+      "note": "Protect one-letter or near-token changes: berth/birth, fender/finder, line/rope, port/starboard, outside/inside, tonight/tomorrow, one night/two nights, Bravo one two/Bravo two one, and spoken Bravo one two/compact B12."
+    },
+    {
+      "area": "policy_risks",
+      "note": "No policy change requested by Content Producer. If Linguist wants broad harbour synonym acceptance for dock/quay/pier/berth, route to Director-Engineer before integration."
+    }
+  ],
+  "merged_into": "content/captain-ether/starter.json",
+  "merged_date": "2026-05-27",
+  "merge_gate": "content/captain-ether/roles/qa/reports/batch-002-acceptance-qa-2026-05-27.md"
+}

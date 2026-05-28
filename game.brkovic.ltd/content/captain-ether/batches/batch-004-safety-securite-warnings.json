@@ -1,0 +1,2219 @@
+{
+  "version": 1,
+  "batch_id": "batch-004-safety-securite-warnings",
+  "status": "merged",
+  "date": "2026-05-27",
+  "branch": "safety_securite",
+  "scope": "Safety information and Securite warnings draft batch for Sea Speak Linguist review. This is not an urgency or distress batch and must not be merged into starter.json before Director-Engineer acceptance, validator gate, QA regression, and integration.",
+  "items": [
+    {
+      "id": "word_safety_safety_001",
+      "type": "word",
+      "level": "beginner",
+      "difficulty_score": 5,
+      "topic": "safety_signal",
+      "branch": "safety_securite",
+      "module": "safety_signal",
+      "source_language": "ru",
+      "source_text": "Безопасность / safety",
+      "target_language": "en",
+      "target_text": "safety",
+      "accepted_answers": [
+        "safety"
+      ],
+      "hint_beginner": "s_____",
+      "hint_intermediate": "safe...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "safety",
+          "SAFETY",
+          "safety."
+        ],
+        "should_reject": [
+          "urgency",
+          "distress",
+          "security"
+        ],
+        "dangerous_minimal_pairs": [
+          "safety / urgency / distress",
+          "safety / security"
+        ],
+        "linguist_note": "Safety information is the branch meaning; security is ordinary English and must stay wrong."
+      }
+    },
+    {
+      "id": "word_safety_warning_001",
+      "type": "word",
+      "level": "beginner",
+      "difficulty_score": 6,
+      "topic": "navigation_warning",
+      "branch": "safety_securite",
+      "module": "navigation_warning",
+      "source_language": "ru",
+      "source_text": "Предупреждение",
+      "target_language": "en",
+      "target_text": "warning",
+      "accepted_answers": [
+        "warning"
+      ],
+      "hint_beginner": "w_____g",
+      "hint_intermediate": "war...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "warning",
+          "WARNING",
+          "warning."
+        ],
+        "should_reject": [
+          "advice",
+          "information",
+          "danger"
+        ],
+        "dangerous_minimal_pairs": [
+          "warning / advice / information"
+        ],
+        "linguist_note": "Warning is kept separate from advice and information."
+      }
+    },
+    {
+      "id": "word_safety_hazard_001",
+      "type": "word",
+      "level": "beginner",
+      "difficulty_score": 6,
+      "topic": "hazard_reporting",
+      "branch": "safety_securite",
+      "module": "hazard_reporting",
+      "source_language": "ru",
+      "source_text": "Опасность / hazard",
+      "target_language": "en",
+      "target_text": "hazard",
+      "accepted_answers": [
+        "hazard"
+      ],
+      "hint_beginner": "h_____",
+      "hint_intermediate": "haz...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "hazard",
+          "HAZARD",
+          "hazard."
+        ],
+        "should_reject": [
+          "obstruction",
+          "danger",
+          "warning"
+        ],
+        "dangerous_minimal_pairs": [
+          "hazard / obstruction / danger"
+        ],
+        "linguist_note": "Danger is ordinary English here; draft trains hazard as the report term."
+      }
+    },
+    {
+      "id": "word_safety_visibility_001",
+      "type": "word",
+      "level": "beginner",
+      "difficulty_score": 6,
+      "topic": "restricted_visibility",
+      "branch": "safety_securite",
+      "module": "restricted_visibility",
+      "source_language": "ru",
+      "source_text": "Видимость",
+      "target_language": "en",
+      "target_text": "visibility",
+      "accepted_answers": [
+        "visibility"
+      ],
+      "hint_beginner": "v________y",
+      "hint_intermediate": "vis...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "visibility",
+          "VISIBILITY",
+          "visibility."
+        ],
+        "should_reject": [
+          "weather",
+          "sea state",
+          "wind"
+        ],
+        "dangerous_minimal_pairs": [
+          "wind / sea state / visibility"
+        ],
+        "linguist_note": "Visibility is not a substitute for weather or sea-state reports."
+      }
+    },
+    {
+      "id": "word_safety_weather_001",
+      "type": "word",
+      "level": "beginner",
+      "difficulty_score": 6,
+      "topic": "weather",
+      "branch": "safety_securite",
+      "module": "weather_sea_state",
+      "source_language": "ru",
+      "source_text": "Погода",
+      "target_language": "en",
+      "target_text": "weather",
+      "accepted_answers": [
+        "weather"
+      ],
+      "hint_beginner": "w______",
+      "hint_intermediate": "wea...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "weather",
+          "WEATHER",
+          "weather."
+        ],
+        "should_reject": [
+          "sea state",
+          "visibility",
+          "wind"
+        ],
+        "dangerous_minimal_pairs": [
+          "weather / sea state / visibility"
+        ],
+        "linguist_note": "Wind is a weather element, not accepted as the word-item answer."
+      }
+    },
+    {
+      "id": "word_safety_obstruction_001",
+      "type": "word",
+      "level": "intermediate",
+      "difficulty_score": 18,
+      "topic": "hazard_reporting",
+      "branch": "safety_securite",
+      "module": "hazard_reporting",
+      "source_language": "ru",
+      "source_text": "Препятствие",
+      "target_language": "en",
+      "target_text": "obstruction",
+      "accepted_answers": [
+        "obstruction"
+      ],
+      "hint_beginner": "o__________",
+      "hint_intermediate": "obs...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "obstruction",
+          "OBSTRUCTION",
+          "obstruction."
+        ],
+        "should_reject": [
+          "hazard",
+          "danger",
+          "obstacle"
+        ],
+        "dangerous_minimal_pairs": [
+          "hazard / obstruction / danger"
+        ],
+        "linguist_note": "Obstacle is ordinary English but remains rejected here; Batch 004 trains obstruction as the strict report term."
+      }
+    },
+    {
+      "id": "expr_safety_securite_signal_001",
+      "type": "short_expression",
+      "level": "beginner",
+      "difficulty_score": 8,
+      "topic": "safety_signal",
+      "branch": "safety_securite",
+      "module": "safety_signal",
+      "source_language": "ru",
+      "source_text": "Сигнал безопасности: Секюрите",
+      "target_language": "en",
+      "target_text": "Securite",
+      "accepted_answers": [
+        "securite",
+        "sécurité"
+      ],
+      "hint_beginner": "Securite",
+      "hint_intermediate": "safety signal",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Securite",
+          "Sécurité",
+          "SECURITE"
+        ],
+        "should_reject": [
+          "security",
+          "pan pan",
+          "mayday"
+        ],
+        "dangerous_minimal_pairs": [
+          "Securite / Sécurité / security",
+          "Securite / Pan-Pan / Mayday"
+        ],
+        "linguist_note": "Accept Securite/Sécurité only. Ordinary English security stays wrong."
+      }
+    },
+    {
+      "id": "expr_safety_safety_warning_001",
+      "type": "short_expression",
+      "level": "beginner",
+      "difficulty_score": 9,
+      "topic": "safety_signal",
+      "branch": "safety_securite",
+      "module": "safety_signal",
+      "source_language": "ru",
+      "source_text": "Предупреждение по безопасности",
+      "target_language": "en",
+      "target_text": "safety warning",
+      "accepted_answers": [
+        "safety warning"
+      ],
+      "hint_beginner": "safety w_____g",
+      "hint_intermediate": "safety...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "safety warning",
+          "SAFETY WARNING",
+          "safety-warning"
+        ],
+        "should_reject": [
+          "security warning",
+          "urgency warning",
+          "distress warning"
+        ],
+        "dangerous_minimal_pairs": [
+          "safety / urgency / distress",
+          "Securite / security"
+        ],
+        "linguist_note": "Security warning is not accepted as a safety-signal substitute."
+      }
+    },
+    {
+      "id": "expr_safety_navigation_warning_001",
+      "type": "short_expression",
+      "level": "beginner",
+      "difficulty_score": 10,
+      "topic": "navigation_warning",
+      "branch": "safety_securite",
+      "module": "navigation_warning",
+      "source_language": "ru",
+      "source_text": "Навигационное предупреждение",
+      "target_language": "en",
+      "target_text": "navigation warning",
+      "accepted_answers": [
+        "navigation warning"
+      ],
+      "hint_beginner": "navigation w_____g",
+      "hint_intermediate": "navigation...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "navigation warning",
+          "NAVIGATION WARNING",
+          "navigation-warning"
+        ],
+        "should_reject": [
+          "weather warning",
+          "safety advice",
+          "navigation information"
+        ],
+        "dangerous_minimal_pairs": [
+          "navigation warning / weather warning",
+          "warning / advice / information"
+        ],
+        "linguist_note": "Navigation warning is distinct from weather warning and ordinary information."
+      }
+    },
+    {
+      "id": "expr_safety_weather_warning_001",
+      "type": "short_expression",
+      "level": "intermediate",
+      "difficulty_score": 19,
+      "topic": "weather",
+      "branch": "safety_securite",
+      "module": "weather_sea_state",
+      "source_language": "ru",
+      "source_text": "Метеопредупреждение",
+      "target_language": "en",
+      "target_text": "weather warning",
+      "accepted_answers": [
+        "weather warning"
+      ],
+      "hint_beginner": "weather w_____g",
+      "hint_intermediate": "weather...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "weather warning",
+          "WEATHER WARNING",
+          "weather-warning"
+        ],
+        "should_reject": [
+          "navigation warning",
+          "weather information",
+          "wind warning"
+        ],
+        "dangerous_minimal_pairs": [
+          "weather warning / navigation warning",
+          "warning / information"
+        ],
+        "linguist_note": "Wind warning is rejected as not the trained phrase in this item."
+      }
+    },
+    {
+      "id": "expr_safety_restricted_visibility_001",
+      "type": "short_expression",
+      "level": "intermediate",
+      "difficulty_score": 20,
+      "topic": "restricted_visibility",
+      "branch": "safety_securite",
+      "module": "restricted_visibility",
+      "source_language": "ru",
+      "source_text": "Ограниченная видимость",
+      "target_language": "en",
+      "target_text": "restricted visibility",
+      "accepted_answers": [
+        "restricted visibility"
+      ],
+      "hint_beginner": "restricted v________y",
+      "hint_intermediate": "restricted...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "restricted visibility",
+          "RESTRICTED VISIBILITY",
+          "restricted-visibility"
+        ],
+        "should_reject": [
+          "poor visibility",
+          "reduced visibility",
+          "visibility good"
+        ],
+        "dangerous_minimal_pairs": [
+          "restricted visibility / poor visibility / visibility good"
+        ],
+        "linguist_note": "Matches existing strictness: poor/reduced visibility are not accepted substitutes."
+      }
+    },
+    {
+      "id": "expr_safety_sea_state_001",
+      "type": "short_expression",
+      "level": "intermediate",
+      "difficulty_score": 20,
+      "topic": "sea_state",
+      "branch": "safety_securite",
+      "module": "weather_sea_state",
+      "source_language": "ru",
+      "source_text": "Состояние моря",
+      "target_language": "en",
+      "target_text": "sea state",
+      "accepted_answers": [
+        "sea state"
+      ],
+      "hint_beginner": "sea s____",
+      "hint_intermediate": "sea...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "sea state",
+          "SEA STATE",
+          "sea-state"
+        ],
+        "should_reject": [
+          "weather",
+          "wind",
+          "visibility"
+        ],
+        "dangerous_minimal_pairs": [
+          "wind / sea state / visibility"
+        ],
+        "linguist_note": "Sea state is not a free synonym for weather or wind."
+      }
+    },
+    {
+      "id": "expr_safety_keep_listening_watch_001",
+      "type": "short_expression",
+      "level": "intermediate",
+      "difficulty_score": 21,
+      "topic": "safety_readback",
+      "branch": "safety_securite",
+      "module": "safety_readback",
+      "source_language": "ru",
+      "source_text": "Ведите наблюдение на связи",
+      "target_language": "en",
+      "target_text": "keep listening watch",
+      "accepted_answers": [
+        "keep listening watch",
+        "keep a listening watch"
+      ],
+      "hint_beginner": "keep listening...",
+      "hint_intermediate": "listening watch",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "keep listening watch",
+          "keep a listening watch",
+          "KEEP LISTENING WATCH"
+        ],
+        "should_reject": [
+          "keep watch",
+          "stand by",
+          "do not answer"
+        ],
+        "dangerous_minimal_pairs": [
+          "listening watch / stand by / do not answer"
+        ],
+        "linguist_note": "Confirmed item-local variant: keep a listening watch is accepted. Keep watch is too broad."
+      }
+    },
+    {
+      "id": "expr_safety_hazard_reported_001",
+      "type": "short_expression",
+      "level": "intermediate",
+      "difficulty_score": 21,
+      "topic": "hazard_reporting",
+      "branch": "safety_securite",
+      "module": "hazard_reporting",
+      "source_language": "ru",
+      "source_text": "Опасность доложена",
+      "target_language": "en",
+      "target_text": "hazard reported",
+      "accepted_answers": [
+        "hazard reported"
+      ],
+      "hint_beginner": "hazard r_______",
+      "hint_intermediate": "hazard...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "hazard reported",
+          "HAZARD REPORTED",
+          "hazard-reported"
+        ],
+        "should_reject": [
+          "danger reported",
+          "obstruction reported",
+          "warning reported"
+        ],
+        "dangerous_minimal_pairs": [
+          "hazard / obstruction / danger"
+        ],
+        "linguist_note": "Obstruction reported is a different report frame in this draft."
+      }
+    },
+    {
+      "id": "expr_safety_obstruction_reported_001",
+      "type": "short_expression",
+      "level": "intermediate",
+      "difficulty_score": 22,
+      "topic": "hazard_reporting",
+      "branch": "safety_securite",
+      "module": "hazard_reporting",
+      "source_language": "ru",
+      "source_text": "Препятствие доложено",
+      "target_language": "en",
+      "target_text": "obstruction reported",
+      "accepted_answers": [
+        "obstruction reported"
+      ],
+      "hint_beginner": "obstruction r_______",
+      "hint_intermediate": "obstruction...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "obstruction reported",
+          "OBSTRUCTION REPORTED",
+          "obstruction-reported"
+        ],
+        "should_reject": [
+          "hazard reported",
+          "danger reported",
+          "obstacle reported"
+        ],
+        "dangerous_minimal_pairs": [
+          "hazard / obstruction / danger"
+        ],
+        "linguist_note": "Obstacle reported remains rejected; obstruction reported is the trained safety report frame."
+      }
+    },
+    {
+      "id": "expr_safety_read_back_warning_001",
+      "type": "short_expression",
+      "level": "intermediate",
+      "difficulty_score": 22,
+      "topic": "safety_readback",
+      "branch": "safety_securite",
+      "module": "safety_readback",
+      "source_language": "ru",
+      "source_text": "Повторите предупреждение для подтверждения",
+      "target_language": "en",
+      "target_text": "read back warning",
+      "accepted_answers": [
+        "read back warning",
+        "readback warning",
+        "read back the warning"
+      ],
+      "hint_beginner": "read back...",
+      "hint_intermediate": "warning",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "read back warning",
+          "readback warning",
+          "read back the warning"
+        ],
+        "should_reject": [
+          "say again warning",
+          "repeat warning",
+          "roger warning"
+        ],
+        "dangerous_minimal_pairs": [
+          "read back / say again",
+          "warning / acknowledgement"
+        ],
+        "linguist_note": "Read back is confirmation; say again asks for retransmission."
+      }
+    },
+    {
+      "id": "phrase_safety_securite_three_times_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 20,
+      "topic": "safety_signal",
+      "branch": "safety_securite",
+      "module": "safety_signal",
+      "source_language": "ru",
+      "source_text": "Секюрите, Секюрите, Секюрите.",
+      "target_language": "en",
+      "target_text": "Securite, Securite, Securite.",
+      "accepted_answers": [
+        "securite securite securite",
+        "sécurité sécurité sécurité"
+      ],
+      "grammar_pattern": "safety_securite_signal_three_times",
+      "hint_beginner": "Securite...",
+      "hint_intermediate": "safety signal",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Securite, Securite, Securite.",
+          "Sécurité Sécurité Sécurité"
+        ],
+        "should_reject": [
+          "security security security",
+          "pan pan pan pan pan pan",
+          "mayday mayday mayday"
+        ],
+        "dangerous_minimal_pairs": [
+          "Securite / Sécurité / security",
+          "Securite / Pan-Pan / Mayday"
+        ],
+        "linguist_note": "Safety signal only. Do not accept ordinary English security or other radio signals."
+      }
+    },
+    {
+      "id": "phrase_safety_navigation_warning_channel_16_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 21,
+      "topic": "navigation_warning",
+      "branch": "safety_securite",
+      "module": "navigation_warning",
+      "source_language": "ru",
+      "source_text": "Секюрите, навигационное предупреждение на канале 16.",
+      "target_language": "en",
+      "target_text": "Securite, navigation warning on channel one six.",
+      "accepted_answers": [
+        "securite navigation warning on channel one six",
+        "sécurité navigation warning on channel one six",
+        "securite navigation warning on channel 16",
+        "sécurité navigation warning on channel 16"
+      ],
+      "grammar_pattern": "safety_signal_warning_channel",
+      "hint_beginner": "Securite, navigation...",
+      "hint_intermediate": "channel one six",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Securite, navigation warning on channel one six.",
+          "Sécurité navigation warning on channel 16"
+        ],
+        "should_reject": [
+          "security navigation warning on channel one six",
+          "securite weather warning on channel one six",
+          "securite navigation warning on channel one two"
+        ],
+        "dangerous_minimal_pairs": [
+          "Securite / security",
+          "navigation warning / weather warning",
+          "channel 16 / channel 12"
+        ],
+        "linguist_note": "Channel number and warning type must stay exact."
+      }
+    },
+    {
+      "id": "phrase_safety_weather_warning_north_wind_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 22,
+      "topic": "weather",
+      "branch": "safety_securite",
+      "module": "weather_sea_state",
+      "source_language": "ru",
+      "source_text": "Секюрите, метеопредупреждение: сильный ветер с севера.",
+      "target_language": "en",
+      "target_text": "Securite, weather warning: strong wind from north.",
+      "accepted_answers": [
+        "securite weather warning strong wind from north",
+        "sécurité weather warning strong wind from north"
+      ],
+      "grammar_pattern": "safety_weather_warning_wind",
+      "hint_beginner": "Securite, weather...",
+      "hint_intermediate": "strong wind from north",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Securite, weather warning: strong wind from north.",
+          "Sécurité weather warning strong wind from north"
+        ],
+        "should_reject": [
+          "securite navigation warning strong wind from north",
+          "securite weather warning strong wind from south",
+          "security weather warning strong wind from north"
+        ],
+        "dangerous_minimal_pairs": [
+          "weather warning / navigation warning",
+          "north / south",
+          "Securite / security"
+        ],
+        "linguist_note": "Wind direction must remain exact; this is information, not a help request."
+      }
+    },
+    {
+      "id": "phrase_safety_sea_state_moderate_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 22,
+      "topic": "sea_state",
+      "branch": "safety_securite",
+      "module": "weather_sea_state",
+      "source_language": "ru",
+      "source_text": "Состояние моря умеренное.",
+      "target_language": "en",
+      "target_text": "Sea state is moderate.",
+      "accepted_answers": [
+        "sea state is moderate",
+        "sea state moderate"
+      ],
+      "grammar_pattern": "safety_sea_state_report",
+      "hint_beginner": "Sea state...",
+      "hint_intermediate": "moderate",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Sea state is moderate.",
+          "sea state moderate"
+        ],
+        "should_reject": [
+          "sea state is rough",
+          "weather is moderate",
+          "visibility is moderate"
+        ],
+        "dangerous_minimal_pairs": [
+          "wind / sea state / visibility",
+          "moderate / rough"
+        ],
+        "linguist_note": "Sea-state value must not be substituted."
+      }
+    },
+    {
+      "id": "phrase_safety_restricted_visibility_marina_approach_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 23,
+      "topic": "restricted_visibility",
+      "branch": "safety_securite",
+      "module": "restricted_visibility",
+      "source_language": "ru",
+      "source_text": "Ограниченная видимость на подходе к марине.",
+      "target_language": "en",
+      "target_text": "Restricted visibility in the marina approach.",
+      "accepted_answers": [
+        "restricted visibility in the marina approach",
+        "restricted visibility marina approach"
+      ],
+      "grammar_pattern": "safety_restricted_visibility_location",
+      "hint_beginner": "Restricted visibility...",
+      "hint_intermediate": "marina approach",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Restricted visibility in the marina approach.",
+          "restricted visibility marina approach"
+        ],
+        "should_reject": [
+          "poor visibility in the marina approach",
+          "reduced visibility in the marina approach",
+          "visibility good in the marina approach",
+          "restricted visibility in the harbour entrance"
+        ],
+        "dangerous_minimal_pairs": [
+          "restricted visibility / poor visibility / visibility good",
+          "marina approach / harbour entrance"
+        ],
+        "linguist_note": "Restricted visibility remains the trained form; location must stay exact."
+      }
+    },
+    {
+      "id": "phrase_safety_obstruction_reporting_point_alpha_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 24,
+      "topic": "hazard_reporting",
+      "branch": "safety_securite",
+      "module": "hazard_reporting",
+      "source_language": "ru",
+      "source_text": "Препятствие около контрольной точки Alpha.",
+      "target_language": "en",
+      "target_text": "Obstruction near reporting point Alpha.",
+      "accepted_answers": [
+        "obstruction near reporting point alpha",
+        "obstruction near the reporting point alpha"
+      ],
+      "grammar_pattern": "safety_obstruction_reporting_point",
+      "hint_beginner": "Obstruction near...",
+      "hint_intermediate": "reporting point Alpha",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Obstruction near reporting point Alpha.",
+          "obstruction near the reporting point Alpha"
+        ],
+        "should_reject": [
+          "hazard near reporting point alpha",
+          "obstacle near reporting point alpha",
+          "obstruction near waypoint alpha",
+          "obstruction near reporting point bravo"
+        ],
+        "dangerous_minimal_pairs": [
+          "hazard / obstruction / danger",
+          "reporting point / waypoint",
+          "Alpha / Bravo"
+        ],
+        "linguist_note": "Obstruction and reporting point are kept strict."
+      }
+    },
+    {
+      "id": "phrase_safety_hazard_two_cables_north_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 25,
+      "topic": "hazard_reporting",
+      "branch": "safety_securite",
+      "module": "hazard_reporting",
+      "source_language": "ru",
+      "source_text": "Опасность два кабельтова к северу от марины.",
+      "target_language": "en",
+      "target_text": "Hazard two cables north of the marina.",
+      "accepted_answers": [
+        "hazard two cables north of the marina",
+        "hazard 2 cables north of the marina"
+      ],
+      "grammar_pattern": "safety_hazard_distance_direction",
+      "hint_beginner": "Hazard two...",
+      "hint_intermediate": "two cables north",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Hazard two cables north of the marina.",
+          "hazard 2 cables north of the marina"
+        ],
+        "should_reject": [
+          "danger two cables north of the marina",
+          "hazard two cables south of the marina",
+          "hazard two nautical miles north of the marina"
+        ],
+        "dangerous_minimal_pairs": [
+          "hazard / danger",
+          "north / south",
+          "cables / nautical miles"
+        ],
+        "linguist_note": "Direction and unit must not be fuzzed."
+      }
+    },
+    {
+      "id": "phrase_safety_navigation_warning_obstruction_channel_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 25,
+      "topic": "navigation_warning",
+      "branch": "safety_securite",
+      "module": "navigation_warning",
+      "source_language": "ru",
+      "source_text": "Навигационное предупреждение: препятствие в канале.",
+      "target_language": "en",
+      "target_text": "Navigation warning: obstruction in the channel.",
+      "accepted_answers": [
+        "navigation warning obstruction in the channel",
+        "navigation warning obstruction channel"
+      ],
+      "grammar_pattern": "safety_navigation_warning_obstruction",
+      "hint_beginner": "Navigation warning...",
+      "hint_intermediate": "obstruction in the channel",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Navigation warning: obstruction in the channel.",
+          "navigation warning obstruction channel"
+        ],
+        "should_reject": [
+          "weather warning obstruction in the channel",
+          "navigation information obstruction in the channel",
+          "navigation warning hazard in the channel"
+        ],
+        "dangerous_minimal_pairs": [
+          "navigation warning / weather warning",
+          "warning / information",
+          "hazard / obstruction"
+        ],
+        "linguist_note": "Warning type and obstruction term stay strict."
+      }
+    },
+    {
+      "id": "phrase_safety_weather_warning_sea_state_rough_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 26,
+      "topic": "weather",
+      "branch": "safety_securite",
+      "module": "weather_sea_state",
+      "source_language": "ru",
+      "source_text": "Метеопредупреждение: состояние моря бурное.",
+      "target_language": "en",
+      "target_text": "Weather warning: sea state rough.",
+      "accepted_answers": [
+        "weather warning sea state rough",
+        "weather warning sea state is rough"
+      ],
+      "grammar_pattern": "safety_weather_warning_sea_state",
+      "hint_beginner": "Weather warning...",
+      "hint_intermediate": "sea state rough",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Weather warning: sea state rough.",
+          "weather warning sea state is rough"
+        ],
+        "should_reject": [
+          "navigation warning sea state rough",
+          "weather warning sea state moderate",
+          "weather information sea state rough"
+        ],
+        "dangerous_minimal_pairs": [
+          "weather warning / navigation warning",
+          "warning / information",
+          "rough / moderate"
+        ],
+        "linguist_note": "Rough sea state is safety information here, not an emergency action."
+      }
+    },
+    {
+      "id": "phrase_safety_keep_listening_watch_channel_16_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 26,
+      "topic": "safety_readback",
+      "branch": "safety_securite",
+      "module": "safety_readback",
+      "source_language": "ru",
+      "source_text": "Ведите наблюдение на канале 16.",
+      "target_language": "en",
+      "target_text": "Keep listening watch on channel one six.",
+      "accepted_answers": [
+        "keep listening watch on channel one six",
+        "keep a listening watch on channel one six",
+        "keep listening watch on channel 16",
+        "keep a listening watch on channel 16"
+      ],
+      "grammar_pattern": "safety_listening_watch_channel",
+      "hint_beginner": "Keep listening watch...",
+      "hint_intermediate": "channel one six",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Keep listening watch on channel one six.",
+          "keep listening watch on channel 16"
+        ],
+        "should_reject": [
+          "keep listening watch on channel one two",
+          "stand by on channel one six",
+          "do not answer on channel one six"
+        ],
+        "dangerous_minimal_pairs": [
+          "channel 16 / channel 12",
+          "listening watch / stand by / do not answer"
+        ],
+        "linguist_note": "Channel and procedure concept must remain exact."
+      }
+    },
+    {
+      "id": "phrase_safety_read_back_navigation_warning_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 27,
+      "topic": "safety_readback",
+      "branch": "safety_securite",
+      "module": "safety_readback",
+      "source_language": "ru",
+      "source_text": "Повторите навигационное предупреждение для подтверждения.",
+      "target_language": "en",
+      "target_text": "Read back navigation warning.",
+      "accepted_answers": [
+        "read back navigation warning",
+        "readback navigation warning",
+        "read back the navigation warning"
+      ],
+      "grammar_pattern": "safety_readback_warning",
+      "hint_beginner": "Read back...",
+      "hint_intermediate": "navigation warning",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Read back navigation warning.",
+          "readback navigation warning",
+          "read back the navigation warning"
+        ],
+        "should_reject": [
+          "say again navigation warning",
+          "repeat navigation warning",
+          "read back weather warning"
+        ],
+        "dangerous_minimal_pairs": [
+          "read back / say again",
+          "navigation warning / weather warning"
+        ],
+        "linguist_note": "Read back is confirmation and warning type stays exact."
+      }
+    },
+    {
+      "id": "phrase_safety_information_received_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 27,
+      "topic": "safety_readback",
+      "branch": "safety_securite",
+      "module": "safety_readback",
+      "source_language": "ru",
+      "source_text": "Информация по безопасности получена.",
+      "target_language": "en",
+      "target_text": "Safety information received.",
+      "accepted_answers": [
+        "safety information received",
+        "received safety information"
+      ],
+      "grammar_pattern": "safety_information_acknowledgement",
+      "hint_beginner": "Safety information...",
+      "hint_intermediate": "received",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Safety information received.",
+          "received safety information"
+        ],
+        "should_reject": [
+          "roger",
+          "security information received",
+          "safety warning received"
+        ],
+        "dangerous_minimal_pairs": [
+          "safety / security",
+          "information / warning",
+          "acknowledgement / roger"
+        ],
+        "linguist_note": "Roger alone is not accepted; this trains explicit safety-information acknowledgement."
+      }
+    },
+    {
+      "id": "phrase_safety_advice_received_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 28,
+      "topic": "safety_readback",
+      "branch": "safety_securite",
+      "module": "safety_readback",
+      "source_language": "ru",
+      "source_text": "Совет по безопасности получен.",
+      "target_language": "en",
+      "target_text": "Safety advice received.",
+      "accepted_answers": [
+        "safety advice received",
+        "received safety advice"
+      ],
+      "grammar_pattern": "safety_advice_acknowledgement",
+      "hint_beginner": "Safety advice...",
+      "hint_intermediate": "received",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Safety advice received.",
+          "received safety advice"
+        ],
+        "should_reject": [
+          "safety advise received",
+          "safety warning received",
+          "safety information received"
+        ],
+        "dangerous_minimal_pairs": [
+          "advice / advise",
+          "warning / advice / information"
+        ],
+        "linguist_note": "Advice is the noun; advise as a verb-form lookalike must stay wrong."
+      }
+    },
+    {
+      "id": "phrase_safety_information_valid_until_1400_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 29,
+      "topic": "safety_signal",
+      "branch": "safety_securite",
+      "module": "safety_signal",
+      "source_language": "ru",
+      "source_text": "Информация по безопасности действует до один четыре ноль ноль UTC.",
+      "target_language": "en",
+      "target_text": "Safety information valid until one four zero zero UTC.",
+      "accepted_answers": [
+        "safety information valid until one four zero zero utc",
+        "safety information valid until one four zero zero zulu",
+        "safety information valid until 1400 utc",
+        "safety information valid until 1400z"
+      ],
+      "grammar_pattern": "safety_information_valid_until",
+      "hint_beginner": "Safety information valid...",
+      "hint_intermediate": "1400 UTC",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Safety information valid until one four zero zero UTC.",
+          "safety information valid until 1400 UTC",
+          "safety information valid until 1400Z"
+        ],
+        "should_reject": [
+          "safety information valid until 1500 utc",
+          "safety information valid until 1400 local",
+          "security information valid until 1400 utc"
+        ],
+        "dangerous_minimal_pairs": [
+          "1400 / 1500",
+          "UTC / local time",
+          "safety / security"
+        ],
+        "linguist_note": "UTC, Zulu, and Z are accepted item-locally; time and time-system meaning must stay protected."
+      }
+    },
+    {
+      "id": "phrase_safety_obstruction_east_breakwater_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 29,
+      "topic": "hazard_reporting",
+      "branch": "safety_securite",
+      "module": "hazard_reporting",
+      "source_language": "ru",
+      "source_text": "Предупреждение: препятствие к востоку от волнолома.",
+      "target_language": "en",
+      "target_text": "Warning: obstruction east of the breakwater.",
+      "accepted_answers": [
+        "warning obstruction east of the breakwater",
+        "warning obstruction east breakwater"
+      ],
+      "grammar_pattern": "safety_warning_obstruction_direction",
+      "hint_beginner": "Warning: obstruction...",
+      "hint_intermediate": "east of the breakwater",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Warning: obstruction east of the breakwater.",
+          "warning obstruction east breakwater"
+        ],
+        "should_reject": [
+          "warning obstruction west of the breakwater",
+          "warning hazard east of the breakwater",
+          "advice obstruction east of the breakwater"
+        ],
+        "dangerous_minimal_pairs": [
+          "east / west",
+          "hazard / obstruction",
+          "warning / advice"
+        ],
+        "linguist_note": "Direction and warning marker must stay exact."
+      }
+    },
+    {
+      "id": "phrase_safety_visibility_less_two_miles_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 30,
+      "topic": "restricted_visibility",
+      "branch": "safety_securite",
+      "module": "restricted_visibility",
+      "source_language": "ru",
+      "source_text": "Видимость менее двух морских миль.",
+      "target_language": "en",
+      "target_text": "Visibility less than two nautical miles.",
+      "accepted_answers": [
+        "visibility less than two nautical miles",
+        "visibility less than 2 nautical miles"
+      ],
+      "grammar_pattern": "safety_visibility_distance",
+      "hint_beginner": "Visibility less than...",
+      "hint_intermediate": "two nautical miles",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Visibility less than two nautical miles.",
+          "visibility less than 2 nautical miles"
+        ],
+        "should_reject": [
+          "visibility good two nautical miles",
+          "visibility less than two cables",
+          "weather less than two nautical miles"
+        ],
+        "dangerous_minimal_pairs": [
+          "restricted visibility / visibility good",
+          "nautical miles / cables",
+          "weather / visibility"
+        ],
+        "linguist_note": "Distance unit and visibility meaning must stay exact."
+      }
+    },
+    {
+      "id": "phrase_safety_securite_nav_obstruction_alpha_001",
+      "type": "phrase",
+      "level": "advanced",
+      "difficulty_score": 36,
+      "topic": "navigation_warning",
+      "branch": "safety_securite",
+      "module": "navigation_warning",
+      "source_language": "ru",
+      "source_text": "Секюрите, Секюрите, Секюрите, навигационное предупреждение: препятствие два кабельтова к северу от контрольной точки Alpha.",
+      "target_language": "en",
+      "target_text": "Securite, Securite, Securite, navigation warning: obstruction two cables north of reporting point Alpha.",
+      "accepted_answers": [
+        "securite securite securite navigation warning obstruction two cables north of reporting point alpha",
+        "sécurité sécurité sécurité navigation warning obstruction two cables north of reporting point alpha",
+        "securite securite securite navigation warning obstruction 2 cables north of reporting point alpha"
+      ],
+      "grammar_pattern": "safety_securite_navigation_warning_position",
+      "hint_beginner": "Securite, Securite...",
+      "hint_intermediate": "obstruction two cables north",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Securite, Securite, Securite, navigation warning: obstruction two cables north of reporting point Alpha.",
+          "Sécurité Sécurité Sécurité navigation warning obstruction 2 cables north of reporting point Alpha"
+        ],
+        "should_reject": [
+          "security security security navigation warning obstruction two cables north of reporting point alpha",
+          "securite securite securite weather warning obstruction two cables north of reporting point alpha",
+          "securite securite securite navigation warning obstruction two cables south of reporting point alpha"
+        ],
+        "dangerous_minimal_pairs": [
+          "Securite / security",
+          "navigation warning / weather warning",
+          "north / south",
+          "cables / nautical miles"
+        ],
+        "linguist_note": "Advanced safety broadcast; signal, warning type, unit, and direction are protected."
+      }
+    },
+    {
+      "id": "phrase_safety_weather_warning_wind_sea_001",
+      "type": "phrase",
+      "level": "advanced",
+      "difficulty_score": 37,
+      "topic": "weather",
+      "branch": "safety_securite",
+      "module": "weather_sea_state",
+      "source_language": "ru",
+      "source_text": "Секюрите, метеопредупреждение: сильный ветер с севера, состояние моря бурное.",
+      "target_language": "en",
+      "target_text": "Securite, weather warning: strong wind from north, sea state rough.",
+      "accepted_answers": [
+        "securite weather warning strong wind from north sea state rough",
+        "sécurité weather warning strong wind from north sea state rough"
+      ],
+      "grammar_pattern": "safety_weather_warning_wind_sea_state",
+      "hint_beginner": "Securite, weather...",
+      "hint_intermediate": "wind from north",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Securite, weather warning: strong wind from north, sea state rough.",
+          "Sécurité weather warning strong wind from north sea state rough"
+        ],
+        "should_reject": [
+          "security weather warning strong wind from north sea state rough",
+          "securite navigation warning strong wind from north sea state rough",
+          "securite weather warning strong wind from south sea state rough"
+        ],
+        "dangerous_minimal_pairs": [
+          "Securite / security",
+          "weather warning / navigation warning",
+          "north / south",
+          "wind / sea state / visibility"
+        ],
+        "linguist_note": "Weather and sea-state information only; no action request."
+      }
+    },
+    {
+      "id": "phrase_safety_restricted_visibility_channel_until_1400_001",
+      "type": "phrase",
+      "level": "advanced",
+      "difficulty_score": 38,
+      "topic": "restricted_visibility",
+      "branch": "safety_securite",
+      "module": "restricted_visibility",
+      "source_language": "ru",
+      "source_text": "Навигационное предупреждение: ограниченная видимость в подходном канале до один четыре ноль ноль UTC.",
+      "target_language": "en",
+      "target_text": "Navigation warning: restricted visibility in the approach channel until one four zero zero UTC.",
+      "accepted_answers": [
+        "navigation warning restricted visibility in the approach channel until one four zero zero utc",
+        "navigation warning restricted visibility in the approach channel until one four zero zero zulu",
+        "navigation warning restricted visibility in the approach channel until 1400 utc",
+        "navigation warning restricted visibility in the approach channel until 1400z"
+      ],
+      "grammar_pattern": "safety_navigation_warning_visibility_time",
+      "hint_beginner": "Navigation warning...",
+      "hint_intermediate": "restricted visibility",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Navigation warning: restricted visibility in the approach channel until one four zero zero UTC.",
+          "navigation warning restricted visibility in the approach channel until 1400Z"
+        ],
+        "should_reject": [
+          "navigation warning poor visibility in the approach channel until 1400 utc",
+          "navigation warning reduced visibility in the approach channel until 1400 utc",
+          "navigation warning restricted visibility in the approach channel until 1500 utc",
+          "weather warning restricted visibility in the approach channel until 1400 utc"
+        ],
+        "dangerous_minimal_pairs": [
+          "restricted visibility / poor visibility",
+          "1400 / 1500",
+          "navigation warning / weather warning"
+        ],
+        "linguist_note": "Restricted visibility, time, and warning type are all protected."
+      }
+    },
+    {
+      "id": "phrase_safety_hazard_bearing_distance_001",
+      "type": "phrase",
+      "level": "advanced",
+      "difficulty_score": 39,
+      "topic": "hazard_reporting",
+      "branch": "safety_securite",
+      "module": "hazard_reporting",
+      "source_language": "ru",
+      "source_text": "Опасность: пеленг ноль девять ноль, дистанция два кабельтова.",
+      "target_language": "en",
+      "target_text": "Hazard: bearing zero nine zero, distance two cables.",
+      "accepted_answers": [
+        "hazard bearing zero nine zero distance two cables",
+        "hazard bearing 090 distance two cables",
+        "hazard bearing zero nine zero distance 2 cables",
+        "hazard bearing 090 distance 2 cables"
+      ],
+      "grammar_pattern": "safety_hazard_bearing_distance",
+      "hint_beginner": "Hazard: bearing...",
+      "hint_intermediate": "distance two cables",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Hazard: bearing zero nine zero, distance two cables.",
+          "hazard bearing 090 distance 2 cables"
+        ],
+        "should_reject": [
+          "danger bearing zero nine zero distance two cables",
+          "hazard bearing 90 distance two cables",
+          "hazard bearing zero nine zero distance two nautical miles"
+        ],
+        "dangerous_minimal_pairs": [
+          "hazard / danger",
+          "090 / 90",
+          "cables / nautical miles"
+        ],
+        "linguist_note": "Numeric bearing and distance unit must remain exact."
+      }
+    },
+    {
+      "id": "phrase_safety_read_back_warning_channel_time_001",
+      "type": "phrase",
+      "level": "advanced",
+      "difficulty_score": 40,
+      "topic": "safety_readback",
+      "branch": "safety_securite",
+      "module": "safety_readback",
+      "source_language": "ru",
+      "source_text": "Повторите предупреждение: канал 16, один четыре ноль ноль UTC.",
+      "target_language": "en",
+      "target_text": "Read back safety warning, channel one six, one four zero zero UTC.",
+      "accepted_answers": [
+        "read back safety warning channel one six one four zero zero utc",
+        "readback safety warning channel one six one four zero zero utc",
+        "read back safety warning channel 16 1400 utc",
+        "readback safety warning channel 16 1400 utc",
+        "read back safety warning channel 16 1400z"
+      ],
+      "grammar_pattern": "safety_readback_warning_channel_time",
+      "hint_beginner": "Read back safety...",
+      "hint_intermediate": "channel one six",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Read back safety warning, channel one six, one four zero zero UTC.",
+          "readback safety warning channel 16 1400 UTC"
+        ],
+        "should_reject": [
+          "say again safety warning channel one six one four zero zero utc",
+          "read back safety warning channel one two one four zero zero utc",
+          "read back safety warning channel one six one five zero zero utc"
+        ],
+        "dangerous_minimal_pairs": [
+          "read back / say again",
+          "channel 16 / channel 12",
+          "1400 / 1500"
+        ],
+        "linguist_note": "Read back, channel, and time must all remain exact."
+      }
+    },
+    {
+      "id": "phrase_safety_correction_obstruction_east_001",
+      "type": "phrase",
+      "level": "advanced",
+      "difficulty_score": 41,
+      "topic": "safety_readback",
+      "branch": "safety_securite",
+      "module": "safety_readback",
+      "source_language": "ru",
+      "source_text": "Исправление: препятствие два кабельтова к востоку от волнолома.",
+      "target_language": "en",
+      "target_text": "Correction, obstruction two cables east of the breakwater.",
+      "accepted_answers": [
+        "correction obstruction two cables east of the breakwater",
+        "correction obstruction 2 cables east of the breakwater"
+      ],
+      "grammar_pattern": "safety_correction_obstruction_position",
+      "hint_beginner": "Correction, obstruction...",
+      "hint_intermediate": "two cables east",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Correction, obstruction two cables east of the breakwater.",
+          "correction obstruction 2 cables east of the breakwater"
+        ],
+        "should_reject": [
+          "obstruction two cables east of the breakwater",
+          "correction obstruction two cables west of the breakwater",
+          "correction hazard two cables east of the breakwater"
+        ],
+        "dangerous_minimal_pairs": [
+          "correction marker / bare warning",
+          "east / west",
+          "hazard / obstruction"
+        ],
+        "linguist_note": "Requires correction marker; direction and term remain exact."
+      }
+    },
+    {
+      "id": "phrase_safety_keep_listening_watch_until_1500_001",
+      "type": "phrase",
+      "level": "advanced",
+      "difficulty_score": 42,
+      "topic": "safety_readback",
+      "branch": "safety_securite",
+      "module": "safety_readback",
+      "source_language": "ru",
+      "source_text": "Ведите наблюдение на связи до один пять ноль ноль UTC.",
+      "target_language": "en",
+      "target_text": "Keep listening watch until one five zero zero UTC.",
+      "accepted_answers": [
+        "keep listening watch until one five zero zero utc",
+        "keep a listening watch until one five zero zero utc",
+        "keep listening watch until one five zero zero zulu",
+        "keep listening watch until 1500 utc",
+        "keep listening watch until 1500z"
+      ],
+      "grammar_pattern": "safety_listening_watch_until_time",
+      "hint_beginner": "Keep listening watch...",
+      "hint_intermediate": "until 1500 UTC",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Keep listening watch until one five zero zero UTC.",
+          "keep listening watch until 1500Z"
+        ],
+        "should_reject": [
+          "keep listening watch until 1400 utc",
+          "stand by until 1500 utc",
+          "keep watch until 1500 utc"
+        ],
+        "dangerous_minimal_pairs": [
+          "1500 / 1400",
+          "listening watch / stand by",
+          "listening watch / keep watch"
+        ],
+        "linguist_note": "Keep a listening watch is acceptable item-locally; listening watch remains distinct from stand by and broad keep watch; time must not be fuzzed."
+      }
+    },
+    {
+      "id": "phrase_safety_warning_read_back_complete_001",
+      "type": "phrase",
+      "level": "advanced",
+      "difficulty_score": 43,
+      "topic": "safety_readback",
+      "branch": "safety_securite",
+      "module": "safety_readback",
+      "source_language": "ru",
+      "source_text": "Предупреждение по безопасности повторено для подтверждения полностью.",
+      "target_language": "en",
+      "target_text": "Safety warning read back complete.",
+      "accepted_answers": [
+        "safety warning read back complete",
+        "safety warning readback complete",
+        "read back of safety warning complete"
+      ],
+      "grammar_pattern": "safety_warning_readback_complete",
+      "hint_beginner": "Safety warning...",
+      "hint_intermediate": "read back complete",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Safety warning read back complete.",
+          "safety warning readback complete",
+          "read back of safety warning complete"
+        ],
+        "should_reject": [
+          "security warning read back complete",
+          "safety warning say again complete",
+          "navigation warning read back complete"
+        ],
+        "dangerous_minimal_pairs": [
+          "safety / security",
+          "read back / say again",
+          "safety warning / navigation warning"
+        ],
+        "linguist_note": "Densest safety-readback acknowledgement; no action request."
+      }
+    }
+  ],
+  "grammar_patterns": [
+    {
+      "id": "safety_securite_signal_three_times",
+      "level": "intermediate",
+      "topic": "safety_signal",
+      "pattern": "Securite repeated three times",
+      "slots": [],
+      "examples": [
+        "Securite, Securite, Securite."
+      ]
+    },
+    {
+      "id": "safety_signal_warning_channel",
+      "level": "intermediate",
+      "topic": "navigation_warning",
+      "pattern": "Securite + warning type + channel",
+      "slots": [
+        "warning_type",
+        "channel"
+      ],
+      "examples": [
+        "Securite, navigation warning on channel one six."
+      ]
+    },
+    {
+      "id": "safety_weather_warning_wind",
+      "level": "intermediate",
+      "topic": "weather",
+      "pattern": "Securite + weather warning + wind direction",
+      "slots": [
+        "wind_condition",
+        "direction"
+      ],
+      "examples": [
+        "Securite, weather warning: strong wind from north."
+      ]
+    },
+    {
+      "id": "safety_sea_state_report",
+      "level": "intermediate",
+      "topic": "sea_state",
+      "pattern": "Sea state is + condition",
+      "slots": [
+        "condition"
+      ],
+      "examples": [
+        "Sea state is moderate."
+      ]
+    },
+    {
+      "id": "safety_restricted_visibility_location",
+      "level": "intermediate",
+      "topic": "restricted_visibility",
+      "pattern": "Restricted visibility in + location",
+      "slots": [
+        "location"
+      ],
+      "examples": [
+        "Restricted visibility in the marina approach."
+      ]
+    },
+    {
+      "id": "safety_obstruction_reporting_point",
+      "level": "intermediate",
+      "topic": "hazard_reporting",
+      "pattern": "Obstruction near + reporting point",
+      "slots": [
+        "reporting_point"
+      ],
+      "examples": [
+        "Obstruction near reporting point Alpha."
+      ]
+    },
+    {
+      "id": "safety_hazard_distance_direction",
+      "level": "intermediate",
+      "topic": "hazard_reporting",
+      "pattern": "Hazard + distance + direction + reference",
+      "slots": [
+        "distance",
+        "direction",
+        "reference"
+      ],
+      "examples": [
+        "Hazard two cables north of the marina."
+      ]
+    },
+    {
+      "id": "safety_navigation_warning_obstruction",
+      "level": "intermediate",
+      "topic": "navigation_warning",
+      "pattern": "Navigation warning + obstruction + location",
+      "slots": [
+        "location"
+      ],
+      "examples": [
+        "Navigation warning: obstruction in the channel."
+      ]
+    },
+    {
+      "id": "safety_weather_warning_sea_state",
+      "level": "intermediate",
+      "topic": "weather",
+      "pattern": "Weather warning + sea state",
+      "slots": [
+        "sea_state"
+      ],
+      "examples": [
+        "Weather warning: sea state rough."
+      ]
+    },
+    {
+      "id": "safety_listening_watch_channel",
+      "level": "intermediate",
+      "topic": "safety_readback",
+      "pattern": "Keep listening watch on + channel",
+      "slots": [
+        "channel"
+      ],
+      "examples": [
+        "Keep listening watch on channel one six."
+      ]
+    },
+    {
+      "id": "safety_readback_warning",
+      "level": "intermediate",
+      "topic": "safety_readback",
+      "pattern": "Read back + warning type",
+      "slots": [
+        "warning_type"
+      ],
+      "examples": [
+        "Read back navigation warning."
+      ]
+    },
+    {
+      "id": "safety_information_acknowledgement",
+      "level": "intermediate",
+      "topic": "safety_readback",
+      "pattern": "Safety information + acknowledgement",
+      "slots": [
+        "acknowledgement"
+      ],
+      "examples": [
+        "Safety information received."
+      ]
+    },
+    {
+      "id": "safety_advice_acknowledgement",
+      "level": "intermediate",
+      "topic": "safety_readback",
+      "pattern": "Safety advice + acknowledgement",
+      "slots": [
+        "acknowledgement"
+      ],
+      "examples": [
+        "Safety advice received."
+      ]
+    },
+    {
+      "id": "safety_information_valid_until",
+      "level": "intermediate",
+      "topic": "safety_signal",
+      "pattern": "Safety information valid until + time",
+      "slots": [
+        "time"
+      ],
+      "examples": [
+        "Safety information valid until one four zero zero UTC."
+      ]
+    },
+    {
+      "id": "safety_warning_obstruction_direction",
+      "level": "intermediate",
+      "topic": "hazard_reporting",
+      "pattern": "Warning + obstruction + direction + reference",
+      "slots": [
+        "direction",
+        "reference"
+      ],
+      "examples": [
+        "Warning: obstruction east of the breakwater."
+      ]
+    },
+    {
+      "id": "safety_visibility_distance",
+      "level": "intermediate",
+      "topic": "restricted_visibility",
+      "pattern": "Visibility less than + distance",
+      "slots": [
+        "distance"
+      ],
+      "examples": [
+        "Visibility less than two nautical miles."
+      ]
+    },
+    {
+      "id": "safety_securite_navigation_warning_position",
+      "level": "advanced",
+      "topic": "navigation_warning",
+      "pattern": "Securite three times + navigation warning + obstruction position",
+      "slots": [
+        "position"
+      ],
+      "examples": [
+        "Securite, Securite, Securite, navigation warning: obstruction two cables north of reporting point Alpha."
+      ]
+    },
+    {
+      "id": "safety_weather_warning_wind_sea_state",
+      "level": "advanced",
+      "topic": "weather",
+      "pattern": "Securite + weather warning + wind + sea state",
+      "slots": [
+        "wind",
+        "sea_state"
+      ],
+      "examples": [
+        "Securite, weather warning: strong wind from north, sea state rough."
+      ]
+    },
+    {
+      "id": "safety_navigation_warning_visibility_time",
+      "level": "advanced",
+      "topic": "restricted_visibility",
+      "pattern": "Navigation warning + restricted visibility + location + time",
+      "slots": [
+        "location",
+        "time"
+      ],
+      "examples": [
+        "Navigation warning: restricted visibility in the approach channel until one four zero zero UTC."
+      ]
+    },
+    {
+      "id": "safety_hazard_bearing_distance",
+      "level": "advanced",
+      "topic": "hazard_reporting",
+      "pattern": "Hazard + bearing + distance",
+      "slots": [
+        "bearing",
+        "distance"
+      ],
+      "examples": [
+        "Hazard: bearing zero nine zero, distance two cables."
+      ]
+    },
+    {
+      "id": "safety_readback_warning_channel_time",
+      "level": "advanced",
+      "topic": "safety_readback",
+      "pattern": "Read back safety warning + channel + time",
+      "slots": [
+        "channel",
+        "time"
+      ],
+      "examples": [
+        "Read back safety warning, channel one six, one four zero zero UTC."
+      ]
+    },
+    {
+      "id": "safety_correction_obstruction_position",
+      "level": "advanced",
+      "topic": "safety_readback",
+      "pattern": "Correction + obstruction position",
+      "slots": [
+        "position"
+      ],
+      "examples": [
+        "Correction, obstruction two cables east of the breakwater."
+      ]
+    },
+    {
+      "id": "safety_listening_watch_until_time",
+      "level": "advanced",
+      "topic": "safety_readback",
+      "pattern": "Keep listening watch until + time",
+      "slots": [
+        "time"
+      ],
+      "examples": [
+        "Keep listening watch until one five zero zero UTC."
+      ]
+    },
+    {
+      "id": "safety_warning_readback_complete",
+      "level": "advanced",
+      "topic": "safety_readback",
+      "pattern": "Safety warning + read back complete",
+      "slots": [],
+      "examples": [
+        "Safety warning read back complete."
+      ]
+    }
+  ],
+  "dangerous_minimal_pairs": [
+    {
+      "pair": "Securite / Sécurité / security",
+      "items": [
+        "expr_safety_securite_signal_001",
+        "phrase_safety_securite_three_times_001",
+        "phrase_safety_securite_nav_obstruction_alpha_001"
+      ],
+      "must_accept": {
+        "expr_safety_securite_signal_001": [
+          "Securite",
+          "Sécurité"
+        ],
+        "phrase_safety_securite_three_times_001": [
+          "Securite Securite Securite",
+          "Sécurité Sécurité Sécurité"
+        ]
+      },
+      "must_reject": {
+        "expr_safety_securite_signal_001": [
+          "security"
+        ],
+        "phrase_safety_securite_three_times_001": [
+          "security security security"
+        ],
+        "phrase_safety_securite_nav_obstruction_alpha_001": [
+          "security security security navigation warning obstruction two cables north of reporting point alpha"
+        ]
+      },
+      "reason": "Securite/Sécurité is the safety signal; ordinary English security must stay wrong."
+    },
+    {
+      "pair": "Securite / Pan-Pan / Mayday",
+      "items": [
+        "expr_safety_securite_signal_001",
+        "phrase_safety_securite_three_times_001"
+      ],
+      "must_accept": {
+        "phrase_safety_securite_three_times_001": [
+          "Securite Securite Securite"
+        ]
+      },
+      "must_reject": {
+        "expr_safety_securite_signal_001": [
+          "pan pan",
+          "mayday"
+        ],
+        "phrase_safety_securite_three_times_001": [
+          "pan pan pan pan pan pan",
+          "mayday mayday mayday"
+        ]
+      },
+      "reason": "Safety signal must not collapse into other radio signal families."
+    },
+    {
+      "pair": "safety / urgency / distress",
+      "items": [
+        "word_safety_safety_001",
+        "expr_safety_safety_warning_001"
+      ],
+      "must_accept": {
+        "word_safety_safety_001": [
+          "safety"
+        ],
+        "expr_safety_safety_warning_001": [
+          "safety warning"
+        ]
+      },
+      "must_reject": {
+        "word_safety_safety_001": [
+          "urgency",
+          "distress"
+        ],
+        "expr_safety_safety_warning_001": [
+          "urgency warning",
+          "distress warning"
+        ]
+      },
+      "reason": "Batch 004 is safety information only."
+    },
+    {
+      "pair": "warning / advice / information",
+      "items": [
+        "word_safety_warning_001",
+        "expr_safety_navigation_warning_001",
+        "phrase_safety_advice_received_001",
+        "phrase_safety_information_received_001"
+      ],
+      "must_accept": {
+        "word_safety_warning_001": [
+          "warning"
+        ],
+        "phrase_safety_advice_received_001": [
+          "safety advice received"
+        ],
+        "phrase_safety_information_received_001": [
+          "safety information received"
+        ]
+      },
+      "must_reject": {
+        "word_safety_warning_001": [
+          "advice",
+          "information"
+        ],
+        "expr_safety_navigation_warning_001": [
+          "navigation information",
+          "safety advice"
+        ],
+        "phrase_safety_advice_received_001": [
+          "safety warning received",
+          "safety information received"
+        ]
+      },
+      "reason": "Message category words carry different operational meaning."
+    },
+    {
+      "pair": "advice / advise",
+      "items": [
+        "phrase_safety_advice_received_001"
+      ],
+      "must_accept": {
+        "phrase_safety_advice_received_001": [
+          "safety advice received"
+        ]
+      },
+      "must_reject": {
+        "phrase_safety_advice_received_001": [
+          "safety advise received"
+        ]
+      },
+      "reason": "Advice is a noun; advise is a verb-form lookalike and must not pass typo matching."
+    },
+    {
+      "pair": "restricted visibility / poor visibility / reduced visibility / visibility good",
+      "items": [
+        "expr_safety_restricted_visibility_001",
+        "phrase_safety_restricted_visibility_marina_approach_001",
+        "phrase_safety_restricted_visibility_channel_until_1400_001"
+      ],
+      "must_accept": {
+        "expr_safety_restricted_visibility_001": [
+          "restricted visibility"
+        ],
+        "phrase_safety_restricted_visibility_marina_approach_001": [
+          "restricted visibility in the marina approach"
+        ]
+      },
+      "must_reject": {
+        "expr_safety_restricted_visibility_001": [
+          "poor visibility",
+          "reduced visibility",
+          "visibility good"
+        ],
+        "phrase_safety_restricted_visibility_marina_approach_001": [
+          "poor visibility in the marina approach",
+          "reduced visibility in the marina approach",
+          "visibility good in the marina approach"
+        ],
+        "phrase_safety_restricted_visibility_channel_until_1400_001": [
+          "navigation warning poor visibility in the approach channel until 1400 utc",
+          "navigation warning reduced visibility in the approach channel until 1400 utc"
+        ]
+      },
+      "reason": "Restricted visibility is the trained term and must not accept ordinary paraphrases or opposite visibility state."
+    },
+    {
+      "pair": "obstruction / obstacle",
+      "items": [
+        "word_safety_obstruction_001",
+        "expr_safety_obstruction_reported_001",
+        "phrase_safety_obstruction_reporting_point_alpha_001"
+      ],
+      "must_accept": {
+        "word_safety_obstruction_001": [
+          "obstruction"
+        ],
+        "expr_safety_obstruction_reported_001": [
+          "obstruction reported"
+        ],
+        "phrase_safety_obstruction_reporting_point_alpha_001": [
+          "obstruction near reporting point alpha"
+        ]
+      },
+      "must_reject": {
+        "word_safety_obstruction_001": [
+          "obstacle"
+        ],
+        "expr_safety_obstruction_reported_001": [
+          "obstacle reported"
+        ],
+        "phrase_safety_obstruction_reporting_point_alpha_001": [
+          "obstacle near reporting point alpha"
+        ]
+      },
+      "reason": "Obstacle is ordinary English but Batch 004 trains obstruction as the safety-warning report term."
+    },
+    {
+      "pair": "navigation warning / weather warning",
+      "items": [
+        "expr_safety_navigation_warning_001",
+        "expr_safety_weather_warning_001",
+        "phrase_safety_navigation_warning_obstruction_channel_001",
+        "phrase_safety_weather_warning_sea_state_rough_001"
+      ],
+      "must_accept": {
+        "expr_safety_navigation_warning_001": [
+          "navigation warning"
+        ],
+        "expr_safety_weather_warning_001": [
+          "weather warning"
+        ]
+      },
+      "must_reject": {
+        "expr_safety_navigation_warning_001": [
+          "weather warning"
+        ],
+        "expr_safety_weather_warning_001": [
+          "navigation warning"
+        ],
+        "phrase_safety_navigation_warning_obstruction_channel_001": [
+          "weather warning obstruction in the channel"
+        ],
+        "phrase_safety_weather_warning_sea_state_rough_001": [
+          "navigation warning sea state rough"
+        ]
+      },
+      "reason": "Navigation and weather warnings are separate safety-information categories."
+    },
+    {
+      "pair": "hazard / obstruction / danger",
+      "items": [
+        "word_safety_hazard_001",
+        "word_safety_obstruction_001",
+        "expr_safety_hazard_reported_001",
+        "expr_safety_obstruction_reported_001"
+      ],
+      "must_accept": {
+        "word_safety_hazard_001": [
+          "hazard"
+        ],
+        "word_safety_obstruction_001": [
+          "obstruction"
+        ],
+        "expr_safety_hazard_reported_001": [
+          "hazard reported"
+        ],
+        "expr_safety_obstruction_reported_001": [
+          "obstruction reported"
+        ]
+      },
+      "must_reject": {
+        "word_safety_hazard_001": [
+          "obstruction",
+          "danger"
+        ],
+        "word_safety_obstruction_001": [
+          "hazard",
+          "danger"
+        ],
+        "expr_safety_hazard_reported_001": [
+          "obstruction reported",
+          "danger reported"
+        ],
+        "expr_safety_obstruction_reported_001": [
+          "hazard reported",
+          "danger reported"
+        ]
+      },
+      "reason": "Hazard, obstruction, and ordinary danger wording are not interchangeable in this draft."
+    },
+    {
+      "pair": "wind / sea state / visibility",
+      "items": [
+        "word_safety_visibility_001",
+        "word_safety_weather_001",
+        "expr_safety_sea_state_001",
+        "phrase_safety_weather_warning_wind_sea_001"
+      ],
+      "must_accept": {
+        "word_safety_visibility_001": [
+          "visibility"
+        ],
+        "word_safety_weather_001": [
+          "weather"
+        ],
+        "expr_safety_sea_state_001": [
+          "sea state"
+        ]
+      },
+      "must_reject": {
+        "word_safety_visibility_001": [
+          "weather",
+          "sea state",
+          "wind"
+        ],
+        "word_safety_weather_001": [
+          "visibility",
+          "sea state",
+          "wind"
+        ],
+        "expr_safety_sea_state_001": [
+          "weather",
+          "wind",
+          "visibility"
+        ],
+        "phrase_safety_weather_warning_wind_sea_001": [
+          "securite weather warning visibility from north sea state rough"
+        ]
+      },
+      "reason": "Weather, wind, sea state, and visibility are related but distinct report elements."
+    },
+    {
+      "pair": "read back / say again",
+      "items": [
+        "expr_safety_read_back_warning_001",
+        "phrase_safety_read_back_navigation_warning_001",
+        "phrase_safety_read_back_warning_channel_time_001"
+      ],
+      "must_accept": {
+        "expr_safety_read_back_warning_001": [
+          "read back warning"
+        ],
+        "phrase_safety_read_back_navigation_warning_001": [
+          "read back navigation warning"
+        ],
+        "phrase_safety_read_back_warning_channel_time_001": [
+          "read back safety warning channel 16 1400 utc"
+        ]
+      },
+      "must_reject": {
+        "expr_safety_read_back_warning_001": [
+          "say again warning",
+          "repeat warning"
+        ],
+        "phrase_safety_read_back_navigation_warning_001": [
+          "say again navigation warning",
+          "repeat navigation warning"
+        ],
+        "phrase_safety_read_back_warning_channel_time_001": [
+          "say again safety warning channel one six one four zero zero utc"
+        ]
+      },
+      "reason": "Read back confirms received information; say again asks for retransmission."
+    },
+    {
+      "pair": "exact positions, channels, times, bearings, distances, directions",
+      "items": [
+        "phrase_safety_navigation_warning_channel_16_001",
+        "phrase_safety_hazard_two_cables_north_001",
+        "phrase_safety_hazard_bearing_distance_001",
+        "phrase_safety_information_valid_until_1400_001",
+        "phrase_safety_keep_listening_watch_until_1500_001"
+      ],
+      "must_accept": {
+        "phrase_safety_navigation_warning_channel_16_001": [
+          "securite navigation warning on channel 16"
+        ],
+        "phrase_safety_hazard_two_cables_north_001": [
+          "hazard 2 cables north of the marina"
+        ],
+        "phrase_safety_hazard_bearing_distance_001": [
+          "hazard bearing 090 distance 2 cables"
+        ],
+        "phrase_safety_information_valid_until_1400_001": [
+          "safety information valid until 1400 utc"
+        ],
+        "phrase_safety_keep_listening_watch_until_1500_001": [
+          "keep listening watch until 1500z"
+        ]
+      },
+      "must_reject": {
+        "phrase_safety_navigation_warning_channel_16_001": [
+          "securite navigation warning on channel 12"
+        ],
+        "phrase_safety_hazard_two_cables_north_001": [
+          "hazard two cables south of the marina",
+          "hazard two nautical miles north of the marina"
+        ],
+        "phrase_safety_hazard_bearing_distance_001": [
+          "hazard bearing 90 distance two cables",
+          "hazard bearing zero nine zero distance two nautical miles"
+        ],
+        "phrase_safety_information_valid_until_1400_001": [
+          "safety information valid until 1500 utc",
+          "safety information valid until 1400 local"
+        ],
+        "phrase_safety_keep_listening_watch_until_1500_001": [
+          "keep listening watch until 1400 utc"
+        ]
+      },
+      "reason": "Safety-warning numerics and directions must not be fuzzed or loosely substituted."
+    }
+  ],
+  "producer_notes": [
+    {
+      "area": "accepted_variants_for_linguist",
+      "note": "Reviewed item-local variants: Sécurité with accent is accepted for Securite, channel 16 numeric and spoken forms are accepted item-locally, UTC/Zulu/Z forms are accepted item-locally, readback compact spelling is accepted for read-back items, keep a listening watch is accepted, and received safety information/advice word order is accepted when the safety term remains exact."
+    },
+    {
+      "area": "intentionally_rejected_forms",
+      "note": "Confirmed rejected forms: ordinary English security for Securite/Sécurité, poor/reduced visibility for restricted visibility, danger for hazard, obstacle for obstruction, wind as a substitute for weather, and local time for UTC safety information."
+    },
+    {
+      "area": "matcher_risks",
+      "note": "Protect signal words, advisory nouns, channel numbers, UTC times, bearing 090 versus 90, cables versus nautical miles, and direction pairs north/south and east/west."
+    },
+    {
+      "area": "scope_risks",
+      "note": "Batch 004 is safety information only. It contains no playable targets for other radio-signal families, rescue relay, legal vessel status, or assistance requests."
+    }
+  ]
+}

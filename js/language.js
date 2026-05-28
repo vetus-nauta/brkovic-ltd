@@ -2,9 +2,36 @@
   const STORAGE_KEY = "brkovic_language";
   const HINT_KEY = "brkovic_language_hint_dismissed";
   const HINT_VERSION = "2026-05-28-language-access";
-  const SUPPORTED_LANGS = ["ru", "en"];
+  const LANGUAGE_OPTIONS = Object.freeze([
+    Object.freeze({ code: "en", name: "English", isDefault: true, isPrimary: true, isAvailable: true }),
+    Object.freeze({ code: "ru", name: "Русский", isAvailable: true }),
+    Object.freeze({ code: "de", name: "Deutsch", isAvailable: false }),
+    Object.freeze({ code: "it", name: "Italiano", isAvailable: false }),
+    Object.freeze({ code: "es", name: "Español", isAvailable: false }),
+    Object.freeze({ code: "sr", name: "Srpski / crnogorski / hrvatski", isAvailable: false }),
+    Object.freeze({ code: "zh", name: "中文 / Mandarin", isAvailable: false })
+  ]);
+  const SUPPORTED_LANGS = Object.freeze(LANGUAGE_OPTIONS
+    .filter((option) => option.isAvailable !== false)
+    .map((option) => option.code));
   const scriptUrl = document.currentScript ? document.currentScript.src : window.location.href;
   let currentLang = "";
+
+  function languageOptions() {
+    return LANGUAGE_OPTIONS.map((option) => ({
+      code: option.code,
+      name: option.name,
+      isDefault: option.isDefault === true,
+      isPrimary: option.isPrimary === true,
+      isAvailable: option.isAvailable !== false
+    }));
+  }
+
+  function defaultLang() {
+    const defaultOption = LANGUAGE_OPTIONS.find((option) => option.isDefault && option.isAvailable !== false);
+    const firstAvailable = LANGUAGE_OPTIONS.find((option) => option.isAvailable !== false);
+    return defaultOption ? defaultOption.code : firstAvailable.code;
+  }
 
   function normalizeLang(value) {
     const raw = String(value || "").trim().toLowerCase();
@@ -17,7 +44,11 @@
     const languages = Array.isArray(navigator.languages) && navigator.languages.length
       ? navigator.languages
       : [navigator.language || navigator.userLanguage || ""];
-    return normalizeLang(languages[0]) === "ru" ? "ru" : "en";
+    for (const language of languages) {
+      const code = normalizeLang(language);
+      if (code) return code;
+    }
+    return defaultLang();
   }
 
   function getQueryLang() {
@@ -55,7 +86,7 @@
   }
 
   function applyTranslations(translations) {
-    document.documentElement.lang = translations.meta_lang || "en";
+    document.documentElement.lang = translations.meta_lang || defaultLang();
     const titleKey = document.documentElement.getAttribute("data-i18n-title");
     const descriptionKey = document.documentElement.getAttribute("data-i18n-description");
     document.title = (titleKey && translations[titleKey]) || translations.meta_title || document.title;
@@ -76,10 +107,23 @@
       const key = element.getAttribute("data-i18n-placeholder");
       if (translations[key]) element.setAttribute("placeholder", translations[key]);
     });
+    document.querySelectorAll("[data-i18n-aria-label]").forEach((element) => {
+      const key = element.getAttribute("data-i18n-aria-label");
+      if (translations[key]) element.setAttribute("aria-label", translations[key]);
+    });
+    document.querySelectorAll("[data-i18n-title]").forEach((element) => {
+      if (element === document.documentElement) return;
+      const key = element.getAttribute("data-i18n-title");
+      if (translations[key]) element.setAttribute("title", translations[key]);
+    });
+    document.querySelectorAll("[data-i18n-alt]").forEach((element) => {
+      const key = element.getAttribute("data-i18n-alt");
+      if (translations[key]) element.setAttribute("alt", translations[key]);
+    });
   }
 
   function updateLanguageButtons(lang) {
-    document.querySelectorAll(".lang-switch__btn, .site-menu-language__option[data-lang]").forEach((button) => {
+    document.querySelectorAll(".site-menu-language__option[data-lang]").forEach((button) => {
       button.classList.toggle("is-active", button.dataset.lang === lang);
       button.setAttribute("aria-pressed", button.dataset.lang === lang ? "true" : "false");
     });
@@ -138,7 +182,7 @@
     hint.setAttribute("role", "status");
     hint.setAttribute("aria-live", "polite");
     hint.innerHTML = `
-      <span data-i18n="language_hint_text">${escapeHtml(translatedText("language_hint_text", "Language was selected from your system settings. You can change it in the menu under Language versions."))}</span>
+      <span data-i18n="language_hint_text">${escapeHtml(translatedText("language_hint_text", "Language was selected automatically from your device settings. You can change it in the menu under Language versions."))}</span>
       <button type="button" data-i18n="language_hint_close">${escapeHtml(translatedText("language_hint_close", "OK"))}</button>
     `;
     hint.querySelector("button").addEventListener("click", dismissLanguageHint);
@@ -146,7 +190,7 @@
   }
 
   async function setLanguage(lang, options = {}) {
-    const nextLang = normalizeLang(lang) || "en";
+    const nextLang = normalizeLang(lang) || defaultLang();
     const source = options.source || "manual";
     const translations = await loadTranslations(nextLang);
     if (options.persist !== false) {
@@ -173,17 +217,19 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     protectFromBrowserTranslate();
-    document.querySelectorAll(".lang-switch__btn").forEach((button) => {
-      button.addEventListener("click", () => setLanguage(button.dataset.lang, { source: "manual", persist: true }));
-    });
     const selected = initialLanguage();
     setLanguage(selected.lang, selected);
   });
 
+  window.BRKOVIC_LANGUAGE_OPTIONS = Object.freeze(languageOptions().map((option) => Object.freeze(option)));
   window.BRKOVIC_LANGUAGE = {
     supported: SUPPORTED_LANGS.slice(),
+    roadmap: languageOptions(),
+    getLanguageOptions: languageOptions,
     getSystemLang: systemLang,
-    getCurrentLang: () => currentLang || normalizeLang(document.documentElement.lang) || "en",
+    getCurrentLang: () => currentLang || normalizeLang(document.documentElement.lang) || defaultLang(),
+    t: translatedText,
     setLanguage: (lang) => setLanguage(lang, { source: "manual", persist: true }),
   };
+  window.t = translatedText;
 })();

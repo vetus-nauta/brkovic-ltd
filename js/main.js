@@ -12,6 +12,38 @@
     return (window.__BRKOVIC_TRANSLATIONS && window.__BRKOVIC_TRANSLATIONS[key]) || fallback || key;
   }
 
+  function getLanguageOptions() {
+    const api = window.BRKOVIC_LANGUAGE;
+    const options = api && typeof api.getLanguageOptions === "function"
+      ? api.getLanguageOptions()
+      : window.BRKOVIC_LANGUAGE_OPTIONS;
+    if (!Array.isArray(options)) return [];
+    return options
+      .map((option) => ({
+        code: String(option?.code || "").trim().toLowerCase(),
+        name: String(option?.name || "").trim(),
+        isDefault: option?.isDefault === true,
+        isPrimary: option?.isPrimary === true,
+        isAvailable: option?.isAvailable !== false
+      }))
+      .filter((option) => option.code && option.name);
+  }
+
+  function defaultLanguageCode() {
+    const options = getLanguageOptions();
+    return options.find((option) => option.isDefault && option.isAvailable)?.code
+      || options.find((option) => option.isAvailable)?.code
+      || options[0]?.code
+      || "";
+  }
+
+  function normalizeLanguage(value) {
+    const raw = String(value || "").trim().toLowerCase();
+    if (!raw) return "";
+    const code = raw.split("-")[0];
+    return getLanguageOptions().some((option) => option.code === code && option.isAvailable) ? code : "";
+  }
+
   function removeLegacyLanguageControls(root = document) {
     root.querySelectorAll(".lang-switch, .language-switch").forEach((node) => {
       node.remove();
@@ -21,14 +53,23 @@
   function currentLanguage() {
     const api = window.BRKOVIC_LANGUAGE;
     if (api && typeof api.getCurrentLang === "function") return api.getCurrentLang();
-    return document.documentElement.lang === "ru" ? "ru" : "en";
+    return normalizeLanguage(document.documentElement.lang) || defaultLanguageCode();
+  }
+
+  function languageOptionName(lang) {
+    const code = normalizeLanguage(lang) || defaultLanguageCode();
+    return getLanguageOptions().find((option) => option.code === code)?.name || code.toUpperCase();
   }
 
   function syncSiteMenuLanguageState(root = document, lang = currentLanguage()) {
+    const activeLang = normalizeLanguage(lang) || defaultLanguageCode();
     root.querySelectorAll(".site-menu-language__option[data-lang]").forEach((button) => {
-      const isActive = button.dataset.lang === lang;
+      const isActive = button.dataset.lang === activeLang;
       button.classList.toggle("is-active", isActive);
       button.setAttribute("aria-pressed", isActive ? "true" : "false");
+    });
+    root.querySelectorAll("[data-site-menu-current-language]").forEach((node) => {
+      node.textContent = languageOptionName(activeLang);
     });
   }
 
@@ -39,6 +80,7 @@
     modal.addEventListener("click", async (event) => {
       const button = event.target.closest?.(".site-menu-language__option[data-lang]");
       if (!button || !modal.contains(button)) return;
+      if (button.disabled || button.classList.contains("is-unavailable")) return;
       const api = window.BRKOVIC_LANGUAGE;
       if (!api || typeof api.setLanguage !== "function") return;
       button.disabled = true;
@@ -58,10 +100,73 @@
     syncSiteMenuLanguageState(modal);
   }
 
+  function languageIconMarkup() {
+    return `
+      <span class="site-menu-language__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" focusable="false">
+          <circle cx="12" cy="12" r="9"></circle>
+          <path d="M3 12h18"></path>
+          <path d="M12 3a14 14 0 0 1 0 18"></path>
+          <path d="M12 3a14 14 0 0 0 0 18"></path>
+        </svg>
+      </span>
+    `;
+  }
+
+  function buildLanguageOptionButtons() {
+    return getLanguageOptions().map((option) => `
+      <button type="button" class="site-menu-language__option${option.isAvailable ? "" : " is-unavailable"}${option.isPrimary ? " is-primary" : ""}" data-lang="${escapeHtml(option.code)}" aria-pressed="false"${option.isAvailable ? "" : " aria-disabled=\"true\" disabled"}>
+        <span class="site-menu-language__name">${escapeHtml(option.name)}</span>
+        <span class="site-menu-language__current" data-i18n="site_menu_language_current">${escapeHtml(t("site_menu_language_current", "Current"))}</span>
+        <span class="site-menu-language__primary" data-i18n="site_menu_language_primary">${escapeHtml(t("site_menu_language_primary", "Primary"))}</span>
+        <span class="site-menu-language__pending" data-i18n="site_menu_language_pending">${escapeHtml(t("site_menu_language_pending", "Coming"))}</span>
+      </button>
+    `).join("");
+  }
+
+  function buildSiteMenuLanguageSection() {
+    const languageButtons = buildLanguageOptionButtons();
+    if (!languageButtons) return "";
+    return `
+      <section class="site-menu-language" aria-labelledby="siteMenuLanguageTitle">
+        <div class="site-menu-language__head">
+          ${languageIconMarkup()}
+          <div>
+            <p class="site-menu-language__kicker" data-i18n="site_menu_language">${escapeHtml(t("site_menu_language", "Site language"))}</p>
+            <h4 id="siteMenuLanguageTitle" data-i18n="site_menu_language_title">${escapeHtml(t("site_menu_language_title", "Language versions"))}</h4>
+          </div>
+        </div>
+        <p class="site-menu-language__status">
+          <span data-i18n="site_menu_language_current_label">${escapeHtml(t("site_menu_language_current_label", "Now"))}</span>
+          <strong data-site-menu-current-language>${escapeHtml(languageOptionName(currentLanguage()))}</strong>
+        </p>
+        <p class="site-menu-language__note" data-i18n="site_menu_language_note">${escapeHtml(t("site_menu_language_note", "English is the primary version. Other language versions will be enabled as translations are prepared."))}</p>
+        <div class="site-menu-language__list" role="list">
+          ${languageButtons}
+        </div>
+      </section>
+    `;
+  }
+
+  function ensureSiteMenuLanguageSection(modal) {
+    if (!modal) return;
+    modal.querySelectorAll(".site-menu-language").forEach((section) => section.remove());
+    const markup = buildSiteMenuLanguageSection();
+    if (!markup) return;
+    const anchor = modal.querySelector(".site-menu-settings");
+    if (anchor) {
+      anchor.insertAdjacentHTML("beforebegin", markup);
+      return;
+    }
+    const dialog = modal.querySelector(".management-modal__dialog");
+    if (dialog) dialog.insertAdjacentHTML("beforeend", markup);
+  }
+
   function buildSiteMenuModal(actionsNode) {
     const existing = document.getElementById("siteMenuModal");
     if (existing) {
       removeLegacyLanguageControls(existing);
+      ensureSiteMenuLanguageSection(existing);
       return existing;
     }
 
@@ -86,39 +191,12 @@
           <a href="/navdesk.html" data-management-modal-close data-i18n="site_menu_navdesk">${escapeHtml(t("site_menu_navdesk", "Nav Desk"))}</a>
           <a href="/index.html#contact" data-management-modal-close data-i18n="site_menu_contact">${escapeHtml(t("site_menu_contact", "Contact"))}</a>
         </nav>
-        <section class="site-menu-language" aria-labelledby="siteMenuLanguageTitle">
-          <div class="site-menu-language__head">
-            <span class="site-menu-language__icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" focusable="false">
-                <circle cx="12" cy="12" r="9"></circle>
-                <path d="M3 12h18"></path>
-                <path d="M12 3a14 14 0 0 1 0 18"></path>
-                <path d="M12 3a14 14 0 0 0 0 18"></path>
-              </svg>
-            </span>
-            <div>
-              <p class="site-menu-language__kicker" data-i18n="site_menu_language">${escapeHtml(t("site_menu_language", "Language versions"))}</p>
-              <h4 id="siteMenuLanguageTitle" data-i18n="site_menu_language_title">${escapeHtml(t("site_menu_language_title", "Choose interface language"))}</h4>
-            </div>
-          </div>
-          <p class="site-menu-language__note" data-i18n="site_menu_language_note">${escapeHtml(t("site_menu_language_note", "Current public UI languages are available here."))}</p>
-          <div class="site-menu-language__list" role="list">
-            <button type="button" class="site-menu-language__option" data-lang="ru" aria-pressed="false">
-              <span class="site-menu-language__name">Русский</span>
-              <span class="site-menu-language__current" data-i18n="site_menu_language_current">${escapeHtml(t("site_menu_language_current", "Current"))}</span>
-            </button>
-            <button type="button" class="site-menu-language__option" data-lang="en" aria-pressed="false">
-              <span class="site-menu-language__name">English</span>
-              <span class="site-menu-language__current" data-i18n="site_menu_language_current">${escapeHtml(t("site_menu_language_current", "Current"))}</span>
-            </button>
-          </div>
-        </section>
-        <p class="site-menu-future" data-i18n="site_menu_future_settings">${escapeHtml(t("site_menu_future_settings", "User settings will live here later."))}</p>
       </div>
     `;
 
     removeLegacyLanguageControls(modal);
     document.body.appendChild(modal);
+    ensureSiteMenuLanguageSection(modal);
     setupSiteMenuLanguageControls(modal);
     return modal;
   }

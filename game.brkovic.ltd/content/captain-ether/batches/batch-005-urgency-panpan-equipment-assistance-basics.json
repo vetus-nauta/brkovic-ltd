@@ -1,0 +1,1216 @@
+{
+  "version": 1,
+  "batch_id": "batch-005-urgency-panpan-equipment-assistance-basics",
+  "status": "merged",
+  "date": "2026-05-27",
+  "branch": "urgency_panpan",
+  "scope": "Urgency / Pan-Pan equipment failure and assistance basics draft for Sea Speak Linguist review. This is not a distress or safety-warning batch and must not be merged into starter.json before Director-Engineer acceptance, validator gate, QA regression, and integration.",
+  "items": [
+    {
+      "id": "word_urgency_urgency_001",
+      "type": "word",
+      "level": "beginner",
+      "difficulty_score": 6,
+      "topic": "urgency_signal",
+      "branch": "urgency_panpan",
+      "module": "urgency_signal",
+      "source_language": "ru",
+      "source_text": "Срочность",
+      "target_language": "en",
+      "target_text": "urgency",
+      "accepted_answers": [
+        "urgency"
+      ],
+      "hint_beginner": "u______",
+      "hint_intermediate": "urg...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "urgency",
+          "URGENCY",
+          "urgency."
+        ],
+        "should_reject": [
+          "safety",
+          "distress",
+          "emergency"
+        ],
+        "dangerous_minimal_pairs": [
+          "urgency / safety / distress"
+        ],
+        "linguist_note": "Urgency must stay between safety information and distress; generic emergency should not replace the trained category."
+      }
+    },
+    {
+      "id": "word_urgency_assistance_001",
+      "type": "word",
+      "level": "beginner",
+      "difficulty_score": 6,
+      "topic": "assistance_request",
+      "branch": "urgency_panpan",
+      "module": "medical_assistance",
+      "source_language": "ru",
+      "source_text": "Помощь",
+      "target_language": "en",
+      "target_text": "assistance",
+      "accepted_answers": [
+        "assistance"
+      ],
+      "hint_beginner": "a________e",
+      "hint_intermediate": "assi...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "assistance",
+          "ASSISTANCE",
+          "assistance.",
+          "help"
+        ],
+        "should_reject": [
+          "advice",
+          "rescue"
+        ],
+        "dangerous_minimal_pairs": [
+          "assistance / advice / rescue"
+        ],
+        "linguist_note": "Assistance is the trained radio noun here; advice, rescue, and ordinary help should remain separate unless reviewed item-locally."
+      }
+    },
+    {
+      "id": "word_urgency_disabled_001",
+      "type": "word",
+      "level": "intermediate",
+      "difficulty_score": 8,
+      "topic": "equipment_failure",
+      "branch": "urgency_panpan",
+      "module": "equipment_failure",
+      "source_language": "ru",
+      "source_text": "Неисправный / потерявший ход",
+      "target_language": "en",
+      "target_text": "disabled",
+      "accepted_answers": [
+        "disabled"
+      ],
+      "hint_beginner": "d_______",
+      "hint_intermediate": "dis...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "disabled",
+          "DISABLED",
+          "disabled."
+        ],
+        "should_reject": [
+          "adrift",
+          "aground",
+          "distressed"
+        ],
+        "dangerous_minimal_pairs": [
+          "disabled / adrift / aground / distressed"
+        ],
+        "linguist_note": "Disabled describes vessel capability in this batch; it should not become a distress declaration or a grounding report."
+      }
+    },
+    {
+      "id": "word_urgency_tow_001",
+      "type": "word",
+      "level": "intermediate",
+      "difficulty_score": 8,
+      "topic": "towing_assistance",
+      "branch": "urgency_panpan",
+      "module": "towing_assistance",
+      "source_language": "ru",
+      "source_text": "Буксир / буксировка",
+      "target_language": "en",
+      "target_text": "tow",
+      "accepted_answers": [
+        "tow"
+      ],
+      "hint_beginner": "t__",
+      "hint_intermediate": "tow",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "tow",
+          "TOW",
+          "tow."
+        ],
+        "should_reject": [
+          "tug",
+          "rescue",
+          "pilot"
+        ],
+        "dangerous_minimal_pairs": [
+          "tow / tug / rescue / pilot"
+        ],
+        "linguist_note": "Tow is kept as the assistance object; tug and pilot operations should not leak from VTS or port-control content."
+      }
+    },
+    {
+      "id": "expr_urgency_panpan_001",
+      "type": "short_expression",
+      "level": "beginner",
+      "difficulty_score": 7,
+      "topic": "urgency_signal",
+      "branch": "urgency_panpan",
+      "module": "urgency_signal",
+      "source_language": "ru",
+      "source_text": "Сигнал срочности: Pan-Pan",
+      "target_language": "en",
+      "target_text": "Pan-Pan",
+      "accepted_answers": [
+        "Pan-Pan",
+        "Pan Pan"
+      ],
+      "hint_beginner": "P__-P__",
+      "hint_intermediate": "Pan...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Pan-Pan",
+          "pan pan",
+          "PAN-PAN"
+        ],
+        "should_reject": [
+          "Mayday",
+          "Securite",
+          "security"
+        ],
+        "dangerous_minimal_pairs": [
+          "Pan-Pan / Securite / Mayday"
+        ],
+        "linguist_note": "Hyphen and spacing variants are proposed item-locally; this must not become cross-signal aliasing."
+      }
+    },
+    {
+      "id": "expr_urgency_message_001",
+      "type": "short_expression",
+      "level": "beginner",
+      "difficulty_score": 7,
+      "topic": "urgency_signal",
+      "branch": "urgency_panpan",
+      "module": "urgency_signal",
+      "source_language": "ru",
+      "source_text": "Срочное сообщение",
+      "target_language": "en",
+      "target_text": "urgency message",
+      "accepted_answers": [
+        "urgency message"
+      ],
+      "hint_beginner": "u______ m______",
+      "hint_intermediate": "urgency...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "urgency message",
+          "URGENCY MESSAGE",
+          "urgency message."
+        ],
+        "should_reject": [
+          "safety message",
+          "distress message",
+          "urgency call"
+        ],
+        "dangerous_minimal_pairs": [
+          "urgency message / safety message / distress message"
+        ],
+        "linguist_note": "Urgency call is left for review; current draft trains message strictly."
+      }
+    },
+    {
+      "id": "expr_urgency_engine_failure_001",
+      "type": "short_expression",
+      "level": "intermediate",
+      "difficulty_score": 8,
+      "topic": "equipment_failure",
+      "branch": "urgency_panpan",
+      "module": "equipment_failure",
+      "source_language": "ru",
+      "source_text": "Отказ двигателя",
+      "target_language": "en",
+      "target_text": "engine failure",
+      "accepted_answers": [
+        "engine failure"
+      ],
+      "hint_beginner": "e_____ f______",
+      "hint_intermediate": "engine...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "engine failure",
+          "ENGINE FAILURE",
+          "engine failure."
+        ],
+        "should_reject": [
+          "steering failure",
+          "power failure",
+          "engine problem"
+        ],
+        "dangerous_minimal_pairs": [
+          "engine failure / steering failure / power failure"
+        ],
+        "linguist_note": "Engine problem is plausible English but may weaken the trained failure term; route to linguist before accepting."
+      }
+    },
+    {
+      "id": "expr_urgency_steering_failure_001",
+      "type": "short_expression",
+      "level": "intermediate",
+      "difficulty_score": 8,
+      "topic": "equipment_failure",
+      "branch": "urgency_panpan",
+      "module": "equipment_failure",
+      "source_language": "ru",
+      "source_text": "Отказ рулевого управления",
+      "target_language": "en",
+      "target_text": "steering failure",
+      "accepted_answers": [
+        "steering failure"
+      ],
+      "hint_beginner": "s_______ f______",
+      "hint_intermediate": "steering...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "steering failure",
+          "STEERING FAILURE",
+          "steering failure."
+        ],
+        "should_reject": [
+          "engine failure",
+          "rudder failure",
+          "power failure"
+        ],
+        "dangerous_minimal_pairs": [
+          "steering failure / engine failure / rudder failure"
+        ],
+        "linguist_note": "Rudder failure may be technically adjacent but is not accepted until Sea Speak review."
+      }
+    },
+    {
+      "id": "expr_urgency_medical_assistance_001",
+      "type": "short_expression",
+      "level": "intermediate",
+      "difficulty_score": 8,
+      "topic": "medical_assistance",
+      "branch": "urgency_panpan",
+      "module": "medical_assistance",
+      "source_language": "ru",
+      "source_text": "Медицинская помощь",
+      "target_language": "en",
+      "target_text": "medical assistance",
+      "accepted_answers": [
+        "medical assistance"
+      ],
+      "hint_beginner": "m______ a________e",
+      "hint_intermediate": "medical...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "medical assistance",
+          "MEDICAL ASSISTANCE",
+          "medical assistance."
+        ],
+        "should_reject": [
+          "medical advice",
+          "medical emergency",
+          "evacuation"
+        ],
+        "dangerous_minimal_pairs": [
+          "medical assistance / medical advice / distress medical emergency"
+        ],
+        "linguist_note": "Medical advice is deliberately rejected pending linguist decision; evacuation leans distress/SAR."
+      }
+    },
+    {
+      "id": "expr_urgency_towing_assistance_001",
+      "type": "short_expression",
+      "level": "intermediate",
+      "difficulty_score": 8,
+      "topic": "towing_assistance",
+      "branch": "urgency_panpan",
+      "module": "towing_assistance",
+      "source_language": "ru",
+      "source_text": "Помощь с буксировкой",
+      "target_language": "en",
+      "target_text": "towing assistance",
+      "accepted_answers": [
+        "towing assistance"
+      ],
+      "hint_beginner": "t_____ a________e",
+      "hint_intermediate": "towing...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "towing assistance",
+          "TOWING ASSISTANCE",
+          "towing assistance."
+        ],
+        "should_reject": [
+          "rescue assistance",
+          "tug assistance",
+          "request tow"
+        ],
+        "dangerous_minimal_pairs": [
+          "towing assistance / rescue / tug assistance"
+        ],
+        "linguist_note": "Request tow may be acceptable in another item; this expression trains towing assistance strictly."
+      }
+    },
+    {
+      "id": "expr_urgency_keep_listening_watch_001",
+      "type": "short_expression",
+      "level": "intermediate",
+      "difficulty_score": 9,
+      "topic": "urgency_readback",
+      "branch": "urgency_panpan",
+      "module": "urgency_readback",
+      "source_language": "ru",
+      "source_text": "Держите радиовахту",
+      "target_language": "en",
+      "target_text": "keep listening watch",
+      "accepted_answers": [
+        "keep listening watch",
+        "keep a listening watch"
+      ],
+      "hint_beginner": "k___ l________ w____",
+      "hint_intermediate": "keep listening...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "keep listening watch",
+          "keep a listening watch",
+          "KEEP LISTENING WATCH"
+        ],
+        "should_reject": [
+          "stand by",
+          "wait out",
+          "go ahead"
+        ],
+        "dangerous_minimal_pairs": [
+          "keep listening watch / stand by / wait out / go ahead"
+        ],
+        "linguist_note": "Accepted variant follows Batch 004 pattern, but procedure words remain distinct."
+      }
+    },
+    {
+      "id": "phrase_urgency_panpan_three_times_001",
+      "type": "phrase",
+      "level": "advanced",
+      "difficulty_score": 11,
+      "topic": "urgency_signal",
+      "branch": "urgency_panpan",
+      "module": "urgency_signal",
+      "source_language": "ru",
+      "source_text": "Повторите сигнал срочности три раза",
+      "target_language": "en",
+      "target_text": "Pan-Pan Pan-Pan Pan-Pan",
+      "accepted_answers": [
+        "Pan-Pan Pan-Pan Pan-Pan",
+        "Pan Pan Pan Pan Pan Pan"
+      ],
+      "hint_beginner": "P__-P__ P__-P__ P__-P__",
+      "hint_intermediate": "Pan-Pan Pan-Pan...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Pan-Pan Pan-Pan Pan-Pan",
+          "pan pan pan pan pan pan",
+          "PAN-PAN PAN-PAN PAN-PAN"
+        ],
+        "should_reject": [
+          "Pan-Pan",
+          "Securite Securite Securite",
+          "Mayday Mayday Mayday"
+        ],
+        "dangerous_minimal_pairs": [
+          "Pan-Pan repeated signal / Securite repeated signal / Mayday repeated signal"
+        ],
+        "linguist_note": "The one-time signal is rejected here because this item trains the formal repeated urgency signal."
+      }
+    },
+    {
+      "id": "phrase_urgency_engine_failure_assistance_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 10,
+      "topic": "equipment_failure",
+      "branch": "urgency_panpan",
+      "module": "equipment_failure",
+      "source_language": "ru",
+      "source_text": "Отказ двигателя, требуется помощь",
+      "target_language": "en",
+      "target_text": "Engine failure require assistance",
+      "accepted_answers": [
+        "Engine failure require assistance",
+        "Engine failure request assistance"
+      ],
+      "hint_beginner": "E_____ f______ r______ a________e",
+      "hint_intermediate": "Engine failure...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Engine failure require assistance",
+          "engine failure request assistance",
+          "ENGINE FAILURE REQUIRE ASSISTANCE"
+        ],
+        "should_reject": [
+          "Steering failure require assistance",
+          "Engine failure require rescue",
+          "Engine problem require assistance"
+        ],
+        "dangerous_minimal_pairs": [
+          "engine failure / steering failure / rescue"
+        ],
+        "linguist_note": "Require/request assistance are proposed item-local variants; rescue is not accepted."
+      }
+    },
+    {
+      "id": "phrase_urgency_disabled_vessel_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 10,
+      "topic": "equipment_failure",
+      "branch": "urgency_panpan",
+      "module": "equipment_failure",
+      "source_language": "ru",
+      "source_text": "Судно потеряло ход",
+      "target_language": "en",
+      "target_text": "Vessel disabled",
+      "accepted_answers": [
+        "Vessel disabled",
+        "Disabled vessel"
+      ],
+      "hint_beginner": "V_____ d_______",
+      "hint_intermediate": "Vessel...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Vessel disabled",
+          "disabled vessel",
+          "VESSEL DISABLED"
+        ],
+        "should_reject": [
+          "Vessel not under command",
+          "Vessel restricted in ability to manoeuvre",
+          "Vessel aground"
+        ],
+        "dangerous_minimal_pairs": [
+          "disabled vessel / not under command / restricted manoeuvrability / aground"
+        ],
+        "linguist_note": "Word order variant is proposed; COLREG legal-status phrases remain wrong for this basic urgency batch."
+      }
+    },
+    {
+      "id": "phrase_urgency_request_medical_assistance_001",
+      "type": "phrase",
+      "level": "advanced",
+      "difficulty_score": 11,
+      "topic": "medical_assistance",
+      "branch": "urgency_panpan",
+      "module": "medical_assistance",
+      "source_language": "ru",
+      "source_text": "Запрашиваем медицинскую помощь",
+      "target_language": "en",
+      "target_text": "Request medical assistance",
+      "accepted_answers": [
+        "Request medical assistance",
+        "Require medical assistance"
+      ],
+      "hint_beginner": "R______ m______ a________e",
+      "hint_intermediate": "Request medical...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Request medical assistance",
+          "require medical assistance",
+          "REQUEST MEDICAL ASSISTANCE"
+        ],
+        "should_reject": [
+          "Request medical advice",
+          "Request evacuation",
+          "Mayday medical emergency"
+        ],
+        "dangerous_minimal_pairs": [
+          "medical assistance / medical advice / evacuation / Mayday"
+        ],
+        "linguist_note": "Require/request are proposed local variants; advice and evacuation stay wrong."
+      }
+    },
+    {
+      "id": "phrase_urgency_medical_assistance_required_001",
+      "type": "phrase",
+      "level": "advanced",
+      "difficulty_score": 11,
+      "topic": "medical_assistance",
+      "branch": "urgency_panpan",
+      "module": "medical_assistance",
+      "source_language": "ru",
+      "source_text": "Требуется медицинская помощь для одного человека",
+      "target_language": "en",
+      "target_text": "Medical assistance required for one person",
+      "accepted_answers": [
+        "Medical assistance required for one person",
+        "Medical assistance required one person"
+      ],
+      "hint_beginner": "M______ a________e r_______ f__ o__ p_____",
+      "hint_intermediate": "Medical assistance required...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Medical assistance required for one person",
+          "medical assistance required one person",
+          "MEDICAL ASSISTANCE REQUIRED FOR ONE PERSON"
+        ],
+        "should_reject": [
+          "Medical advice required for one person",
+          "Medical assistance required for two persons",
+          "Person overboard"
+        ],
+        "dangerous_minimal_pairs": [
+          "medical assistance / medical advice / one person / two persons / person overboard"
+        ],
+        "linguist_note": "Person count must stay exact; person overboard is reserved for distress content."
+      }
+    },
+    {
+      "id": "phrase_urgency_request_towing_assistance_001",
+      "type": "phrase",
+      "level": "advanced",
+      "difficulty_score": 11,
+      "topic": "towing_assistance",
+      "branch": "urgency_panpan",
+      "module": "towing_assistance",
+      "source_language": "ru",
+      "source_text": "Запрашиваем помощь с буксировкой",
+      "target_language": "en",
+      "target_text": "Request towing assistance",
+      "accepted_answers": [
+        "Request towing assistance",
+        "Require towing assistance",
+        "Request tow",
+        "Require tow"
+      ],
+      "hint_beginner": "R______ t_____ a________e",
+      "hint_intermediate": "Request towing...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Request towing assistance",
+          "require towing assistance",
+          "request tow",
+          "require tow",
+          "REQUEST TOWING ASSISTANCE"
+        ],
+        "should_reject": [
+          "Request rescue assistance",
+          "Request tug assistance",
+          "Request pilot"
+        ],
+        "dangerous_minimal_pairs": [
+          "towing assistance / rescue / tug assistance / pilot"
+        ],
+        "linguist_note": "Tug assistance and pilot requests belong to other operational contexts and should not be accepted here."
+      }
+    },
+    {
+      "id": "phrase_urgency_position_north_marina_001",
+      "type": "phrase",
+      "level": "advanced",
+      "difficulty_score": 12,
+      "topic": "position_and_intentions",
+      "branch": "urgency_panpan",
+      "module": "position_and_intentions",
+      "source_language": "ru",
+      "source_text": "Позиция: две мили к северу от марины",
+      "target_language": "en",
+      "target_text": "Position two nautical miles north of the marina",
+      "accepted_answers": [
+        "Position two nautical miles north of the marina",
+        "Position 2 nautical miles north of the marina"
+      ],
+      "hint_beginner": "P_______ t__ n_______ m____ n____ o_ t__ m_____",
+      "hint_intermediate": "Position two nautical miles...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Position two nautical miles north of the marina",
+          "position 2 nautical miles north of the marina",
+          "POSITION TWO NAUTICAL MILES NORTH OF THE MARINA"
+        ],
+        "should_reject": [
+          "Position two nautical miles south of the marina",
+          "Position two cables north of the marina",
+          "Destination two nautical miles north of the marina"
+        ],
+        "dangerous_minimal_pairs": [
+          "position / destination / north / south / nautical miles / cables"
+        ],
+        "linguist_note": "Position object, direction, and distance unit must stay exact."
+      }
+    },
+    {
+      "id": "phrase_urgency_disabled_position_channel_16_001",
+      "type": "phrase",
+      "level": "advanced",
+      "difficulty_score": 12,
+      "topic": "position_and_intentions",
+      "branch": "urgency_panpan",
+      "module": "position_and_intentions",
+      "source_language": "ru",
+      "source_text": "Потеряли ход, позиция, канал 16",
+      "target_language": "en",
+      "target_text": "Disabled vessel position on channel 16",
+      "accepted_answers": [
+        "Disabled vessel position on channel 16",
+        "Vessel disabled position on channel 16",
+        "Disabled vessel position on channel one six"
+      ],
+      "hint_beginner": "D_______ v_____ p_______ o_ c______ 16",
+      "hint_intermediate": "Disabled vessel position...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Disabled vessel position on channel 16",
+          "vessel disabled position on channel one six",
+          "DISABLED VESSEL POSITION ON CHANNEL 16"
+        ],
+        "should_reject": [
+          "Disabled vessel position on channel 12",
+          "Distressed vessel position on channel 16",
+          "Disabled vessel destination on channel 16"
+        ],
+        "dangerous_minimal_pairs": [
+          "disabled / distressed / position / destination / channel 16 / channel 12"
+        ],
+        "linguist_note": "Channel value and report object must not be fuzzed; distressed changes the branch."
+      }
+    },
+    {
+      "id": "phrase_urgency_eta_harbour_1400_001",
+      "type": "phrase",
+      "level": "advanced",
+      "difficulty_score": 12,
+      "topic": "position_and_intentions",
+      "branch": "urgency_panpan",
+      "module": "position_and_intentions",
+      "source_language": "ru",
+      "source_text": "Ожидаемое прибытие в гавань 1400 UTC",
+      "target_language": "en",
+      "target_text": "ETA harbour 1400 UTC",
+      "accepted_answers": [
+        "ETA harbour 1400 UTC",
+        "ETA harbour 1400Z",
+        "ETA harbour 1400 Zulu",
+        "ETA harbour one four zero zero UTC",
+        "ETA harbour one four zero zero Zulu"
+      ],
+      "hint_beginner": "E__ h______ 1400 U__",
+      "hint_intermediate": "ETA harbour...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "ETA harbour 1400 UTC",
+          "eta harbour 1400z",
+          "ETA harbour 1400 Zulu",
+          "ETA harbour one four zero zero UTC",
+          "ETA harbour one four zero zero Zulu"
+        ],
+        "should_reject": [
+          "ETA harbour 1500 UTC",
+          "ETA marina 1400 UTC",
+          "Position harbour 1400 UTC"
+        ],
+        "dangerous_minimal_pairs": [
+          "ETA / position / 1400 UTC / 1500 UTC / harbour / marina"
+        ],
+        "linguist_note": "UTC/Zulu/Z style variants are local; time and destination must stay exact."
+      }
+    },
+    {
+      "id": "phrase_urgency_drifting_east_001",
+      "type": "phrase",
+      "level": "advanced",
+      "difficulty_score": 12,
+      "topic": "position_and_intentions",
+      "branch": "urgency_panpan",
+      "module": "position_and_intentions",
+      "source_language": "ru",
+      "source_text": "Дрейфуем на восток",
+      "target_language": "en",
+      "target_text": "Drifting east",
+      "accepted_answers": [
+        "Drifting east"
+      ],
+      "hint_beginner": "D_______ e___",
+      "hint_intermediate": "Drifting...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Drifting east",
+          "DRIFTING EAST",
+          "drifting east."
+        ],
+        "should_reject": [
+          "Drifting west",
+          "Proceeding east",
+          "Adrift east"
+        ],
+        "dangerous_minimal_pairs": [
+          "drifting / proceeding / adrift / east / west"
+        ],
+        "linguist_note": "Direction and movement state are strict; adrift may need its own item before acceptance."
+      }
+    },
+    {
+      "id": "phrase_urgency_reduced_power_harbour_001",
+      "type": "phrase",
+      "level": "advanced",
+      "difficulty_score": 12,
+      "topic": "position_and_intentions",
+      "branch": "urgency_panpan",
+      "module": "position_and_intentions",
+      "source_language": "ru",
+      "source_text": "Следуем в гавань на сниженной мощности",
+      "target_language": "en",
+      "target_text": "Proceeding to harbour under reduced power",
+      "accepted_answers": [
+        "Proceeding to harbour under reduced power",
+        "Proceeding to the harbour under reduced power"
+      ],
+      "hint_beginner": "P_________ t_ h______ u____ r______ p____",
+      "hint_intermediate": "Proceeding to harbour...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Proceeding to harbour under reduced power",
+          "proceeding to the harbour under reduced power",
+          "PROCEEDING TO HARBOUR UNDER REDUCED POWER"
+        ],
+        "should_reject": [
+          "Proceeding to marina under reduced power",
+          "Proceeding to harbour without power",
+          "Requesting harbour under reduced power"
+        ],
+        "dangerous_minimal_pairs": [
+          "harbour / marina / reduced power / without power / proceeding / requesting"
+        ],
+        "linguist_note": "Reduced power is not full power loss; destination and action must stay item-specific."
+      }
+    },
+    {
+      "id": "phrase_urgency_received_message_001",
+      "type": "phrase",
+      "level": "advanced",
+      "difficulty_score": 11,
+      "topic": "urgency_readback",
+      "branch": "urgency_panpan",
+      "module": "urgency_readback",
+      "source_language": "ru",
+      "source_text": "Срочное сообщение получено",
+      "target_language": "en",
+      "target_text": "Urgency message received",
+      "accepted_answers": [
+        "Urgency message received",
+        "Received urgency message"
+      ],
+      "hint_beginner": "U______ m______ r_______",
+      "hint_intermediate": "Urgency message...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Urgency message received",
+          "received urgency message",
+          "URGENCY MESSAGE RECEIVED"
+        ],
+        "should_reject": [
+          "Safety message received",
+          "Distress message received",
+          "Urgency call received"
+        ],
+        "dangerous_minimal_pairs": [
+          "urgency message / safety message / distress message / urgency call"
+        ],
+        "linguist_note": "Word order variant is proposed; message/call and signal-family substitutions stay wrong."
+      }
+    },
+    {
+      "id": "phrase_urgency_stand_by_channel_16_001",
+      "type": "phrase",
+      "level": "advanced",
+      "difficulty_score": 11,
+      "topic": "urgency_readback",
+      "branch": "urgency_panpan",
+      "module": "urgency_readback",
+      "source_language": "ru",
+      "source_text": "Ожидайте на канале 16",
+      "target_language": "en",
+      "target_text": "Stand by on channel 16",
+      "accepted_answers": [
+        "Stand by on channel 16",
+        "Stand by on channel one six"
+      ],
+      "hint_beginner": "S____ b_ o_ c______ 16",
+      "hint_intermediate": "Stand by...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Stand by on channel 16",
+          "stand by on channel one six",
+          "STAND BY ON CHANNEL 16"
+        ],
+        "should_reject": [
+          "Stand by on channel 12",
+          "Keep listening watch on channel 16",
+          "Go ahead on channel 16"
+        ],
+        "dangerous_minimal_pairs": [
+          "stand by / keep listening watch / go ahead / channel 16 / channel 12"
+        ],
+        "linguist_note": "Stand by is a distinct instruction; channel number must stay exact."
+      }
+    },
+    {
+      "id": "phrase_urgency_read_back_details_001",
+      "type": "phrase",
+      "level": "advanced",
+      "difficulty_score": 12,
+      "topic": "urgency_readback",
+      "branch": "urgency_panpan",
+      "module": "urgency_readback",
+      "source_language": "ru",
+      "source_text": "Повторите детали Pan-Pan",
+      "target_language": "en",
+      "target_text": "Read back Pan-Pan details",
+      "accepted_answers": [
+        "Read back Pan-Pan details",
+        "Readback Pan-Pan details",
+        "Read back Pan Pan details"
+      ],
+      "hint_beginner": "R___ b___ P__-P__ d______",
+      "hint_intermediate": "Read back Pan-Pan...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Read back Pan-Pan details",
+          "readback pan pan details",
+          "READ BACK PAN-PAN DETAILS"
+        ],
+        "should_reject": [
+          "Say again Pan-Pan details",
+          "Read back Mayday details",
+          "Read back Securite details"
+        ],
+        "dangerous_minimal_pairs": [
+          "read back / say again / Pan-Pan / Mayday / Securite"
+        ],
+        "linguist_note": "Readback compact spelling follows earlier local pattern; signal family must remain strict."
+      }
+    }
+  ],
+  "grammar_patterns": [],
+  "dangerous_minimal_pairs": [
+    {
+      "pair": "Pan-Pan / Securite / Mayday",
+      "items": [
+        "expr_urgency_panpan_001",
+        "phrase_urgency_panpan_three_times_001",
+        "phrase_urgency_read_back_details_001"
+      ],
+      "must_accept": {
+        "expr_urgency_panpan_001": [
+          "Pan-Pan"
+        ],
+        "phrase_urgency_panpan_three_times_001": [
+          "Pan-Pan Pan-Pan Pan-Pan"
+        ],
+        "phrase_urgency_read_back_details_001": [
+          "Read back Pan-Pan details"
+        ]
+      },
+      "must_reject": {
+        "expr_urgency_panpan_001": [
+          "Mayday",
+          "Securite"
+        ],
+        "phrase_urgency_panpan_three_times_001": [
+          "Mayday Mayday Mayday",
+          "Securite Securite Securite"
+        ],
+        "phrase_urgency_read_back_details_001": [
+          "Read back Mayday details",
+          "Read back Securite details"
+        ]
+      },
+      "reason": "Urgency, safety, and distress signals must not collapse into one radio signal family."
+    },
+    {
+      "pair": "urgency / safety / distress",
+      "items": [
+        "word_urgency_urgency_001",
+        "expr_urgency_message_001",
+        "phrase_urgency_received_message_001"
+      ],
+      "must_accept": {
+        "word_urgency_urgency_001": [
+          "urgency"
+        ],
+        "expr_urgency_message_001": [
+          "urgency message"
+        ],
+        "phrase_urgency_received_message_001": [
+          "urgency message received"
+        ]
+      },
+      "must_reject": {
+        "word_urgency_urgency_001": [
+          "safety",
+          "distress"
+        ],
+        "expr_urgency_message_001": [
+          "safety message",
+          "distress message"
+        ],
+        "phrase_urgency_received_message_001": [
+          "safety message received",
+          "distress message received"
+        ]
+      },
+      "reason": "Operational message category changes the meaning of the call."
+    },
+    {
+      "pair": "engine failure / steering failure / power failure",
+      "items": [
+        "expr_urgency_engine_failure_001",
+        "expr_urgency_steering_failure_001",
+        "phrase_urgency_engine_failure_assistance_001"
+      ],
+      "must_accept": {
+        "expr_urgency_engine_failure_001": [
+          "engine failure"
+        ],
+        "expr_urgency_steering_failure_001": [
+          "steering failure"
+        ],
+        "phrase_urgency_engine_failure_assistance_001": [
+          "engine failure require assistance"
+        ]
+      },
+      "must_reject": {
+        "expr_urgency_engine_failure_001": [
+          "steering failure",
+          "power failure"
+        ],
+        "expr_urgency_steering_failure_001": [
+          "engine failure",
+          "power failure"
+        ],
+        "phrase_urgency_engine_failure_assistance_001": [
+          "steering failure require assistance"
+        ]
+      },
+      "reason": "Failure type changes vessel capability and the assistance needed."
+    },
+    {
+      "pair": "disabled vessel / not under command / restricted manoeuvrability",
+      "items": [
+        "word_urgency_disabled_001",
+        "phrase_urgency_disabled_vessel_001",
+        "phrase_urgency_disabled_position_channel_16_001"
+      ],
+      "must_accept": {
+        "word_urgency_disabled_001": [
+          "disabled"
+        ],
+        "phrase_urgency_disabled_vessel_001": [
+          "vessel disabled"
+        ],
+        "phrase_urgency_disabled_position_channel_16_001": [
+          "disabled vessel position on channel 16"
+        ]
+      },
+      "must_reject": {
+        "word_urgency_disabled_001": [
+          "distressed",
+          "aground"
+        ],
+        "phrase_urgency_disabled_vessel_001": [
+          "vessel not under command",
+          "vessel restricted in ability to manoeuvre"
+        ],
+        "phrase_urgency_disabled_position_channel_16_001": [
+          "distressed vessel position on channel 16"
+        ]
+      },
+      "reason": "Basic urgency disabled-vessel wording should not blur into distress or legal-status categories."
+    },
+    {
+      "pair": "medical assistance / medical advice / evacuation",
+      "items": [
+        "expr_urgency_medical_assistance_001",
+        "phrase_urgency_request_medical_assistance_001",
+        "phrase_urgency_medical_assistance_required_001"
+      ],
+      "must_accept": {
+        "expr_urgency_medical_assistance_001": [
+          "medical assistance"
+        ],
+        "phrase_urgency_request_medical_assistance_001": [
+          "request medical assistance"
+        ],
+        "phrase_urgency_medical_assistance_required_001": [
+          "medical assistance required for one person"
+        ]
+      },
+      "must_reject": {
+        "expr_urgency_medical_assistance_001": [
+          "medical advice",
+          "evacuation"
+        ],
+        "phrase_urgency_request_medical_assistance_001": [
+          "request medical advice",
+          "request evacuation"
+        ],
+        "phrase_urgency_medical_assistance_required_001": [
+          "medical advice required for one person",
+          "medical assistance required for two persons"
+        ]
+      },
+      "reason": "Medical assistance, advice, evacuation, and person counts must stay item-specific."
+    },
+    {
+      "pair": "towing assistance / rescue / tug assistance",
+      "items": [
+        "word_urgency_tow_001",
+        "expr_urgency_towing_assistance_001",
+        "phrase_urgency_request_towing_assistance_001"
+      ],
+      "must_accept": {
+        "word_urgency_tow_001": [
+          "tow"
+        ],
+        "expr_urgency_towing_assistance_001": [
+          "towing assistance"
+        ],
+        "phrase_urgency_request_towing_assistance_001": [
+          "request towing assistance",
+          "request tow"
+        ]
+      },
+      "must_reject": {
+        "word_urgency_tow_001": [
+          "tug",
+          "rescue"
+        ],
+        "expr_urgency_towing_assistance_001": [
+          "rescue assistance",
+          "tug assistance"
+        ],
+        "phrase_urgency_request_towing_assistance_001": [
+          "request rescue assistance",
+          "request tug assistance"
+        ]
+      },
+      "reason": "Towage support must not imply rescue, SAR, tug operations, or pilot service."
+    },
+    {
+      "pair": "stand by / keep listening watch / go ahead",
+      "items": [
+        "expr_urgency_keep_listening_watch_001",
+        "phrase_urgency_stand_by_channel_16_001",
+        "phrase_urgency_read_back_details_001"
+      ],
+      "must_accept": {
+        "expr_urgency_keep_listening_watch_001": [
+          "keep listening watch"
+        ],
+        "phrase_urgency_stand_by_channel_16_001": [
+          "stand by on channel 16"
+        ],
+        "phrase_urgency_read_back_details_001": [
+          "read back Pan-Pan details"
+        ]
+      },
+      "must_reject": {
+        "expr_urgency_keep_listening_watch_001": [
+          "stand by",
+          "go ahead"
+        ],
+        "phrase_urgency_stand_by_channel_16_001": [
+          "keep listening watch on channel 16",
+          "go ahead on channel 16"
+        ],
+        "phrase_urgency_read_back_details_001": [
+          "say again Pan-Pan details"
+        ]
+      },
+      "reason": "Procedure words carry different radio actions and should remain strict."
+    },
+    {
+      "pair": "exact channels, times, positions, directions, distances, and counts",
+      "items": [
+        "phrase_urgency_position_north_marina_001",
+        "phrase_urgency_disabled_position_channel_16_001",
+        "phrase_urgency_eta_harbour_1400_001",
+        "phrase_urgency_drifting_east_001",
+        "phrase_urgency_medical_assistance_required_001"
+      ],
+      "must_accept": {
+        "phrase_urgency_position_north_marina_001": [
+          "position two nautical miles north of the marina"
+        ],
+        "phrase_urgency_disabled_position_channel_16_001": [
+          "disabled vessel position on channel 16"
+        ],
+        "phrase_urgency_eta_harbour_1400_001": [
+          "ETA harbour 1400 UTC",
+          "ETA harbour 1400 Zulu"
+        ],
+        "phrase_urgency_drifting_east_001": [
+          "drifting east"
+        ],
+        "phrase_urgency_medical_assistance_required_001": [
+          "medical assistance required for one person"
+        ]
+      },
+      "must_reject": {
+        "phrase_urgency_position_north_marina_001": [
+          "position two nautical miles south of the marina",
+          "position two cables north of the marina"
+        ],
+        "phrase_urgency_disabled_position_channel_16_001": [
+          "disabled vessel position on channel 12"
+        ],
+        "phrase_urgency_eta_harbour_1400_001": [
+          "ETA harbour 1500 UTC",
+          "ETA marina 1400 UTC"
+        ],
+        "phrase_urgency_drifting_east_001": [
+          "drifting west"
+        ],
+        "phrase_urgency_medical_assistance_required_001": [
+          "medical assistance required for two persons"
+        ]
+      },
+      "reason": "Urgency details are operationally significant and must not be fuzzed or loosely substituted."
+    }
+  ],
+  "producer_notes": [
+    {
+      "area": "accepted_variants_for_linguist",
+      "note": "Reviewed item-local variants include Pan-Pan/Pan Pan spacing, request/require assistance in selected assistance phrases, request/require tow for the towing-assistance request item, disabled vessel/vessel disabled word order, keep a listening watch, readback/read back, channel one six, 1400Z, 1400 Zulu, spoken 1400 UTC, and spoken 1400 Zulu."
+    },
+    {
+      "area": "intentionally_rejected_forms",
+      "note": "Rejected forms include Mayday, Securite, safety message, distress message, generic emergency/help, medical advice, evacuation, rescue assistance, tug assistance, pilot requests, legal-status phrases, wrong channel/time/direction/distance/unit/person count, and changed failure types."
+    },
+    {
+      "area": "matcher_risks",
+      "note": "Protect signal families, assistance categories, failure types, legal-status terms, channel numbers, UTC/Z time values, direction pairs, distance units, and person counts. No broad synonym expansion is proposed."
+    },
+    {
+      "area": "scope_risks",
+      "note": "Batch 005 is urgency only. It contains no playable target content for Mayday distress, Securite safety broadcasts, SAR, fire, flooding, man overboard, abandon ship, heavy VTS/port-control, or collision-avoidance intentions."
+    }
+  ]
+}

@@ -26,6 +26,9 @@ The site must not be treated as a Russian-only interface with later ad hoc trans
 ## Core Principles
 
 - The owner's Russian source text remains canonical and must not be rewritten without approval.
+- The public site language strategy is many-language from the start: English is the primary public site language; additional target versions are Russian, German, Italian, Spanish, regional Serbian/Montenegrin/Croatian, and Mandarin.
+- The old `RU/EN` view is only the current technical implementation, not the project language strategy.
+- The old future `fr` mention in a handoff is superseded until the owner explicitly reinstates French.
 - Interface text must use structured language keys where practical, not scattered hardcoded strings.
 - A term may be correct in English and wrong in Russian. Maritime terminology must be checked by locale, not translated literally.
 - Visible interface labels, internal class names, print labels, ARIA labels, placeholders, status messages, and generated document text are all localization surfaces.
@@ -73,4 +76,4 @@ Open `task-0001-language-surface-inventory.md` and prepare a language-surface in
 
 ## Current Assigned Task
 
-Open `task-0003-journal-translation-work-order.md` and prepare the Ship Journal translation work order. This is a report-first task: do not generate production translations, do not touch FTP/database/live API, and do not invent a final target language list if it is not explicit in project documents.
+Open `task-0004-target-language-matrix.md` and prepare/update the target language matrix. This is a report-first task: record the owner-approved language direction, separate current frontend availability from future targets, and do not generate production translations until Backend/Admin and SEO approve storage, URL, review and publishing gates.

@@ -1,0 +1,2378 @@
+{
+  "version": 1,
+  "batch_id": "batch-001-radio-procedure",
+  "status": "merged",
+  "date": "2026-05-27",
+  "branch": "core_radio",
+  "scope": "Core radio procedure batch merged into starter.json after Sea Speak Linguist review, Director-Engineer matcher fix, and QA acceptance.",
+  "items": [
+    {
+      "id": "word_core_question_marker_001",
+      "type": "word",
+      "level": "beginner",
+      "difficulty_score": 5,
+      "topic": "message_markers",
+      "branch": "core_radio",
+      "module": "message_markers",
+      "source_language": "ru",
+      "source_text": "Маркер сообщения: вопрос",
+      "target_language": "en",
+      "target_text": "question",
+      "accepted_answers": [
+        "question"
+      ],
+      "hint_beginner": "q______n",
+      "hint_intermediate": "qu...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "question",
+          "QUESTION",
+          "question."
+        ],
+        "should_reject": [
+          "answer",
+          "request",
+          "inquiry"
+        ],
+        "dangerous_minimal_pairs": [
+          "question / answer",
+          "question / request"
+        ],
+        "linguist_note": "Keep as the message marker, not a free synonym like inquiry."
+      }
+    },
+    {
+      "id": "word_core_answer_marker_001",
+      "type": "word",
+      "level": "beginner",
+      "difficulty_score": 5,
+      "topic": "message_markers",
+      "branch": "core_radio",
+      "module": "message_markers",
+      "source_language": "ru",
+      "source_text": "Маркер сообщения: ответ",
+      "target_language": "en",
+      "target_text": "answer",
+      "accepted_answers": [
+        "answer"
+      ],
+      "hint_beginner": "a____r",
+      "hint_intermediate": "an...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "answer",
+          "ANSWER",
+          "answer."
+        ],
+        "should_reject": [
+          "question",
+          "reply",
+          "response"
+        ],
+        "dangerous_minimal_pairs": [
+          "answer / question"
+        ],
+        "linguist_note": "Reply/response are ordinary English; draft keeps the trained message marker answer."
+      }
+    },
+    {
+      "id": "word_core_information_marker_001",
+      "type": "word",
+      "level": "beginner",
+      "difficulty_score": 6,
+      "topic": "message_markers",
+      "branch": "core_radio",
+      "module": "message_markers",
+      "source_language": "ru",
+      "source_text": "Маркер сообщения: информация",
+      "target_language": "en",
+      "target_text": "information",
+      "accepted_answers": [
+        "information"
+      ],
+      "hint_beginner": "i_________n",
+      "hint_intermediate": "info...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "information",
+          "INFORMATION",
+          "information."
+        ],
+        "should_reject": [
+          "info",
+          "warning",
+          "advice"
+        ],
+        "dangerous_minimal_pairs": [
+          "information / warning",
+          "information / advice"
+        ],
+        "linguist_note": "Confirmed strict marker policy: reject info. The drill trains the formal message marker information."
+      }
+    },
+    {
+      "id": "word_core_warning_marker_001",
+      "type": "word",
+      "level": "beginner",
+      "difficulty_score": 6,
+      "topic": "message_markers",
+      "branch": "core_radio",
+      "module": "message_markers",
+      "source_language": "ru",
+      "source_text": "Маркер сообщения: предупреждение",
+      "target_language": "en",
+      "target_text": "warning",
+      "accepted_answers": [
+        "warning"
+      ],
+      "hint_beginner": "w_____g",
+      "hint_intermediate": "war...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "warning",
+          "WARNING",
+          "warning."
+        ],
+        "should_reject": [
+          "information",
+          "advice",
+          "danger"
+        ],
+        "dangerous_minimal_pairs": [
+          "warning / information",
+          "warning / advice"
+        ],
+        "linguist_note": "Do not accept danger; it loses the message-marker function."
+      }
+    },
+    {
+      "id": "word_core_instruction_marker_001",
+      "type": "word",
+      "level": "beginner",
+      "difficulty_score": 7,
+      "topic": "message_markers",
+      "branch": "core_radio",
+      "module": "message_markers",
+      "source_language": "ru",
+      "source_text": "Маркер сообщения: указание",
+      "target_language": "en",
+      "target_text": "instruction",
+      "accepted_answers": [
+        "instruction"
+      ],
+      "hint_beginner": "i_________n",
+      "hint_intermediate": "instr...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "instruction",
+          "INSTRUCTION",
+          "instruction."
+        ],
+        "should_reject": [
+          "advice",
+          "request",
+          "order"
+        ],
+        "dangerous_minimal_pairs": [
+          "instruction / advice",
+          "instruction / request"
+        ],
+        "linguist_note": "Order may be close in ordinary English but is not the trained marker here."
+      }
+    },
+    {
+      "id": "word_core_advice_marker_001",
+      "type": "word",
+      "level": "beginner",
+      "difficulty_score": 7,
+      "topic": "message_markers",
+      "branch": "core_radio",
+      "module": "message_markers",
+      "source_language": "ru",
+      "source_text": "Маркер сообщения: совет",
+      "target_language": "en",
+      "target_text": "advice",
+      "accepted_answers": [
+        "advice"
+      ],
+      "hint_beginner": "a____e",
+      "hint_intermediate": "ad...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "advice",
+          "ADVICE",
+          "advice."
+        ],
+        "should_reject": [
+          "advise",
+          "instruction",
+          "warning"
+        ],
+        "dangerous_minimal_pairs": [
+          "advice / advise",
+          "advice / instruction",
+          "advice / warning"
+        ],
+        "linguist_note": "Confirmed strict marker policy: advise is a verb, not the marker noun. It must stay wrong even if typo matching sees it as close to advice."
+      }
+    },
+    {
+      "id": "word_core_request_marker_001",
+      "type": "word",
+      "level": "beginner",
+      "difficulty_score": 7,
+      "topic": "message_markers",
+      "branch": "core_radio",
+      "module": "message_markers",
+      "source_language": "ru",
+      "source_text": "Маркер сообщения: запрос",
+      "target_language": "en",
+      "target_text": "request",
+      "accepted_answers": [
+        "request"
+      ],
+      "hint_beginner": "r_____t",
+      "hint_intermediate": "req...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "request",
+          "REQUEST",
+          "request."
+        ],
+        "should_reject": [
+          "question",
+          "instruction",
+          "demand"
+        ],
+        "dangerous_minimal_pairs": [
+          "request / question",
+          "request / instruction"
+        ],
+        "linguist_note": "Demand changes tone and authority; keep wrong unless linguist decides otherwise."
+      }
+    },
+    {
+      "id": "word_core_intention_marker_001",
+      "type": "word",
+      "level": "beginner",
+      "difficulty_score": 8,
+      "topic": "message_markers",
+      "branch": "core_radio",
+      "module": "message_markers",
+      "source_language": "ru",
+      "source_text": "Маркер сообщения: намерение",
+      "target_language": "en",
+      "target_text": "intention",
+      "accepted_answers": [
+        "intention"
+      ],
+      "hint_beginner": "i_______n",
+      "hint_intermediate": "int...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "intention",
+          "INTENTION",
+          "intention."
+        ],
+        "should_reject": [
+          "intend",
+          "instruction",
+          "information"
+        ],
+        "dangerous_minimal_pairs": [
+          "intention / instruction",
+          "intention / information"
+        ],
+        "linguist_note": "Intend is grammatically close but not the message marker."
+      }
+    },
+    {
+      "id": "word_core_correction_marker_001",
+      "type": "word",
+      "level": "beginner",
+      "difficulty_score": 8,
+      "topic": "readback_correction",
+      "branch": "core_radio",
+      "module": "readback_correction",
+      "source_language": "ru",
+      "source_text": "Исправление",
+      "target_language": "en",
+      "target_text": "correction",
+      "accepted_answers": [
+        "correction"
+      ],
+      "hint_beginner": "c________n",
+      "hint_intermediate": "cor...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "correction",
+          "CORRECTION",
+          "correction."
+        ],
+        "should_reject": [
+          "correct",
+          "wrong",
+          "mistake"
+        ],
+        "dangerous_minimal_pairs": [
+          "correction / correct",
+          "correction / wrong"
+        ],
+        "linguist_note": "Correction introduces the corrected message; correct is a confirmation."
+      }
+    },
+    {
+      "id": "word_core_figures_001",
+      "type": "word",
+      "level": "beginner",
+      "difficulty_score": 8,
+      "topic": "spelling_numbers",
+      "branch": "core_radio",
+      "module": "spelling_numbers",
+      "source_language": "ru",
+      "source_text": "Маркер: дальше идут цифры",
+      "target_language": "en",
+      "target_text": "figures",
+      "accepted_answers": [
+        "figures"
+      ],
+      "hint_beginner": "f_____s",
+      "hint_intermediate": "fig...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "figures",
+          "FIGURES",
+          "figures."
+        ],
+        "should_reject": [
+          "numbers",
+          "digits",
+          "figures follow"
+        ],
+        "dangerous_minimal_pairs": [
+          "figures / numbers"
+        ],
+        "linguist_note": "Numbers/digits are ordinary paraphrases; draft keeps the formal procedure word."
+      }
+    },
+    {
+      "id": "word_core_spell_001",
+      "type": "word",
+      "level": "beginner",
+      "difficulty_score": 8,
+      "topic": "spelling_numbers",
+      "branch": "core_radio",
+      "module": "spelling_numbers",
+      "source_language": "ru",
+      "source_text": "Диктуйте по буквам",
+      "target_language": "en",
+      "target_text": "spell",
+      "accepted_answers": [
+        "spell"
+      ],
+      "hint_beginner": "s____",
+      "hint_intermediate": "sp...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "spell",
+          "SPELL",
+          "spell."
+        ],
+        "should_reject": [
+          "spelling",
+          "say again",
+          "repeat"
+        ],
+        "dangerous_minimal_pairs": [
+          "spell / say again"
+        ],
+        "linguist_note": "Spelling reports a mode; spell is the command/request form for this drill."
+      }
+    },
+    {
+      "id": "word_core_wait_001",
+      "type": "word",
+      "level": "beginner",
+      "difficulty_score": 9,
+      "topic": "opening_closing",
+      "branch": "core_radio",
+      "module": "opening_closing",
+      "source_language": "ru",
+      "source_text": "Ждите, короткая пауза",
+      "target_language": "en",
+      "target_text": "wait",
+      "accepted_answers": [
+        "wait"
+      ],
+      "hint_beginner": "w___",
+      "hint_intermediate": "wa...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "wait",
+          "WAIT",
+          "wait."
+        ],
+        "should_reject": [
+          "stand by",
+          "wait out",
+          "out"
+        ],
+        "dangerous_minimal_pairs": [
+          "wait / stand by",
+          "wait / wait out"
+        ],
+        "linguist_note": "Confirmed: wait and stand by stay separate in training. Do not accept wait out or stand by for this word item."
+      }
+    },
+    {
+      "id": "word_core_resume_001",
+      "type": "word",
+      "level": "beginner",
+      "difficulty_score": 9,
+      "topic": "opening_closing",
+      "branch": "core_radio",
+      "module": "opening_closing",
+      "source_language": "ru",
+      "source_text": "Возобновите",
+      "target_language": "en",
+      "target_text": "resume",
+      "accepted_answers": [
+        "resume"
+      ],
+      "hint_beginner": "r_____",
+      "hint_intermediate": "res...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "resume",
+          "RESUME",
+          "resume."
+        ],
+        "should_reject": [
+          "continue",
+          "go ahead",
+          "again"
+        ],
+        "dangerous_minimal_pairs": [
+          "resume / go ahead"
+        ],
+        "linguist_note": "Continue is ordinary English; draft keeps the procedure word resume."
+      }
+    },
+    {
+      "id": "word_core_decimal_001",
+      "type": "word",
+      "level": "intermediate",
+      "difficulty_score": 18,
+      "topic": "spelling_numbers",
+      "branch": "core_radio",
+      "module": "spelling_numbers",
+      "source_language": "ru",
+      "source_text": "Десятичная точка в радиообмене",
+      "target_language": "en",
+      "target_text": "decimal",
+      "accepted_answers": [
+        "decimal"
+      ],
+      "hint_beginner": "d______",
+      "hint_intermediate": "dec...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "decimal",
+          "DECIMAL",
+          "decimal."
+        ],
+        "should_reject": [
+          "point",
+          "dot",
+          "comma"
+        ],
+        "dangerous_minimal_pairs": [
+          "decimal / point"
+        ],
+        "linguist_note": "Confirmed strictness: decimal is the radio form for this drill; point, dot, and comma stay wrong."
+      }
+    },
+    {
+      "id": "word_core_niner_001",
+      "type": "word",
+      "level": "intermediate",
+      "difficulty_score": 19,
+      "topic": "spelling_numbers",
+      "branch": "core_radio",
+      "module": "spelling_numbers",
+      "source_language": "ru",
+      "source_text": "Цифра девять в радиообмене",
+      "target_language": "en",
+      "target_text": "niner",
+      "accepted_answers": [
+        "niner"
+      ],
+      "hint_beginner": "n____",
+      "hint_intermediate": "nin...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "niner",
+          "NINER",
+          "niner."
+        ],
+        "should_reject": [
+          "nine",
+          "ninety",
+          "number nine"
+        ],
+        "dangerous_minimal_pairs": [
+          "niner / nine"
+        ],
+        "linguist_note": "Confirmed strictness: this drill trains the radio pronunciation niner; ordinary nine stays wrong."
+      }
+    },
+    {
+      "id": "expr_core_radio_check_001",
+      "type": "short_expression",
+      "level": "beginner",
+      "difficulty_score": 9,
+      "topic": "radio_procedure",
+      "branch": "core_radio",
+      "module": "procedure_words",
+      "source_language": "ru",
+      "source_text": "Проверка связи",
+      "target_language": "en",
+      "target_text": "radio check",
+      "accepted_answers": [
+        "radio check"
+      ],
+      "hint_beginner": "radio c____",
+      "hint_intermediate": "radio...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "radio check",
+          "RADIO CHECK",
+          "radio-check"
+        ],
+        "should_reject": [
+          "check radio",
+          "how do you read me",
+          "roger"
+        ],
+        "dangerous_minimal_pairs": [
+          "radio check / how do you read me"
+        ],
+        "linguist_note": "How do you read me is related but not the same prompt."
+      }
+    },
+    {
+      "id": "expr_core_this_is_001",
+      "type": "short_expression",
+      "level": "beginner",
+      "difficulty_score": 9,
+      "topic": "station_call",
+      "branch": "core_radio",
+      "module": "station_calls",
+      "source_language": "ru",
+      "source_text": "Это...",
+      "target_language": "en",
+      "target_text": "this is",
+      "accepted_answers": [
+        "this is"
+      ],
+      "hint_beginner": "this i_",
+      "hint_intermediate": "this...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "this is",
+          "THIS IS",
+          "this-is"
+        ],
+        "should_reject": [
+          "here is",
+          "from",
+          "calling"
+        ],
+        "dangerous_minimal_pairs": [
+          "this is / calling"
+        ],
+        "linguist_note": "Calling can appear in station calls but should not replace the identification marker."
+      }
+    },
+    {
+      "id": "expr_core_calling_001",
+      "type": "short_expression",
+      "level": "beginner",
+      "difficulty_score": 9,
+      "topic": "station_call",
+      "branch": "core_radio",
+      "module": "station_calls",
+      "source_language": "ru",
+      "source_text": "Вызываю",
+      "target_language": "en",
+      "target_text": "calling",
+      "accepted_answers": [
+        "calling"
+      ],
+      "hint_beginner": "c______",
+      "hint_intermediate": "call...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "calling",
+          "CALLING",
+          "calling."
+        ],
+        "should_reject": [
+          "this is",
+          "called",
+          "call me"
+        ],
+        "dangerous_minimal_pairs": [
+          "calling / this is"
+        ],
+        "linguist_note": "Keep as a calling phrase element, not a general call verb."
+      }
+    },
+    {
+      "id": "expr_core_say_again_all_001",
+      "type": "short_expression",
+      "level": "beginner",
+      "difficulty_score": 10,
+      "topic": "clarification",
+      "branch": "core_radio",
+      "module": "repetition_clarification",
+      "source_language": "ru",
+      "source_text": "Повторите всё сообщение",
+      "target_language": "en",
+      "target_text": "say again all",
+      "accepted_answers": [
+        "say again all",
+        "please say again all"
+      ],
+      "hint_beginner": "say again a__",
+      "hint_intermediate": "say again...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "say again all",
+          "please say again all",
+          "SAY AGAIN ALL"
+        ],
+        "should_reject": [
+          "repeat all",
+          "again all",
+          "read back all"
+        ],
+        "dangerous_minimal_pairs": [
+          "say again / repeat",
+          "say again / read back"
+        ],
+        "linguist_note": "Do not accept repeat; this protects the existing Sea Speak distinction."
+      }
+    },
+    {
+      "id": "expr_core_stand_by_one_minute_001",
+      "type": "short_expression",
+      "level": "beginner",
+      "difficulty_score": 10,
+      "topic": "radio_procedure",
+      "branch": "core_radio",
+      "module": "opening_closing",
+      "source_language": "ru",
+      "source_text": "Ожидайте одну минуту",
+      "target_language": "en",
+      "target_text": "stand by one minute",
+      "accepted_answers": [
+        "stand by one minute",
+        "stand by for one minute",
+        "please stand by one minute",
+        "stand by 1 minute"
+      ],
+      "hint_beginner": "stand by one...",
+      "hint_intermediate": "stand by...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "stand by one minute",
+          "stand by 1 minute",
+          "please stand by for one minute"
+        ],
+        "should_reject": [
+          "wait one minute",
+          "wait out one minute",
+          "standing by one minute"
+        ],
+        "dangerous_minimal_pairs": [
+          "stand by / wait",
+          "stand by / wait out"
+        ],
+        "linguist_note": "Confirmed safe: stand by for one minute preserves the same standby instruction and time value."
+      }
+    },
+    {
+      "id": "expr_core_read_back_my_message_001",
+      "type": "short_expression",
+      "level": "beginner",
+      "difficulty_score": 11,
+      "topic": "readback_correction",
+      "branch": "core_radio",
+      "module": "readback_correction",
+      "source_language": "ru",
+      "source_text": "Повторите моё сообщение для подтверждения",
+      "target_language": "en",
+      "target_text": "read back my message",
+      "accepted_answers": [
+        "read back my message",
+        "read back the message",
+        "read it back"
+      ],
+      "hint_beginner": "read back my...",
+      "hint_intermediate": "read back...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "read back my message",
+          "read back the message",
+          "read it back"
+        ],
+        "should_reject": [
+          "say again my message",
+          "repeat my message",
+          "roger my message"
+        ],
+        "dangerous_minimal_pairs": [
+          "read back / say again",
+          "read back / repeat"
+        ],
+        "linguist_note": "Confirmed safe for this generic readback command: read it back preserves the readback action. Do not accept say again or repeat."
+      }
+    },
+    {
+      "id": "expr_core_wrong_001",
+      "type": "short_expression",
+      "level": "beginner",
+      "difficulty_score": 11,
+      "topic": "readback_correction",
+      "branch": "core_radio",
+      "module": "readback_correction",
+      "source_language": "ru",
+      "source_text": "Неверно",
+      "target_language": "en",
+      "target_text": "wrong",
+      "accepted_answers": [
+        "wrong"
+      ],
+      "hint_beginner": "w____",
+      "hint_intermediate": "wr...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "wrong",
+          "WRONG",
+          "wrong."
+        ],
+        "should_reject": [
+          "negative",
+          "incorrect",
+          "correction"
+        ],
+        "dangerous_minimal_pairs": [
+          "wrong / negative",
+          "wrong / correction"
+        ],
+        "linguist_note": "Incorrect is ordinary English; draft keeps the specific correction signal wrong."
+      }
+    },
+    {
+      "id": "expr_core_correct_001",
+      "type": "short_expression",
+      "level": "beginner",
+      "difficulty_score": 11,
+      "topic": "readback_correction",
+      "branch": "core_radio",
+      "module": "readback_correction",
+      "source_language": "ru",
+      "source_text": "Верно",
+      "target_language": "en",
+      "target_text": "correct",
+      "accepted_answers": [
+        "correct",
+        "that is correct"
+      ],
+      "hint_beginner": "c______",
+      "hint_intermediate": "cor...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "correct",
+          "that is correct",
+          "CORRECT"
+        ],
+        "should_reject": [
+          "affirmative",
+          "roger",
+          "yes"
+        ],
+        "dangerous_minimal_pairs": [
+          "correct / affirmative",
+          "correct / roger"
+        ],
+        "linguist_note": "That is correct is accepted but risky; do not collapse correct with affirmative."
+      }
+    },
+    {
+      "id": "expr_core_figures_follow_001",
+      "type": "short_expression",
+      "level": "beginner",
+      "difficulty_score": 12,
+      "topic": "spelling_numbers",
+      "branch": "core_radio",
+      "module": "spelling_numbers",
+      "source_language": "ru",
+      "source_text": "Дальше идут цифры",
+      "target_language": "en",
+      "target_text": "figures follow",
+      "accepted_answers": [
+        "figures follow"
+      ],
+      "hint_beginner": "figures f_____",
+      "hint_intermediate": "figures...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "figures follow",
+          "FIGURES FOLLOW",
+          "figures-follow"
+        ],
+        "should_reject": [
+          "numbers follow",
+          "digits follow",
+          "figures"
+        ],
+        "dangerous_minimal_pairs": [
+          "figures / numbers"
+        ],
+        "linguist_note": "Draft rejects numbers follow to preserve the procedure word."
+      }
+    },
+    {
+      "id": "expr_core_say_again_all_after_001",
+      "type": "short_expression",
+      "level": "intermediate",
+      "difficulty_score": 20,
+      "topic": "clarification",
+      "branch": "core_radio",
+      "module": "repetition_clarification",
+      "source_language": "ru",
+      "source_text": "Повторите всё после...",
+      "target_language": "en",
+      "target_text": "say again all after",
+      "accepted_answers": [
+        "say again all after",
+        "please say again all after"
+      ],
+      "hint_beginner": "say again all a____",
+      "hint_intermediate": "say again all...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "say again all after",
+          "please say again all after",
+          "SAY AGAIN ALL AFTER"
+        ],
+        "should_reject": [
+          "repeat all after",
+          "read back all after",
+          "say again all before"
+        ],
+        "dangerous_minimal_pairs": [
+          "say again / repeat",
+          "after / before"
+        ],
+        "linguist_note": "Before/after direction must not be fuzzed."
+      }
+    },
+    {
+      "id": "expr_core_say_again_all_before_001",
+      "type": "short_expression",
+      "level": "intermediate",
+      "difficulty_score": 20,
+      "topic": "clarification",
+      "branch": "core_radio",
+      "module": "repetition_clarification",
+      "source_language": "ru",
+      "source_text": "Повторите всё перед...",
+      "target_language": "en",
+      "target_text": "say again all before",
+      "accepted_answers": [
+        "say again all before",
+        "please say again all before"
+      ],
+      "hint_beginner": "say again all b_____",
+      "hint_intermediate": "say again all...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "say again all before",
+          "please say again all before",
+          "SAY AGAIN ALL BEFORE"
+        ],
+        "should_reject": [
+          "repeat all before",
+          "read back all before",
+          "say again all after"
+        ],
+        "dangerous_minimal_pairs": [
+          "say again / repeat",
+          "before / after"
+        ],
+        "linguist_note": "Before/after direction must not be fuzzed."
+      }
+    },
+    {
+      "id": "expr_core_do_not_answer_001",
+      "type": "short_expression",
+      "level": "intermediate",
+      "difficulty_score": 22,
+      "topic": "radio_procedure",
+      "branch": "core_radio",
+      "module": "opening_closing",
+      "source_language": "ru",
+      "source_text": "Не отвечайте",
+      "target_language": "en",
+      "target_text": "do not answer",
+      "accepted_answers": [
+        "do not answer",
+        "do not reply"
+      ],
+      "hint_beginner": "do not a_____",
+      "hint_intermediate": "do not...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "do not answer",
+          "do not reply",
+          "DO NOT ANSWER"
+        ],
+        "should_reject": [
+          "stand by",
+          "wait",
+          "go ahead"
+        ],
+        "dangerous_minimal_pairs": [
+          "do not answer / stand by",
+          "do not answer / go ahead"
+        ],
+        "linguist_note": "Confirmed safe: do not reply keeps the same instruction as do not answer. Keep separate from stand by, wait, and go ahead."
+      }
+    },
+    {
+      "id": "expr_core_resume_communication_001",
+      "type": "short_expression",
+      "level": "intermediate",
+      "difficulty_score": 22,
+      "topic": "radio_procedure",
+      "branch": "core_radio",
+      "module": "opening_closing",
+      "source_language": "ru",
+      "source_text": "Возобновите связь",
+      "target_language": "en",
+      "target_text": "resume communication",
+      "accepted_answers": [
+        "resume communication",
+        "resume communications"
+      ],
+      "hint_beginner": "resume c____________",
+      "hint_intermediate": "resume...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "resume communication",
+          "resume communications",
+          "RESUME COMMUNICATION"
+        ],
+        "should_reject": [
+          "go ahead",
+          "continue",
+          "answer now"
+        ],
+        "dangerous_minimal_pairs": [
+          "resume communication / go ahead"
+        ],
+        "linguist_note": "Communications plural is accepted as grammar variation."
+      }
+    },
+    {
+      "id": "expr_core_i_spell_001",
+      "type": "short_expression",
+      "level": "intermediate",
+      "difficulty_score": 23,
+      "topic": "spelling_numbers",
+      "branch": "core_radio",
+      "module": "spelling_numbers",
+      "source_language": "ru",
+      "source_text": "Диктую по буквам",
+      "target_language": "en",
+      "target_text": "I spell",
+      "accepted_answers": [
+        "i spell"
+      ],
+      "hint_beginner": "I s____",
+      "hint_intermediate": "I sp...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "I spell",
+          "i spell",
+          "I SPELL"
+        ],
+        "should_reject": [
+          "spell",
+          "spelling",
+          "I repeat"
+        ],
+        "dangerous_minimal_pairs": [
+          "I spell / spell",
+          "I spell / repeat"
+        ],
+        "linguist_note": "Distinguish request spell from sender marker I spell."
+      }
+    },
+    {
+      "id": "expr_core_wait_out_001",
+      "type": "short_expression",
+      "level": "advanced",
+      "difficulty_score": 36,
+      "topic": "opening_closing",
+      "branch": "core_radio",
+      "module": "opening_closing",
+      "source_language": "ru",
+      "source_text": "Ждите, связь временно заканчиваю",
+      "target_language": "en",
+      "target_text": "wait out",
+      "accepted_answers": [
+        "wait out"
+      ],
+      "hint_beginner": "wait o__",
+      "hint_intermediate": "wait...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "wait out",
+          "WAIT OUT",
+          "wait-out"
+        ],
+        "should_reject": [
+          "wait",
+          "out",
+          "stand by"
+        ],
+        "dangerous_minimal_pairs": [
+          "wait / wait out",
+          "out / wait out"
+        ],
+        "linguist_note": "High-risk because out appears inside the phrase; matcher must not accept out alone."
+      }
+    },
+    {
+      "id": "phrase_core_radio_check_over_001",
+      "type": "phrase",
+      "level": "beginner",
+      "difficulty_score": 12,
+      "topic": "radio_check",
+      "branch": "core_radio",
+      "module": "procedure_words",
+      "source_language": "ru",
+      "source_text": "Проверка связи, приём.",
+      "target_language": "en",
+      "target_text": "Radio check, over.",
+      "accepted_answers": [
+        "radio check over",
+        "radio check, over"
+      ],
+      "grammar_pattern": "radio_check_with_over",
+      "hint_beginner": "Radio check, o___",
+      "hint_intermediate": "Radio check...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Radio check, over.",
+          "radio check over",
+          "RADIO CHECK OVER"
+        ],
+        "should_reject": [
+          "radio check out",
+          "radio check over and out",
+          "how do you read me over"
+        ],
+        "dangerous_minimal_pairs": [
+          "over / out"
+        ],
+        "linguist_note": "Protect over as invitation to reply; do not accept out or over and out."
+      }
+    },
+    {
+      "id": "phrase_core_how_read_me_001",
+      "type": "phrase",
+      "level": "beginner",
+      "difficulty_score": 13,
+      "topic": "radio_check",
+      "branch": "core_radio",
+      "module": "procedure_words",
+      "source_language": "ru",
+      "source_text": "Как вы меня слышите?",
+      "target_language": "en",
+      "target_text": "How do you read me?",
+      "accepted_answers": [
+        "how do you read me",
+        "how do you read"
+      ],
+      "grammar_pattern": "radio_readability_check",
+      "hint_beginner": "How do you read...",
+      "hint_intermediate": "How do...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "How do you read me?",
+          "how do you read me",
+          "how do you read"
+        ],
+        "should_reject": [
+          "radio check",
+          "do you read me",
+          "can you hear me"
+        ],
+        "dangerous_minimal_pairs": [
+          "how do you read me / radio check"
+        ],
+        "linguist_note": "How do you read is accepted as a shortened standard query; can you hear me is too ordinary."
+      }
+    },
+    {
+      "id": "phrase_core_read_loud_clear_001",
+      "type": "phrase",
+      "level": "beginner",
+      "difficulty_score": 14,
+      "topic": "radio_check",
+      "branch": "core_radio",
+      "module": "procedure_words",
+      "source_language": "ru",
+      "source_text": "Слышу вас громко и ясно.",
+      "target_language": "en",
+      "target_text": "I read you loud and clear.",
+      "accepted_answers": [
+        "i read you loud and clear",
+        "read you loud and clear",
+        "loud and clear"
+      ],
+      "grammar_pattern": "radio_readability_response",
+      "hint_beginner": "I read you...",
+      "hint_intermediate": "loud and clear",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "I read you loud and clear.",
+          "read you loud and clear",
+          "loud and clear"
+        ],
+        "should_reject": [
+          "roger",
+          "affirmative",
+          "I hear you"
+        ],
+        "dangerous_minimal_pairs": [
+          "readability report / roger"
+        ],
+        "linguist_note": "Confirmed safe as a shortened readability report. It must not collapse into roger, affirmative, or I hear you."
+      }
+    },
+    {
+      "id": "phrase_core_call_orion_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 20,
+      "topic": "station_call",
+      "branch": "core_radio",
+      "module": "station_calls",
+      "source_language": "ru",
+      "source_text": "Aurora, это парусная яхта Orion.",
+      "target_language": "en",
+      "target_text": "Aurora, this is sailing yacht Orion.",
+      "accepted_answers": [
+        "aurora this is sailing yacht orion",
+        "aurora this is sy orion",
+        "aurora this is s y orion",
+        "aurora sailing yacht orion"
+      ],
+      "grammar_pattern": "station_call_vessel_to_vessel",
+      "hint_beginner": "Aurora, this is...",
+      "hint_intermediate": "Aurora...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Aurora, this is sailing yacht Orion.",
+          "Aurora this is S/Y Orion",
+          "Aurora sailing yacht Orion"
+        ],
+        "should_reject": [
+          "Orion this is Aurora",
+          "Aurora to Orion",
+          "this is motor yacht Orion"
+        ],
+        "dangerous_minimal_pairs": [
+          "called station / calling station"
+        ],
+        "linguist_note": "S/Y variants are accepted following starter policy; station order must stay protected."
+      }
+    },
+    {
+      "id": "phrase_core_marina_aurora_calling_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 21,
+      "topic": "station_call",
+      "branch": "core_radio",
+      "module": "station_calls",
+      "source_language": "ru",
+      "source_text": "Marina Control, Aurora вызывает.",
+      "target_language": "en",
+      "target_text": "Marina Control, Aurora calling.",
+      "accepted_answers": [
+        "marina control aurora calling",
+        "marina control sailing yacht aurora calling",
+        "marina control sy aurora calling",
+        "marina control s y aurora calling"
+      ],
+      "grammar_pattern": "station_call_calling_form",
+      "hint_beginner": "Marina Control...",
+      "hint_intermediate": "Aurora calling",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Marina Control, Aurora calling.",
+          "Marina Control S/Y Aurora calling",
+          "Marina Control sailing yacht Aurora calling"
+        ],
+        "should_reject": [
+          "Aurora Marina Control calling",
+          "Aurora to Marina Control",
+          "Marina Control this is motor yacht Aurora"
+        ],
+        "dangerous_minimal_pairs": [
+          "called station / calling station",
+          "sailing yacht / motor yacht"
+        ],
+        "linguist_note": "Confirmed station-call policy: called station first. Aurora to Marina Control remains rejected, matching starter policy."
+      }
+    },
+    {
+      "id": "phrase_core_switch_channel_one_two_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 22,
+      "topic": "channel_change",
+      "branch": "core_radio",
+      "module": "spelling_numbers",
+      "source_language": "ru",
+      "source_text": "Перейдите на канал 12.",
+      "target_language": "en",
+      "target_text": "Switch to channel one two.",
+      "accepted_answers": [
+        "switch to channel one two",
+        "change to channel one two",
+        "switch channel one two",
+        "change channel one two",
+        "go to channel one two",
+        "switch to channel 12",
+        "change to channel 12",
+        "channel one two",
+        "channel 12"
+      ],
+      "grammar_pattern": "channel_change_basic",
+      "hint_beginner": "Switch to channel...",
+      "hint_intermediate": "channel one two",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Switch to channel one two.",
+          "channel 12",
+          "change to channel one two"
+        ],
+        "should_reject": [
+          "channel 13",
+          "channel 16",
+          "switch off channel one two"
+        ],
+        "dangerous_minimal_pairs": [
+          "channel 12 / channel 13 / channel 16",
+          "switch / switch off"
+        ],
+        "linguist_note": "Confirmed safe: change/go to channel one two follow starter channel-change policy. Channel digits stay strict."
+      }
+    },
+    {
+      "id": "phrase_core_read_back_channel_one_two_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 23,
+      "topic": "readback_correction",
+      "branch": "core_radio",
+      "module": "readback_correction",
+      "source_language": "ru",
+      "source_text": "Повторите канал 12 для подтверждения.",
+      "target_language": "en",
+      "target_text": "Read back channel one two.",
+      "accepted_answers": [
+        "read back channel one two",
+        "readback channel one two",
+        "read back channel 12",
+        "readback channel 12"
+      ],
+      "grammar_pattern": "readback_specific_item",
+      "hint_beginner": "Read back channel...",
+      "hint_intermediate": "read back...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Read back channel one two.",
+          "readback channel 12",
+          "read back channel 12"
+        ],
+        "should_reject": [
+          "say again channel one two",
+          "repeat channel one two",
+          "read back channel two one"
+        ],
+        "dangerous_minimal_pairs": [
+          "read back / say again",
+          "channel 12 / channel 21"
+        ],
+        "linguist_note": "Readback compact form is accepted; numeric order must stay exact."
+      }
+    },
+    {
+      "id": "phrase_core_correction_channel_one_three_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 24,
+      "topic": "readback_correction",
+      "branch": "core_radio",
+      "module": "readback_correction",
+      "source_language": "ru",
+      "source_text": "Исправление: канал 13.",
+      "target_language": "en",
+      "target_text": "Correction, channel one three.",
+      "accepted_answers": [
+        "correction channel one three",
+        "correction channel 13",
+        "correction, channel one three"
+      ],
+      "grammar_pattern": "correction_with_replacement",
+      "hint_beginner": "Correction, channel...",
+      "hint_intermediate": "correction...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Correction, channel one three.",
+          "correction channel 13",
+          "correction channel one three"
+        ],
+        "should_reject": [
+          "channel one three",
+          "correction channel one two",
+          "wrong channel one three"
+        ],
+        "dangerous_minimal_pairs": [
+          "correction / wrong",
+          "channel 13 / channel 12"
+        ],
+        "linguist_note": "Draft requires correction marker; bare channel one three is not enough for this drill."
+      }
+    },
+    {
+      "id": "phrase_core_question_underway_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 24,
+      "topic": "message_markers",
+      "branch": "core_radio",
+      "module": "message_markers",
+      "source_language": "ru",
+      "source_text": "Вопрос: вы на ходу?",
+      "target_language": "en",
+      "target_text": "Question, are you underway?",
+      "accepted_answers": [
+        "question are you underway",
+        "question are you under way",
+        "question, are you underway"
+      ],
+      "grammar_pattern": "message_marker_question",
+      "hint_beginner": "Question, are you...",
+      "hint_intermediate": "Question...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Question, are you underway?",
+          "question are you under way",
+          "question are you underway"
+        ],
+        "should_reject": [
+          "answer are you underway",
+          "request are you underway",
+          "are you underway"
+        ],
+        "dangerous_minimal_pairs": [
+          "question / answer",
+          "question / request"
+        ],
+        "linguist_note": "Draft requires the question marker; plain question without marker should fail for this item."
+      }
+    },
+    {
+      "id": "phrase_core_answer_affirmative_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 25,
+      "topic": "acknowledgement",
+      "branch": "core_radio",
+      "module": "acknowledgement",
+      "source_language": "ru",
+      "source_text": "Ответ: да.",
+      "target_language": "en",
+      "target_text": "Answer, affirmative.",
+      "accepted_answers": [
+        "answer affirmative",
+        "answer is affirmative",
+        "answer, affirmative"
+      ],
+      "grammar_pattern": "message_marker_answer",
+      "hint_beginner": "Answer, a__________",
+      "hint_intermediate": "Answer...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Answer, affirmative.",
+          "answer affirmative",
+          "answer is affirmative"
+        ],
+        "should_reject": [
+          "affirmative",
+          "answer yes",
+          "answer negative"
+        ],
+        "dangerous_minimal_pairs": [
+          "roger / affirmative",
+          "affirmative / negative"
+        ],
+        "linguist_note": "Do not accept yes or roger; affirmative is the target answer value."
+      }
+    },
+    {
+      "id": "phrase_core_answer_negative_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 25,
+      "topic": "acknowledgement",
+      "branch": "core_radio",
+      "module": "acknowledgement",
+      "source_language": "ru",
+      "source_text": "Ответ: нет.",
+      "target_language": "en",
+      "target_text": "Answer, negative.",
+      "accepted_answers": [
+        "answer negative",
+        "answer is negative",
+        "answer, negative"
+      ],
+      "grammar_pattern": "message_marker_answer",
+      "hint_beginner": "Answer, n_______",
+      "hint_intermediate": "Answer...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Answer, negative.",
+          "answer negative",
+          "answer is negative"
+        ],
+        "should_reject": [
+          "negative",
+          "answer no",
+          "answer affirmative"
+        ],
+        "dangerous_minimal_pairs": [
+          "negative / no",
+          "affirmative / negative"
+        ],
+        "linguist_note": "Do not accept no; this protects the existing negative policy."
+      }
+    },
+    {
+      "id": "phrase_core_request_read_back_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 26,
+      "topic": "readback_correction",
+      "branch": "core_radio",
+      "module": "readback_correction",
+      "source_language": "ru",
+      "source_text": "Запрос: повторите для подтверждения.",
+      "target_language": "en",
+      "target_text": "Request read back.",
+      "accepted_answers": [
+        "request read back",
+        "request you read back",
+        "i request read back"
+      ],
+      "grammar_pattern": "message_marker_request",
+      "hint_beginner": "Request read...",
+      "hint_intermediate": "Request...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Request read back.",
+          "request you read back",
+          "I request read back"
+        ],
+        "should_reject": [
+          "read back",
+          "please read back",
+          "say again"
+        ],
+        "dangerous_minimal_pairs": [
+          "request / imperative",
+          "read back / say again"
+        ],
+        "linguist_note": "Please read back is intentionally rejected in draft because this drills the request marker."
+      }
+    },
+    {
+      "id": "phrase_core_say_again_position_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 26,
+      "topic": "clarification",
+      "branch": "core_radio",
+      "module": "repetition_clarification",
+      "source_language": "ru",
+      "source_text": "Повторите вашу позицию.",
+      "target_language": "en",
+      "target_text": "Say again your position.",
+      "accepted_answers": [
+        "say again your position",
+        "please say again your position",
+        "say again position"
+      ],
+      "grammar_pattern": "say_again_specific_item",
+      "hint_beginner": "Say again your...",
+      "hint_intermediate": "Say again...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Say again your position.",
+          "please say again your position",
+          "say again position"
+        ],
+        "should_reject": [
+          "repeat your position",
+          "read back your position",
+          "say again your heading"
+        ],
+        "dangerous_minimal_pairs": [
+          "say again / repeat",
+          "position / heading"
+        ],
+        "linguist_note": "Confirmed safe: say again position keeps the target object. Repeat and read back remain wrong."
+      }
+    },
+    {
+      "id": "phrase_core_stand_by_channel_one_six_001",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 27,
+      "topic": "radio_procedure",
+      "branch": "core_radio",
+      "module": "opening_closing",
+      "source_language": "ru",
+      "source_text": "Ожидайте на канале 16.",
+      "target_language": "en",
+      "target_text": "Stand by on channel one six.",
+      "accepted_answers": [
+        "stand by on channel one six",
+        "stand by channel one six",
+        "stand by on channel 16",
+        "stand by channel 16"
+      ],
+      "grammar_pattern": "stand_by_on_channel",
+      "hint_beginner": "Stand by on...",
+      "hint_intermediate": "channel one six",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Stand by on channel one six.",
+          "stand by channel 16",
+          "stand by on channel 16"
+        ],
+        "should_reject": [
+          "switch to channel one six",
+          "wait on channel one six",
+          "stand by on channel one two"
+        ],
+        "dangerous_minimal_pairs": [
+          "stand by / switch",
+          "channel 16 / channel 12"
+        ],
+        "linguist_note": "Do not accept switch; standing by on a channel is not changing channel."
+      }
+    },
+    {
+      "id": "phrase_core_do_not_answer_until_called_001",
+      "type": "phrase",
+      "level": "advanced",
+      "difficulty_score": 37,
+      "topic": "radio_procedure",
+      "branch": "core_radio",
+      "module": "opening_closing",
+      "source_language": "ru",
+      "source_text": "Не отвечайте, пока вас не вызовут.",
+      "target_language": "en",
+      "target_text": "Do not answer until called.",
+      "accepted_answers": [
+        "do not answer until called",
+        "do not reply until called"
+      ],
+      "grammar_pattern": "do_not_answer_until_condition",
+      "hint_beginner": "Do not answer...",
+      "hint_intermediate": "until called",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Do not answer until called.",
+          "do not reply until called"
+        ],
+        "should_reject": [
+          "stand by until called",
+          "wait until called",
+          "answer when called"
+        ],
+        "dangerous_minimal_pairs": [
+          "do not answer / stand by",
+          "do not answer / wait"
+        ],
+        "linguist_note": "Confirmed safe: do not reply until called keeps the same prohibition. Do not accept stand by or wait for this item."
+      }
+    },
+    {
+      "id": "phrase_core_resume_communication_now_001",
+      "type": "phrase",
+      "level": "advanced",
+      "difficulty_score": 38,
+      "topic": "radio_procedure",
+      "branch": "core_radio",
+      "module": "opening_closing",
+      "source_language": "ru",
+      "source_text": "Возобновите связь сейчас.",
+      "target_language": "en",
+      "target_text": "Resume communication now.",
+      "accepted_answers": [
+        "resume communication now",
+        "resume communications now"
+      ],
+      "grammar_pattern": "resume_communication",
+      "hint_beginner": "Resume communication...",
+      "hint_intermediate": "Resume...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Resume communication now.",
+          "resume communications now"
+        ],
+        "should_reject": [
+          "go ahead now",
+          "continue now",
+          "answer now"
+        ],
+        "dangerous_minimal_pairs": [
+          "resume communication / go ahead"
+        ],
+        "linguist_note": "Resume and go ahead should remain separate procedure concepts."
+      }
+    },
+    {
+      "id": "phrase_core_wait_out_call_again_001",
+      "type": "phrase",
+      "level": "advanced",
+      "difficulty_score": 40,
+      "topic": "opening_closing",
+      "branch": "core_radio",
+      "module": "opening_closing",
+      "source_language": "ru",
+      "source_text": "Ждите, связь временно заканчиваю, я вызову снова.",
+      "target_language": "en",
+      "target_text": "Wait out, I will call you again.",
+      "accepted_answers": [
+        "wait out i will call you again",
+        "wait out will call you again"
+      ],
+      "grammar_pattern": "wait_out_then_recall",
+      "hint_beginner": "Wait out...",
+      "hint_intermediate": "I will call...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Wait out, I will call you again.",
+          "wait out will call you again"
+        ],
+        "should_reject": [
+          "wait over i will call you again",
+          "stand by i will call you again",
+          "out i will call you again"
+        ],
+        "dangerous_minimal_pairs": [
+          "wait out / wait over",
+          "wait out / out"
+        ],
+        "linguist_note": "High-risk phrase because over/out confusion can creep in by typo or paraphrase."
+      }
+    },
+    {
+      "id": "phrase_core_correction_eta_1500_001",
+      "type": "phrase",
+      "level": "advanced",
+      "difficulty_score": 41,
+      "topic": "readback_correction",
+      "branch": "core_radio",
+      "module": "readback_correction",
+      "source_language": "ru",
+      "source_text": "Исправление: моё ETA один пять ноль ноль UTC.",
+      "target_language": "en",
+      "target_text": "Correction, my ETA is one five zero zero UTC.",
+      "accepted_answers": [
+        "correction my eta is one five zero zero utc",
+        "correction eta one five zero zero utc",
+        "correction my eta one five zero zero utc",
+        "correction my eta is one five zero zero zulu",
+        "correction eta one five zero zero zulu",
+        "correction my eta is 1500 utc",
+        "correction eta 1500 utc",
+        "correction my eta is 1500z",
+        "correction eta 1500z"
+      ],
+      "grammar_pattern": "correction_time_report",
+      "hint_beginner": "Correction, my ETA...",
+      "hint_intermediate": "one five zero zero",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Correction, my ETA is one five zero zero UTC.",
+          "correction ETA 1500 UTC",
+          "correction ETA 1500Z"
+        ],
+        "should_reject": [
+          "correction eta 1400 utc",
+          "eta 1500 utc",
+          "correction my eta is one four zero zero utc"
+        ],
+        "dangerous_minimal_pairs": [
+          "1500 / 1400",
+          "correction marker / bare ETA"
+        ],
+        "linguist_note": "Numeric tokens must not be fuzzy; draft requires correction marker for this item."
+      }
+    },
+    {
+      "id": "phrase_core_spell_call_sign_001",
+      "type": "phrase",
+      "level": "advanced",
+      "difficulty_score": 42,
+      "topic": "spelling_numbers",
+      "branch": "core_radio",
+      "module": "spelling_numbers",
+      "source_language": "ru",
+      "source_text": "Продиктуйте ваш позывной по буквам.",
+      "target_language": "en",
+      "target_text": "Spell your call sign.",
+      "accepted_answers": [
+        "spell your call sign",
+        "spell your callsign",
+        "spell call sign",
+        "spell callsign"
+      ],
+      "grammar_pattern": "spell_requested_identifier",
+      "hint_beginner": "Spell your...",
+      "hint_intermediate": "call sign",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Spell your call sign.",
+          "spell your callsign",
+          "spell call sign"
+        ],
+        "should_reject": [
+          "say again your call sign",
+          "repeat your call sign",
+          "what is your call sign"
+        ],
+        "dangerous_minimal_pairs": [
+          "spell / say again",
+          "spell / repeat"
+        ],
+        "linguist_note": "Callsign as one word is accepted as spelling variation."
+      }
+    },
+    {
+      "id": "phrase_core_i_spell_aurora_001",
+      "type": "phrase",
+      "level": "advanced",
+      "difficulty_score": 44,
+      "topic": "spelling_numbers",
+      "branch": "core_radio",
+      "module": "spelling_numbers",
+      "source_language": "ru",
+      "source_text": "Диктую Aurora по буквам: Alfa Uniform Romeo Oscar Romeo Alfa.",
+      "target_language": "en",
+      "target_text": "I spell Aurora: Alfa Uniform Romeo Oscar Romeo Alfa.",
+      "accepted_answers": [
+        "i spell aurora alfa uniform romeo oscar romeo alfa",
+        "i spell alfa uniform romeo oscar romeo alfa",
+        "aurora alfa uniform romeo oscar romeo alfa"
+      ],
+      "grammar_pattern": "i_spell_identifier",
+      "hint_beginner": "I spell Aurora...",
+      "hint_intermediate": "Alfa Uniform...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "I spell Aurora: Alfa Uniform Romeo Oscar Romeo Alfa.",
+          "i spell alfa uniform romeo oscar romeo alfa",
+          "Aurora Alfa Uniform Romeo Oscar Romeo Alfa"
+        ],
+        "should_reject": [
+          "i spell aurora alpha uniform romeo oscar romeo alpha",
+          "i repeat aurora alfa uniform romeo oscar romeo alfa",
+          "aurora"
+        ],
+        "dangerous_minimal_pairs": [
+          "Alfa / Alpha",
+          "I spell / I repeat"
+        ],
+        "linguist_note": "Confirmed strictness: keep official ICAO/IMO Alfa. Reject Alpha even though it is common ordinary spelling."
+      }
+    }
+  ],
+  "grammar_patterns": [
+    {
+      "id": "radio_check_with_over",
+      "level": "beginner",
+      "topic": "radio_check",
+      "pattern": "Radio check + over",
+      "slots": [],
+      "examples": [
+        "Radio check, over."
+      ]
+    },
+    {
+      "id": "radio_readability_check",
+      "level": "beginner",
+      "topic": "radio_check",
+      "pattern": "How do you read me?",
+      "slots": [],
+      "examples": [
+        "How do you read me?"
+      ]
+    },
+    {
+      "id": "radio_readability_response",
+      "level": "beginner",
+      "topic": "radio_check",
+      "pattern": "I read you + readability",
+      "slots": [
+        "readability"
+      ],
+      "examples": [
+        "I read you loud and clear."
+      ]
+    },
+    {
+      "id": "station_call_vessel_to_vessel",
+      "level": "intermediate",
+      "topic": "station_call",
+      "pattern": "Called station + this is + vessel name",
+      "slots": [
+        "called_station",
+        "vessel_name"
+      ],
+      "examples": [
+        "Aurora, this is sailing yacht Orion."
+      ]
+    },
+    {
+      "id": "station_call_calling_form",
+      "level": "intermediate",
+      "topic": "station_call",
+      "pattern": "Called station + calling vessel + calling",
+      "slots": [
+        "called_station",
+        "calling_vessel"
+      ],
+      "examples": [
+        "Marina Control, Aurora calling."
+      ]
+    },
+    {
+      "id": "channel_change_basic",
+      "level": "intermediate",
+      "topic": "channel_change",
+      "pattern": "Switch to channel + channel number",
+      "slots": [
+        "channel_number"
+      ],
+      "examples": [
+        "Switch to channel one two."
+      ]
+    },
+    {
+      "id": "readback_specific_item",
+      "level": "intermediate",
+      "topic": "readback_correction",
+      "pattern": "Read back + message element",
+      "slots": [
+        "message_element"
+      ],
+      "examples": [
+        "Read back channel one two."
+      ]
+    },
+    {
+      "id": "correction_with_replacement",
+      "level": "intermediate",
+      "topic": "readback_correction",
+      "pattern": "Correction + replacement value",
+      "slots": [
+        "replacement_value"
+      ],
+      "examples": [
+        "Correction, channel one three."
+      ]
+    },
+    {
+      "id": "message_marker_question",
+      "level": "intermediate",
+      "topic": "message_markers",
+      "pattern": "Question + question text",
+      "slots": [
+        "question_text"
+      ],
+      "examples": [
+        "Question, are you underway?"
+      ]
+    },
+    {
+      "id": "message_marker_answer",
+      "level": "intermediate",
+      "topic": "message_markers",
+      "pattern": "Answer + answer value",
+      "slots": [
+        "answer_value"
+      ],
+      "examples": [
+        "Answer, affirmative.",
+        "Answer, negative."
+      ]
+    },
+    {
+      "id": "message_marker_request",
+      "level": "intermediate",
+      "topic": "message_markers",
+      "pattern": "Request + requested action",
+      "slots": [
+        "requested_action"
+      ],
+      "examples": [
+        "Request read back."
+      ]
+    },
+    {
+      "id": "say_again_specific_item",
+      "level": "intermediate",
+      "topic": "clarification",
+      "pattern": "Say again + message element",
+      "slots": [
+        "message_element"
+      ],
+      "examples": [
+        "Say again your position."
+      ]
+    },
+    {
+      "id": "stand_by_on_channel",
+      "level": "intermediate",
+      "topic": "radio_procedure",
+      "pattern": "Stand by on channel + channel number",
+      "slots": [
+        "channel_number"
+      ],
+      "examples": [
+        "Stand by on channel one six."
+      ]
+    },
+    {
+      "id": "do_not_answer_until_condition",
+      "level": "advanced",
+      "topic": "radio_procedure",
+      "pattern": "Do not answer until + condition",
+      "slots": [
+        "condition"
+      ],
+      "examples": [
+        "Do not answer until called."
+      ]
+    },
+    {
+      "id": "resume_communication",
+      "level": "advanced",
+      "topic": "radio_procedure",
+      "pattern": "Resume communication + time marker",
+      "slots": [
+        "time_marker"
+      ],
+      "examples": [
+        "Resume communication now."
+      ]
+    },
+    {
+      "id": "wait_out_then_recall",
+      "level": "advanced",
+      "topic": "opening_closing",
+      "pattern": "Wait out + recall statement",
+      "slots": [
+        "recall_statement"
+      ],
+      "examples": [
+        "Wait out, I will call you again."
+      ]
+    },
+    {
+      "id": "correction_time_report",
+      "level": "advanced",
+      "topic": "readback_correction",
+      "pattern": "Correction + ETA report",
+      "slots": [
+        "eta"
+      ],
+      "examples": [
+        "Correction, my ETA is one five zero zero UTC."
+      ]
+    },
+    {
+      "id": "spell_requested_identifier",
+      "level": "advanced",
+      "topic": "spelling_numbers",
+      "pattern": "Spell + identifier",
+      "slots": [
+        "identifier"
+      ],
+      "examples": [
+        "Spell your call sign."
+      ]
+    },
+    {
+      "id": "i_spell_identifier",
+      "level": "advanced",
+      "topic": "spelling_numbers",
+      "pattern": "I spell + identifier + spelling alphabet sequence",
+      "slots": [
+        "identifier",
+        "spelling_sequence"
+      ],
+      "examples": [
+        "I spell Aurora: Alfa Uniform Romeo Oscar Romeo Alfa."
+      ]
+    }
+  ],
+  "dangerous_minimal_pairs": [
+    {
+      "pair": "over / out",
+      "items": [
+        "phrase_core_radio_check_over_001",
+        "expr_core_wait_out_001",
+        "phrase_core_wait_out_call_again_001"
+      ],
+      "must_accept": {
+        "phrase_core_radio_check_over_001": [
+          "radio check over"
+        ],
+        "expr_core_wait_out_001": [
+          "wait out"
+        ]
+      },
+      "must_reject": {
+        "phrase_core_radio_check_over_001": [
+          "radio check out",
+          "radio check over and out"
+        ],
+        "expr_core_wait_out_001": [
+          "out",
+          "wait over"
+        ]
+      },
+      "reason": "Over invites a reply; out closes or suspends the exchange. Wait out must not become out alone."
+    },
+    {
+      "pair": "say again / repeat",
+      "items": [
+        "expr_core_say_again_all_001",
+        "expr_core_say_again_all_after_001",
+        "expr_core_say_again_all_before_001",
+        "phrase_core_say_again_position_001"
+      ],
+      "must_accept": {
+        "phrase_core_say_again_position_001": [
+          "say again your position"
+        ]
+      },
+      "must_reject": {
+        "phrase_core_say_again_position_001": [
+          "repeat your position"
+        ],
+        "expr_core_say_again_all_001": [
+          "repeat all"
+        ]
+      },
+      "reason": "Repeat is not accepted as a substitute for say again in this Sea Speak training."
+    },
+    {
+      "pair": "roger / affirmative / correct",
+      "items": [
+        "expr_core_correct_001",
+        "phrase_core_answer_affirmative_001"
+      ],
+      "must_accept": {
+        "expr_core_correct_001": [
+          "correct"
+        ],
+        "phrase_core_answer_affirmative_001": [
+          "answer affirmative"
+        ]
+      },
+      "must_reject": {
+        "expr_core_correct_001": [
+          "affirmative",
+          "roger",
+          "yes"
+        ],
+        "phrase_core_answer_affirmative_001": [
+          "answer roger",
+          "answer yes"
+        ]
+      },
+      "reason": "Roger acknowledges receipt, affirmative means yes, and correct confirms accuracy."
+    },
+    {
+      "pair": "affirmative / negative",
+      "items": [
+        "phrase_core_answer_affirmative_001",
+        "phrase_core_answer_negative_001"
+      ],
+      "must_accept": {
+        "phrase_core_answer_affirmative_001": [
+          "answer affirmative"
+        ],
+        "phrase_core_answer_negative_001": [
+          "answer negative"
+        ]
+      },
+      "must_reject": {
+        "phrase_core_answer_affirmative_001": [
+          "answer negative"
+        ],
+        "phrase_core_answer_negative_001": [
+          "answer affirmative",
+          "answer no"
+        ]
+      },
+      "reason": "Answer value is operationally opposite and must not be fuzzed."
+    },
+    {
+      "pair": "read back / say again",
+      "items": [
+        "expr_core_read_back_my_message_001",
+        "phrase_core_read_back_channel_one_two_001",
+        "phrase_core_request_read_back_001",
+        "phrase_core_say_again_position_001"
+      ],
+      "must_accept": {
+        "phrase_core_read_back_channel_one_two_001": [
+          "read back channel one two"
+        ],
+        "phrase_core_say_again_position_001": [
+          "say again your position"
+        ]
+      },
+      "must_reject": {
+        "phrase_core_read_back_channel_one_two_001": [
+          "say again channel one two",
+          "repeat channel one two"
+        ],
+        "phrase_core_say_again_position_001": [
+          "read back your position",
+          "repeat your position"
+        ]
+      },
+      "reason": "Read back is receiver confirmation; say again asks the sender to retransmit."
+    },
+    {
+      "pair": "channel 12 / channel 13 / channel 16",
+      "items": [
+        "phrase_core_switch_channel_one_two_001",
+        "phrase_core_correction_channel_one_three_001",
+        "phrase_core_stand_by_channel_one_six_001"
+      ],
+      "must_accept": {
+        "phrase_core_switch_channel_one_two_001": [
+          "channel 12"
+        ],
+        "phrase_core_correction_channel_one_three_001": [
+          "correction channel 13"
+        ],
+        "phrase_core_stand_by_channel_one_six_001": [
+          "stand by channel 16"
+        ]
+      },
+      "must_reject": {
+        "phrase_core_switch_channel_one_two_001": [
+          "channel 13",
+          "channel 16"
+        ],
+        "phrase_core_correction_channel_one_three_001": [
+          "correction channel 12"
+        ],
+        "phrase_core_stand_by_channel_one_six_001": [
+          "stand by channel 12"
+        ]
+      },
+      "reason": "Channel digits must not be typo-corrected or semantically substituted."
+    },
+    {
+      "pair": "1500 / 1400",
+      "items": [
+        "phrase_core_correction_eta_1500_001"
+      ],
+      "must_accept": {
+        "phrase_core_correction_eta_1500_001": [
+          "correction ETA 1500 UTC",
+          "correction ETA 1500Z"
+        ]
+      },
+      "must_reject": {
+        "phrase_core_correction_eta_1500_001": [
+          "correction ETA 1400 UTC",
+          "correction ETA 1400Z"
+        ]
+      },
+      "reason": "ETA time digits must not be corrected by typo or semantic matching."
+    },
+    {
+      "pair": "Alfa / Alpha",
+      "items": [
+        "phrase_core_i_spell_aurora_001"
+      ],
+      "must_accept": {
+        "phrase_core_i_spell_aurora_001": [
+          "i spell aurora alfa uniform romeo oscar romeo alfa"
+        ]
+      },
+      "must_reject": {
+        "phrase_core_i_spell_aurora_001": [
+          "i spell aurora alpha uniform romeo oscar romeo alpha"
+        ]
+      },
+      "reason": "Confirmed: keep official ICAO/IMO spelling alphabet form Alfa; Alpha stays wrong for this training item."
+    },
+    {
+      "pair": "advice / advise",
+      "items": [
+        "word_core_advice_marker_001"
+      ],
+      "must_accept": {
+        "word_core_advice_marker_001": [
+          "advice"
+        ]
+      },
+      "must_reject": {
+        "word_core_advice_marker_001": [
+          "advise"
+        ]
+      },
+      "reason": "Advice is the message-marker noun; advise is a verb. The typo layer must not accept this one-letter grammatical change."
+    }
+  ],
+  "linguist_review_notes": [
+    {
+      "area": "risk_accepted_variants",
+      "items": [
+        "word_core_information_marker_001",
+        "expr_core_stand_by_one_minute_001",
+        "expr_core_read_back_my_message_001",
+        "expr_core_do_not_answer_001",
+        "phrase_core_read_loud_clear_001",
+        "phrase_core_switch_channel_one_two_001"
+      ],
+      "note": "Decision: reject info for the information marker; keep stand by for one minute, read it back, do not reply, shortened loud and clear, and go/change to channel one two as safe item-local variants."
+    },
+    {
+      "area": "strict_marker_drills",
+      "items": [
+        "word_core_question_marker_001",
+        "word_core_answer_marker_001",
+        "phrase_core_question_underway_001",
+        "phrase_core_request_read_back_001"
+      ],
+      "note": "Confirmed: phrase marker drills require explicit Question, Request, or Answer. Plain forms without the marker stay wrong."
+    },
+    {
+      "area": "procedure_word_boundaries",
+      "items": [
+        "word_core_wait_001",
+        "expr_core_wait_out_001",
+        "phrase_core_wait_out_call_again_001",
+        "phrase_core_do_not_answer_until_called_001",
+        "phrase_core_resume_communication_now_001"
+      ],
+      "note": "Confirmed: wait, stand by, wait out, do not answer, resume communication, and go ahead are intentionally separated."
+    },
+    {
+      "area": "spelling_numbers",
+      "items": [
+        "word_core_figures_001",
+        "word_core_decimal_001",
+        "word_core_niner_001",
+        "phrase_core_i_spell_aurora_001"
+      ],
+      "note": "Decision: keep strict forms. Reject numbers for figures, point/dot for decimal, nine for niner, and Alpha for Alfa."
+    },
+    {
+      "area": "station_calls",
+      "items": [
+        "phrase_core_call_orion_001",
+        "phrase_core_marina_aurora_calling_001"
+      ],
+      "note": "Station order is protected. Draft follows existing starter policy and rejects forms like Aurora to Marina Control."
+    }
+  ],
+  "merged_into": "content/captain-ether/starter.json",
+  "merged_date": "2026-05-27",
+  "merge_gate": "content/captain-ether/qa-batch-001-acceptance-2026-05-27.md"
+}

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Brkovic Maritime Games">
+  <rect width="512" height="512" rx="96" fill="#12324a"/>
+  <path d="M112 324c58 40 230 40 288 0-12 58-68 94-144 94s-132-36-144-94Z" fill="#70d7e8"/>
+  <path d="M256 84l82 214H174L256 84Z" fill="#f8fbff"/>
+  <path d="M256 84v214h82L256 84Z" fill="#dbeef6"/>
+  <path d="M154 318c70 28 134 28 204 0" fill="none" stroke="#f5b44b" stroke-width="22" stroke-linecap="round"/>
+  <circle cx="256" cy="256" r="24" fill="#12324a"/>
+</svg>
+

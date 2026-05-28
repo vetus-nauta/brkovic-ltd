@@ -119,6 +119,22 @@
   line-height: 1.6;
 }
 
+.translation-status--success {
+  color: #1c7f46;
+}
+
+.translation-status--warning {
+  color: #ad5f14;
+}
+
+.translation-status--error {
+  color: #a12626;
+}
+
+.translation-status--info {
+  color: var(--color-muted);
+}
+
 .admin-posts-editor {
   display: grid;
   gap: 22px;
@@ -348,4 +364,26 @@
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+.admin-translation-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  margin-top: 10px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(16,36,58,.08);
+}
+
+.admin-translation-options label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-ink);
+  font-size: 0.92rem;
+}
+
+.admin-translation-options input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
 }

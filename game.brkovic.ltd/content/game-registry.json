@@ -1,0 +1,55 @@
+{
+  "games": [
+    {
+      "slug": "captain_ether",
+      "title_ru": "Капитан — Эфир",
+      "title_en": "Captain Ether",
+      "description_ru": "Морская игра-тренажёр радиообмена.",
+      "hub_note_ru": "Активная игра Nav Desk для Sea Speak, УКВ и рабочих фраз радиообмена.",
+      "status": "active",
+      "stage_ru": "Доступно",
+      "entry_route": "/games/captain-ether",
+      "icon": "radio",
+      "navdesk_card": {
+        "kicker_ru": "Обучение",
+        "title_ru": "Капитан — Эфир",
+        "description_ru": "Морская игра-тренажёр радиообмена. Тренируй Sea Speak, собирай потерянные вёсла и соревнуйся с экипажем.",
+        "source": "brkovic-ltd/navdesk.html"
+      }
+    },
+    {
+      "slug": "watch_officer",
+      "title_ru": "Watch Officer",
+      "title_en": "Watch Officer",
+      "description_ru": "Локальный 2D greybox-прототип решений вахтенного помощника: безопасная вода, один встречный сценарий трафика, AIS-вектор и черновая оценка результата.",
+      "hub_note_ru": "Стадированный Web-кандидат: prototype/draft, не финальный учебный продукт и не навигационная инструкция.",
+      "status": "prototype",
+      "stage_ru": "Прототип / draft",
+      "entry_route": "/games/watch-officer",
+      "launch_route": "/play/watch-officer/",
+      "review_status": "draft_not_final_training_content",
+      "icon": "watch",
+      "navdesk_card": null
+    },
+    {
+      "slug": "wind_rider",
+      "title_ru": "Оседлавший ветер",
+      "title_en": "Wind Rider",
+      "description_ru": "Паруса, ветер, физика паруса и управление.",
+      "status": "planned",
+      "stage_ru": "Запланировано",
+      "entry_route": "/games/wind-rider",
+      "icon": "sail"
+    },
+    {
+      "slug": "mystic_boatswain",
+      "title_ru": "Мистический боцман",
+      "title_en": "Mystic Boatswain",
+      "description_ru": "Названия частей, помещений, оборудования и узлов яхт и кораблей.",
+      "status": "planned",
+      "stage_ru": "Запланировано",
+      "entry_route": "/games/mystic-boatswain",
+      "icon": "boatswain"
+    }
+  ]
+}

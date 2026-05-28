@@ -1,0 +1,105 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/runtime/playable_greybox_controller.gd" id="1_controller"]
+
+[node name="PlayableGreyboxScene" type="Node2D"]
+script = ExtResource("1_controller")
+
+[node name="HudLayer" type="CanvasLayer" parent="."]
+
+[node name="HudLabel" type="Label" parent="HudLayer"]
+offset_left = 12.0
+offset_top = 12.0
+offset_right = 402.0
+offset_bottom = 136.0
+text = "Watch Officer greybox"
+
+[node name="ScenarioSelector" type="OptionButton" parent="HudLayer"]
+offset_left = 420.0
+offset_top = 12.0
+offset_right = 760.0
+offset_bottom = 42.0
+
+[node name="ScenarioSelectorStatusLabel" type="Label" parent="HudLayer"]
+offset_left = 420.0
+offset_top = 48.0
+offset_right = 820.0
+offset_bottom = 104.0
+text = "Draft training | Region A / VTS inactive"
+autowrap_mode = 3
+
+[node name="WarningStackLabel" type="Label" parent="HudLayer"]
+offset_left = 870.0
+offset_top = 12.0
+offset_right = 1268.0
+offset_bottom = 104.0
+text = "Warnings"
+
+[node name="ResultStatusLabel" type="Label" parent="HudLayer"]
+offset_left = 870.0
+offset_top = 112.0
+offset_right = 1268.0
+offset_bottom = 218.0
+text = "Result"
+
+[node name="AttemptStatusLabel" type="Label" parent="HudLayer"]
+offset_left = 870.0
+offset_top = 226.0
+offset_right = 1268.0
+offset_bottom = 316.0
+text = "Attempt"
+
+[node name="CaptainReportLabel" type="Label" parent="HudLayer"]
+offset_left = 870.0
+offset_top = 324.0
+offset_right = 1268.0
+offset_bottom = 462.0
+text = "Captain note"
+
+[node name="BriefingPanelLabel" type="Label" parent="HudLayer"]
+visible = false
+offset_left = 230.0
+offset_top = 58.0
+offset_right = 990.0
+offset_bottom = 578.0
+text = "Safe Water, Crossing Target"
+autowrap_mode = 3
+
+[node name="ResultFeedbackLabel" type="Label" parent="HudLayer"]
+visible = false
+offset_left = 280.0
+offset_top = 86.0
+offset_right = 980.0
+offset_bottom = 506.0
+text = "Result feedback"
+autowrap_mode = 3
+
+[node name="CoachingRailLabel" type="Label" parent="HudLayer"]
+visible = false
+offset_left = 12.0
+offset_top = 142.0
+offset_right = 612.0
+offset_bottom = 200.0
+text = "Decision coaching"
+autowrap_mode = 3
+
+[node name="CueLegendLabel" type="Label" parent="HudLayer"]
+offset_left = 12.0
+offset_top = 550.0
+offset_right = 912.0
+offset_bottom = 580.0
+text = "Cues"
+
+[node name="DebugStatusLabel" type="Label" parent="HudLayer"]
+offset_left = 12.0
+offset_top = 588.0
+offset_right = 552.0
+offset_bottom = 708.0
+text = "Draft / non-final training"
+
+[node name="InstructionsLabel" type="Label" parent="HudLayer"]
+offset_left = 12.0
+offset_top = 684.0
+offset_right = 992.0
+offset_bottom = 710.0
+text = "Controls: Space/Enter start | A/Left port | D/Right starboard | Q/Down speed down | E/Up speed up | R reset"

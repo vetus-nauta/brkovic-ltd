@@ -1,0 +1,1466 @@
+{
+  "version": 1,
+  "batch_id": "batch-006-english-native-seaspeak-pilot",
+  "status": "draft_internal",
+  "date": "2026-05-27",
+  "branch": "english_native_seaspeak_pilot",
+  "scope": "Internal-only English-native pilot draft for ordinary or unsafe natural English prompts to controlled Sea Speak / SMCP-style English. Excludes REV-001 to REV-005 from the first pilot. Do not merge into starter.json before Sea Speak Linguist review, QA fixture design, Director-Engineer acceptance, and a separate playable integration decision.",
+  "items": [
+    {
+      "id": "EN-B006-CORE-001",
+      "type": "short_expression",
+      "level": "beginner",
+      "difficulty_score": 5,
+      "topic": "clarification",
+      "branch": "core_radio",
+      "module": "clarification",
+      "learner_stream": "english_native",
+      "source_language": "en",
+      "source_register": "unsafe_natural_english",
+      "source_text": "What did you say?",
+      "target_language": "en",
+      "target_register": "sea_speak_smcp",
+      "target_text": "Say again.",
+      "accepted_answers": [
+        "Say again."
+      ],
+      "hint_beginner": "S__ a____.",
+      "hint_intermediate": "Say...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Say again.",
+          "say again",
+          "SAY AGAIN."
+        ],
+        "should_reject": [
+          "What did you say?",
+          "repeat",
+          "please repeat"
+        ],
+        "dangerous_minimal_pairs": [
+          "say again / repeat"
+        ],
+        "linguist_note": "Approved as drafted; keep repeat wrong for SMCP-style clarification.",
+        "localization_note": "Learner source is English; UI localization must not make the source prompt an accepted answer."
+      }
+    },
+    {
+      "id": "EN-B006-CORE-002",
+      "type": "phrase",
+      "level": "beginner",
+      "difficulty_score": 6,
+      "topic": "clarification",
+      "branch": "core_radio",
+      "module": "clarification",
+      "learner_stream": "english_native",
+      "source_language": "en",
+      "source_register": "unsafe_natural_english",
+      "source_text": "What did you say about my position?",
+      "target_language": "en",
+      "target_register": "sea_speak_smcp",
+      "target_text": "Say again your position.",
+      "accepted_answers": [
+        "Say again your position."
+      ],
+      "hint_beginner": "S__ a____ your p_______.",
+      "hint_intermediate": "Say again...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Say again your position.",
+          "say again your position",
+          "SAY AGAIN YOUR POSITION."
+        ],
+        "should_reject": [
+          "What did you say about my position?",
+          "repeat your position",
+          "say again my position",
+          "what is my position"
+        ],
+        "dangerous_minimal_pairs": [
+          "say again position / read back position",
+          "your position / my position"
+        ],
+        "linguist_note": "Approved as drafted; preserve the requested field and pronoun boundary.",
+        "localization_note": "Do not localize the Sea Speak target away from English phraseology."
+      }
+    },
+    {
+      "id": "EN-B006-CORE-003",
+      "type": "short_expression",
+      "level": "beginner",
+      "difficulty_score": 5,
+      "topic": "acknowledgement",
+      "branch": "core_radio",
+      "module": "acknowledgement",
+      "learner_stream": "english_native",
+      "source_language": "en",
+      "source_register": "ordinary_english",
+      "source_text": "I heard your message.",
+      "target_language": "en",
+      "target_register": "sea_speak_smcp",
+      "target_text": "Roger.",
+      "accepted_answers": [
+        "Roger."
+      ],
+      "hint_beginner": "R____.",
+      "hint_intermediate": "Rog...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Roger.",
+          "roger",
+          "ROGER."
+        ],
+        "should_reject": [
+          "I heard your message.",
+          "affirmative",
+          "yes",
+          "got it",
+          "copy"
+        ],
+        "dangerous_minimal_pairs": [
+          "roger / affirmative / correct / yes"
+        ],
+        "linguist_note": "Approved as drafted; Roger confirms receipt, not yes/correct.",
+        "localization_note": "English UI copy must not imply ordinary acknowledgements are accepted variants."
+      }
+    },
+    {
+      "id": "EN-B006-CORE-004",
+      "type": "short_expression",
+      "level": "beginner",
+      "difficulty_score": 5,
+      "topic": "acknowledgement",
+      "branch": "core_radio",
+      "module": "acknowledgement",
+      "learner_stream": "english_native",
+      "source_language": "en",
+      "source_register": "unsafe_natural_english",
+      "source_text": "Yes.",
+      "target_language": "en",
+      "target_register": "sea_speak_smcp",
+      "target_text": "Affirmative.",
+      "accepted_answers": [
+        "Affirmative."
+      ],
+      "hint_beginner": "A__________.",
+      "hint_intermediate": "Aff...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Affirmative.",
+          "affirmative",
+          "AFFIRMATIVE."
+        ],
+        "should_reject": [
+          "Yes.",
+          "yes",
+          "roger",
+          "correct",
+          "OK"
+        ],
+        "dangerous_minimal_pairs": [
+          "affirmative / roger / correct / yes"
+        ],
+        "linguist_note": "Approved as drafted; yes must stay a natural-language source prompt, not an answer.",
+        "localization_note": "Accepted meaning is language-gated to Sea Speak target English."
+      }
+    },
+    {
+      "id": "EN-B006-CORE-005",
+      "type": "short_expression",
+      "level": "beginner",
+      "difficulty_score": 5,
+      "topic": "acknowledgement",
+      "branch": "core_radio",
+      "module": "acknowledgement",
+      "learner_stream": "english_native",
+      "source_language": "en",
+      "source_register": "unsafe_natural_english",
+      "source_text": "No.",
+      "target_language": "en",
+      "target_register": "sea_speak_smcp",
+      "target_text": "Negative.",
+      "accepted_answers": [
+        "Negative."
+      ],
+      "hint_beginner": "N_______.",
+      "hint_intermediate": "Neg...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Negative.",
+          "negative",
+          "NEGATIVE."
+        ],
+        "should_reject": [
+          "No.",
+          "no",
+          "not roger",
+          "wrong",
+          "negative roger"
+        ],
+        "dangerous_minimal_pairs": [
+          "negative / affirmative / no / wrong"
+        ],
+        "linguist_note": "Approved as drafted; Negative is the controlled answer for no.",
+        "localization_note": "UI language must not add localized no-forms as accepted answers."
+      }
+    },
+    {
+      "id": "EN-B006-CORE-006",
+      "type": "short_expression",
+      "level": "beginner",
+      "difficulty_score": 5,
+      "topic": "opening_closing",
+      "branch": "core_radio",
+      "module": "opening_closing",
+      "learner_stream": "english_native",
+      "source_language": "en",
+      "source_register": "ordinary_english",
+      "source_text": "I have finished my turn and expect your reply.",
+      "target_language": "en",
+      "target_register": "sea_speak_smcp",
+      "target_text": "Over.",
+      "accepted_answers": [
+        "Over."
+      ],
+      "hint_beginner": "O___.",
+      "hint_intermediate": "Ov...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Over.",
+          "over",
+          "OVER."
+        ],
+        "should_reject": [
+          "I have finished my turn and expect your reply.",
+          "out",
+          "over and out",
+          "go ahead",
+          "roger"
+        ],
+        "dangerous_minimal_pairs": [
+          "over / out / over and out"
+        ],
+        "linguist_note": "Approved as drafted; Over and Out remain separate procedure words.",
+        "localization_note": "Do not translate or paraphrase procedure words by UI locale."
+      }
+    },
+    {
+      "id": "EN-B006-CORE-007",
+      "type": "short_expression",
+      "level": "beginner",
+      "difficulty_score": 5,
+      "topic": "opening_closing",
+      "branch": "core_radio",
+      "module": "opening_closing",
+      "learner_stream": "english_native",
+      "source_language": "en",
+      "source_register": "ordinary_english",
+      "source_text": "The conversation is finished.",
+      "target_language": "en",
+      "target_register": "sea_speak_smcp",
+      "target_text": "Out.",
+      "accepted_answers": [
+        "Out."
+      ],
+      "hint_beginner": "O__.",
+      "hint_intermediate": "Ou...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Out.",
+          "out",
+          "OUT."
+        ],
+        "should_reject": [
+          "The conversation is finished.",
+          "over",
+          "over and out",
+          "finished",
+          "roger out"
+        ],
+        "dangerous_minimal_pairs": [
+          "out / over / over and out"
+        ],
+        "linguist_note": "Approved as drafted; Out closes the exchange and does not invite a reply.",
+        "localization_note": "Keep target as English Sea Speak even under non-English UI."
+      }
+    },
+    {
+      "id": "EN-B006-CORE-008",
+      "type": "short_expression",
+      "level": "beginner",
+      "difficulty_score": 6,
+      "topic": "radio_procedure",
+      "branch": "core_radio",
+      "module": "radio_procedure",
+      "learner_stream": "english_native",
+      "source_language": "en",
+      "source_register": "unsafe_natural_english",
+      "source_text": "Can you wait?",
+      "target_language": "en",
+      "target_register": "sea_speak_smcp",
+      "target_text": "Stand by.",
+      "accepted_answers": [
+        "Stand by."
+      ],
+      "hint_beginner": "S____ b_.",
+      "hint_intermediate": "Stand...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Stand by.",
+          "stand by",
+          "STAND BY."
+        ],
+        "should_reject": [
+          "Can you wait?",
+          "wait",
+          "hold on",
+          "wait out",
+          "do not answer"
+        ],
+        "dangerous_minimal_pairs": [
+          "stand by / wait out / wait / do not answer"
+        ],
+        "linguist_note": "Approved as drafted; ordinary wait remains wrong for this drill.",
+        "localization_note": "Do not add localized wait equivalents to accepted answers."
+      }
+    },
+    {
+      "id": "EN-B006-CORE-009",
+      "type": "short_expression",
+      "level": "intermediate",
+      "difficulty_score": 8,
+      "topic": "radio_procedure",
+      "branch": "core_radio",
+      "module": "radio_procedure",
+      "learner_stream": "english_native",
+      "source_language": "en",
+      "source_register": "unsafe_natural_english",
+      "source_text": "Stop answering for now.",
+      "target_language": "en",
+      "target_register": "sea_speak_smcp",
+      "target_text": "Wait out.",
+      "accepted_answers": [
+        "Wait out."
+      ],
+      "hint_beginner": "W___ o__.",
+      "hint_intermediate": "Wait...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Wait out.",
+          "wait out",
+          "WAIT OUT."
+        ],
+        "should_reject": [
+          "Stop answering for now.",
+          "stand by",
+          "wait",
+          "hold on",
+          "out"
+        ],
+        "dangerous_minimal_pairs": [
+          "wait out / stand by / out"
+        ],
+        "linguist_note": "Approved as drafted; Wait out is not a casual wait request.",
+        "localization_note": "UI localization must preserve the procedural difference from Stand by."
+      }
+    },
+    {
+      "id": "EN-B006-CORE-010",
+      "type": "short_expression",
+      "level": "intermediate",
+      "difficulty_score": 8,
+      "topic": "radio_procedure",
+      "branch": "core_radio",
+      "module": "radio_procedure",
+      "learner_stream": "english_native",
+      "source_language": "en",
+      "source_register": "ordinary_english",
+      "source_text": "You can speak now.",
+      "target_language": "en",
+      "target_register": "sea_speak_smcp",
+      "target_text": "Go ahead.",
+      "accepted_answers": [
+        "Go ahead."
+      ],
+      "hint_beginner": "G_ a____.",
+      "hint_intermediate": "Go...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Go ahead.",
+          "go ahead",
+          "GO AHEAD."
+        ],
+        "should_reject": [
+          "You can speak now.",
+          "proceed",
+          "enter",
+          "continue",
+          "over"
+        ],
+        "dangerous_minimal_pairs": [
+          "go ahead / proceed / enter / over"
+        ],
+        "linguist_note": "Approved as drafted; Go ahead is radio permission to speak, not movement clearance.",
+        "localization_note": "Keep radio procedure meaning separate from harbour movement instructions."
+      }
+    },
+    {
+      "id": "EN-B006-CORE-011",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 9,
+      "topic": "readback_correction",
+      "branch": "core_radio",
+      "module": "readback_correction",
+      "learner_stream": "english_native",
+      "source_language": "en",
+      "source_register": "natural_maritime_english",
+      "source_text": "Tell me the channel back.",
+      "target_language": "en",
+      "target_register": "sea_speak_smcp",
+      "target_text": "Read back channel one two.",
+      "accepted_answers": [
+        "Read back channel one two."
+      ],
+      "hint_beginner": "R___ b___ channel o__ t__.",
+      "hint_intermediate": "Read back...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Read back channel one two.",
+          "read back channel one two",
+          "READ BACK CHANNEL ONE TWO."
+        ],
+        "should_reject": [
+          "Tell me the channel back.",
+          "say again channel one two",
+          "read back channel one three",
+          "channel 12 please"
+        ],
+        "dangerous_minimal_pairs": [
+          "read back / say again",
+          "channel one two / channel one three"
+        ],
+        "linguist_note": "Approved as drafted; keep the readback instruction and channel value strict.",
+        "localization_note": "Numeric tokens are not localization variants."
+      }
+    },
+    {
+      "id": "EN-B006-CORE-012",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 9,
+      "topic": "radio_procedure",
+      "branch": "core_radio",
+      "module": "radio_procedure",
+      "learner_stream": "english_native",
+      "source_language": "en",
+      "source_register": "natural_maritime_english",
+      "source_text": "Move the radio to channel twelve.",
+      "target_language": "en",
+      "target_register": "sea_speak_smcp",
+      "target_text": "Switch to channel one two.",
+      "accepted_answers": [
+        "Switch to channel one two."
+      ],
+      "hint_beginner": "S_____ to channel o__ t__.",
+      "hint_intermediate": "Switch to...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Switch to channel one two.",
+          "switch to channel one two",
+          "SWITCH TO CHANNEL ONE TWO."
+        ],
+        "should_reject": [
+          "Move the radio to channel twelve.",
+          "switch to channel one three",
+          "go to channel 12",
+          "channel one six",
+          "change to twelve"
+        ],
+        "dangerous_minimal_pairs": [
+          "channel one two / channel one three / channel one six"
+        ],
+        "linguist_note": "Approved as drafted; item trains digit-by-digit channel wording.",
+        "localization_note": "Do not convert channel one two into localized numeric shorthand."
+      }
+    },
+    {
+      "id": "EN-B006-CORE-013",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 8,
+      "topic": "message_markers",
+      "branch": "core_radio",
+      "module": "message_markers",
+      "learner_stream": "english_native",
+      "source_language": "en",
+      "source_register": "ordinary_english",
+      "source_text": "I need permission to enter.",
+      "target_language": "en",
+      "target_register": "sea_speak_smcp",
+      "target_text": "Request permission to enter.",
+      "accepted_answers": [
+        "Request permission to enter."
+      ],
+      "hint_beginner": "R______ permission to enter.",
+      "hint_intermediate": "Request...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Request permission to enter.",
+          "request permission to enter",
+          "REQUEST PERMISSION TO ENTER."
+        ],
+        "should_reject": [
+          "I need permission to enter.",
+          "I need permission",
+          "question permission to enter",
+          "answer permission to enter"
+        ],
+        "dangerous_minimal_pairs": [
+          "Request / Question / Answer markers"
+        ],
+        "linguist_note": "Approved as drafted; Request marker is required for this permission phrase.",
+        "localization_note": "Message marker must remain in English target phraseology."
+      }
+    },
+    {
+      "id": "EN-B006-CORE-014",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 9,
+      "topic": "message_markers",
+      "branch": "core_radio",
+      "module": "message_markers",
+      "learner_stream": "english_native",
+      "source_language": "en",
+      "source_register": "ordinary_english",
+      "source_text": "I am asking for your ETA.",
+      "target_language": "en",
+      "target_register": "sea_speak_smcp",
+      "target_text": "Question. What is your ETA?",
+      "accepted_answers": [
+        "Question. What is your ETA?"
+      ],
+      "hint_beginner": "Q_______. What is your ETA?",
+      "hint_intermediate": "Question...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Question. What is your ETA?",
+          "question what is your ETA",
+          "QUESTION. WHAT IS YOUR ETA?"
+        ],
+        "should_reject": [
+          "I am asking for your ETA.",
+          "what is your ETA",
+          "request what is your ETA",
+          "answer ETA"
+        ],
+        "dangerous_minimal_pairs": [
+          "Question marker present / no marker",
+          "Question / Request / Answer markers"
+        ],
+        "linguist_note": "Approved as drafted; omission of Question must stay wrong for marker training.",
+        "localization_note": "ETA token and Question marker must stay stable across UI locales."
+      }
+    },
+    {
+      "id": "EN-B006-CORE-015",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 9,
+      "topic": "readback_correction",
+      "branch": "core_radio",
+      "module": "readback_correction",
+      "learner_stream": "english_native",
+      "source_language": "en",
+      "source_register": "ordinary_english",
+      "source_text": "That is wrong. The channel is twelve.",
+      "target_language": "en",
+      "target_register": "sea_speak_smcp",
+      "target_text": "Correction. Channel one two.",
+      "accepted_answers": [
+        "Correction. Channel one two."
+      ],
+      "hint_beginner": "C_________. Channel o__ t__.",
+      "hint_intermediate": "Correction...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Correction. Channel one two.",
+          "correction channel one two",
+          "CORRECTION. CHANNEL ONE TWO."
+        ],
+        "should_reject": [
+          "That is wrong. The channel is twelve.",
+          "wrong channel twelve",
+          "correction channel one three",
+          "channel 12"
+        ],
+        "dangerous_minimal_pairs": [
+          "correction marker present / no marker",
+          "channel one two / channel one three"
+        ],
+        "linguist_note": "Approved as drafted; channel 12 without Correction stays wrong here.",
+        "localization_note": "Do not treat digit rendering as a localization-only change for this marker drill."
+      }
+    },
+    {
+      "id": "EN-B006-MAR-001",
+      "type": "short_expression",
+      "level": "beginner",
+      "difficulty_score": 6,
+      "topic": "berth_request",
+      "branch": "marina_harbour",
+      "module": "berth_request",
+      "learner_stream": "english_native",
+      "source_language": "en",
+      "source_register": "ordinary_english",
+      "source_text": "I need a place in the marina tonight.",
+      "target_language": "en",
+      "target_register": "sea_speak_smcp",
+      "target_text": "Request berth for tonight.",
+      "accepted_answers": [
+        "Request berth for tonight."
+      ],
+      "hint_beginner": "R______ berth for tonight.",
+      "hint_intermediate": "Request berth...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Request berth for tonight.",
+          "request berth for tonight",
+          "REQUEST BERTH FOR TONIGHT."
+        ],
+        "should_reject": [
+          "I need a place in the marina tonight.",
+          "need a berth tonight",
+          "request birth for tonight",
+          "request slip for tonight",
+          "request dock"
+        ],
+        "dangerous_minimal_pairs": [
+          "berth / birth / dock / pier / slip",
+          "request berth / need a berth"
+        ],
+        "linguist_note": "Approved as drafted; keep berth strict and do not accept ordinary need phrasing.",
+        "localization_note": "Marina source prompt remains English learner prompt, not answer content."
+      }
+    },
+    {
+      "id": "EN-B006-MAR-002",
+      "type": "short_expression",
+      "level": "beginner",
+      "difficulty_score": 7,
+      "topic": "berth_request",
+      "branch": "marina_harbour",
+      "module": "berth_request",
+      "learner_stream": "english_native",
+      "source_language": "en",
+      "source_register": "ordinary_english",
+      "source_text": "Can I park the boat at berth Bravo one two?",
+      "target_language": "en",
+      "target_register": "sea_speak_smcp",
+      "target_text": "Request berth Bravo one two.",
+      "accepted_answers": [
+        "Request berth Bravo one two."
+      ],
+      "hint_beginner": "R______ berth Bravo o__ t__.",
+      "hint_intermediate": "Request berth Bravo...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Request berth Bravo one two.",
+          "request berth Bravo one two",
+          "REQUEST BERTH BRAVO ONE TWO."
+        ],
+        "should_reject": [
+          "Can I park the boat at berth Bravo one two?",
+          "request berth B12",
+          "request birth Bravo one two",
+          "park at berth Bravo one two"
+        ],
+        "dangerous_minimal_pairs": [
+          "berth / birth",
+          "Bravo one two / B12"
+        ],
+        "linguist_note": "Approved as drafted; compact B12 remains wrong until explicitly designed.",
+        "localization_note": "Berth identifier spelling is part of the target phrase, not UI localization."
+      }
+    },
+    {
+      "id": "EN-B006-MAR-003",
+      "type": "short_expression",
+      "level": "beginner",
+      "difficulty_score": 5,
+      "topic": "fuel_water_power",
+      "branch": "marina_harbour",
+      "module": "fuel_water_power",
+      "learner_stream": "english_native",
+      "source_language": "en",
+      "source_register": "ordinary_english",
+      "source_text": "I need fuel.",
+      "target_language": "en",
+      "target_register": "sea_speak_smcp",
+      "target_text": "Request fuel.",
+      "accepted_answers": [
+        "Request fuel."
+      ],
+      "hint_beginner": "R______ fuel.",
+      "hint_intermediate": "Request...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Request fuel.",
+          "request fuel",
+          "REQUEST FUEL."
+        ],
+        "should_reject": [
+          "I need fuel.",
+          "need fuel",
+          "request water",
+          "request shore power",
+          "fuel please"
+        ],
+        "dangerous_minimal_pairs": [
+          "fuel / fresh water / shore power",
+          "request fuel / need fuel"
+        ],
+        "linguist_note": "Approved as drafted; service terms must not substitute for each other.",
+        "localization_note": "Do not infer accepted service synonyms from localized UI labels."
+      }
+    },
+    {
+      "id": "EN-B006-MAR-004",
+      "type": "short_expression",
+      "level": "beginner",
+      "difficulty_score": 5,
+      "topic": "fuel_water_power",
+      "branch": "marina_harbour",
+      "module": "fuel_water_power",
+      "learner_stream": "english_native",
+      "source_language": "en",
+      "source_register": "ordinary_english",
+      "source_text": "I need fresh water.",
+      "target_language": "en",
+      "target_register": "sea_speak_smcp",
+      "target_text": "Request fresh water.",
+      "accepted_answers": [
+        "Request fresh water."
+      ],
+      "hint_beginner": "R______ fresh water.",
+      "hint_intermediate": "Request fresh...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Request fresh water.",
+          "request fresh water",
+          "REQUEST FRESH WATER."
+        ],
+        "should_reject": [
+          "I need fresh water.",
+          "need water",
+          "request fuel",
+          "request shore power",
+          "request water fuel"
+        ],
+        "dangerous_minimal_pairs": [
+          "fresh water / fuel / shore power"
+        ],
+        "linguist_note": "Approved as drafted; fresh water stays separate from fuel and power.",
+        "localization_note": "Water-service text is item-local and must not become a global synonym."
+      }
+    },
+    {
+      "id": "EN-B006-MAR-005",
+      "type": "short_expression",
+      "level": "beginner",
+      "difficulty_score": 6,
+      "topic": "fuel_water_power",
+      "branch": "marina_harbour",
+      "module": "fuel_water_power",
+      "learner_stream": "english_native",
+      "source_language": "en",
+      "source_register": "ordinary_english",
+      "source_text": "I need to plug in at the dock.",
+      "target_language": "en",
+      "target_register": "sea_speak_smcp",
+      "target_text": "Request shore power.",
+      "accepted_answers": [
+        "Request shore power."
+      ],
+      "hint_beginner": "R______ shore power.",
+      "hint_intermediate": "Request shore...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Request shore power.",
+          "request shore power",
+          "REQUEST SHORE POWER."
+        ],
+        "should_reject": [
+          "I need to plug in at the dock.",
+          "request power",
+          "request fuel",
+          "request fresh water",
+          "plug in"
+        ],
+        "dangerous_minimal_pairs": [
+          "shore power / fuel / fresh water",
+          "shore power / power"
+        ],
+        "linguist_note": "Approved as drafted; shore power remains the trained service term.",
+        "localization_note": "Do not accept localized or ordinary plug-in wording as target answer."
+      }
+    },
+    {
+      "id": "EN-B006-MAR-006",
+      "type": "short_expression",
+      "level": "beginner",
+      "difficulty_score": 6,
+      "topic": "mooring",
+      "branch": "marina_harbour",
+      "module": "mooring",
+      "learner_stream": "english_native",
+      "source_language": "en",
+      "source_register": "unsafe_natural_english",
+      "source_text": "Put out the bumpers.",
+      "target_language": "en",
+      "target_register": "sea_speak_smcp",
+      "target_text": "Prepare fenders.",
+      "accepted_answers": [
+        "Prepare fenders."
+      ],
+      "hint_beginner": "P______ fenders.",
+      "hint_intermediate": "Prepare...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Prepare fenders.",
+          "prepare fenders",
+          "PREPARE FENDERS."
+        ],
+        "should_reject": [
+          "Put out the bumpers.",
+          "prepare bumpers",
+          "prepare finders",
+          "put out bumpers",
+          "prepare lines"
+        ],
+        "dangerous_minimal_pairs": [
+          "fender / bumper / finder",
+          "fenders / lines"
+        ],
+        "linguist_note": "Approved as drafted; bumper and finder remain wrong.",
+        "localization_note": "Mooring object names must not be localized into accepted answers."
+      }
+    },
+    {
+      "id": "EN-B006-MAR-007",
+      "type": "short_expression",
+      "level": "beginner",
+      "difficulty_score": 6,
+      "topic": "mooring",
+      "branch": "marina_harbour",
+      "module": "mooring",
+      "learner_stream": "english_native",
+      "source_language": "en",
+      "source_register": "unsafe_natural_english",
+      "source_text": "Tie the ropes.",
+      "target_language": "en",
+      "target_register": "sea_speak_smcp",
+      "target_text": "Prepare lines.",
+      "accepted_answers": [
+        "Prepare lines."
+      ],
+      "hint_beginner": "P______ lines.",
+      "hint_intermediate": "Prepare...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Prepare lines.",
+          "prepare lines",
+          "PREPARE LINES."
+        ],
+        "should_reject": [
+          "Tie the ropes.",
+          "prepare ropes",
+          "tie ropes",
+          "prepare fenders",
+          "make fast ropes"
+        ],
+        "dangerous_minimal_pairs": [
+          "line / rope",
+          "lines / fenders"
+        ],
+        "linguist_note": "Approved as drafted; line remains the trained mooring term.",
+        "localization_note": "Do not accept ordinary rope wording through UI localization."
+      }
+    },
+    {
+      "id": "EN-B006-MAR-008",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 8,
+      "topic": "approach",
+      "branch": "marina_harbour",
+      "module": "approach",
+      "learner_stream": "english_native",
+      "source_language": "en",
+      "source_register": "ordinary_english",
+      "source_text": "Wait outside the marina.",
+      "target_language": "en",
+      "target_register": "sea_speak_smcp",
+      "target_text": "Stand by outside the marina.",
+      "accepted_answers": [
+        "Stand by outside the marina."
+      ],
+      "hint_beginner": "S____ b_ outside the marina.",
+      "hint_intermediate": "Stand by outside...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Stand by outside the marina.",
+          "stand by outside the marina",
+          "STAND BY OUTSIDE THE MARINA."
+        ],
+        "should_reject": [
+          "Wait outside the marina.",
+          "wait out",
+          "wait outside",
+          "do not answer outside",
+          "enter marina"
+        ],
+        "dangerous_minimal_pairs": [
+          "stand by outside / wait out / do not answer",
+          "outside / enter"
+        ],
+        "linguist_note": "Approved as drafted; outside waiting instruction is not Wait out.",
+        "localization_note": "Do not collapse harbour instruction and radio wait procedure by locale."
+      }
+    },
+    {
+      "id": "EN-B006-MAR-009",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 8,
+      "topic": "approach",
+      "branch": "marina_harbour",
+      "module": "approach",
+      "learner_stream": "english_native",
+      "source_language": "en",
+      "source_register": "ordinary_english",
+      "source_text": "Come into the harbour now.",
+      "target_language": "en",
+      "target_register": "sea_speak_smcp",
+      "target_text": "Proceed into harbour.",
+      "accepted_answers": [
+        "Proceed into harbour."
+      ],
+      "hint_beginner": "P______ into harbour.",
+      "hint_intermediate": "Proceed into...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Proceed into harbour.",
+          "proceed into harbour",
+          "PROCEED INTO HARBOUR."
+        ],
+        "should_reject": [
+          "Come into the harbour now.",
+          "go ahead",
+          "approach harbour",
+          "enter harbour",
+          "proceed out of harbour"
+        ],
+        "dangerous_minimal_pairs": [
+          "proceed / enter / approach / go ahead",
+          "into harbour / out of harbour"
+        ],
+        "linguist_note": "Applied Director decision: reject text is exact enter harbour with no editorial suffix.",
+        "localization_note": "Harbour movement clearance must stay separate from radio Go ahead in every UI locale."
+      }
+    },
+    {
+      "id": "EN-B006-MAR-010",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 8,
+      "topic": "departure",
+      "branch": "marina_harbour",
+      "module": "departure",
+      "learner_stream": "english_native",
+      "source_language": "en",
+      "source_register": "ordinary_english",
+      "source_text": "I am leaving the berth now.",
+      "target_language": "en",
+      "target_register": "sea_speak_smcp",
+      "target_text": "I am departing berth now.",
+      "accepted_answers": [
+        "I am departing berth now."
+      ],
+      "hint_beginner": "I am d________ berth now.",
+      "hint_intermediate": "I am departing...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "I am departing berth now.",
+          "i am departing berth now",
+          "I AM DEPARTING BERTH NOW."
+        ],
+        "should_reject": [
+          "I am leaving the berth now.",
+          "arrival berth now",
+          "leaving dock",
+          "departing birth now",
+          "request berth now"
+        ],
+        "dangerous_minimal_pairs": [
+          "departure / arrival",
+          "berth / birth / dock"
+        ],
+        "linguist_note": "Applied Director decision: target revised to I am departing berth now.",
+        "localization_note": "Departure report remains English target phraseology, independent of UI locale."
+      }
+    },
+    {
+      "id": "EN-B006-NAV-001",
+      "type": "phrase",
+      "level": "beginner",
+      "difficulty_score": 7,
+      "topic": "heading_course",
+      "branch": "navigation_reports",
+      "module": "heading_course",
+      "learner_stream": "english_native",
+      "source_language": "en",
+      "source_register": "unsafe_natural_english",
+      "source_text": "Turn right to avoid me.",
+      "target_language": "en",
+      "target_register": "sea_speak_smcp",
+      "target_text": "I am altering course to starboard.",
+      "accepted_answers": [
+        "I am altering course to starboard."
+      ],
+      "hint_beginner": "I am altering course to s________.",
+      "hint_intermediate": "I am altering...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "I am altering course to starboard.",
+          "i am altering course to starboard",
+          "I AM ALTERING COURSE TO STARBOARD."
+        ],
+        "should_reject": [
+          "Turn right to avoid me.",
+          "turn right",
+          "alter course to port",
+          "I am turning right",
+          "starboard side to"
+        ],
+        "dangerous_minimal_pairs": [
+          "starboard / port",
+          "right / starboard",
+          "altering course / berthing side"
+        ],
+        "linguist_note": "Approved as drafted; ordinary right stays wrong.",
+        "localization_note": "Direction terms must not be localized into left/right accepted answers."
+      }
+    },
+    {
+      "id": "EN-B006-NAV-002",
+      "type": "phrase",
+      "level": "beginner",
+      "difficulty_score": 7,
+      "topic": "heading_course",
+      "branch": "navigation_reports",
+      "module": "heading_course",
+      "learner_stream": "english_native",
+      "source_language": "en",
+      "source_register": "unsafe_natural_english",
+      "source_text": "Turn left.",
+      "target_language": "en",
+      "target_register": "sea_speak_smcp",
+      "target_text": "I am altering course to port.",
+      "accepted_answers": [
+        "I am altering course to port."
+      ],
+      "hint_beginner": "I am altering course to p___.",
+      "hint_intermediate": "I am altering...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "I am altering course to port.",
+          "i am altering course to port",
+          "I AM ALTERING COURSE TO PORT."
+        ],
+        "should_reject": [
+          "Turn left.",
+          "turn left",
+          "alter course to starboard",
+          "I am going left",
+          "port side to"
+        ],
+        "dangerous_minimal_pairs": [
+          "port / starboard",
+          "left / port",
+          "altering course / berthing side"
+        ],
+        "linguist_note": "Approved as drafted; ordinary left stays wrong.",
+        "localization_note": "Port/starboard meaning must not be replaced by localized left/right."
+      }
+    },
+    {
+      "id": "EN-B006-NAV-003",
+      "type": "phrase",
+      "level": "beginner",
+      "difficulty_score": 6,
+      "topic": "position_reporting",
+      "branch": "navigation_reports",
+      "module": "position_reporting",
+      "learner_stream": "english_native",
+      "source_language": "en",
+      "source_register": "ordinary_english",
+      "source_text": "I am north of the marina.",
+      "target_language": "en",
+      "target_register": "sea_speak_smcp",
+      "target_text": "My position is north of the marina.",
+      "accepted_answers": [
+        "My position is north of the marina."
+      ],
+      "hint_beginner": "My p_______ is north of the marina.",
+      "hint_intermediate": "My position...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "My position is north of the marina.",
+          "my position is north of the marina",
+          "MY POSITION IS NORTH OF THE MARINA."
+        ],
+        "should_reject": [
+          "I am north of the marina.",
+          "I am at marina",
+          "position south of the marina",
+          "my course is north",
+          "north marina"
+        ],
+        "dangerous_minimal_pairs": [
+          "position / course",
+          "north / south"
+        ],
+        "linguist_note": "Approved as drafted; report is current position, not course.",
+        "localization_note": "Cardinal direction and report type remain Sea Speak target content."
+      }
+    },
+    {
+      "id": "EN-B006-NAV-004",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 9,
+      "topic": "heading_course",
+      "branch": "navigation_reports",
+      "module": "heading_course",
+      "learner_stream": "english_native",
+      "source_language": "en",
+      "source_register": "natural_maritime_english",
+      "source_text": "I am steering east.",
+      "target_language": "en",
+      "target_register": "sea_speak_smcp",
+      "target_text": "My heading is zero nine zero degrees.",
+      "accepted_answers": [
+        "My heading is zero nine zero degrees."
+      ],
+      "hint_beginner": "My h______ is zero nine zero degrees.",
+      "hint_intermediate": "My heading...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "My heading is zero nine zero degrees.",
+          "my heading is zero nine zero degrees",
+          "MY HEADING IS ZERO NINE ZERO DEGREES."
+        ],
+        "should_reject": [
+          "I am steering east.",
+          "my course is east",
+          "heading 90 degrees",
+          "bearing zero nine zero",
+          "east"
+        ],
+        "dangerous_minimal_pairs": [
+          "heading / course / bearing",
+          "zero nine zero / 90",
+          "east / zero nine zero"
+        ],
+        "linguist_note": "Approved as drafted; numeric heading wording is intentional.",
+        "localization_note": "Do not convert zero nine zero to localized or compact numeric forms for this item."
+      }
+    },
+    {
+      "id": "EN-B006-NAV-005",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 9,
+      "topic": "heading_course",
+      "branch": "navigation_reports",
+      "module": "heading_course",
+      "learner_stream": "english_native",
+      "source_language": "en",
+      "source_register": "natural_maritime_english",
+      "source_text": "I am going to waypoint Alpha.",
+      "target_language": "en",
+      "target_register": "sea_speak_smcp",
+      "target_text": "My course is to waypoint Alpha.",
+      "accepted_answers": [
+        "My course is to waypoint Alpha."
+      ],
+      "hint_beginner": "My c_____ is to waypoint Alpha.",
+      "hint_intermediate": "My course...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "My course is to waypoint Alpha.",
+          "my course is to waypoint Alpha",
+          "MY COURSE IS TO WAYPOINT ALPHA."
+        ],
+        "should_reject": [
+          "I am going to waypoint Alpha.",
+          "my heading is waypoint Alpha",
+          "bearing waypoint Alpha",
+          "going to Alpha",
+          "my course is to waypoint Bravo"
+        ],
+        "dangerous_minimal_pairs": [
+          "course / heading / bearing",
+          "waypoint Alpha / waypoint Bravo"
+        ],
+        "linguist_note": "Applied Director decision: target revised to My course is to waypoint Alpha; Bravo reject revised.",
+        "localization_note": "Waypoint name and course relation must stay exact across UI locales."
+      }
+    },
+    {
+      "id": "EN-B006-NAV-006",
+      "type": "phrase",
+      "level": "beginner",
+      "difficulty_score": 6,
+      "topic": "speed_distance",
+      "branch": "navigation_reports",
+      "module": "speed_distance",
+      "learner_stream": "english_native",
+      "source_language": "en",
+      "source_register": "ordinary_english",
+      "source_text": "I am doing six knots.",
+      "target_language": "en",
+      "target_register": "sea_speak_smcp",
+      "target_text": "My speed is six knots.",
+      "accepted_answers": [
+        "My speed is six knots."
+      ],
+      "hint_beginner": "My s____ is six knots.",
+      "hint_intermediate": "My speed...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "My speed is six knots.",
+          "my speed is six knots",
+          "MY SPEED IS SIX KNOTS."
+        ],
+        "should_reject": [
+          "I am doing six knots.",
+          "six nautical miles",
+          "speed six cables",
+          "doing six",
+          "my distance is six knots"
+        ],
+        "dangerous_minimal_pairs": [
+          "knots / nautical miles / cables",
+          "speed / distance"
+        ],
+        "linguist_note": "Approved as drafted; speed unit and report type stay strict.",
+        "localization_note": "Units are target semantics and must not be changed by locale."
+      }
+    },
+    {
+      "id": "EN-B006-NAV-007",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 9,
+      "topic": "speed_distance",
+      "branch": "navigation_reports",
+      "module": "speed_distance",
+      "learner_stream": "english_native",
+      "source_language": "en",
+      "source_register": "natural_maritime_english",
+      "source_text": "The buoy is two cables north of me.",
+      "target_language": "en",
+      "target_register": "sea_speak_smcp",
+      "target_text": "Buoy two cables north of my position.",
+      "accepted_answers": [
+        "Buoy two cables north of my position."
+      ],
+      "hint_beginner": "Buoy two c_____ north of my position.",
+      "hint_intermediate": "Buoy two cables...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Buoy two cables north of my position.",
+          "buoy two cables north of my position",
+          "BUOY TWO CABLES NORTH OF MY POSITION."
+        ],
+        "should_reject": [
+          "The buoy is two cables north of me.",
+          "two nautical miles",
+          "two cables south",
+          "buoy north",
+          "two cables north of your position"
+        ],
+        "dangerous_minimal_pairs": [
+          "cables / nautical miles",
+          "north / south",
+          "my position / your position"
+        ],
+        "linguist_note": "Applied Director decision: reject revised to two cables north of your position.",
+        "localization_note": "Distance unit, direction, and reference point must remain exact."
+      }
+    },
+    {
+      "id": "EN-B006-NAV-008",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 9,
+      "topic": "eta_reports",
+      "branch": "navigation_reports",
+      "module": "eta_reports",
+      "learner_stream": "english_native",
+      "source_language": "en",
+      "source_register": "ordinary_english",
+      "source_text": "I will arrive at two pm UTC.",
+      "target_language": "en",
+      "target_register": "sea_speak_smcp",
+      "target_text": "ETA harbour one four zero zero UTC.",
+      "accepted_answers": [
+        "ETA harbour one four zero zero UTC."
+      ],
+      "hint_beginner": "ETA harbour o__ f___ z___ z___ UTC.",
+      "hint_intermediate": "ETA harbour...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "ETA harbour one four zero zero UTC.",
+          "eta harbour one four zero zero UTC",
+          "ETA HARBOUR ONE FOUR ZERO ZERO UTC."
+        ],
+        "should_reject": [
+          "I will arrive at two pm UTC.",
+          "ETA harbour 1500 UTC",
+          "ETA harbour 1400 local",
+          "two pm",
+          "ETA marina 1400 UTC"
+        ],
+        "dangerous_minimal_pairs": [
+          "1400 / 1500",
+          "UTC / local",
+          "harbour / marina"
+        ],
+        "linguist_note": "Approved as drafted; time value, UTC marker, and location remain strict.",
+        "localization_note": "Do not localize time format into accepted answer variants without Director approval."
+      }
+    },
+    {
+      "id": "EN-B006-NAV-009",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 9,
+      "topic": "navigation_readback",
+      "branch": "navigation_reports",
+      "module": "navigation_readback",
+      "learner_stream": "english_native",
+      "source_language": "en",
+      "source_register": "natural_maritime_english",
+      "source_text": "Say my heading back to me: zero nine zero.",
+      "target_language": "en",
+      "target_register": "sea_speak_smcp",
+      "target_text": "Read back heading zero nine zero degrees.",
+      "accepted_answers": [
+        "Read back heading zero nine zero degrees."
+      ],
+      "hint_beginner": "R___ b___ heading zero nine zero degrees.",
+      "hint_intermediate": "Read back heading...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "Read back heading zero nine zero degrees.",
+          "read back heading zero nine zero degrees",
+          "READ BACK HEADING ZERO NINE ZERO DEGREES."
+        ],
+        "should_reject": [
+          "Say my heading back to me: zero nine zero.",
+          "say again heading zero nine zero",
+          "read back heading 90 degrees",
+          "read back bearing zero nine zero",
+          "heading east"
+        ],
+        "dangerous_minimal_pairs": [
+          "read back / say again",
+          "heading / bearing",
+          "zero nine zero / 90"
+        ],
+        "linguist_note": "Approved as drafted; readback procedure and heading field are both required.",
+        "localization_note": "Punctuation in source prompt must not leak into accepted target matching."
+      }
+    },
+    {
+      "id": "EN-B006-NAV-010",
+      "type": "phrase",
+      "level": "intermediate",
+      "difficulty_score": 8,
+      "topic": "position_reporting",
+      "branch": "navigation_reports",
+      "module": "position_reporting",
+      "learner_stream": "english_native",
+      "source_language": "en",
+      "source_register": "ordinary_english",
+      "source_text": "I passed behind your vessel.",
+      "target_language": "en",
+      "target_register": "sea_speak_smcp",
+      "target_text": "I passed astern of your vessel.",
+      "accepted_answers": [
+        "I passed astern of your vessel."
+      ],
+      "hint_beginner": "I passed a_____ of your vessel.",
+      "hint_intermediate": "I passed astern...",
+      "hint_advanced": "",
+      "qa_notes": {
+        "should_accept": [
+          "I passed astern of your vessel.",
+          "i passed astern of your vessel",
+          "I PASSED ASTERN OF YOUR VESSEL."
+        ],
+        "should_reject": [
+          "I passed behind your vessel.",
+          "I passed behind",
+          "I passed ahead of your vessel",
+          "I passed abeam",
+          "astern side"
+        ],
+        "dangerous_minimal_pairs": [
+          "astern / ahead / abeam",
+          "astern / behind"
+        ],
+        "linguist_note": "Approved as drafted; astern is the trained Sea Speak spatial term.",
+        "localization_note": "Spatial term must remain Sea Speak target English, not ordinary English paraphrase."
+      }
+    }
+  ]
+}

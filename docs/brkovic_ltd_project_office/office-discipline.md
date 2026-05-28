@@ -54,6 +54,18 @@ The current phase is MVP release stabilization, not redesign.
 
 Full findings must be written to the required report file.
 
+## Background Agent Watcher
+
+Every background agent must have Director watcher control.
+
+- When an agent is started, add it to `docs/brkovic_ltd_project_office/director-reports/2026-05-28-agent-control-log.md`.
+- Record agent id, role, task id, expected output, safe boundaries, and next director action.
+- The Director performs a first check shortly after launch and then repeats checks during the same chat turn.
+- If the agent is still active after a check, keep the task visible as active; do not imply completion.
+- If the agent appears stalled, request a short status from the agent before reassigning or interrupting.
+- When the agent finishes, inspect the report, update the task registry, close the agent, and write the close event.
+- Do not leave background processes ambiguous for the owner or the next chat.
+
 Short chat reply format:
 
 ```text

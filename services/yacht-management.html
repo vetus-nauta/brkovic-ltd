@@ -19,7 +19,7 @@
 <body class="service-page service-page--yacht-management management-page">
   <div class="site-shell">
     <header class="topbar">
-      <a href="../index.html#hero" class="brand brand--image" aria-label="VETUS NAUTA - Brkovic home">
+      <a href="../index.html#hero" class="brand brand--image" aria-label="VETUS NAUTA - Brkovic home" data-i18n-aria-label="a11y_brand_home">
         <span class="brand__picture brand__picture--home">
           <img src="../brand/logo-header-inline-light.png" alt="VETUS NAUTA - Brkovic" class="brand__logo-image brand__logo-image--desktop" />
           <img src="../brand/logo-header-mobile.png" alt="VETUS NAUTA - Brkovic" class="brand__logo-image brand__logo-image--mobile" />
@@ -132,7 +132,7 @@
                 <h3 id="managementConfigTitle" data-i18n="ym_config_title">Adjust calculation</h3>
                 <p data-i18n="ym_config_intro">Change yacht type, length, crew participation and services. The final price card updates instantly.</p>
               </div>
-              <button type="button" class="management-modal__close" data-management-modal-close aria-label="Close">×</button>
+              <button type="button" class="management-modal__close" data-management-modal-close aria-label="Close" data-i18n-aria-label="a11y_close">×</button>
             </div>
             <form class="management-calc-form" id="managementCalcForm">
             <fieldset class="management-step">
@@ -211,7 +211,7 @@
                 <h3 id="managementDocsTitle" data-i18n="ym_docs_title">Print, save and proformas</h3>
                 <p data-i18n="ym_docs_intro">Prepare a public estimate or draft proforma documents from the current calculation.</p>
               </div>
-              <button type="button" class="management-modal__close" data-management-modal-close aria-label="Close">×</button>
+              <button type="button" class="management-modal__close" data-management-modal-close aria-label="Close" data-i18n-aria-label="a11y_close">×</button>
             </div>
             <div class="management-actions">
               <button type="button" class="btn btn--secondary" id="managementPrintBtn" data-i18n="ym_action_print">Print estimate</button>
@@ -231,7 +231,7 @@
                 <p class="section-heading__eyebrow" data-i18n="ym_info_eyebrow">Explanation</p>
                 <h3 id="managementInfoTitle" data-i18n="ym_info_title">How the range is formed</h3>
               </div>
-              <button type="button" class="management-modal__close" data-management-modal-close aria-label="Close">×</button>
+              <button type="button" class="management-modal__close" data-management-modal-close aria-label="Close" data-i18n-aria-label="a11y_close">×</button>
             </div>
             <p data-i18n="ym_info_text">The estimate starts with a monthly base, then adjusts by yacht type, length and crew setup. Monthly add-ons and one-time services are shown separately so recurring work is not mixed with event-based tasks.</p>
             <p class="management-disclaimer" data-i18n="ym_disclaimer">This estimate is provided for informational and budgeting purposes only and does not constitute a binding commercial offer. Final pricing, scope of services, liabilities and operational conditions are defined exclusively in the signed agreement after vessel review and scope confirmation.</p>
@@ -333,7 +333,7 @@
         <p class="management-disclaimer" data-i18n="ym_disclaimer">This estimate is provided for informational and budgeting purposes only and does not constitute a binding commercial offer. Final pricing, scope of services, liabilities and operational conditions are defined exclusively in the signed agreement after vessel review and scope confirmation.</p>
       </section>
     </main>
-    <nav class="mobile-dock management-dock" aria-label="Quick actions">
+    <nav class="mobile-dock management-dock" aria-label="Quick actions" data-i18n-aria-label="a11y_quick_actions">
       <button type="button" id="managementDockMenuButton"><img src="../images/icons/grid.svg" alt="" /><span data-i18n="ym_dock_menu">Menu</span></button>
       <a href="#management-calculator"><img src="../images/icons/grid.svg" alt="" /><span data-i18n="ym_dock_calc">Calc</span></a>
       <a href="#managementEstimate"><img src="../images/icons/chat.svg" alt="" /><span data-i18n="ym_dock_result">Result</span></a>
@@ -350,7 +350,7 @@
           <a href="../admin-mnr.html" target="_blank" rel="nofollow noopener noreferrer">admin-mnr</a>
         </div>
       </div>
-      <nav class="footer__map-card" aria-label="Services">
+      <nav class="footer__map-card" aria-label="Services" data-i18n-aria-label="a11y_footer_services">
         <h2 data-i18n="footer_services_title">Services</h2>
         <div class="footer__links">
           <a href="../services/yacht-management.html" data-i18n="service_1_title">Yacht Management</a>
@@ -360,7 +360,7 @@
           <a href="../services/yacht-registration.html" data-i18n="service_7_title">Yacht Registration</a>
         </div>
       </nav>
-      <nav class="footer__map-card" aria-label="Leisure and practical tools">
+      <nav class="footer__map-card" aria-label="Leisure and practical tools" data-i18n-aria-label="a11y_footer_leisure_tools">
         <h2 data-i18n="footer_leisure_tools_title">Leisure & tools</h2>
         <div class="footer__links">
           <a href="../services/sailing-tours.html" data-i18n="service_4_title">Sailing Tours</a>
@@ -379,42 +379,15 @@
           <p class="section-heading__eyebrow" data-i18n="ym_site_menu_eyebrow">Page controls</p>
           <h3 id="siteMenuTitle" data-i18n="ym_site_menu_title">Menu and settings</h3>
         </div>
-        <button type="button" class="management-modal__close" data-management-modal-close aria-label="Close">×</button>
+        <button type="button" class="management-modal__close" data-management-modal-close aria-label="Close" data-i18n-aria-label="a11y_close">×</button>
       </div>
       <nav class="management-modal-nav" aria-label="Yacht management sections">
         <a href="#management-calculator" data-management-modal-close data-i18n="ym_nav_calc">Calculator</a>
         <a href="#management-scope" data-management-modal-close data-i18n="ym_nav_scope">Services</a>
         <a href="#contact" data-management-modal-close data-i18n="ym_nav_contact">Request</a>
       </nav>
-      <section class="site-menu-language" aria-labelledby="siteMenuLanguageTitle">
-        <div class="site-menu-language__head">
-          <span class="site-menu-language__icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" focusable="false">
-              <circle cx="12" cy="12" r="9"></circle>
-              <path d="M3 12h18"></path>
-              <path d="M12 3a14 14 0 0 1 0 18"></path>
-              <path d="M12 3a14 14 0 0 0 0 18"></path>
-            </svg>
-          </span>
-          <div>
-            <p class="site-menu-language__kicker" data-i18n="site_menu_language">Language versions</p>
-            <h4 id="siteMenuLanguageTitle" data-i18n="site_menu_language_title">Choose interface language</h4>
-          </div>
-        </div>
-        <p class="site-menu-language__note" data-i18n="site_menu_language_note">Current public UI languages are available here.</p>
-        <div class="site-menu-language__list" role="list">
-          <button type="button" class="site-menu-language__option" data-lang="ru" aria-pressed="false">
-            <span class="site-menu-language__name">Русский</span>
-            <span class="site-menu-language__current" data-i18n="site_menu_language_current">Current</span>
-          </button>
-          <button type="button" class="site-menu-language__option" data-lang="en" aria-pressed="false">
-            <span class="site-menu-language__name">English</span>
-            <span class="site-menu-language__current" data-i18n="site_menu_language_current">Current</span>
-          </button>
-        </div>
-      </section>
       <div class="site-menu-settings">
-        <a class="instagram-link" href="#" id="instagramTopLink" target="_blank" rel="noopener" aria-label="Instagram"><img src="../images/icons/instagram.svg" alt="" /></a>
+        <a class="instagram-link" href="#" id="instagramTopLink" target="_blank" rel="noopener" aria-label="Instagram" data-i18n-aria-label="a11y_instagram"><img src="../images/icons/instagram.svg" alt="" /></a>
       </div>
     </div>
   </div>

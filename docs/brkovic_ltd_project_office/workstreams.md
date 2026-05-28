@@ -5,16 +5,16 @@
 
 | Stream | Owner Chat | Current Focus | Status |
 | --- | --- | --- | --- |
-| DIR | `CHAT-BRK-DIRECTOR-001` | Office control, gate decisions, final MVP direction | Active |
+| DIR | `CHAT-BRK-DIRECTOR-001` | OpenAI Language Desk Sprint 01 launched after live key health check | Active |
 | REL | `CHAT-BRK-RELEASE-001` | Safe release package and deploy manifest | Report received |
-| QAUX | `CHAT-BRK-QA-UX-001` | NavDesk functional and print/PDF audit | Assigned |
+| QAUX | `CHAT-BRK-QA-UX-001` | Journal translation control sprint smoke queued (admin auth + AI-button status paths) | In Progress |
 | SEO | `CHAT-BRK-SEO-I18N-001` | SEO, languages, metadata, indexing readiness | Report received |
 | SEODIR | `CHAT-BRK-SEO-DIR-001` | Director-level SEO integration, page-agent command and public search readiness | Ready |
-| LANGAI | `CHAT-BRK-SEO-I18N-001` + `CHAT-BRK-BACKEND-001` | AI-assisted multilingual journal duplicates, SEO, review workflow | Marker preserved |
-| LOC | `CHAT-BRK-LOC-001` | Ship Journal translation work order: report received, awaiting Director/owner language-list decision | Report received |
-| BE | `CHAT-BRK-BACKEND-001` | Backend/admin/API boundaries, live dependency risks, NavDesk tides audit | Report received |
-| BEIMPL | `CHAT-BRK-BE-IMPL-001` | Approved backend implementation in journal backend and admin APIs | Skeleton report ready |
-| FEIMPL | `CHAT-BRK-FE-IMPL-001` | NavDesk frontend polish: main cards and route print accepted for MVP | Approved |
+| LANGAI | `CHAT-BRK-SEO-I18N-001` + `CHAT-BRK-BACKEND-001` | AI-assisted multilingual journal duplicates, SEO, review workflow | Backend/admin sprint launched |
+| LOC | `CHAT-BRK-LOC-001` | NavDesk protected phrase registry ready for review | For Review |
+| BE | `CHAT-BRK-BACKEND-001` | Journal translation control sprint: activation + stability of `/translations*` routes for posts/collections | For Review |
+| BEIMPL | `CHAT-BRK-BE-IMPL-001` | OpenAI language desk local backend skeleton implemented locally | For Review |
+| FEIMPL | `CHAT-BRK-FE-IMPL-001` | Language Sprint 02: NavDesk small-calculator i18n alias implemented | For Review |
 | DEPLOY | `CHAT-BRK-DEPLOY-001` | Production upload | Closed until Director gate |
 | PRODQA | `CHAT-BRK-PROD-QA-001` | Post-deploy smoke and indexing | Closed until deploy |
 
@@ -22,7 +22,7 @@
 
 ```text
 REL + QAUX + SEO + SEODIR + BE
-        + LANGAI marker + LOC inventory when assigned
+        + LANGAI backend/admin sprint + LOC inventory when assigned
         ↓
 Director gate
         ↓

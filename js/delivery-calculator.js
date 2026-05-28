@@ -269,23 +269,35 @@
   function crewText(lengthBand) {
     const isRu = lang() === "ru";
     if (lengthBand === "12-15") {
-      return isRu
-        ? "Экипаж: обычно шкипер; второй человек по задаче, погоде и маршруту."
-        : "Crew: usually skipper only; second crew member by task, weather and route.";
+      return tr(
+        "delivery_calc_crew_12_15",
+        isRu
+          ? "Экипаж: обычно шкипер; второй человек по задаче, погоде и маршруту."
+          : "Crew: usually skipper only; second crew member by task, weather and route."
+      );
     }
     if (lengthBand === "15-20") {
-      return isRu
-        ? "Экипаж: ближе к 18 м deckhand / mate лучше закладывать заранее."
-        : "Crew: closer to 18 m, a deckhand / mate should be planned in advance.";
+      return tr(
+        "delivery_calc_crew_15_20",
+        isRu
+          ? "Экипаж: ближе к 18 м deckhand / mate лучше закладывать заранее."
+          : "Crew: closer to 18 m, a deckhand / mate should be planned in advance."
+      );
     }
     if (lengthBand === "20-25") {
-      return isRu
-        ? "Экипаж: deckhand / mate желателен; около 23-24 м обычно становится условием доставки."
-        : "Crew: deckhand / mate is recommended; around 23-24 m it usually becomes a delivery condition.";
+      return tr(
+        "delivery_calc_crew_20_25",
+        isRu
+          ? "Экипаж: deckhand / mate желателен; около 23-24 м обычно становится условием доставки."
+          : "Crew: deckhand / mate is recommended; around 23-24 m it usually becomes a delivery condition."
+      );
     }
-    return isRu
-      ? "Экипаж: второй член экипажа и дальнейший состав по документам, страховой, менеджерской компании и маршруту."
-      : "Crew: second crew member and further manning depend on papers, insurer, manager and route.";
+    return tr(
+      "delivery_calc_crew_40plus",
+      isRu
+        ? "Экипаж: второй член экипажа и дальнейший состав по документам, страховой, менеджерской компании и маршруту."
+        : "Crew: second crew member and further manning depend on papers, insurer, manager and route."
+    );
   }
 
   function update() {
@@ -305,22 +317,26 @@
     if (els.fuelLiters) els.fuelLiters.textContent = `${oneDecimal(fuelLiters)} L`;
     if (els.workCost) els.workCost.textContent = money(workCost);
     if (els.speedFact) {
-      els.speedFact.textContent = isRu
-        ? `Скорость в расчете: ${speed} уз.`
-        : `Calculation speed: ${speed} kn`;
+      const speedPrefix = tr("delivery_calc_speed_fact_prefix", isRu ? "Скорость в расчете:" : "Calculation speed:");
+      const speedUnit = tr("delivery_calc_unit_kn", isRu ? "уз." : "kn");
+      els.speedFact.textContent = `${speedPrefix} ${speed} ${speedUnit}`;
     }
     if (els.crewFact) els.crewFact.textContent = crewText(length);
 
     if (els.summary) {
       if (!distance) {
-        els.summary.textContent = isRu
-          ? "Укажите морскую дистанцию, чтобы увидеть расчет."
-          : "Enter sea distance to see the estimate.";
+        els.summary.textContent = tr(
+          "delivery_calc_summary_empty",
+          isRu
+            ? "Укажите морскую дистанцию, чтобы увидеть расчет."
+            : "Enter sea distance to see the estimate."
+        );
       } else {
-        const time = isRu ? `${oneDecimal(hours)} ч` : `${oneDecimal(hours)} h`;
-        const fuel = isRu
-          ? `около ${oneDecimal(fuelLiters)} л топлива`
-          : `about ${oneDecimal(fuelLiters)} L fuel`;
+        const timeUnit = tr("delivery_calc_unit_hour_short", isRu ? "ч" : "h");
+        const fuelPrefix = tr("delivery_calc_summary_fuel_prefix", isRu ? "около" : "about");
+        const fuelUnit = tr("delivery_calc_summary_fuel_unit", isRu ? "л топлива" : "L fuel");
+        const time = `${oneDecimal(hours)} ${timeUnit}`;
+        const fuel = `${fuelPrefix} ${oneDecimal(fuelLiters)} ${fuelUnit}`;
         els.summary.textContent = `${routePrefix()}${oneDecimal(distance)} NM · ${time} · ${fuel}`;
       }
     }
