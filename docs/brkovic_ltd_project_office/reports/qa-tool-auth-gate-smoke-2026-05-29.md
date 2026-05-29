@@ -145,3 +145,33 @@ TOOL_AUTH_MAX_ATTEMPTS=10 TOOL_AUTH_INTERVAL_SECONDS=60 tools/wait-for-tool-auth
 Статус по задаче после этого прогона:
 - `BRK-MVP-QAUX-013` — **In Review**, route-level smoke доступность подтверждена;
 - требуется один короткий `desktop/tablet/mobile` сквозной UX-прогон с реальными `TEST_EMAIL/TEST_CODE` для полного закрытия (если есть стабильный проверочный код).
+
+### Recheck 2026-05-29 23:39:05 CEST (full auth routes alive + regex fixed)
+
+Проверено целевое состояние после точечного деплоя:
+
+- `TOOLS`: `tool-auth-gate-smoke.sh` (`TOOL_AUTH_TEST_EMAIL=vetus.nauta@gmail.com`) — **PASS** (request-code возвращает 201, verify не запускается из-за отсутствия валидного TEST_CODE).
+- `tools/wait-for-tool-auth-backend.sh` (`MAX_ATTEMPTS=1`) — PASS:
+  - `/auth/user/me` → 200
+  - `/auth/user/request-code` → 201
+  - `/auth/user/verify-code` → 401 с `CODE_EXPIRED` при тестовом коде
+  - `/auth/user/logout` → 201
+- `POST /api/auth/user/verify-code` на неверном коде возвращает сейчас `400` + `code must match /^\d{6}$/` для нечислового формата (валидация работает); для числового просроченного — `401 CODE_EXPIRED`.
+- `/api/health/translation` → `providerMode: live`, `configured: true`, `liveGenerationAvailable: true`.
+
+`BE-007` contract gate по live-доступности endpoints закрыт; остаётся только UX-сквозной smoke для `BRK-MVP-QAUX-013` на планшете/мобиле в момент открытия/закрытия модалки и полной проверки flow.
+
+### Recheck 2026-05-29 23:40:47 CEST (logout probe hardened)
+
+- `tools/tool-auth-gate-smoke.sh` обновлён: `POST /api/auth/user/logout` теперь тестируется с телом `{}` для устойчивого живого ответа.
+- Результат с `TOOL_AUTH_TEST_EMAIL=vetus.nauta@gmail.com`:
+  - `GET /api/auth/user/me` → **200** (`authenticated:false`)
+  - `POST /api/auth/user/request-code` → **201**
+  - `POST /api/auth/user/logout` → **201**
+  - `POST /api/auth/user/verify-code` в этом прогоне не запускался (нет валидного TEST_CODE).
+
+Дополнение: endpoint-уровень стабильный; для полноценного сценария остаётся ручной `request-code -> verify` с реальным кодом из письма.
+
+## Вывод
+
+`BRK-MVP-QAUX-013` теперь можно считать `In Review` на технической готовности API и готовым к единичному UX-окну по сценариям desktop/tablet/mobile с валидным `TEST_EMAIL/TEST_CODE`.

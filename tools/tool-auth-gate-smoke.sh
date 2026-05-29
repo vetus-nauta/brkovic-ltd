@@ -111,7 +111,7 @@ else
   fi
 fi
 
-if ! request_code POST "/auth/user/logout" "" "200,204,403" "POST /auth/user/logout"; then
+if ! request_code POST "/auth/user/logout" "{}" "200,201,202,204" "POST /auth/user/logout"; then
   FAIL=1
 fi
 

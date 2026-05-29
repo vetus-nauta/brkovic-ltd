@@ -457,15 +457,18 @@
   }
 
   async function toolAuthFetch(route, options = {}) {
+    const method = String(options.method || 'GET').toUpperCase();
+    const body = options.body === undefined && method === 'POST' ? '{}' : options.body;
+
     const response = await fetch(buildToolAuthApiUrl(route), {
       credentials: 'include',
-      method: options.method || 'GET',
+      method,
       headers: {
         'Accept': 'application/json',
-        ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+        ...(body ? { 'Content-Type': 'application/json' } : {}),
         ...(options.headers || {}),
       },
-      body: options.body || undefined,
+      body,
     });
 
     const raw = await response.text();
