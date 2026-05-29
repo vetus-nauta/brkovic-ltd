@@ -62,10 +62,14 @@
 | `BRK-MVP-BE-002` | OpenAI language desk server boundary | `CHAT-BRK-BACKEND-001` | For Review | `reports/openai-language-desk-implementation-notes-2026-05-27.md` |
 | `BRK-MVP-BE-004` | OpenAI live-key health and boundary confirmation | `CHAT-BRK-BACKEND-001` | For Review | `reports/openai-live-key-health-2026-05-28.md` |
 | `BRK-MVP-BE-005` | Translation route activation for admin UI | `CHAT-BRK-BACKEND-001` | For Review | `reports/backend-admin-translation-route-activation-2026-05-28.md` |
+| `BRK-MVP-BE-007` | Public user auth gateway for protected tools (Google / email code) | `CHAT-BRK-BE-IMPL-001` | In Progress | `reports/backend-engineer-tool-auth-gateway-2026-05-29.md` |
+| `BRK-MVP-BE-007-A` | Canonical /api/auth/user route + migration aliases deployment order | `CHAT-BRK-BE-IMPL-001` | Ready | `cabinets/backend-engineer/task-0009-be007-canonical-route-deployment.md` |
 | `BRK-MVP-BEIMPL-001` | OpenAI language desk backend skeleton plan | `CHAT-BRK-BE-IMPL-001` | For Review | `reports/backend-engineer-openai-language-desk-skeleton-2026-05-27.md` |
 | `BRK-MVP-BEIMPL-002` | NavDesk tides place search expansion | `CHAT-BRK-BE-IMPL-001` | For Review | `reports/navdesk-tides-search-expansion-2026-05-27.md` |
 | `BRK-MVP-BEIMPL-003` | NavDesk tides weekly graph API | `CHAT-BRK-BE-IMPL-001` | For Review | `reports/navdesk-tides-weekly-graph-api-2026-05-27.md` |
 | `BRK-MVP-BEIMPL-004` | OpenAI language desk local backend skeleton implementation | `CHAT-BRK-BE-IMPL-001` | For Review | `reports/backend-engineer-openai-language-desk-local-skeleton-2026-05-28.md` |
+| `BRK-MVP-BEIMPL-005` | Enable live journal translation provider (prod-ready mode) | `CHAT-BRK-BE-IMPL-001` | Approved | `reports/backend-engineer-live-journal-translation-provider-2026-05-29.md` |
+| `BRK-MVP-BEIMPL-006` | Journal translation production hardening (provider health/idempotency/validation) | `CHAT-BRK-BE-IMPL-001` | Approved | `reports/backend-engineer-journal-translation-production-hardening-2026-05-29.md` |
 | `BRK-MVP-FE-001` | Frontend/NavDesk engineer role intake | `CHAT-BRK-FE-IMPL-001` | For Review | `reports/frontend-engineer-role-intake-2026-05-27.md` |
 | `BRK-MVP-FE-002` | NavDesk tides autocomplete frontend implementation | `CHAT-BRK-FE-IMPL-001` | For Review | `reports/navdesk-tides-frontend-autocomplete-2026-05-27.md` |
 | `BRK-MVP-FE-003` | NavDesk tides weekly graph and print frontend | `CHAT-BRK-FE-IMPL-001` | For Review | `reports/navdesk-tides-weekly-graph-frontend-2026-05-27.md` |
@@ -85,25 +89,34 @@
 | `BRK-MVP-FE-017` | Journal safe JS UI i18n layer | `CHAT-BRK-FE-IMPL-001` | For Review | `reports/frontend-journal-safe-js-ui-i18n-layer-2026-05-28.md` |
 | `BRK-MVP-FE-018` | Delivery calculator safe JS UI i18n layer | `CHAT-BRK-FE-IMPL-001` | For Review | `reports/frontend-delivery-safe-js-ui-i18n-layer-2026-05-28.md` |
 | `BRK-MVP-FE-019` | NavDesk small calculator i18n alias | `CHAT-BRK-FE-IMPL-001` | For Review | `reports/frontend-navdesk-small-calculator-i18n-alias-2026-05-28.md` |
+| `BRK-MVP-FE-020` | Language menu modal window and per-language variants | `CHAT-BRK-FE-IMPL-001` | For Review | `reports/frontend-language-menu-modal-window-2026-05-29.md` |
+| `BRK-MVP-FE-021` | Tool access gating flow (Google + 6-digit code) | `CHAT-BRK-FE-IMPL-001` | For Review | `reports/frontend-tool-auth-gating-flow-2026-05-29.md` |
 | `BRK-MVP-QAUX-005` | NavDesk functional and print/PDF audit | `CHAT-BRK-QA-UX-001` | Assigned | `reports/navdesk-functional-print-audit-2026-05-27.md` |
-| `BRK-MVP-QAUX-006` | Language menu and system-language hint QA | `CHAT-BRK-QA-UX-001` | For Review | `reports/language-menu-qa-2026-05-28.md` |
+| `BRK-MVP-QAUX-006` | Language menu and system-language hint QA | `CHAT-BRK-QA-UX-001` | Superseded | `reports/language-menu-qa-2026-05-28.md` |
+| `BRK-MVP-QAUX-012` | Language menu and system-language hint re-check after modal rollout | `CHAT-BRK-QA-UX-001` | In Progress | `reports/language-menu-qa-2026-05-29.md` |
 | `BRK-MVP-QAUX-007` | NavDesk language layer smoke | `CHAT-BRK-QA-UX-001` | For Review | `reports/navdesk-language-layer-smoke-2026-05-28.md` |
 | `BRK-MVP-QAUX-008` | Language interactive smoke | `CHAT-BRK-QA-UX-001` | For Review | `reports/language-interactive-smoke-2026-05-28.md` |
 | `BRK-MVP-QAUX-009` | Language Sprint 02 regression smoke | `CHAT-BRK-QA-UX-001` | For Review | `reports/language-sprint-02-regression-smoke-2026-05-28.md` |
 | `BRK-MVP-QAUX-010` | Language Sprint 02 delivery smoke | `CHAT-BRK-QA-UX-001` | For Review | `reports/language-sprint-02-delivery-smoke-2026-05-28.md` |
 | `BRK-MVP-QAUX-011` | NavDesk small calculator i18n smoke | `CHAT-BRK-QA-UX-001` | For Review | `reports/navdesk-small-calculator-i18n-smoke-2026-05-28.md` |
+| `BRK-MVP-QAUX-013` | Tool auth gate smoke (desktop/tablet/mobile) | `CHAT-BRK-QA-UX-001` | In Review | `reports/qa-tool-auth-gate-smoke-2026-05-29.md` |
 | `BRK-MVP-BE-003` | NavDesk tides function audit | `CHAT-BRK-BACKEND-001` | For Review | `reports/navdesk-tides-audit-2026-05-27.md` |
 | `BRK-MVP-DEPLOY-001` | Controlled production deploy | `CHAT-BRK-DEPLOY-001` | Gate Closed | `reports/deploy-report-2026-05-27.md` |
 | `BRK-MVP-PRODQA-001` | Production smoke and indexing QA | `CHAT-BRK-PROD-QA-001` | Gate Closed | `reports/production-smoke-seo-indexing-2026-05-27.md` |
 
 ## Immediate Next Step
 
-Open the first four worker chats:
+Run these active streams in order:
 
-1. `CHAT-BRK-RELEASE-001`
-2. `CHAT-BRK-QA-UX-001`
-3. `CHAT-BRK-SEO-I18N-001`
-4. `CHAT-BRK-BACKEND-001`
-5. `CHAT-BRK-LOC-001` when Director starts localization inventory
+1. Finish `BRK-MVP-BE-007` backend contract/implementation for public tool auth.
+2. Deliver `BRK-MVP-FE-021` and align tool action flow in shared UI.
+3. Run `BRK-MVP-QAUX-013` one-shot smoke (desktop/tablet/mobile).
+4. Keep `BRK-MVP-BEIMPL-005/006` and `BRK-MVP-QAUX-012` on the previously agreed single-shot backend-translation release control.
+5. Do not open production deploy until both gates are green and Director approves.
 
-Do not open deploy or production QA until the Director approves the gate.
+Owner chats to keep in sync:
+
+1. `CHAT-BRK-BE-IMPL-001`
+2. `CHAT-BRK-FE-IMPL-001`
+3. `CHAT-BRK-QA-UX-001`
+4. `CHAT-BRK-DIRECTOR-001` (for final decision lock)

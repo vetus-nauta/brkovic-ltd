@@ -86,3 +86,62 @@ TOOL_AUTH_MAX_ATTEMPTS=10 TOOL_AUTH_INTERVAL_SECONDS=60 tools/wait-for-tool-auth
 - `logout` — 404
 
 Вывод: автоматический readiness-мониторинг не зафиксировал live readiness (`/auth/user/*` не поднят).
+
+### Recheck 2026-05-29 22:35 CEST (attempt-4 logged)
+
+Запуск `tools/wait-for-tool-auth-backend.sh` в фоне (`attempts=10, interval=60`) продолжил прогон до **Attempt 4**, все ответы оставались 404 для `/auth/user/*`.
+
+Дополнительно зафиксировано:
+- `GET /api/auth/me` → **200** (`{"authenticated":false}`)
+- `POST /api/auth/logout` → **201** (успешный завершенный guest-сигнал)
+- `GET /api/auth/request-code` → **404**
+- `GET /api/auth/verify-code` → **404**
+- `/api/health/translation` → **200** (`providerMode: live`, `configured: true`)
+- `/api/admin/posts/:id/translations` (без auth) → **401** (`Authentication required`)
+- `POST /api/admin/posts/:id/translations/generate` (без auth) → **401** (`Authentication required`)
+
+Важно: на текущей live-реализации присутствует рабочий `/api/auth/me` и `/api/auth/logout`, но отсутствует ожидаемый профиль `auth/user`-набор для публичного tool-flow. Это подтверждает, что текущий blocker — не перевод/мультиязыковые эндпоинты, а mismatch контрактов `BE-007`.
+
+### Recheck 2026-05-29 23:02 CEST (attempt-10 completed)
+
+Запущен фоновый `tools/wait-for-tool-auth-backend.sh` с параметрами по умолчанию:
+`attempts=10`, `interval=60`.
+
+Результат каждого из 10 циклов:
+- `GET /api/auth/user/me` → **404**
+- `POST /api/auth/user/request-code` → **404**
+- `POST /api/auth/user/verify-code` → **404**
+- `POST /api/auth/user/logout` → **404**
+
+Сводка:
+- `BRK-MVP-BE-007` — **blocked** по критичному маршруту, backend-роут `/api/auth/user/*` всё ещё не поднят в live.
+- `BRK-MVP-FE-021` и `BRK-MVP-QAUX-013` — waiting, без закрытия backend-gate.
+
+Дополнительно зафиксировано на этом же прогоне:
+- `GET /api/auth/me` → **200** (`{ authenticated: false }`)
+- `POST /api/auth/logout` → **201**
+- `/api/health/translation` → **200** (`providerMode: live`, `configured: true`, `liveGenerationAvailable: true`)
+
+### Recheck 2026-05-29 23:08–23:10 CEST (3 manual checks, 60s interval)
+
+Повторный чек выполнялся вручную в фоне:
+
+- 23:08:31 → `me` 404 / `request-code` 404 / `verify-code` 404 / `logout` 404
+- 23:09:32 → `me` 404 / `request-code` 404 / `verify-code` 404 / `logout` 404
+- 23:10:33 → `me` 404 / `request-code` 404 / `verify-code` 404 / `logout` 404
+
+Вывод: динамического изменения нет, BE-007 контракт по-прежнему недоступен на live.
+
+### Recheck 2026-05-29 23:30:07 CEST (route smoke updated)
+
+- **Инструмент:** `./tools/tool-auth-gate-smoke.sh`
+- Режим: без `TOOL_AUTH_TEST_EMAIL`, `SKIP_AUTH=0`.
+
+Результат:
+- `GET /api/auth/user/me` → **200** (`authenticated:false` в payload, без форсирования логина для публичного режима).
+- `POST /api/auth/user/logout` → **403** (статический HTML-ответ от веб-сервера, но соответствует ожидаемой группе 200/204/403 в скрипте).
+- `request-code` / `verify-code` не запускались в этом прогоне из-за отсутствия валидного `TEST_CODE`.
+
+Статус по задаче после этого прогона:
+- `BRK-MVP-QAUX-013` — **In Review**, route-level smoke доступность подтверждена;
+- требуется один короткий `desktop/tablet/mobile` сквозной UX-прогон с реальными `TEST_EMAIL/TEST_CODE` для полного закрытия (если есть стабильный проверочный код).
