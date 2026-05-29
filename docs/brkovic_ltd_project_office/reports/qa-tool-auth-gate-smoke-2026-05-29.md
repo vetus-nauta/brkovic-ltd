@@ -76,3 +76,13 @@ TOOL_AUTH_MAX_ATTEMPTS=10 TOOL_AUTH_INTERVAL_SECONDS=60 tools/wait-for-tool-auth
 - `GET /api/admin/posts/.../translations` → **401** (`Authentication required`)
 - `POST /api/admin/posts/.../translations/generate` → **401**
 - `GET http://127.0.0.1/admin-api-proxy.php?path=/auth/user/request-code` → **404** (локальная прокси-обертка на момент проверки)
+
+### Watch run 2026-05-29 22:26–22:28 CEST (5 attempts, 20s interval)
+
+Командный блок `tools/wait-for-tool-auth-backend.sh` (5 итераций) показал **все 404** по всем `/auth/user/*`:
+- `me` — 404
+- `request-code` — 404
+- `verify-code` — 404
+- `logout` — 404
+
+Вывод: автоматический readiness-мониторинг не зафиксировал live readiness (`/auth/user/*` не поднят).
