@@ -64,3 +64,15 @@ TOOL_AUTH_MAX_ATTEMPTS=10 TOOL_AUTH_INTERVAL_SECONDS=60 tools/wait-for-tool-auth
 - `/auth/user/request-code` → 404
 - `/auth/user/verify-code` → 404
 - `/auth/user/logout` → 404 (POST)
+
+### Recheck 2026-05-29 22:26 CEST
+
+- `GET /api/auth/user/me` → **404**
+- `POST /api/auth/user/request-code` → **404**
+- `POST /api/auth/user/verify-code` → **404**
+- `POST /api/auth/user/logout` → **403** (cloud webserver denied page, HTML)
+
+Дополнительно по admin-линии (без авторизации):
+- `GET /api/admin/posts/.../translations` → **401** (`Authentication required`)
+- `POST /api/admin/posts/.../translations/generate` → **401**
+- `GET http://127.0.0.1/admin-api-proxy.php?path=/auth/user/request-code` → **404** (локальная прокси-обертка на момент проверки)
