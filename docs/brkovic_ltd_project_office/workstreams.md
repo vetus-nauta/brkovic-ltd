@@ -11,7 +11,7 @@
 | SEO | `CHAT-BRK-SEO-I18N-001` | SEO, languages, metadata, indexing readiness | Report received |
 | SEODIR | `CHAT-BRK-SEO-DIR-001` | Director-level SEO integration, page-agent command and public search readiness | Ready |
 | LANGAI | `CHAT-BRK-SEO-I18N-001` + `CHAT-BRK-BACKEND-001` | AI-assisted multilingual journal duplicates, SEO, review workflow | Backend/admin sprint launched |
-| LOC | `CHAT-BRK-LOC-001` | NavDesk protected phrase registry ready for review | For Review |
+| LOC | `CHAT-BRK-LOC-001` | Language Sprint 03 delivered first-pass dictionaries and waiting for localization/SEO review for DE/IT/ES/SR/ZH | For Review |
 | BE | `CHAT-BRK-BACKEND-001` | Journal translation control sprint: activation + stability of `/translations*` routes for posts/collections | For Review |
 | BEIMPL | `CHAT-BRK-BE-IMPL-001` | OpenAI language desk local backend skeleton implemented locally | For Review |
 | FEIMPL | `CHAT-BRK-FE-IMPL-001` | Language Sprint 02: NavDesk small-calculator i18n alias implemented | For Review |

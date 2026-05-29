@@ -57,6 +57,7 @@
 | `BRK-MVP-LOC-008` | Static-unused key classification | `CHAT-BRK-LOC-001` | For Review | `reports/static-unused-key-classification-2026-05-28.md` |
 | `BRK-MVP-LOC-009` | Language Sprint 02 locked/risk copy map | `CHAT-BRK-LOC-001` | For Review | `reports/language-sprint-02-risk-map-2026-05-28.md` |
 | `BRK-MVP-LOC-010` | NavDesk protected phrase registry | `CHAT-BRK-LOC-001` | For Review | `reports/navdesk-protected-phrase-registry-2026-05-28.md` |
+| `BRK-MVP-LOC-011` | Language Sprint 03: roadmap language execution (DE/IT/ES/SR/ZH) | `CHAT-BRK-LOC-001` | For Review | `reports/language-roadmap-sprint-03-2026-05-29.md` |
 | `BRK-MVP-BE-001` | Role intake and backend/admin/API audit | `CHAT-BRK-BACKEND-001` | For Review | `reports/backend-admin-api-audit-2026-05-27.md` |
 | `BRK-MVP-BE-002` | OpenAI language desk server boundary | `CHAT-BRK-BACKEND-001` | For Review | `reports/openai-language-desk-implementation-notes-2026-05-27.md` |
 | `BRK-MVP-BE-004` | OpenAI live-key health and boundary confirmation | `CHAT-BRK-BACKEND-001` | For Review | `reports/openai-live-key-health-2026-05-28.md` |
