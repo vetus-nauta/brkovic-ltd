@@ -573,6 +573,8 @@
   async function openToolAuthPrompt() {
     return new Promise((resolve) => {
       const messages = toolAuthStatusText();
+      const opener = document.activeElement;
+      const openerToRestore = opener instanceof HTMLElement ? opener : null;
       const existing = document.getElementById(TOOL_AUTH_PROMPT_ID);
       const modal = existing || document.createElement('div');
 
@@ -606,6 +608,12 @@
         </div>
       `;
 
+      const restoreFocus = () => {
+        if (openerToRestore && openerToRestore.isConnected && typeof openerToRestore.focus === 'function') {
+          openerToRestore.focus();
+        }
+      };
+
       if (!existing) {
         document.body.appendChild(modal);
       }
@@ -623,6 +631,7 @@
         if (!document.querySelector('.management-modal.is-open')) {
           document.body.classList.remove('management-modal-open');
         }
+        restoreFocus();
         resolve(result === null ? { authenticated: false } : result);
       };
 
