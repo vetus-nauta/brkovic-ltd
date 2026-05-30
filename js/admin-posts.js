@@ -132,11 +132,18 @@
     const message = String(error?.message || '').toLowerCase();
     const status = Number(error?.status || 0);
     return status === 404
+      || status === 405
       || message.includes('cannot get /api/admin/posts/')
       || message.includes('cannot get /api/admin/journal-collections/')
       || message.includes('cannot post /api/admin/posts/')
       || message.includes('cannot post /api/admin/journal-collections/')
       || message.includes('cannot post /api/admin/journal-ai/translations/generate');
+  }
+
+  function markAiGenerationRouteEnabled() {
+    if (isAiGenerationRouteEnabled) return;
+    isAiGenerationRouteEnabled = true;
+    updateTranslationStatusButtonStates();
   }
   function setPostTranslationStatus(text, tone = 'info') {
     setTranslationStatusNode(postAiTranslationStatus, text, tone);
@@ -686,6 +693,7 @@
     try {
       const payload = await listPostTranslations(postId);
       const translations = Array.isArray(payload?.translations) ? payload.translations : [];
+      markAiGenerationRouteEnabled();
       postTranslationRows = translations;
       setPostTranslationStatus(
         buildTranslationStatusSummary(translations),
@@ -712,6 +720,7 @@
     try {
       const payload = await listCollectionTranslations(collectionId);
       const translations = Array.isArray(payload?.translations) ? payload.translations : [];
+      markAiGenerationRouteEnabled();
       collectionTranslationRows = translations;
       setCollectionTranslationStatus(
         buildTranslationStatusSummary(translations),
@@ -1221,6 +1230,7 @@
       setBusy(generateAiPostTranslationsBtn, true, generateAiPostTranslationsBtn.textContent);
       setPostTranslationStatus('Инициируем AI-перевод...', 'info');
       const response = await generatePostTranslations(currentPostId, payload);
+      markAiGenerationRouteEnabled();
       const { text, tone } = summarizeAndTone(response?.items || []);
       setPostTranslationStatus(text, tone);
       setStatus(`AI-перевод на пост завершен. ${text}`);
@@ -1275,6 +1285,7 @@
       setBusy(generateAiCollectionTranslationsBtn, true, generateAiCollectionTranslationsBtn.textContent);
       setCollectionTranslationStatus('Инициируем AI-перевод...', 'info');
       const response = await generateCollectionTranslations(currentCollectionId, payload);
+      markAiGenerationRouteEnabled();
       const { text, tone } = summarizeAndTone(response?.items || []);
       setCollectionTranslationStatus(text, tone);
       setCollectionsStatus(`AI-перевод на многoстраничную запись завершен. ${text}`, true);
@@ -1336,6 +1347,7 @@
       setBusy(generateAiPostMissingTranslationsBtn, true, generateAiPostMissingTranslationsBtn.textContent);
       setPostTranslationStatus('Инициируем AI-перевод для отсутствующих языков...', 'info');
       const response = await generatePostTranslations(currentPostId, payload);
+      markAiGenerationRouteEnabled();
       const { text, tone } = summarizeAndTone(response?.items || []);
       setPostTranslationStatus(text, tone);
       setStatus(`AI-перевод для отсутствующих языков запущен. ${text}`);
@@ -1382,6 +1394,7 @@
       setBusy(generateAiMissingCollectionTranslationsBtn, true, generateAiMissingCollectionTranslationsBtn.textContent);
       setCollectionTranslationStatus('Инициируем AI-перевод для отсутствующих языков...', 'info');
       const response = await generateCollectionTranslations(currentCollectionId, payload);
+      markAiGenerationRouteEnabled();
       const { text, tone } = summarizeAndTone(response?.items || []);
       setCollectionTranslationStatus(text, tone);
       setCollectionsStatus(`AI-перевод для отсутствующих языков запущен. ${text}`, true);

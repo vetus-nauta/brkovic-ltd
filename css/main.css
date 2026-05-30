@@ -68,6 +68,10 @@ button { cursor: pointer; }
 }
 .instagram-link img { width: 22px; height: 22px; }
 
+.topbar__actions > .instagram-link {
+  display: none !important;
+}
+
 .section { padding: 26px 0; scroll-margin-top: 100px; }
 .section:first-of-type { padding-top: 12px; }
 .section--paper,
@@ -1284,6 +1288,30 @@ button { cursor: pointer; }
 }
 .footer strong { color: var(--color-brand); display: block; margin-bottom: 6px; }
 .footer p { margin: 0; line-height: 1.5; }
+.footer-social-link {
+  width: max-content;
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 7px 11px;
+  border: 1px solid rgba(16,36,58,.10);
+  border-radius: 999px;
+  background: rgba(255,255,255,.58);
+  color: var(--color-brand);
+  font-size: .84rem;
+  font-weight: 800;
+  line-height: 1;
+}
+.footer-social-link:hover {
+  background: rgba(255,255,255,.82);
+  transform: translateY(-1px);
+}
+.footer-social-link img {
+  width: 18px;
+  height: 18px;
+}
 .footer__copy {
   margin-top: 14px !important;
   color: var(--color-muted);
@@ -1889,6 +1917,131 @@ html[lang="en"] .hero-highlight p {
   background: currentColor;
 }
 
+.tool-account-button {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  border: 1px solid rgba(16,36,58,.16);
+  border-radius: 999px;
+  background: rgba(255,255,255,.78);
+  color: var(--color-brand);
+  box-shadow: 0 10px 24px rgba(16,36,58,.08);
+  cursor: pointer;
+}
+
+.tool-account-button[hidden] {
+  display: none;
+}
+
+.tool-account-button:hover,
+.tool-account-button:focus-visible {
+  border-color: rgba(156,62,46,.32);
+  outline: none;
+  box-shadow: 0 14px 28px rgba(16,36,58,.12);
+}
+
+.tool-account-button__avatar,
+.site-menu-account__avatar {
+  display: inline-grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(16,36,58,.92), rgba(83,120,76,.88));
+  color: #fff;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.tool-account-button__avatar {
+  width: 36px;
+  height: 36px;
+  font-size: .94rem;
+}
+
+.tool-account-button__avatar img,
+.site-menu-account__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.site-menu-account {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid rgba(16,36,58,.12);
+  border-radius: 18px;
+  background: rgba(16,36,58,.04);
+}
+
+.site-menu-account[hidden] {
+  display: none;
+}
+
+.site-menu-account__head {
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+}
+
+.site-menu-account__avatar {
+  width: 46px;
+  height: 46px;
+  font-size: 1rem;
+}
+
+.site-menu-account__head strong,
+.site-menu-account__head span {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.site-menu-account__head strong {
+  color: var(--color-brand);
+  font-size: .98rem;
+}
+
+.site-menu-account__head span {
+  color: var(--color-muted);
+  font-size: .84rem;
+}
+
+.site-menu-account__label {
+  margin: 0 0 2px;
+  color: var(--color-muted);
+  font-size: .74rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.site-menu-account__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.site-menu-account__meta span {
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.72);
+  color: var(--color-muted);
+  font-size: .78rem;
+  font-weight: 700;
+}
+
+.site-menu-account--modal {
+  margin-top: 6px;
+}
+
 .management-calc-layout--summary {
   grid-template-columns: minmax(0, 1.25fr) minmax(280px, .55fr);
 }
@@ -2004,6 +2157,74 @@ html[lang="en"] .hero-highlight p {
 
 .management-modal__dialog--compact {
   width: min(480px, calc(100vw - 32px));
+}
+
+.tool-auth-prompt__body {
+  display: grid;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.tool-auth-prompt__note {
+  margin: 0;
+  padding: 9px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(83,120,76,.16);
+  background: rgba(83,120,76,.08);
+  color: #2d5232;
+  font-size: .9rem;
+  line-height: 1.45;
+}
+
+.tool-auth-prompt__label {
+  display: grid;
+  gap: 6px;
+}
+
+.tool-auth-prompt__label label {
+  color: var(--color-muted);
+  font-size: .86rem;
+  line-height: 1.2;
+}
+
+.tool-auth-prompt__input {
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 12px;
+  border: 1px solid rgba(16,36,58,.2);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--color-brand);
+}
+
+.tool-auth-prompt__input:focus {
+  outline: 2px solid rgba(156,62,46,.35);
+  outline-offset: 0;
+}
+
+.tool-auth-prompt__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.tool-auth-prompt__actions .btn {
+  min-height: 46px;
+}
+
+.tool-auth-prompt__status {
+  min-height: 1.1em;
+  margin: 0;
+  font-size: .9rem;
+  line-height: 1.4;
+  color: var(--color-muted);
+}
+
+.tool-auth-prompt__status.is-success {
+  color: #2d6a3f;
+}
+
+.tool-auth-prompt__status.is-error {
+  color: #9f2a2a;
 }
 
 .management-modal__header {
@@ -2425,6 +2646,32 @@ body.navdesk-theme-night .site-menu-modal .site-menu-language__primary,
 body.navdesk-theme-night .site-menu-modal .site-menu-language__pending {
   background: rgba(214,197,170,.10);
   color: rgba(232,221,199,.58);
+}
+
+body.navdesk-theme-night .site-menu-modal .site-menu-account {
+  border-color: rgba(214,197,170,.14);
+  background: rgba(0,0,0,.14);
+}
+
+body.navdesk-theme-night .site-menu-modal .site-menu-account__head strong {
+  color: #f0d5a8;
+}
+
+body.navdesk-theme-night .site-menu-modal .site-menu-account__head span,
+body.navdesk-theme-night .site-menu-modal .site-menu-account__label {
+  color: rgba(232,221,199,.64);
+}
+
+body.navdesk-theme-night .site-menu-modal .site-menu-account__meta span {
+  background: rgba(214,197,170,.10);
+  color: rgba(232,221,199,.68);
+}
+
+body.navdesk-theme-night .tool-account-button {
+  border-color: rgba(214,197,170,.16);
+  background: rgba(0,0,0,.18);
+  color: rgba(232,221,199,.88);
+  box-shadow: none;
 }
 
 .management-dock button {

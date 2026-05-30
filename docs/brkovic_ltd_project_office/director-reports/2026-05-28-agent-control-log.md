@@ -80,13 +80,50 @@ When a background agent is started:
 | 2026-05-28 18:38 CEST | `019e6f6a-dc38-7831-af00-2f946f1d824a` / Aristotle | Frontend/NavDesk Engineer | `BRK-MVP-FE-014` | Status requested | Expected report pending | Second watcher interval timed out; sent non-interrupt status request. |
 | 2026-05-28 18:41 CEST | `019e6f6a-dc38-7831-af00-2f946f1d824a` / Aristotle | Frontend/NavDesk Engineer | `BRK-MVP-FE-014` | Completed and closing | `docs/brkovic_ltd_project_office/reports/frontend-accessibility-attribute-keys-2026-05-28.md` | Report and patch inspected; JS/JSON/diff checks passed; task registry set to `For Review`. |
 | 2026-05-28 23:34 CEST | Director | Backend route-control check | `BRK-MVP-BE-005` | Completed (stage-1 anonymous smoke + smoke script prep) | `tools/journal-admin-translation-smoke.sh`, `docs/brkovic_ltd_project_office/reports/backend-admin-translation-auth-smoke-2026-05-28.md` | 4 endpoint’а на `live` для неавторизованного состояния подтверждают `401`. Сценарий для авторизованного smoke добавлен и готов к запуску с `BRK_ADMIN_EMAIL/BRK_ADMIN_PASSWORD`. |
+| 2026-05-29 19:35 CEST | Director | BRK Translation/Menu Gate Sprint 01 Watcher | `BRK-MVP-BEIMPL-005`, `BRK-MVP-BEIMPL-006`, `BRK-MVP-FE-020`, `BRK-MVP-QAUX-012` | Active checkpoint | Fresh manual smoke in branch context + live `curl` probe | Пакет маршрутов и авторизация подтверждены (`401` anon, `200/201` после login), `POST generate` работает, но `provider.configured=false`, `providerMode=stub`, `/api/health/translation` всё ещё `404`, FE/QA отчётов по FE-020/QAUX-012 пока нет. |
+| 2026-05-29 21:55 CEST | Director | BRK Translation/Menu Gate Sprint 02 Execution | `BRK-MVP-BEIMPL-005`, `BRK-MVP-BEIMPL-006`, `BRK-MVP-FE-020`, `BRK-MVP-QAUX-012` | Sprint started | Задан единый sprint-loop и блоки DoD для всех 4 задач; ожидаем обновления статуса и report-файлов от backend/FE/QA. |
+| 2026-05-29 22:10 CEST | Director | BRK Translation/Menu Gate Sprint 02 update | `BRK-MVP-FE-020`, `BRK-MVP-QAUX-012` | Frontend checkpoint closed | FE-report приложен: `docs/brkovic_ltd_project_office/reports/frontend-language-menu-modal-window-2026-05-29.md`; `BRK-MVP-FE-020` отмечен как `For Review`. QA-report подготовлен как `In Progress` пока не пройден browser smoke desktop/tablet/mobile. |
+| 2026-05-29 22:12 CEST | Director | BRK Translation/Menu Gate Fastlane | `BRK-MVP-BEIMPL-005`, `BRK-MVP-BEIMPL-006` | In progress (single-shot) | Зафиксирован план одноразового прохода: прод развёртывание live-provider + hardening, затем один QAUX-012 smoke в desktop/tablet/mobile после закрытия BEIMPL-005/006. Циклические проверки больше не проводятся. |
+| 2026-05-29 22:16 CEST | Director | Backend one-shot handoff | `BRK-MVP-BEIMPL-005`, `BRK-MVP-BEIMPL-006` | Action issued | Передана офлайн задача `task-0007-translation-live-single-shot.md`: один проход, без повторов, с чёткими условиями `providerMode/live` и endpoint подтверждением. |
+| 2026-05-29 20:18 CEST | Director | Backend live check | `BRK-BE-IMPL-LIVE-01` | Fails / in progress | Повторный targeted smoke подтверждён: `/auth/login` валиден, `/api/health/translation`=404, provider remains `stub` (`configured=false`, `providerMode=stub`, `liveGenerationAvailable=false`). |
+| 2026-05-29 22:35 CEST | Director | Backend validation (fixed collection id) | `BRK-MVP-BEIMPL-005`, `BRK-MVP-BEIMPL-006` | Fails / in progress | Новый smoke `TRIGGER_SMOKE=1` с `POST_ID=11718191-e852-4db4-84fe-02b09e6ab717`, `COLLECTION_ID=ddfd23e6-1cad-4341-a5fe-cd2467213229` показал: все админ endpoint’ы отвечают (`200/201`), но provider по-прежнему `configured=false`, `providerMode=stub`, `liveGenerationAvailable=false`; `/api/health/translation` по-прежнему `404`. |
+| 2026-05-29 20:45 CEST | Director | Backend re-run check | `BRK-MVP-BEIMPL-005`, `BRK-MVP-BEIMPL-006` | Fails / in progress | Повторный run подтверждает статус без изменений: login=201, post/collection generate по-прежнему `configured=false`, `providerMode=stub`, `liveGenerationAvailable=false`; проверка `/api/health/translation` и `/api/admin/health*` (`/api/admin/health`, `/api/admin/health/translation`, `/api/health/ai`, `/api/admin/health/ai`) тоже `404`. |
 
 ## Active Background Agents
 
-| Agent | Task | Started | Expected Output |
-| --- | --- | --- | --- |
-None.
+| Agent | Task | Started | Expected Output | Director Action |
+| --- | --- | --- | --- | --- |
+| `BRK-BE-IMPL-LIVE-01` | `BRK-MVP-BEIMPL-005` / `BRK-MVP-BEIMPL-006` | 2026-05-29 21:30 CEST | `docs/brkovic_ltd_project_office/reports/backend-engineer-live-journal-translation-provider-2026-05-29.md` / `...journal-translation-production-hardening-2026-05-29.md` | Backend team is confirming provider live metadata and hardening pass. |
+| `BRK-FE-020-LOOP-01` | `BRK-MVP-FE-020` | 2026-05-29 21:35 CEST | `docs/brkovic_ltd_project_office/reports/frontend-language-menu-modal-window-2026-05-29.md` | Frontend loop closed. |
+| `BRK-QA-UX-012-LOOP-01` | `BRK-MVP-QAUX-012` | 2026-05-29 21:40 CEST | `docs/brkovic_ltd_project_office/reports/language-menu-qa-2026-05-29.md` | QA re-check after FE-020 on desktop/tablet/mobile, normal/day/night. |
+| `BRK-QA-UX-012-LOCK-01` | `BRK-MVP-QAUX-012` | 2026-05-29 22:16 CEST | `docs/brkovic_ltd_project_office/reports/language-menu-qa-2026-05-29.md` | Блокировка: запуск только после live-подтверждения BEIMPL-005/006 и единственный финальный прогон. |
+| `BRK-SPRINT-02-LOOP` | `BRK-MVP-BEIMPL-005`, `BRK-MVP-BEIMPL-006`, `BRK-MVP-FE-020`, `BRK-MVP-QAUX-012` | 2026-05-29 21:55 CEST | Sprint aggregate checkpoints + full gate log | Director will merge statuses into this log and update task-registry after each agent handoff. |
+| `BRK-BE-007-BG-01` | `BRK-MVP-BE-007` | 2026-05-29 22:57 CEST | `docs/brkovic_ltd_project_office/reports/backend-engineer-tool-auth-gateway-2026-05-29.md` | Backend auth flow for public tool users started: route contract + anti-abuse + session helper plan. |
+| `BRK-FE-021-BG-01` | `BRK-MVP-FE-021` | 2026-05-29 22:58 CEST | `docs/brkovic_ltd_project_office/reports/frontend-tool-auth-gating-flow-2026-05-29.md` | Frontend gate for public tools started: shared prompt modal + ensureToolAccess wrapper. |
+| `BRK-QA-UX-013-BG-01` | `BRK-MVP-QAUX-013` | 2026-05-29 22:59 CEST | `docs/brkovic_ltd_project_office/reports/qa-tool-auth-gate-smoke-2026-05-29.md` | QA smoke for no-login tool gating in read-first mode started (desktop/tablet/mobile). |
 
 ## Next Director Decision
 
-FE-014 and LOC-007 are ready for Director/owner review. No active background agents.
+Next: no-loop sequence.
+- `BRK-QA-UX-012-LOOP-01` выполняется ровно один раз после `live`-подтверждения BEIMPL-005/006.
+- Пока `stub` — QA не запускается.
+- Теперь параллельно запускаем новый спринт с акцентом на public-tool auth:
+  - `BRK-MVP-BE-007` + `BRK-MVP-FE-021` + `BRK-MVP-QAUX-013`.
+- Для нового спринта тоже single-shot режим: один контролируемый прогон QA после стабилизации FE/BE.
+- Пока не замыкать в production; работаем в локальной связке + backend staging/probe где возможно.
+
+## Background Check — 2026-05-29 23:05 CEST
+
+- По факту в реестре и логе видно, что **три новых агента по auth-цепочке запущены**, но все ещё `In Progress` и без финального артефакта:
+  - `BRK-BE-007-BG-01` → ожидает endpoint-реализацию и отчёт.
+  - `BRK-FE-021-BG-01` → ожидает контракт/готовность бэкенда для привязки.
+  - `BRK-QA-UX-013-BG-01` → ожидает завершения FE/BE и один smoke-прогон.
+- Отдельно продолжается переводная серия:
+  - `BRK-MVP-BEIMPL-005/006` и `BRK-QAUX-012` остаются `stub`, до момента live-перехода они не должны закрывать gate.
+- Режим управления: **ни одного массового перезапуска не делаем**, только точечный запуск по достижении готовности блоков.
+
+### Что делать прямо сейчас (в следующем сообщении)
+
+1. Закрыть `BRK-BE-007` (публичный API-эндпоинт auth) и зафиксировать отчёт/доступный контракт.
+2. После получения контракта запустить финальный pass `BRK-FE-021` (modal + `ensureToolAccess`).
+3. После FE-подключения сделать один `BRK-MVP-QAUX-013` smoke в 3 вьюхах.

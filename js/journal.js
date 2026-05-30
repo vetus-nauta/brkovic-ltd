@@ -10,7 +10,9 @@
     || /^192\.168\./.test(hostname)
     || /^172\.(1[6-9]|2\d|3[0-1])\./.test(hostname);
   const API_ORIGIN = isLocalPreviewHost ? LIVE_API_ORIGIN : '';
-  const API_BASE = `${API_ORIGIN}/api/public/journal`;
+  const API_BASE = isLocalPreviewHost
+    ? '/admin-api-proxy.php?path=/public/journal'
+    : `${API_ORIGIN}/api/public/journal`;
   const LOCAL_JOURNAL_SNAPSHOT = '/data/journal-public.json';
   const STORAGE_TRANSLATIONS = 'brkovic_journal_translations_v1';
 
@@ -97,6 +99,48 @@ let lightboxJustClosedAt = 0;
 
   function likeStateKey(kind, slug) {
     return kind === 'collection' ? `collection:${slug}` : slug;
+  }
+
+  function readJournalAuthProfile() {
+    try {
+      const raw = localStorage.getItem('brkovic_tool_auth_session_v1');
+      if (!raw) return null;
+      const profile = JSON.parse(raw);
+      if (!profile || !profile.authenticated) return null;
+      if (profile.expiresAt && Date.now() > Number(profile.expiresAt)) return null;
+      return profile;
+    } catch {
+      return null;
+    }
+  }
+
+  async function requireJournalAuth() {
+    const cached = readJournalAuthProfile();
+    if (cached) return cached;
+
+    if (typeof window.ensureToolAccess !== 'function') {
+      return null;
+    }
+
+    const allowed = await window.ensureToolAccess();
+    return allowed ? (readJournalAuthProfile() || { authenticated: true }) : null;
+  }
+
+  function journalAuthName(profile) {
+    const emailName = String(profile?.email || '').split('@')[0] || '';
+    return String(profile?.displayName || emailName || '').trim();
+  }
+
+  function prepareJournalCommentForm(form, profile) {
+    if (!form) return;
+    const nameInput = form.elements?.name;
+    if (nameInput && !String(nameInput.value || '').trim()) {
+      nameInput.value = journalAuthName(profile);
+    }
+  }
+
+  function collectionReadLabel() {
+    return t('journal_collection_read_cta', getLang() === 'ru' ? 'Читать' : 'Read');
   }
 
   function entryKind(entry) {
@@ -1024,7 +1068,7 @@ let lightboxJustClosedAt = 0;
         </div>
         <div class="journal-post__right">
           <a class="journal-action journal-collection-cover__open" href="journal.html?collection=${encodeURIComponent(collection.slug)}">
-            ${escapeHtml(t('journal_collection_open_chapters', 'Open chapters'))}
+            ${escapeHtml(collectionReadLabel())} <span aria-hidden="true">›</span>
           </a>
         </div>
       </div>
@@ -1186,6 +1230,9 @@ let lightboxJustClosedAt = 0;
             <span>${escapeHtml(author)}</span>
             ${date ? `<span>${escapeHtml(date)}</span>` : ''}
           </div>
+          <button class="journal-collection-cover-art__read" type="button" data-collection-step="1">
+            ${escapeHtml(collectionReadLabel())} <span aria-hidden="true">›</span>
+          </button>
         </div>
       </div>
     `;
@@ -1231,8 +1278,13 @@ let lightboxJustClosedAt = 0;
             <section class="journal-collection-page journal-collection-page--cover" data-collection-page data-book-label="${escapeHtml(firstProgress)}">
               ${coverArt}
               <div class="journal-collection-cover-index">
-                <div class="journal-collection-single__meta">
-                  <span>${escapeHtml(tf('journal_collection_chapters_count_template', 'Chapters: {count}', { count: collection.pagesCount || collection.pages?.length || 0 }))}</span>
+                <div class="journal-collection-cover-index__head">
+                  <div class="journal-collection-single__meta">
+                    <span>${escapeHtml(tf('journal_collection_chapters_count_template', 'Chapters: {count}', { count: collection.pagesCount || collection.pages?.length || 0 }))}</span>
+                  </div>
+                  <button class="journal-collection-cover-index__read" type="button" data-collection-step="1">
+                    ${escapeHtml(collectionReadLabel())} <span aria-hidden="true">›</span>
+                  </button>
                 </div>
                 ${pageList ? `
                   <ol class="journal-collection-cover__pages journal-collection-cover__pages--book">
@@ -1244,32 +1296,33 @@ let lightboxJustClosedAt = 0;
             ${pagesMarkup || `<section class="journal-collection-page" data-collection-page><div class="journal-empty">${escapeHtml(t('journal_empty', 'No entries yet.'))}</div></section>`}
           </div>
         </div>
-      </div>
-      <p class="journal-post__rights">${escapeHtml(t('journal_rights_notice', lang === 'ru' ? '© BRKOVIC / VETUS NAUTA. Текст и медиа защищены авторским правом. Использование только с письменного разрешения.' : '© BRKOVIC / VETUS NAUTA. Text and media are protected by copyright. Use only with written permission.'))}</p>
-      <div class="journal-post__actions" id="journal-comments-${escapeHtml(collection.slug)}">
-        <div class="journal-post__left">
-          <button class="journal-action ${likeState.liked ? 'is-liked' : ''}" data-action="like" data-kind="collection" data-id="${escapeHtml(collection.id)}" data-slug="${escapeHtml(collection.slug)}">
-            ${escapeHtml(t('journal_like', 'Like'))} · <span>${likeState.likesCount}</span>
-          </button>
-          <button class="journal-action" data-action="comment-focus" data-kind="collection" data-id="${escapeHtml(collection.id)}">
-            ${escapeHtml(t('journal_comment', 'Comment'))} · <span>${comments.length || collection.commentsCount || 0}</span>
-          </button>
+        <div class="journal-collection-book__engagement">
+          <p class="journal-post__rights">${escapeHtml(t('journal_rights_notice', lang === 'ru' ? '© BRKOVIC / VETUS NAUTA. Текст и медиа защищены авторским правом. Использование только с письменного разрешения.' : '© BRKOVIC / VETUS NAUTA. Text and media are protected by copyright. Use only with written permission.'))}</p>
+          <div class="journal-post__actions" id="journal-comments-${escapeHtml(collection.slug)}">
+            <div class="journal-post__left">
+              <button class="journal-action ${likeState.liked ? 'is-liked' : ''}" data-action="like" data-kind="collection" data-id="${escapeHtml(collection.id)}" data-slug="${escapeHtml(collection.slug)}" aria-pressed="${likeState.liked ? 'true' : 'false'}" ${likeState.liked ? 'disabled' : ''}>
+                ${escapeHtml(t('journal_like', 'Like'))} · <span>${likeState.likesCount}</span>
+              </button>
+              <button class="journal-action" data-action="comment-focus" data-kind="collection" data-id="${escapeHtml(collection.id)}">
+                ${escapeHtml(t('journal_comment', 'Comment'))} · <span>${comments.length || collection.commentsCount || 0}</span>
+              </button>
+            </div>
+            <div class="journal-post__right">
+              <button class="journal-action" data-action="share" data-kind="collection" data-id="${escapeHtml(collection.id)}" data-slug="${escapeHtml(collection.slug)}">
+                ${escapeHtml(t('journal_share', 'Share'))}
+              </button>
+            </div>
+          </div>
+          <div class="journal-comments">
+            <div class="journal-comments__list">${comments.map(commentMarkup).join('') || ''}</div>
+            <form class="journal-comment-form" data-kind="collection" data-id="${escapeHtml(collection.id)}" data-slug="${escapeHtml(collection.slug)}">
+              <input type="text" name="name" placeholder="${escapeHtml(t('journal_comment_name', 'Name'))}" maxlength="80" required />
+              <input type="text" name="text" placeholder="${escapeHtml(t('journal_comment_text', 'Написать комментарий'))}" maxlength="2000" required />
+              <button class="btn btn--secondary" type="submit">${escapeHtml(t('journal_comment_submit', 'Send'))}</button>
+            </form>
+            <div class="journal-comment-status" data-comment-status-for="${escapeHtml(collection.id)}"></div>
+          </div>
         </div>
-        <div class="journal-post__right">
-          <button class="journal-action" data-action="share" data-kind="collection" data-id="${escapeHtml(collection.id)}" data-slug="${escapeHtml(collection.slug)}">
-            ${escapeHtml(t('journal_share', 'Share'))}
-          </button>
-        </div>
-      </div>
-      <div class="journal-comments">
-        <div class="journal-comments__list">${comments.map(commentMarkup).join('') || ''}</div>
-        <form class="journal-comment-form" data-kind="collection" data-id="${escapeHtml(collection.id)}" data-slug="${escapeHtml(collection.slug)}">
-          <input type="text" name="name" placeholder="${escapeHtml(t('journal_comment_name', 'Name'))}" maxlength="80" required />
-          <input type="email" name="email" placeholder="${escapeHtml(t('journal_comment_email', 'Email (необязательно)'))}" maxlength="120" />
-          <input type="text" name="text" placeholder="${escapeHtml(t('journal_comment_text', 'Написать комментарий'))}" maxlength="2000" required />
-          <button class="btn btn--secondary" type="submit">${escapeHtml(t('journal_comment_submit', 'Send'))}</button>
-        </form>
-        <div class="journal-comment-status" data-comment-status-for="${escapeHtml(collection.id)}"></div>
       </div>
     `;
 
@@ -1368,7 +1421,7 @@ let lightboxJustClosedAt = 0;
         <p class="journal-post__rights">${escapeHtml(t('journal_rights_notice', getLang() === 'ru' ? '© BRKOVIC / VETUS NAUTA. Текст и медиа защищены авторским правом. Использование только с письменного разрешения.' : '© BRKOVIC / VETUS NAUTA. Text and media are protected by copyright. Use only with written permission.'))}</p>
         <div class="journal-post__actions">
           <div class="journal-post__left">
-            <button class="journal-action ${likeState.liked ? 'is-liked' : ''}" data-action="like" data-id="${entry.id}" data-slug="${entry.slug}">
+            <button class="journal-action ${likeState.liked ? 'is-liked' : ''}" data-action="like" data-id="${entry.id}" data-slug="${entry.slug}" aria-pressed="${likeState.liked ? 'true' : 'false'}" ${likeState.liked ? 'disabled' : ''}>
               ${escapeHtml(t('journal_like', 'Like'))} · <span>${likeState.likesCount}</span>
             </button>
             <button class="journal-action" data-action="comment-focus" data-id="${entry.id}">
@@ -1385,7 +1438,6 @@ let lightboxJustClosedAt = 0;
           <div class="journal-comments__list">${approvedComments.map(commentMarkup).join('') || ''}</div>
           <form class="journal-comment-form" data-kind="post" data-id="${entry.id}" data-slug="${entry.slug}">
             <input type="text" name="name" placeholder="${escapeHtml(t('journal_comment_name', 'Name'))}" maxlength="80" required />
-            <input type="email" name="email" placeholder="${escapeHtml(t('journal_comment_email', 'Email (необязательно)'))}" maxlength="120" />
             <input type="text" name="text" placeholder="${escapeHtml(t('journal_comment_text', 'Написать комментарий'))}" maxlength="2000" required />
             <button class="btn btn--secondary" type="submit">${escapeHtml(t('journal_comment_submit', 'Send'))}</button>
           </form>
@@ -1700,13 +1752,15 @@ let lightboxJustClosedAt = 0;
         const kind = button.dataset.kind || 'post';
         if (!slug) return;
 
-        button.disabled = true;
-
         try {
           const current = likeStateBySlug[likeStateKey(kind, slug)] || { liked: false, likesCount: 0 };
-          const result = current.liked
-            ? await unlikePost(slug, kind)
-            : await likePost(slug, kind);
+          if (current.liked) return;
+
+          const profile = await requireJournalAuth();
+          if (!profile) return;
+
+          button.disabled = true;
+          const result = await likePost(slug, kind);
 
           likeStateBySlug[likeStateKey(kind, slug)] = {
             liked: !!result.liked,
@@ -1730,9 +1784,13 @@ let lightboxJustClosedAt = 0;
     });
 
     document.querySelectorAll('[data-action="comment-focus"]').forEach((button) => {
-      button.onclick = () => {
-        const form = document.querySelector(`.journal-comment-form[data-id="${button.dataset.id}"] input[name="text"]`);
-        if (form) form.focus();
+      button.onclick = async () => {
+        const form = document.querySelector(`.journal-comment-form[data-id="${button.dataset.id}"]`);
+        const textInput = form?.querySelector('input[name="text"]');
+        const profile = await requireJournalAuth();
+        if (!profile) return;
+        prepareJournalCommentForm(form, profile);
+        if (textInput) textInput.focus();
       };
     });
 
@@ -1783,6 +1841,17 @@ let lightboxJustClosedAt = 0;
     });
 
     document.querySelectorAll('.journal-comment-form').forEach((form) => {
+      form.addEventListener('focusin', async (event) => {
+        if (readJournalAuthProfile()) return;
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+        target.blur();
+        const profile = await requireJournalAuth();
+        if (!profile || !target.isConnected) return;
+        prepareJournalCommentForm(form, profile);
+        setTimeout(() => target.focus(), 10);
+      }, { capture: true });
+
       form.onsubmit = async (event) => {
         event.preventDefault();
 
@@ -1791,8 +1860,11 @@ let lightboxJustClosedAt = 0;
         const kind = form.dataset.kind || 'post';
         const statusNode = document.querySelector(`[data-comment-status-for="${id}"]`);
 
-        const authorName = form.elements.name.value.trim();
-        const authorEmail = form.elements.email.value.trim();
+        const profile = await requireJournalAuth();
+        if (!profile) return;
+        prepareJournalCommentForm(form, profile);
+
+        const authorName = form.elements.name.value.trim() || journalAuthName(profile);
         const content = form.elements.text.value.trim();
 
         if (!authorName || !content || !slug) return;
@@ -1806,7 +1878,7 @@ let lightboxJustClosedAt = 0;
         try {
           await submitComment(kind, slug, {
             authorName,
-            authorEmail: authorEmail || undefined,
+            authorEmail: profile.email || undefined,
             content,
           });
 

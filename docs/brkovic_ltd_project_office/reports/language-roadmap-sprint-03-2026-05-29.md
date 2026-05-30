@@ -71,6 +71,20 @@
 4. Final gate:
    - set `isAvailable` to `true` progressively after copy + SEO approval per language page scope.
 
+### Sprint 03 — Current Progress
+
+- Step 1 (localization snapshots) — completed (first-pass dictionaries landed, diff/validation completed).
+- Step 3a (route smoke baseline, anonymous/401 check) — completed in `tools/journal-admin-translation-smoke.sh`.
+- Step 3b (authorized generation smoke for selected post/collection and target languages) — completed on live endpoints:
+  - post: `11718191-e852-4db4-84fe-02b09e6ab717`
+  - collection: `ddfd23e6-1cad-4341-a5fe-cd2467213229`
+  - status: `200/201` for all stage-3/4 checks.
+
+### Backend translation behavior note
+
+- Endpoints return `provider.configured: false`, `providerMode: "stub"`, `liveGenerationAvailable: false` on generation responses.
+- Следующий шаг для бизнес-результата: включение production OpenAI/translation provider в backend.
+
 ## Deliverable reference
 
 - Updated by: `BRK-MVP-LOC-011`  

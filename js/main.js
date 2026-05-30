@@ -181,6 +181,7 @@
             <span class="site-menu-language-current" aria-hidden="true" data-site-menu-current-language>${escapeHtml(languageOptionName(currentLanguage()))}</span>
           </a>
         </nav>
+        <section class="site-menu-account" data-tool-account-panel hidden></section>
       </div>
     `;
   }
@@ -310,6 +311,7 @@
       actions.appendChild(button);
     }
     topbar.classList.add("topbar--site-menu");
+    ensureToolAccountButton(actions);
 
     const modal = buildSiteMenuModal();
     const picker = buildSiteMenuPickerModal();
@@ -318,6 +320,7 @@
     setupSiteMenuLanguageControls(modal);
     setupSiteMenuDismissal(picker);
     setupSiteMenuDismissal(modal);
+    syncToolAccountUi();
     if (!modal || button.dataset.siteMenuBound === "true") return;
     button.dataset.siteMenuBound = "true";
 
@@ -354,6 +357,7 @@
     const map = {
       instagramTopLink: c.instagramUrl,
       instagramLink: c.instagramUrl,
+      instagramFooterLink: c.instagramUrl,
       whatsappLink: c.whatsappUrl,
       telegramLink: c.telegramUrl,
       viberLink: c.viberUrl,
@@ -444,21 +448,20 @@
   const TOOL_AUTH_CACHE_KEY = 'brkovic_tool_auth_session_v1';
   const TOOL_AUTH_PROMPT_ID = 'toolAuthPromptModal';
   const TOOL_AUTH_CACHE_TTL_MS = 30 * 60 * 1000;
-
-  function isLocalBackendHost(hostname) {
-    return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1' || hostname.endsWith('.local');
-  }
+  const TOOL_AUTH_PROXY_PATH = '/admin-api-proxy.php';
+  let toolAuthStatusPromise = null;
 
   function buildToolAuthApiUrl(route) {
-    if (isLocalBackendHost(window.location.hostname)) {
-      return `/admin-api-proxy.php?path=${encodeURIComponent(route)}`;
-    }
-    return route;
+    return `${TOOL_AUTH_PROXY_PATH}?path=${encodeURIComponent(route)}`;
   }
 
   async function toolAuthFetch(route, options = {}) {
     const method = String(options.method || 'GET').toUpperCase();
     const body = options.body === undefined && method === 'POST' ? '{}' : options.body;
+    const sanitizeRaw = (value) => String(value || '')
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/\\s+/g, ' ')
+      .trim();
 
     const response = await fetch(buildToolAuthApiUrl(route), {
       credentials: 'include',
@@ -472,6 +475,31 @@
     });
 
     const raw = await response.text();
+    const contentType = String(response.headers.get('content-type') || '').toLowerCase();
+    const isHtmlResponse = contentType.includes('text/html') || /^\s*</.test(raw);
+    if (isHtmlResponse) {
+      const htmlLower = sanitizeRaw(raw).toLowerCase();
+      const isFirewallBlock = htmlLower.includes('firewall') && htmlLower.includes('blocking your connection');
+      const isCaptcha = htmlLower.includes('recaptcha') || htmlLower.includes('unblock');
+      const isCloudHostBlock = isFirewallBlock || htmlLower.includes('unauthorized access') || htmlLower.includes('contact server owner');
+      const message = isCloudHostBlock
+        ? 'Запрос заблокирован защитой хостинга (cloud web-server). Проверьте доступ к домену и/или пройдите капчу.'
+        : (isFirewallBlock || isCaptcha
+          ? 'Запрос заблокирован веб-паролем провайдера. Нужно пройти проверку и повторить запрос.'
+          : 'Сервис авторизации недоступен в этом канале сейчас.');
+      const error = new Error(message);
+      error.payload = {
+        error: {
+          code: 'HTTP_NON_JSON',
+          message,
+        },
+      };
+      error.status = response.status;
+      error.retryAfter = response.headers.get('Retry-After') || null;
+      error.name = 'ToolAuthError';
+      throw error;
+    }
+
     let payload = null;
     try {
       payload = raw ? JSON.parse(raw) : null;
@@ -481,7 +509,11 @@
 
     if (!response.ok || !payload || payload.success === false) {
       const message = payload?.error?.message || payload?.message || raw || response.statusText;
+      const retryAfterHeader = response.headers.get('Retry-After');
       const error = new Error(String(message || 'Auth request failed'));
+      error.payload = payload;
+      error.status = response.status;
+      error.retryAfter = retryAfterHeader || null;
       error.name = 'ToolAuthError';
       throw error;
     }
@@ -507,13 +539,19 @@
 
   function writeToolAuthCache(data) {
     try {
+      const existing = readToolAuthCache();
       const expiresAt = Date.now() + TOOL_AUTH_CACHE_TTL_MS;
       localStorage.setItem(
         TOOL_AUTH_CACHE_KEY,
         JSON.stringify({
+          ...(existing || {}),
           ...data,
           authenticated: Boolean(data?.authenticated),
           email: data?.email || null,
+          displayName: data?.displayName || existing?.displayName || null,
+          avatarUrl: data?.avatarUrl || existing?.avatarUrl || null,
+          authProvider: data?.authProvider || existing?.authProvider || 'email',
+          sessionExpiresAt: data?.sessionExpiresAt || existing?.sessionExpiresAt || null,
           expiresAt,
         }),
       );
@@ -526,16 +564,180 @@
     } catch (error) {}
   }
 
-  async function fetchToolAuthStatus() {
-    const payload = await toolAuthFetch('/api/auth/user/me');
-    const data = payload && payload.data ? payload.data : null;
-    if (data && data.authenticated) {
-      writeToolAuthCache(data);
-      return data;
+  function toolAccountInitial(profile) {
+    const source = String(profile?.displayName || profile?.email || 'B').trim();
+    return (source[0] || 'B').toUpperCase();
+  }
+
+  function toolAccountProviderLabel(profile) {
+    const provider = String(profile?.authProvider || '').toLowerCase();
+    if (provider === 'google') return 'Google';
+    if (provider === 'email') return 'Email-код';
+    return provider || 'Аккаунт';
+  }
+
+  function ensureToolAccountButton(actions) {
+    if (!actions || document.getElementById('toolAccountButton')) return;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.id = 'toolAccountButton';
+    button.className = 'tool-account-button';
+    button.hidden = true;
+    button.setAttribute('aria-label', 'Аккаунт');
+    button.innerHTML = '<span class="tool-account-button__avatar" data-tool-account-avatar>B</span>';
+    actions.insertBefore(button, actions.firstChild);
+    button.addEventListener('click', () => {
+      const modal = buildToolAccountModal();
+      openSiteMenu(modal);
+    });
+  }
+
+  function renderToolAccountAvatar(container, profile) {
+    if (!container) return;
+    const avatarUrl = String(profile?.avatarUrl || '').trim();
+    if (avatarUrl) {
+      container.innerHTML = `<img src="${escapeHtml(avatarUrl)}" alt="" referrerpolicy="no-referrer" />`;
+      return;
+    }
+    container.innerHTML = `<span>${escapeHtml(toolAccountInitial(profile))}</span>`;
+  }
+
+  function renderToolAccountPanel(profile, root = document) {
+    const panel = root.querySelector?.('[data-tool-account-panel]');
+    if (!panel) return;
+    const isAuthenticated = Boolean(profile?.authenticated);
+    panel.hidden = !isAuthenticated;
+    if (!isAuthenticated) {
+      panel.innerHTML = '';
+      return;
     }
 
-    clearToolAuthCache();
-    return null;
+    const displayName = profile.displayName || profile.email || 'Brkovic account';
+    const email = profile.email || '';
+    panel.innerHTML = `
+      <div class="site-menu-account__head">
+        <span class="site-menu-account__avatar" data-tool-account-avatar></span>
+        <div>
+          <p class="site-menu-account__label">Аккаунт</p>
+          <strong>${escapeHtml(displayName)}</strong>
+          ${email ? `<span>${escapeHtml(email)}</span>` : ''}
+        </div>
+      </div>
+      <div class="site-menu-account__meta">
+        <span>${escapeHtml(toolAccountProviderLabel(profile))}</span>
+        <span>Доступ к инструментам</span>
+      </div>
+      <button type="button" class="btn btn--secondary btn--full" data-tool-account-logout>Выйти</button>
+    `;
+    renderToolAccountAvatar(panel.querySelector('[data-tool-account-avatar]'), profile);
+    const logout = panel.querySelector('[data-tool-account-logout]');
+    if (logout) {
+      logout.addEventListener('click', async () => {
+        logout.disabled = true;
+        logout.textContent = 'Выходим...';
+        await toolAuthFetch('/api/auth/user/logout', { method: 'POST' }).catch(() => null);
+        clearToolAuthCache();
+        syncToolAccountUi(null);
+        const openModal = document.querySelector('.management-modal.is-open');
+        if (openModal) closeSiteMenu(openModal);
+      }, { once: true });
+    }
+  }
+
+  function buildToolAccountModal() {
+    const existing = document.getElementById('toolAccountModal');
+    const markup = `
+      <div class="management-modal__backdrop" data-management-modal-close></div>
+      <div class="management-modal__dialog management-modal__dialog--compact" role="dialog" aria-modal="true" aria-labelledby="toolAccountTitle">
+        <div class="management-modal__header">
+          <div>
+            <p class="section-heading__eyebrow">Brkovic.ltd</p>
+            <h3 id="toolAccountTitle">Аккаунт</h3>
+          </div>
+          <button type="button" class="management-modal__close" data-management-modal-close aria-label="Закрыть">×</button>
+        </div>
+        <section class="site-menu-account site-menu-account--modal" data-tool-account-panel></section>
+      </div>
+    `;
+
+    if (existing) {
+      existing.innerHTML = markup;
+      setupSiteMenuDismissal(existing);
+      renderToolAccountPanel(readToolAuthCache(), existing);
+      return existing;
+    }
+
+    const modal = document.createElement('div');
+    modal.className = 'management-modal site-menu-modal tool-account-modal';
+    modal.id = 'toolAccountModal';
+    modal.setAttribute('aria-hidden', 'true');
+    modal.innerHTML = markup;
+    document.body.appendChild(modal);
+    setupSiteMenuDismissal(modal);
+    renderToolAccountPanel(readToolAuthCache(), modal);
+    return modal;
+  }
+
+  function syncAuthenticatedContactEmail(profile = readToolAuthCache()) {
+    const email = normalizeEmail(profile?.email || '');
+    if (!profile?.authenticated || !email) return;
+
+    document.querySelectorAll('form input[type="email"][name="email"]').forEach((input) => {
+      if (!(input instanceof HTMLInputElement)) return;
+      if (String(input.value || '').trim()) return;
+      input.value = email;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+  }
+
+  function syncToolAccountUi(profile = undefined) {
+    const cached = profile === undefined ? readToolAuthCache() : profile;
+    const isAuthenticated = Boolean(cached?.authenticated);
+    const button = document.getElementById('toolAccountButton');
+    const topbar = document.querySelector('.topbar');
+    if (topbar) topbar.classList.toggle('topbar--tool-account-active', isAuthenticated);
+    if (button) {
+      button.hidden = !isAuthenticated;
+      if (isAuthenticated) {
+        button.setAttribute('aria-label', `Аккаунт ${cached.email || ''}`.trim());
+        renderToolAccountAvatar(button.querySelector('[data-tool-account-avatar]'), cached);
+      }
+    }
+    renderToolAccountPanel(cached);
+    syncAuthenticatedContactEmail(cached);
+  }
+
+  async function fetchToolAuthStatus() {
+    if (toolAuthStatusPromise) {
+      return toolAuthStatusPromise;
+    }
+
+    toolAuthStatusPromise = (async () => {
+      const payload = await toolAuthFetch('/api/auth/user/me');
+      const data = payload && payload.data ? payload.data : null;
+      if (data && data.authenticated) {
+        writeToolAuthCache(data);
+        syncToolAccountUi(readToolAuthCache());
+        return data;
+      }
+
+      const cached = readToolAuthCache();
+      if (cached && cached.authenticated) {
+        syncToolAccountUi(cached);
+        return cached;
+      }
+
+      clearToolAuthCache();
+      syncToolAccountUi(null);
+      return null;
+    })();
+
+    try {
+      return await toolAuthStatusPromise;
+    } finally {
+      toolAuthStatusPromise = null;
+    }
   }
 
   function normalizeEmail(value) {
@@ -544,27 +746,119 @@
 
   function isFallbackAuthError(errorMessage, error) {
     const message = String(errorMessage || error?.message || '').toLowerCase();
-    return message.includes('cannot get')
+    return message.includes('ssl')
+      || message.includes('certificate')
+      || message.includes('firewall')
+      || message.includes('blocked')
+      || message.includes('unblock')
+      || message.includes('cannot get')
       || message.includes('cannot post')
       || message.includes('404')
       || message.includes('not found')
       || message.includes('failed to')
+      || message.includes('rate limit')
+      || message.includes('too many')
       || message.includes('network')
       || message.includes('fetch');
+  }
+
+  function parseRetryAfterSeconds(rawValue) {
+    if (rawValue === null || rawValue === undefined) return null;
+    if (typeof rawValue === 'number' && Number.isFinite(rawValue)) {
+      return rawValue > 0 ? Math.ceil(rawValue) : 0;
+    }
+    const parsed = Number(String(rawValue).trim());
+    if (Number.isFinite(parsed) && parsed > 0) {
+      return Math.ceil(parsed);
+    }
+
+    const timestamp = Date.parse(String(rawValue));
+    if (Number.isFinite(timestamp)) {
+      const delta = Math.ceil((timestamp - Date.now()) / 1000);
+      return delta > 0 ? delta : 1;
+    }
+
+    return null;
+  }
+
+  function extractRateLimitWaitSeconds(error) {
+    return (
+      parseRetryAfterSeconds(error?.retryAfter)
+      || parseRetryAfterSeconds(error?.payload?.meta?.retryAfter)
+      || parseRetryAfterSeconds(error?.payload?.meta?.retryAfterSeconds)
+      || parseRetryAfterSeconds(error?.payload?.retryAfter)
+      || parseRetryAfterSeconds(error?.payload?.retryAfterSeconds)
+      || parseRetryAfterSeconds(error?.payload?.data?.retryAfter)
+      || parseRetryAfterSeconds(error?.payload?.data?.retryAfterSeconds)
+    );
+  }
+
+  function isRateLimitError(errorMessage, error) {
+    const message = String(errorMessage || error?.message || '').toLowerCase();
+    const status = Number(error?.status || 0);
+    return status === 429
+      || message.includes('rate limit')
+      || message.includes('rate-limited')
+      || message.includes('too many')
+      || message.includes('rate-limiting')
+      || message.includes('слишком много')
+    || message.includes('лимит')
+    || message.includes('огранич');
+  }
+
+  function extractAuthErrorCode(error) {
+    return (
+      error?.payload?.error?.code
+      || error?.payload?.data?.error?.code
+      || error?.payload?.meta?.code
+      || null
+    );
+  }
+
+  function normalizeAuthErrorMessage(error, fallback) {
+    const directCode = extractAuthErrorCode(error);
+    const rawCode = error?.payload?.error?.code || error?.code;
+    const message = String(
+      error?.payload?.error?.message
+      || error?.payload?.data?.error?.message
+      || error?.message
+      || fallback
+      || 'Ошибка.',
+    );
+    const normalizedMessage = message.toLowerCase();
+    if (normalizedMessage.includes('ssl') || normalizedMessage.includes('certificate')) {
+      return 'Сейчас сервис проверки недоступен из-за ошибки безопасного соединения с сервером. Попробуйте позже.';
+    }
+    if (rawCode === 'HTTP_NON_JSON') {
+      return message;
+    }
+    if (normalizedMessage.includes('firewall') || normalizedMessage.includes('blocked')) {
+      return 'Сейчас серверная защита блокирует ваши запросы. Проверьте доступ к домену в браузере и повторите попытку позже.';
+    }
+
+    if (directCode === 'CODE_EXPIRED') {
+      return 'Код уже просрочен или неактивен. Запросите новый и проверьте почту через 1–2 минуты.';
+    }
+
+    if (directCode === 'NO_ACTIVE_CODE' || /no active code request/i.test(message)) {
+      return 'Для этого email нет активного запроса кода. Сначала запросите новый код.';
+    }
+
+    return message;
   }
 
   function toolAuthStatusText() {
     return {
       title: 'Доступ к инструментам',
-      intro: 'Для сохранения данных, печати и экспорта на NavDesk нужен быстрый вход.',
-      google: 'Google вход (скоро)',
+      intro: 'Для работы с калькуляторами, NavDesk и обучающими играми нужен быстрый вход.',
+      google: 'Продолжить с Google',
       emailPlaceholder: 'ваш email',
       request: 'Выслать код',
       verify: 'Подтвердить',
       resend: 'Отправить повторно',
       close: 'Позже',
       codeHint: 'Введите 6-значный код из письма.',
-      codeRequestSent: 'Код отправлен. Проверьте почту.',
+      codeRequestSent: 'Код отправлен',
       codeResentIn: 'Можно запросить повторно через',
       wrongCode: 'Неверный код. Проверьте число и попробуйте снова.',
       genericError: 'Не удалось выполнить вход. Проверьте интернет и повторите.',
@@ -579,7 +873,10 @@
       const opener = document.activeElement;
       const openerToRestore = opener instanceof HTMLElement ? opener : null;
       const existing = document.getElementById(TOOL_AUTH_PROMPT_ID);
-      const modal = existing || document.createElement('div');
+      if (existing) {
+        existing.remove();
+      }
+      const modal = document.createElement('div');
 
       modal.id = TOOL_AUTH_PROMPT_ID;
       modal.className = 'management-modal site-menu-modal';
@@ -595,18 +892,23 @@
             <button type="button" class="management-modal__close" data-tool-auth-close aria-label="${escapeHtml(messages.closeAria)}">×</button>
           </div>
       <div class="tool-auth-prompt__body">
-        <button type="button" class="btn btn--secondary" disabled>${escapeHtml(messages.google)}</button>
-        <label class="site-form__field" for="toolAuthEmail" style="margin-top:10px;display:block;">
-          <span>Сейчас доступны Email-код и локальная проверка.</span>
-          <input id="toolAuthEmail" type="email" autocomplete="email" inputmode="email" placeholder="${escapeHtml(messages.emailPlaceholder)}" />
-            </label>
-            <button type="button" class="btn btn--primary" id="toolAuthRequestCode" style="margin-top:8px;">${escapeHtml(messages.request)}</button>
-            <p id="toolAuthStatus" data-tool-auth-status role="status" style="margin-top:8px;min-height:1.1em;"></p>
-            <label class="site-form__field" for="toolAuthCode" style="margin-top:10px;display:block;">
-              <span>${escapeHtml(messages.codeHint)}</span>
-              <input id="toolAuthCode" type="text" maxlength="6" placeholder="000000" inputmode="numeric" pattern="[0-9]{6}" />
-            </label>
-            <button type="button" class="btn btn--primary" id="toolAuthVerify" style="margin-top:8px;">${escapeHtml(messages.verify)}</button>
+        <p class="tool-auth-prompt__note">Откройте доступ к рабочим инструментам Brkovic.ltd.</p>
+        <button type="button" class="btn btn--secondary" id="toolAuthGoogle" disabled>${escapeHtml(messages.google)}</button>
+        <div class="tool-auth-prompt__label">
+          <label for="toolAuthEmail">${escapeHtml('Email')}</label>
+          <input id="toolAuthEmail" class="tool-auth-prompt__input" type="email" autocomplete="email" inputmode="email" placeholder="${escapeHtml(messages.emailPlaceholder)}" />
+        </div>
+        <div class="tool-auth-prompt__actions">
+          <button type="button" class="btn btn--primary" id="toolAuthRequestCode">${escapeHtml(messages.request)}</button>
+        </div>
+        <p id="toolAuthStatus" data-tool-auth-status role="status" class="tool-auth-prompt__status" aria-live="polite"></p>
+        <div class="tool-auth-prompt__label">
+          <label for="toolAuthCode">${escapeHtml(messages.codeHint)}</label>
+          <input id="toolAuthCode" class="tool-auth-prompt__input" type="text" maxlength="6" placeholder="000000" inputmode="numeric" pattern="[0-9]{6}" />
+        </div>
+        <div class="tool-auth-prompt__actions">
+          <button type="button" class="btn btn--primary btn--full" id="toolAuthVerify">${escapeHtml(messages.verify)}</button>
+        </div>
           </div>
         </div>
       `;
@@ -617,13 +919,12 @@
         }
       };
 
-      if (!existing) {
-        document.body.appendChild(modal);
-      }
+      document.body.appendChild(modal);
 
       const statusEl = modal.querySelector('[data-tool-auth-status]');
       const requestBtn = modal.querySelector('#toolAuthRequestCode');
       const verifyBtn = modal.querySelector('#toolAuthVerify');
+      const googleBtn = modal.querySelector('#toolAuthGoogle');
       const emailInput = modal.querySelector('#toolAuthEmail');
       const codeInput = modal.querySelector('#toolAuthCode');
       const closeButtons = modal.querySelectorAll('[data-tool-auth-close]');
@@ -639,15 +940,83 @@
       };
 
       const setStatus = (message) => {
-        if (statusEl) statusEl.textContent = message;
+        if (!statusEl) return;
+        const text = String(message || '');
+        statusEl.textContent = text;
+        const lower = text.toLowerCase();
+        const isSuccess = /(успеш|выполнен|отправлен|код отправлен|запрос принят|код принят)/.test(lower);
+        const isError = /(ошиб|невер|недоступ|непол|проср|not found|invalid|не найден|не уда|expired|код недейств|служба .* недоступ|слишком много|rate limit|too many|лимит|огранич)/.test(lower);
+        statusEl.classList.remove('is-success', 'is-error');
+        if (isSuccess) {
+          statusEl.classList.add('is-success');
+        } else if (isError) {
+          statusEl.classList.add('is-error');
+        }
+      };
+
+      const setButtonBusy = (button, busy, label) => {
+        if (!button) return;
+        if (!button.dataset.idleLabel) {
+          button.dataset.idleLabel = button.textContent || '';
+        }
+        button.disabled = Boolean(busy);
+        button.setAttribute('aria-busy', busy ? 'true' : 'false');
+        button.textContent = busy ? label : button.dataset.idleLabel;
+      };
+
+      const getDebugCode = (payload) => {
+        if (!payload || typeof payload !== 'object') return '';
+        const candidates = [
+          payload?.data?.debugCode,
+          payload?.data?.debug?.code,
+          payload?.data?.data?.debugCode,
+          payload?.debugCode,
+          payload?.data?.code,
+          payload?.code,
+          payload?.data?.data?.code,
+          payload?.data?.otp,
+          payload?.otp,
+          payload?.token,
+          payload?.data?.token,
+          payload?.data?.data?.otp,
+        ];
+        for (const value of candidates) {
+          if (typeof value === 'string' && /^\d{6}$/.test(value)) {
+            return value;
+          }
+        }
+        return '';
+      };
+
+      const parseCooldownSeconds = (payload, fallback = 55) => {
+        const candidate =
+          payload?.data?.ttlSeconds
+          || payload?.data?.data?.ttlSeconds
+          || payload?.ttlSeconds
+          || payload?.data?.meta?.ttlSeconds
+          || payload?.meta?.ttlSeconds;
+        const parsed = Number(candidate);
+        if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
+        return Math.min(Math.max(Math.floor(parsed), 20), 55);
+      };
+
+      const extractRequestError = (error) => {
+        if (error?.payload && typeof error.payload === 'object') {
+          return (
+            error.payload?.error?.message
+            || error.payload?.message
+            || error.payload?.data?.message
+            || error.payload?.data?.error?.message
+          );
+        }
+
+        return null;
       };
 
       let cooldownTimer = null;
       let cooldownLeft = 0;
-
-      const setRequestState = (enabled) => {
-        if (requestBtn) requestBtn.disabled = !enabled;
-      };
+      let requestPending = false;
+      let verifyPending = false;
 
       const tickCooldown = () => {
         if (cooldownLeft <= 0) {
@@ -662,50 +1031,149 @@
         cooldownTimer = setTimeout(tickCooldown, 1000);
       };
 
-      const startCooldown = () => {
+      const startCooldown = (seconds = 55) => {
         if (cooldownTimer) clearTimeout(cooldownTimer);
-        cooldownLeft = 55;
+        cooldownLeft = parseCooldownSeconds({}, seconds);
         requestBtn && (requestBtn.disabled = true);
         tickCooldown();
       };
 
       const tryRequestCode = async () => {
+        if (!requestBtn || requestBtn.disabled || requestPending) return;
+        requestPending = true;
+        setButtonBusy(requestBtn, true, 'Отправляем...');
         try {
           const email = normalizeEmail(emailInput?.value);
           if (!email) {
             setStatus('Введите email.');
+            setButtonBusy(requestBtn, false);
+            requestPending = false;
             return;
           }
           localStorage.setItem('brkovic_tool_auth_email', email);
-          setStatus(messages.codeRequestSent);
+          setStatus('Отправляем код...');
           const payload = await toolAuthFetch('/api/auth/user/request-code', {
             method: 'POST',
             body: JSON.stringify({ email }),
           });
-          const debugCode = payload?.data?.debugCode;
+          const requested = payload?.success !== false && (
+            payload?.data?.requested === true
+            || payload?.data?.data?.requested === true
+            || payload?.requested === true
+            || payload?.data?.status === 'requested'
+          );
+          const messageRequested = requested ? messages.codeRequestSent : 'Запрос принят к обработке.';
+          const debugCode = getDebugCode(payload);
+          const statusHint = 'Если код не пришел — повторите через 60 сек.';
           if (debugCode) {
-            setStatus(`${messages.codeRequestSent} Код: ${debugCode}`);
+            setStatus(`${messages.codeRequestSent}: ${debugCode}`);
           } else {
-            setStatus(messages.codeRequestSent);
+            setStatus(`${messageRequested} ${statusHint}`);
           }
           if (codeInput) codeInput.focus();
-          startCooldown();
+          requestPending = false;
+          startCooldown(parseCooldownSeconds(payload, 55));
         } catch (error) {
+          requestPending = false;
+          const retryAfterSeconds = extractRateLimitWaitSeconds(error);
+          if (isRateLimitError(error?.message, error)) {
+            const wait = retryAfterSeconds || 60;
+            const statusMessage = `Слишком много запросов. Попробуйте снова через ${wait} сек.`;
+            setStatus(statusMessage);
+            startCooldown(wait);
+            return;
+          }
           const fallback = isFallbackAuthError(error?.message, error)
-            ? 'Сейчас сервис проверки еще не включен на текущем сервере.'
+            ? 'Сейчас сервис проверки недоступен. Повторите попытку через минуту.'
             : (error?.message || messages.genericError);
-          setStatus(fallback);
+          const extracted = extractRequestError(error) || fallback;
+          setStatus(extracted);
+          setButtonBusy(requestBtn, false);
+          if (cooldownTimer) {
+            clearTimeout(cooldownTimer);
+            cooldownTimer = null;
+            cooldownLeft = 0;
+          }
+          if (requestBtn) {
+            requestBtn.textContent = messages.request;
+          }
+        }
+      };
+
+      const googleStartUrl = () => {
+        const returnTo = `${window.location.pathname || '/'}${window.location.search || ''}${window.location.hash || ''}`;
+        const route = `/api/auth/user/google/start?returnTo=${encodeURIComponent(returnTo)}`;
+        if (window.location.hostname === 'brkovic.ltd') return route;
+        return `https://brkovic.ltd${route}`;
+      };
+
+      const onGoogleMessage = (event) => {
+        if (event.origin !== 'https://brkovic.ltd') return;
+        const message = event.data || {};
+        if (message.type !== 'brkovic-tool-auth-google' || !message.payload) return;
+        writeToolAuthCache({
+          authenticated: true,
+          email: message.payload.email || null,
+          displayName: message.payload.displayName || null,
+          avatarUrl: message.payload.avatarUrl || null,
+          authProvider: message.payload.authProvider || 'google',
+          sessionExpiresAt: message.payload.sessionExpiresAt,
+        });
+        syncToolAccountUi(readToolAuthCache());
+        setStatus(messages.success);
+        close({ authenticated: true, profile: message.payload });
+      };
+
+      const tryGoogle = () => {
+        if (!googleBtn) return;
+        if (googleBtn.disabled) {
+          setStatus('Google-вход ещё не подключён на сервере.');
+          return;
+        }
+        const popup = window.open(
+          googleStartUrl(),
+          'brkovicGoogleAuth',
+          'popup=yes,width=520,height=680,menubar=no,toolbar=no,location=yes,status=no',
+        );
+        if (!popup) {
+          setStatus('Разрешите всплывающее окно для входа через Google.');
+          return;
+        }
+        setStatus('Откройте Google и подтвердите вход.');
+        popup.focus();
+      };
+
+      const syncGoogleButton = async () => {
+        if (!googleBtn) return;
+        googleBtn.disabled = true;
+        googleBtn.setAttribute('aria-busy', 'true');
+        try {
+          const payload = await toolAuthFetch('/api/auth/user/google/status');
+          const configured = Boolean(payload?.data?.configured || payload?.data?.data?.configured);
+          googleBtn.disabled = !configured;
+          googleBtn.title = configured ? '' : 'Google-вход ещё не подключён на сервере.';
+        } catch (error) {
+          googleBtn.disabled = true;
+          googleBtn.title = 'Google-вход сейчас недоступен.';
+        } finally {
+          googleBtn.setAttribute('aria-busy', 'false');
         }
       };
 
       const tryVerify = async () => {
+        if (verifyPending) return;
+        verifyPending = true;
+        setButtonBusy(verifyBtn, true, 'Проверяем...');
         try {
           const email = normalizeEmail(emailInput?.value);
           const code = String(codeInput?.value || '').replace(/\D/g, '').trim();
           if (!email || code.length !== 6) {
             setStatus('Введите email и 6-значный код.');
+            setButtonBusy(verifyBtn, false);
+            verifyPending = false;
             return;
           }
+          setStatus('Проверяем код...');
           const payload = await toolAuthFetch('/api/auth/user/verify-code', {
             method: 'POST',
             body: JSON.stringify({ email, code }),
@@ -713,24 +1181,40 @@
           const verified = payload && payload.data ? payload.data : null;
           if (!verified || verified.authenticated === false) {
             setStatus(messages.wrongCode);
+            setButtonBusy(verifyBtn, false);
+            verifyPending = false;
             return;
           }
           writeToolAuthCache({
             authenticated: true,
             email: verified.email || email,
             displayName: verified.displayName || null,
+            avatarUrl: verified.avatarUrl || null,
             authProvider: verified.authProvider || 'email',
             sessionExpiresAt: verified.sessionExpiresAt,
           });
+          syncToolAccountUi(readToolAuthCache());
           setStatus(messages.success);
           close({ authenticated: true, profile: verified });
         } catch (error) {
-          setStatus(error?.message || messages.wrongCode);
+          verifyPending = false;
+          setButtonBusy(verifyBtn, false);
+          if (isRateLimitError(error?.message, error)) {
+            const wait = extractRateLimitWaitSeconds(error) || 60;
+            setStatus(`Слишком много запросов. Попробуйте снова через ${wait} сек.`);
+            startCooldown(wait);
+            return;
+          }
+          const normalized = normalizeAuthErrorMessage(error, messages.wrongCode);
+          setStatus(normalized);
         }
       };
 
       if (requestBtn) requestBtn.addEventListener('click', tryRequestCode, { once: false });
       if (verifyBtn) verifyBtn.addEventListener('click', tryVerify, { once: false });
+      if (googleBtn) googleBtn.addEventListener('click', tryGoogle, { once: false });
+      window.addEventListener('message', onGoogleMessage, { once: false });
+      syncGoogleButton();
       closeButtons.forEach((button) => button.addEventListener('click', close, { once: false }));
       modal.addEventListener('keydown', (event) => {
         if (event.key !== 'Escape') return;
@@ -746,6 +1230,7 @@
 
       const cleanup = () => {
         if (cooldownTimer) clearTimeout(cooldownTimer);
+        window.removeEventListener('message', onGoogleMessage);
       };
 
       modal.addEventListener('remove', cleanup, { once: true });
@@ -772,9 +1257,61 @@
     return false;
   }
 
+  function isGameLink(target) {
+    if (!target || target.tagName !== 'A') return false;
+    const href = target.getAttribute('href');
+    if (!href) return false;
+    try {
+      const url = new URL(href, window.location.href);
+      return url.hostname === 'game.brkovic.ltd';
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function gameReturnPath(target) {
+    const fallback = '/';
+    if (!target || target.tagName !== 'A') return fallback;
+    try {
+      const url = new URL(target.getAttribute('href') || fallback, window.location.href);
+      if (url.hostname !== 'game.brkovic.ltd') return fallback;
+      const path = `${url.pathname || '/'}${url.search || ''}${url.hash || ''}`;
+      return path.startsWith('/') && !path.startsWith('//') ? path : fallback;
+    } catch (error) {
+      return fallback;
+    }
+  }
+
+  async function resolveGameAuthHref(target) {
+    const directHref = target?.getAttribute?.('href') || 'https://game.brkovic.ltd/';
+    const returnTo = gameReturnPath(target);
+
+    try {
+      const payload = await toolAuthFetch(`/api/auth/user/ecosystem-token?returnTo=${encodeURIComponent(returnTo)}`);
+      const data = payload?.data || payload || {};
+      if (typeof data.loginUrl === 'string' && data.loginUrl) return data.loginUrl;
+      if (typeof data.url === 'string' && data.url) return data.url;
+      if (typeof data.token === 'string' && data.token) {
+        const loginUrl = new URL('https://game.brkovic.ltd/api/auth/ecosystem-login.php');
+        loginUrl.searchParams.set('token', data.token);
+        return loginUrl.toString();
+      }
+    } catch (error) {
+      throw new Error('Не удалось подготовить единый вход в обучающие игры. Попробуйте ещё раз.');
+    }
+
+    throw new Error('Сервер не вернул ссылку единого входа в обучающие игры.');
+  }
+
   function isToolActionCandidate(target) {
     if (!target) return false;
     if (target.closest('[data-tool-auth-action]')) {
+      return true;
+    }
+    if (isGameLink(target)) {
+      return true;
+    }
+    if (target.closest('#deliveryCalc, #management-calculator')) {
       return true;
     }
     const id = String(target.id || '').toLowerCase();
@@ -790,10 +1327,20 @@
   }
 
   function bindToolActionAuthGate() {
-    if (!document.querySelector('.navdesk-page')) return;
+    if (!document.querySelector('.navdesk-page, #deliveryCalc, #management-calculator, a[href*="game.brkovic.ltd"]')) return;
+
+    const protectedSelector = [
+      '.navdesk-page button[id]',
+      '.navdesk-page .navdesk-tool-card',
+      '.navdesk-page a[href^="navdesk-"]',
+      '#deliveryCalc button',
+      '#management-calculator button',
+      'a[href*="game.brkovic.ltd"]',
+      '[data-tool-auth-action]',
+    ].join(', ');
 
     document.addEventListener('click', async (event) => {
-      const target = event.target.closest('.navdesk-page button[id], .navdesk-page .navdesk-tool-card, .navdesk-page a[href^="navdesk-"]');
+      const target = event.target.closest(protectedSelector);
       if (!target) return;
       if (target.dataset && target.dataset.toolAuthReplay === '1') {
         delete target.dataset.toolAuthReplay;
@@ -808,7 +1355,9 @@
 
         target.dataset.toolAuthReplay = '1';
         if (target.tagName === 'A') {
-          const href = target.getAttribute('href');
+          const href = isGameLink(target)
+            ? await resolveGameAuthHref(target)
+            : target.getAttribute('href');
           if (href) window.location.href = href;
           return;
         }
@@ -822,8 +1371,30 @@
         if (existingPrompt) {
           const statusEl = existingPrompt.querySelector('[data-tool-auth-status]');
           if (statusEl) statusEl.textContent = fallback;
+        } else if (typeof window.alert === 'function') {
+          window.alert(fallback);
         }
       }
+    }, { capture: true });
+
+    document.addEventListener('focusin', async (event) => {
+      const target = event.target.closest?.('#deliveryCalc input, #deliveryCalc select, #deliveryCalc textarea, #management-calculator input, #management-calculator select, #management-calculator textarea');
+      if (!target || !isToolActionCandidate(target)) return;
+      if (target.dataset && target.dataset.toolAuthFocusReplay === '1') {
+        delete target.dataset.toolAuthFocusReplay;
+        return;
+      }
+
+      const cached = readToolAuthCache();
+      if (cached && cached.authenticated) return;
+
+      target.blur();
+      try {
+        const allowed = await ensureToolAccess();
+        if (!allowed || !target.isConnected) return;
+        target.dataset.toolAuthFocusReplay = '1';
+        setTimeout(() => target.focus(), 10);
+      } catch (error) {}
     }, { capture: true });
   }
 
@@ -832,6 +1403,7 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     setupSiteMenu();
+    fetchToolAuthStatus().catch(() => syncToolAccountUi(readToolAuthCache()));
     applyContactLinks();
     setupCvTriggers();
     setupServiceRequestFromUrl();

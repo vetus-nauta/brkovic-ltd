@@ -5,11 +5,11 @@
   const LANGUAGE_OPTIONS = Object.freeze([
     Object.freeze({ code: "en", name: "English", isDefault: true, isPrimary: true, isAvailable: true }),
     Object.freeze({ code: "ru", name: "Русский", isAvailable: true }),
-    Object.freeze({ code: "de", name: "Deutsch", isAvailable: false }),
-    Object.freeze({ code: "it", name: "Italiano", isAvailable: false }),
-    Object.freeze({ code: "es", name: "Español", isAvailable: false }),
-    Object.freeze({ code: "sr", name: "Srpski / crnogorski / hrvatski", isAvailable: false }),
-    Object.freeze({ code: "zh", name: "中文 / Mandarin", isAvailable: false })
+    Object.freeze({ code: "de", name: "Deutsch", isAvailable: true }),
+    Object.freeze({ code: "it", name: "Italiano", isAvailable: true }),
+    Object.freeze({ code: "es", name: "Español", isAvailable: true }),
+    Object.freeze({ code: "sr", name: "Srpski / crnogorski / hrvatski", isAvailable: true }),
+    Object.freeze({ code: "zh", name: "中文 / Mandarin", isAvailable: true })
   ]);
   const SUPPORTED_LANGS = Object.freeze(LANGUAGE_OPTIONS
     .filter((option) => option.isAvailable !== false)

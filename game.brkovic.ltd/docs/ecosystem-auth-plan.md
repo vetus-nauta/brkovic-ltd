@@ -2,6 +2,14 @@
 
 Goal: a user registered on `brkovic.ltd` should automatically be usable on `game.brkovic.ltd`. The game app must not create a separate account silo.
 
+Mandatory guardrail for future game chats and builds:
+
+```text
+game.brkovic.ltd/docs/ecosystem-auth-guardrail.md
+```
+
+Do not remove or bypass the shared SSO bridge. Email-code login inside the game domain is a fallback for direct visits, not the primary ecosystem path.
+
 ## Future Flow
 
 1. User logs in or registers on `brkovic.ltd`.
@@ -54,4 +62,3 @@ Enable it only after `brkovic.ltd` has real account registration/login and both 
 ## Why Not Share One Cookie
 
 Browsers can share cookies across subdomains only when the cookie domain is set to `.brkovic.ltd`, but this couples session security and logout behavior across apps. A signed short-lived SSO token keeps `brkovic.ltd` as the account owner while allowing `game.brkovic.ltd` to maintain a separate app session and game progress.
-

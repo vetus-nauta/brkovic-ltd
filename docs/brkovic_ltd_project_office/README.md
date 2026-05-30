@@ -10,6 +10,7 @@
 Every office chat must read these files before acting:
 
 ```text
+docs/brkovic_ltd_project_office/cabinets/director/new-chat-prompt.md
 game.brkovic.ltd/docs/game-director/mandatory-chat-operating-rules.md
 game.brkovic.ltd/docs/game-director/chat-reporting-rules.md
 docs/brkovic_ltd_project_office/office-discipline.md

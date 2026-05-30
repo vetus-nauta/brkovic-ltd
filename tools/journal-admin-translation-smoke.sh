@@ -4,17 +4,33 @@ set -euo pipefail
 HOST="${JOURNAL_API_HOST:-https://brkovic.ltd}"
 API_BASE="${JOURNAL_API_BASE:-/api}"
 SKIP_AUTH="${JOURNAL_SMOKE_SKIP_AUTH:-0}"
+TRIGGER_SMOKE="${JOURNAL_SMOKE_TRIGGER_GENERATION:-0}"
+TEST_LANGS="${JOURNAL_SMOKE_LANGS:-en,de,it,es,sr,zh}"
 POST_ID="${JOURNAL_TEST_POST_ID:-00000000-0000-0000-0000-000000000000}"
 COLLECTION_ID="${JOURNAL_TEST_COLLECTION_ID:-11111111-1111-1111-1111-111111111111}"
 
-ADMIN_EMAIL="${BRK_ADMIN_EMAIL:-${1:-}}"
+ADMIN_EMAIL="${BRK_ADMIN_EMAIL:-}"
 ADMIN_PASSWORD="${BRK_ADMIN_PASSWORD:-}"
-if [[ "${2:-}" == "--skip-auth" || "${2:-}" == "skip-auth" ]]; then
-  SKIP_AUTH=1
-fi
 
-if [[ -z "${1:-}" && -n "${BRK_ADMIN_EMAIL:-}" ]]; then
-  ADMIN_EMAIL="${BRK_ADMIN_EMAIL}"
+for arg in "$@"; do
+  if [[ "$arg" == "--skip-auth" || "$arg" == "skip-auth" ]]; then
+    SKIP_AUTH=1
+  fi
+done
+
+NON_FLAG_ARGS=()
+for arg in "$@"; do
+  if [[ "$arg" == --skip-auth || "$arg" == skip-auth ]]; then
+    continue
+  fi
+  NON_FLAG_ARGS+=("$arg")
+done
+
+if [[ -n "${NON_FLAG_ARGS[0]:-}" ]]; then
+  ADMIN_EMAIL="${NON_FLAG_ARGS[0]}"
+fi
+if [[ -n "${NON_FLAG_ARGS[1]:-}" ]]; then
+  ADMIN_PASSWORD="${NON_FLAG_ARGS[1]}"
 fi
 
 TMP_COOKIE="$(mktemp)"
@@ -25,33 +41,30 @@ cleanup() {
 }
 trap cleanup EXIT
 
-if [[ -z "$ADMIN_PASSWORD" ]]; then
-  if [[ "$SKIP_AUTH" == "1" ]]; then
-    :
-  else
-    echo "Не передан пароль админа (BRK_ADMIN_PASSWORD / argv[2]). Укажите либо BRK_ADMIN_EMAIL + BRK_ADMIN_PASSWORD, либо запустите с флагом --skip-auth."
+log() {
+  printf '[%s] %s\n' "$(date -Iseconds)" "$*"
+}
+
+if [[ "$SKIP_AUTH" == "1" ]]; then
+  if [[ -z "$ADMIN_EMAIL" && -z "$ADMIN_PASSWORD" ]]; then
+    log "Режим без авторизации в smoke: проверка только анонимного доступа."
+  elif [[ -z "$ADMIN_PASSWORD" || -z "$ADMIN_EMAIL" ]]; then
+    echo "В режиме --skip-auth email/password не обязательны; если пароль не нужен, удалите оба BRK_ADMIN_* или передайте оба для авторизованной проверки." >&2
+  fi
+else
+  if [[ -z "$ADMIN_EMAIL" ]]; then
+    echo "Не указан email (BRK_ADMIN_EMAIL или argv[1])." >&2
     exit 1
   fi
-fi
-
-if [[ -z "$ADMIN_PASSWORD" ]]; then
-  if [[ "$SKIP_AUTH" == "1" ]]; then
-    log "Режим без авторизации в smoke: проверка только анонимного доступа."
+  if [[ -z "$ADMIN_PASSWORD" ]]; then
+    echo "Не передан пароль админа (BRK_ADMIN_PASSWORD / argv[2]). Укажите email и пароль без --skip-auth." >&2
+    exit 1
   fi
-fi
-
-if [[ -z "$ADMIN_EMAIL" ]]; then
-  echo "Не указан email (BRK_ADMIN_EMAIL или argv[1])." >&2
-  exit 1
 fi
 
 api_url() {
   local path=$1
   printf '%s%s%s' "$HOST" "$API_BASE" "$path"
-}
-
-log() {
-  printf '[%s] %s\n' "$(date -Iseconds)" "$*"
 }
 
 request() {
@@ -119,6 +132,8 @@ check_path() {
 
 log "HOST=${HOST}"
 log "API_BASE=${API_BASE}"
+log "TEST_LANGS=${TEST_LANGS}"
+log "TRIGGER_SMOKE=${TRIGGER_SMOKE}"
 log "POST_ID=${POST_ID}"
 log "COLLECTION_ID=${COLLECTION_ID}"
 
@@ -169,6 +184,33 @@ fi
 
 if ! check_path POST "/admin/journal-collections/$COLLECTION_ID/translations/generate" '{"sourceLanguage":"ru","targetLanguages":["en"],"includeSeo":true,"includeMedia":true}' "200,201,400,404" "auth collection translation generate" \
   && ! check_path POST "/admin/journal-collections/$COLLECTION_ID/translations/generate" '{"sourceLanguage":"ru","targetLanguages":["en"],"includeSeo":true,"includeMedia":true}' "200,201,400,404" "auth collection translation generate retry"; then
+  exit 1
+fi
+
+if [[ "$TRIGGER_SMOKE" == "1" ]]; then
+  log "Stage 4: localized generation smoke (по языкам TEST_LANGS)"
+  target_json="$(echo "$TEST_LANGS" | awk -v q='\"' '{
+    n = split($0, a, ",");
+    out = "";
+    for (i = 1; i <= n; i++) {
+      if (a[i] == "") continue;
+      if (out != "") out = out ","
+      out = out "\"" a[i] "\"";
+    }
+    print "[" out "]";
+  }')"
+  payload="{\"sourceLanguage\":\"ru\",\"targetLanguages\":$target_json,\"includeSeo\":true,\"includeMedia\":true}"
+
+  if ! check_path POST "/admin/posts/$POST_ID/translations/generate" "$payload" "200,201,400" "auth post translation generate multi-lang"; then
+    FAILED=1
+  fi
+  if ! check_path POST "/admin/journal-collections/$COLLECTION_ID/translations/generate" "$payload" "200,201,400" "auth collection translation generate multi-lang"; then
+    FAILED=1
+  fi
+fi
+
+if [[ "$FAILED" -ne 0 ]]; then
+  log "Authenticated smoke completed with failures."
   exit 1
 fi
 

@@ -620,12 +620,28 @@
     width: auto !important;
     margin: 0 !important;
     justify-content: flex-end !important;
+    gap: 8px !important;
   }
 
   .site-menu-button {
     min-width: 48px;
     min-height: 48px;
     padding: 0 13px;
+  }
+
+  .tool-account-button {
+    width: 42px;
+    height: 42px;
+  }
+
+  .tool-account-button__avatar {
+    width: 32px;
+    height: 32px;
+    font-size: .86rem;
+  }
+
+  .topbar.topbar--tool-account-active .instagram-link {
+    display: none;
   }
 
   .site-menu-button > span:last-child {

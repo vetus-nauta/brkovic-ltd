@@ -18,6 +18,7 @@ Then read:
 ```text
 game.brkovic.ltd/docs/game-director/mandatory-chat-operating-rules.md
 game.brkovic.ltd/docs/game-director/chat-reporting-rules.md
+docs/brkovic_ltd_project_office/cabinets/director/new-chat-prompt.md
 docs/brkovic_ltd_project_office/README.md
 docs/brkovic_ltd_project_office/chat-registry.md
 docs/brkovic_ltd_project_office/task-registry.md

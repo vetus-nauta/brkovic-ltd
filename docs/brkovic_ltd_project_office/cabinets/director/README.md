@@ -25,6 +25,7 @@
 Read:
 
 ```text
+docs/brkovic_ltd_project_office/cabinets/director/new-chat-prompt.md
 docs/brkovic_ltd_project_office/README.md
 docs/brkovic_ltd_project_office/office-discipline.md
 docs/brkovic_ltd_project_office/chat-registry.md

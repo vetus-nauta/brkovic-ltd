@@ -175,3 +175,24 @@ TOOL_AUTH_MAX_ATTEMPTS=10 TOOL_AUTH_INTERVAL_SECONDS=60 tools/wait-for-tool-auth
 ## Вывод
 
 `BRK-MVP-QAUX-013` теперь можно считать `In Review` на технической готовности API и готовым к единичному UX-окну по сценариям desktop/tablet/mobile с валидным `TEST_EMAIL/TEST_CODE`.
+
+### Recheck 2026-05-29 23:42:20 CEST (final route-hardening check)
+
+- `tools/tool-auth-gate-smoke.sh` (`TOOL_AUTH_TEST_EMAIL=vetus.nauta@gmail.com`) — **PASS**:
+  - `GET /api/auth/user/me` → **200** (`authenticated:false`)
+  - `POST /api/auth/user/request-code` → **201**
+  - `POST /api/auth/user/logout` → **201**
+  - `verify` не запускался (нет валидного `TEST_CODE`/`TEST_EMAIL`/временного кода).
+- `POST /api/auth/user/verify-code` при подстановке тестового кода:
+  - `401 CODE_EXPIRED` для истекшего кода,
+  - `400` при нарушении маски `^\d{6}$`.
+
+Текущее итоговое состояние:
+- `BRK-MVP-BE-007` — gate по route-доступности закрыт.
+- `BRK-MVP-QAUX-013` — **технически готов**, ожидает один разовый сквозной UX-прогон в браузере:
+  1) `desktop` → `tablet` → `mobile`,
+  2) клик на tool-card/кнопку -> открытие auth modal,
+  3) закрытие по `Esc`/backdrop,
+  4) request-code + verify через живой код.
+
+Без последнего пункта сценария задача остаётся `In Review` как контрольное "human-in-the-loop" завершение.
