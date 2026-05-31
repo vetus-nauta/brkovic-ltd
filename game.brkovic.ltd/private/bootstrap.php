@@ -74,9 +74,814 @@ function storage_mutate(string $name, array $default, callable $callback): mixed
     }
     try {
         flock($lock, LOCK_EX);
-        $data = storage_load_unlocked($name, $default);
+        $data = storage_source_for_mutation($name, $default);
         $result = $callback($data);
-        storage_write_unlocked($name, $data);
+        storage_persist_after_mutation($name, $data);
+        return $result;
+    } finally {
+        flock($lock, LOCK_UN);
+        fclose($lock);
+    }
+}
+
+function storage_source_for_mutation(string $name, array $default): array {
+    if (!atlas_primary_write_store_enabled($name)) {
+        return storage_load_unlocked($name, $default);
+    }
+
+    return match ($name) {
+        'progress' => progress_store(),
+        'weak_points' => weak_points_store(),
+        'watch_sessions' => watch_sessions_store(),
+        'captain_answer_logs' => function_exists('captain_answer_logs_store')
+            ? captain_answer_logs_store()
+            : storage_load_unlocked($name, $default),
+        default => storage_load_unlocked($name, $default),
+    };
+}
+
+function storage_persist_after_mutation(string $name, array $data): void {
+    if (atlas_primary_write_store_enabled($name)) {
+        if (atlas_primary_write_sync_store($name, $data)) {
+            if (atlas_primary_write_json_shadow_enabled()) {
+                storage_write_unlocked($name, $data);
+            }
+            return;
+        }
+    }
+
+    storage_write_unlocked($name, $data);
+    atlas_mirror_sync_store($name, $data);
+}
+
+function atlas_mirror_config(): array {
+    $config = app_config('atlas_mirror', []);
+    return is_array($config) ? $config : [];
+}
+
+function atlas_mirror_enabled(): bool {
+    return !empty(atlas_mirror_config()['enabled']);
+}
+
+function atlas_mirror_store_plan(string $name, array $data): ?array {
+    $mirroredAt = iso_time();
+    return match ($name) {
+        'watch_sessions' => [
+            'collection' => 'watch_sessions',
+            'documents' => atlas_mirror_watch_session_documents($data, $mirroredAt),
+        ],
+        'progress' => [
+            'collection' => 'progress',
+            'documents' => atlas_mirror_progress_documents($data, $mirroredAt),
+        ],
+        'weak_points' => [
+            'collection' => 'weak_points',
+            'documents' => atlas_mirror_weak_point_documents($data, $mirroredAt),
+        ],
+        'captain_answer_logs' => [
+            'collection' => 'answer_logs',
+            'documents' => array_values(array_map(
+                static function (array $entry) use ($mirroredAt): array {
+                    $id = (string) ($entry['id'] ?? '');
+                    return ['_id' => $id] + $entry + ['mirrored_at' => $mirroredAt];
+                },
+                array_filter($data['entries'] ?? [], 'is_array')
+            )),
+        ],
+        default => null,
+    };
+}
+
+function atlas_mirror_watch_session_documents(array $data, string $mirroredAt): array {
+    $documents = [];
+    foreach ($data['sessions'] ?? [] as $session) {
+        if (!is_array($session)) continue;
+        $id = (string) ($session['id'] ?? '');
+        $documents[] = ['_id' => $id, 'session_id' => $id] + $session + ['mirrored_at' => $mirroredAt];
+    }
+    return $documents;
+}
+
+function atlas_mirror_progress_documents(array $data, string $mirroredAt): array {
+    $documents = [];
+    foreach ($data['users'] ?? [] as $userId => $progress) {
+        if (!is_array($progress)) continue;
+        $userId = (string) $userId;
+        $documents[] = ['_id' => $userId, 'user_id' => $userId] + $progress + ['mirrored_at' => $mirroredAt];
+    }
+    return $documents;
+}
+
+function atlas_mirror_weak_point_documents(array $data, string $mirroredAt): array {
+    $documents = [];
+    foreach ($data['users'] ?? [] as $userId => $points) {
+        if (!is_array($points)) continue;
+        foreach ($points as $itemId => $point) {
+            if (!is_array($point)) continue;
+            $userId = (string) $userId;
+            $resolvedItemId = (string) ($point['item_id'] ?? $itemId);
+            $documents[] = ['_id' => $userId . ':' . $resolvedItemId, 'user_id' => $userId, 'item_id' => $resolvedItemId]
+                + $point
+                + ['mirrored_at' => $mirroredAt];
+        }
+    }
+    return $documents;
+}
+
+function atlas_mirror_uri(array $config): string {
+    $uri = trim((string) ($config['uri'] ?? ''));
+    if ($uri !== '') return $uri;
+    $envName = trim((string) ($config['uri_env'] ?? ''));
+    if ($envName === '') return '';
+    return trim((string) getenv($envName));
+}
+
+function atlas_mirror_clean_name(string $value): string {
+    return preg_replace('/[^a-z0-9_.-]/i', '', trim($value)) ?? '';
+}
+
+function atlas_mirror_sync_store(string $name, array $data): void {
+    if (!atlas_mirror_enabled()) return;
+    $plan = atlas_mirror_store_plan($name, $data);
+    if ($plan === null) return;
+
+    $config = atlas_mirror_config();
+    $uri = atlas_mirror_uri($config);
+    $driverPath = trim((string) ($config['driver_path'] ?? ''));
+    $nodeBin = trim((string) ($config['node_bin'] ?? 'node'));
+    $database = atlas_mirror_clean_name((string) ($config['database'] ?? 'captain_ether'));
+    $timeoutMs = max(1000, (int) ($config['timeout_ms'] ?? 15000));
+
+    if ($uri === '' || $driverPath === '' || $nodeBin === '' || $database === '') {
+        atlas_mirror_log('config_error', $name, [
+            'collection' => $plan['collection'],
+            'message' => 'Atlas mirror configuration is incomplete.',
+        ]);
+        return;
+    }
+
+    $encoded = json_encode($plan['documents'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    if ($encoded === false) {
+        atlas_mirror_log('encode_error', $name, [
+            'collection' => $plan['collection'],
+            'message' => 'Could not encode Atlas mirror documents.',
+        ]);
+        return;
+    }
+
+    $command = escapeshellarg($nodeBin) . ' -e ' . escapeshellarg(atlas_mirror_node_script());
+    $descriptors = [
+        0 => ['pipe', 'r'],
+        1 => ['pipe', 'w'],
+        2 => ['pipe', 'w'],
+    ];
+    $environment = array_merge($_ENV, [
+        'ATLAS_MIRROR_URI' => $uri,
+        'ATLAS_MIRROR_DRIVER_PATH' => $driverPath,
+        'ATLAS_MIRROR_DATABASE' => $database,
+        'ATLAS_MIRROR_COLLECTION' => atlas_mirror_clean_name((string) $plan['collection']),
+        'ATLAS_MIRROR_TIMEOUT_MS' => (string) $timeoutMs,
+    ]);
+
+    $process = @proc_open($command, $descriptors, $pipes, APP_ROOT, $environment);
+    if (!is_resource($process)) {
+        atlas_mirror_log('process_error', $name, [
+            'collection' => $plan['collection'],
+            'message' => 'Could not start Atlas mirror process.',
+        ]);
+        return;
+    }
+
+    try {
+        fwrite($pipes[0], $encoded);
+        fclose($pipes[0]);
+        $stdout = stream_get_contents($pipes[1]);
+        fclose($pipes[1]);
+        $stderr = stream_get_contents($pipes[2]);
+        fclose($pipes[2]);
+        $exitCode = proc_close($process);
+        if ($exitCode !== 0) {
+            atlas_mirror_log('sync_error', $name, [
+                'collection' => $plan['collection'],
+                'exit_code' => $exitCode,
+                'stdout' => atlas_mirror_truncate((string) $stdout),
+                'stderr' => atlas_mirror_truncate((string) $stderr),
+            ]);
+        }
+    } catch (Throwable $error) {
+        foreach ($pipes as $pipe) {
+            if (is_resource($pipe)) fclose($pipe);
+        }
+        proc_terminate($process);
+        proc_close($process);
+        atlas_mirror_log('runtime_error', $name, [
+            'collection' => $plan['collection'],
+            'message' => $error->getMessage(),
+        ]);
+    }
+}
+
+function atlas_mirror_log(string $type, string $store, array $context): void {
+    $config = atlas_mirror_config();
+    $path = (string) ($config['error_log'] ?? (STORAGE_DIR . '/atlas-mirror-error.log'));
+    $payload = [
+        'time' => iso_time(),
+        'type' => $type,
+        'store' => $store,
+        'context' => $context,
+    ];
+    @file_put_contents(
+        $path,
+        json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL,
+        FILE_APPEND | LOCK_EX
+    );
+}
+
+function atlas_mirror_truncate(string $value, int $limit = 2000): string {
+    if (strlen($value) <= $limit) return $value;
+    return substr($value, 0, $limit) . '...';
+}
+
+function atlas_mirror_node_script(): string {
+    return <<<'JS'
+const fs = require('fs');
+
+const docs = JSON.parse(fs.readFileSync(0, 'utf8') || '[]');
+const driverPath = process.env.ATLAS_MIRROR_DRIVER_PATH || '';
+const uri = process.env.ATLAS_MIRROR_URI || '';
+const database = process.env.ATLAS_MIRROR_DATABASE || '';
+const collection = process.env.ATLAS_MIRROR_COLLECTION || '';
+const timeoutMs = Number(process.env.ATLAS_MIRROR_TIMEOUT_MS || '15000');
+
+if (!driverPath || !uri || !database || !collection) {
+  throw new Error('Atlas mirror environment is incomplete.');
+}
+
+const { MongoClient } = require(driverPath);
+
+(async () => {
+  const client = new MongoClient(uri, { serverSelectionTimeoutMS: timeoutMs });
+  await client.connect();
+  try {
+    const target = client.db(database).collection(collection);
+    await target.deleteMany({});
+    if (docs.length > 0) {
+      await target.insertMany(docs, { ordered: true });
+    }
+    process.stdout.write(JSON.stringify({ ok: true, count: docs.length }));
+  } finally {
+    await client.close();
+  }
+})().catch((error) => {
+  process.stderr.write(error && error.stack ? error.stack : String(error));
+  process.exit(1);
+});
+JS;
+}
+
+function atlas_runtime_store_key(string $name): string {
+    return match ($name) {
+        'captain_answer_logs' => 'answer_logs',
+        default => $name,
+    };
+}
+
+function atlas_primary_write_config(): array {
+    $config = app_config('atlas_primary_write', []);
+    return is_array($config) ? $config : [];
+}
+
+function atlas_primary_write_enabled(): bool {
+    return !empty(atlas_primary_write_config()['enabled']);
+}
+
+function atlas_primary_write_store_enabled(string $name): bool {
+    if (!atlas_primary_write_enabled()) return false;
+    $config = atlas_primary_write_config();
+    $key = atlas_runtime_store_key($name);
+    return !empty($config[$key . '_enabled']);
+}
+
+function atlas_primary_write_json_shadow_enabled(): bool {
+    if (!atlas_primary_write_enabled()) return true;
+    $config = atlas_primary_write_config();
+    return !array_key_exists('json_shadow_enabled', $config) || !empty($config['json_shadow_enabled']);
+}
+
+function atlas_primary_write_uri(array $config): string {
+    $uri = trim((string) ($config['uri'] ?? ''));
+    if ($uri !== '') return $uri;
+    $envName = trim((string) ($config['uri_env'] ?? ''));
+    if ($envName !== '') {
+        $value = trim((string) getenv($envName));
+        if ($value !== '') return $value;
+    }
+    return atlas_live_read_uri(atlas_live_read_config());
+}
+
+function atlas_primary_write_sync_store(string $name, array $data): bool {
+    $plan = atlas_mirror_store_plan($name, $data);
+    if ($plan === null) return false;
+
+    $config = atlas_primary_write_config();
+    $uri = atlas_primary_write_uri($config);
+    $driverPath = trim((string) ($config['driver_path'] ?? ''));
+    $nodeBin = trim((string) ($config['node_bin'] ?? 'node'));
+    $database = atlas_mirror_clean_name((string) ($config['database'] ?? 'captain_ether'));
+    $timeoutMs = max(1000, (int) ($config['timeout_ms'] ?? 15000));
+
+    if ($uri === '' || $driverPath === '' || $nodeBin === '' || $database === '') {
+        atlas_primary_write_log('config_error', $name, [
+            'collection' => $plan['collection'],
+            'message' => 'Atlas primary-write configuration is incomplete.',
+        ]);
+        return false;
+    }
+
+    $encoded = json_encode($plan['documents'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    if ($encoded === false) {
+        atlas_primary_write_log('encode_error', $name, [
+            'collection' => $plan['collection'],
+            'message' => 'Could not encode Atlas primary-write documents.',
+        ]);
+        return false;
+    }
+
+    $command = escapeshellarg($nodeBin) . ' -e ' . escapeshellarg(atlas_primary_write_node_script());
+    $descriptors = [
+        0 => ['pipe', 'r'],
+        1 => ['pipe', 'w'],
+        2 => ['pipe', 'w'],
+    ];
+    $environment = array_merge($_ENV, [
+        'ATLAS_PRIMARY_WRITE_URI' => $uri,
+        'ATLAS_PRIMARY_WRITE_DRIVER_PATH' => $driverPath,
+        'ATLAS_PRIMARY_WRITE_DATABASE' => $database,
+        'ATLAS_PRIMARY_WRITE_COLLECTION' => atlas_mirror_clean_name((string) $plan['collection']),
+        'ATLAS_PRIMARY_WRITE_TIMEOUT_MS' => (string) $timeoutMs,
+    ]);
+
+    $process = @proc_open($command, $descriptors, $pipes, APP_ROOT, $environment);
+    if (!is_resource($process)) {
+        atlas_primary_write_log('process_error', $name, [
+            'collection' => $plan['collection'],
+            'message' => 'Could not start Atlas primary-write process.',
+        ]);
+        return false;
+    }
+
+    try {
+        fwrite($pipes[0], $encoded);
+        fclose($pipes[0]);
+        $stdout = stream_get_contents($pipes[1]);
+        fclose($pipes[1]);
+        $stderr = stream_get_contents($pipes[2]);
+        fclose($pipes[2]);
+        $exitCode = proc_close($process);
+        if ($exitCode !== 0) {
+            atlas_primary_write_log('sync_error', $name, [
+                'collection' => $plan['collection'],
+                'exit_code' => $exitCode,
+                'stdout' => atlas_mirror_truncate((string) $stdout),
+                'stderr' => atlas_mirror_truncate((string) $stderr),
+            ]);
+            return false;
+        }
+
+        return true;
+    } catch (Throwable $error) {
+        foreach ($pipes as $pipe) {
+            if (is_resource($pipe)) fclose($pipe);
+        }
+        proc_terminate($process);
+        proc_close($process);
+        atlas_primary_write_log('runtime_error', $name, [
+            'collection' => $plan['collection'],
+            'message' => $error->getMessage(),
+        ]);
+        return false;
+    }
+}
+
+function atlas_primary_write_log(string $type, string $store, array $context): void {
+    $config = atlas_primary_write_config();
+    $path = (string) ($config['error_log'] ?? (STORAGE_DIR . '/atlas-primary-write-error.log'));
+    $payload = [
+        'time' => iso_time(),
+        'type' => $type,
+        'store' => $store,
+        'context' => $context,
+    ];
+    @file_put_contents(
+        $path,
+        json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL,
+        FILE_APPEND | LOCK_EX
+    );
+}
+
+function atlas_primary_write_node_script(): string {
+    return <<<'JS'
+const fs = require('fs');
+
+const docs = JSON.parse(fs.readFileSync(0, 'utf8') || '[]');
+const driverPath = process.env.ATLAS_PRIMARY_WRITE_DRIVER_PATH || '';
+const uri = process.env.ATLAS_PRIMARY_WRITE_URI || '';
+const database = process.env.ATLAS_PRIMARY_WRITE_DATABASE || '';
+const collection = process.env.ATLAS_PRIMARY_WRITE_COLLECTION || '';
+const timeoutMs = Number(process.env.ATLAS_PRIMARY_WRITE_TIMEOUT_MS || '15000');
+
+if (!driverPath || !uri || !database || !collection) {
+  throw new Error('Atlas primary-write environment is incomplete.');
+}
+
+const { MongoClient } = require(driverPath);
+
+(async () => {
+  const client = new MongoClient(uri, { serverSelectionTimeoutMS: timeoutMs });
+  await client.connect();
+  try {
+    const target = client.db(database).collection(collection);
+    await target.deleteMany({});
+    if (docs.length > 0) {
+      await target.insertMany(docs, { ordered: true });
+    }
+    process.stdout.write(JSON.stringify({ ok: true, count: docs.length }));
+  } finally {
+    await client.close();
+  }
+})().catch((error) => {
+  process.stderr.write(error && error.stack ? error.stack : String(error));
+  process.exit(1);
+});
+JS;
+}
+
+function atlas_live_read_config(): array {
+    $config = app_config('atlas_live_read', []);
+    return is_array($config) ? $config : [];
+}
+
+function atlas_live_read_enabled(): bool {
+    return !empty(atlas_live_read_config()['enabled']);
+}
+
+function atlas_live_read_store_enabled(string $store): bool {
+    if (!atlas_live_read_enabled()) return false;
+    $config = atlas_live_read_config();
+    return !empty($config[$store . '_enabled']);
+}
+
+function atlas_live_read_uri(array $config): string {
+    $uri = trim((string) ($config['uri'] ?? ''));
+    if ($uri !== '') return $uri;
+    $envName = trim((string) ($config['uri_env'] ?? ''));
+    if ($envName !== '') {
+        $value = trim((string) getenv($envName));
+        if ($value !== '') return $value;
+    }
+    $primaryConfig = atlas_primary_write_config();
+    $primaryUri = trim((string) ($primaryConfig['uri'] ?? ''));
+    if ($primaryUri !== '') return $primaryUri;
+    $primaryEnvName = trim((string) ($primaryConfig['uri_env'] ?? ''));
+    if ($primaryEnvName !== '') {
+        $primaryEnvValue = trim((string) getenv($primaryEnvName));
+        if ($primaryEnvValue !== '') return $primaryEnvValue;
+    }
+    return atlas_mirror_uri(atlas_mirror_config());
+}
+
+function atlas_live_read_collection_documents(string $collection): ?array {
+    $config = atlas_live_read_config();
+    $primaryConfig = atlas_primary_write_config();
+    $uri = atlas_live_read_uri($config);
+    $driverPath = trim((string) ($config['driver_path'] ?? ($primaryConfig['driver_path'] ?? '')));
+    $nodeBin = trim((string) ($config['node_bin'] ?? ($primaryConfig['node_bin'] ?? 'node')));
+    $database = atlas_mirror_clean_name((string) ($config['database'] ?? ($primaryConfig['database'] ?? 'captain_ether')));
+    $timeoutMs = max(1000, (int) ($config['timeout_ms'] ?? 15000));
+    $collection = atlas_mirror_clean_name($collection);
+
+    if ($uri === '' || $driverPath === '' || $nodeBin === '' || $database === '' || $collection === '') {
+        atlas_live_read_log('config_error', $collection, ['message' => 'Atlas live-read configuration is incomplete.']);
+        return null;
+    }
+
+    $command = escapeshellarg($nodeBin) . ' -e ' . escapeshellarg(atlas_live_read_node_script());
+    $descriptors = [
+        0 => ['pipe', 'r'],
+        1 => ['pipe', 'w'],
+        2 => ['pipe', 'w'],
+    ];
+    $environment = array_merge($_ENV, [
+        'ATLAS_LIVE_READ_URI' => $uri,
+        'ATLAS_LIVE_READ_DRIVER_PATH' => $driverPath,
+        'ATLAS_LIVE_READ_DATABASE' => $database,
+        'ATLAS_LIVE_READ_COLLECTION' => $collection,
+        'ATLAS_LIVE_READ_TIMEOUT_MS' => (string) $timeoutMs,
+    ]);
+
+    $process = @proc_open($command, $descriptors, $pipes, APP_ROOT, $environment);
+    if (!is_resource($process)) {
+        atlas_live_read_log('process_error', $collection, ['message' => 'Could not start Atlas live-read process.']);
+        return null;
+    }
+
+    try {
+        fclose($pipes[0]);
+        $stdout = stream_get_contents($pipes[1]);
+        fclose($pipes[1]);
+        $stderr = stream_get_contents($pipes[2]);
+        fclose($pipes[2]);
+        $exitCode = proc_close($process);
+        if ($exitCode !== 0) {
+            atlas_live_read_log('read_error', $collection, [
+                'exit_code' => $exitCode,
+                'stdout' => atlas_mirror_truncate((string) $stdout),
+                'stderr' => atlas_mirror_truncate((string) $stderr),
+            ]);
+            return null;
+        }
+
+        $payload = json_decode((string) $stdout, true);
+        if (!is_array($payload) || !is_array($payload['documents'] ?? null)) {
+            atlas_live_read_log('decode_error', $collection, ['stdout' => atlas_mirror_truncate((string) $stdout)]);
+            return null;
+        }
+        return $payload['documents'];
+    } catch (Throwable $error) {
+        foreach ($pipes as $pipe) {
+            if (is_resource($pipe)) fclose($pipe);
+        }
+        proc_terminate($process);
+        proc_close($process);
+        atlas_live_read_log('runtime_error', $collection, ['message' => $error->getMessage()]);
+        return null;
+    }
+}
+
+function atlas_live_read_log(string $type, string $collection, array $context): void {
+    $config = atlas_live_read_config();
+    $path = (string) ($config['error_log'] ?? (STORAGE_DIR . '/atlas-live-read-error.log'));
+    $payload = [
+        'time' => iso_time(),
+        'type' => $type,
+        'collection' => $collection,
+        'context' => $context,
+    ];
+    @file_put_contents(
+        $path,
+        json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL,
+        FILE_APPEND | LOCK_EX
+    );
+}
+
+function atlas_live_read_node_script(): string {
+    return <<<'JS'
+const driverPath = process.env.ATLAS_LIVE_READ_DRIVER_PATH || '';
+const uri = process.env.ATLAS_LIVE_READ_URI || '';
+const database = process.env.ATLAS_LIVE_READ_DATABASE || '';
+const collection = process.env.ATLAS_LIVE_READ_COLLECTION || '';
+const timeoutMs = Number(process.env.ATLAS_LIVE_READ_TIMEOUT_MS || '15000');
+
+if (!driverPath || !uri || !database || !collection) {
+  throw new Error('Atlas live-read environment is incomplete.');
+}
+
+const { MongoClient } = require(driverPath);
+
+(async () => {
+  const client = new MongoClient(uri, { serverSelectionTimeoutMS: timeoutMs });
+  await client.connect();
+  try {
+    const documents = await client.db(database).collection(collection).find({}).sort({ $natural: 1 }).toArray();
+    process.stdout.write(JSON.stringify({ ok: true, documents }));
+  } finally {
+    await client.close();
+  }
+})().catch((error) => {
+  process.stderr.write(error && error.stack ? error.stack : String(error));
+  process.exit(1);
+});
+JS;
+}
+
+function progress_live_read_enabled(): bool {
+    return atlas_primary_write_store_enabled('progress') || atlas_live_read_store_enabled('progress');
+}
+
+function progress_store(): array {
+    $jsonStore = storage_read('progress', progress_default());
+    if (!progress_live_read_enabled()) {
+        return $jsonStore;
+    }
+
+    $mongoDocuments = atlas_live_read_collection_documents('progress');
+    if ($mongoDocuments === null) {
+        return $jsonStore;
+    }
+
+    $mongoStore = progress_mongo_store($mongoDocuments);
+    if (!progress_parity_ok($jsonStore, $mongoStore)) {
+        atlas_live_read_log('parity_error', 'progress', [
+            'json_users' => count(progress_store_users($jsonStore)),
+            'mongo_users' => count(progress_store_users($mongoStore)),
+        ]);
+        return $jsonStore;
+    }
+
+    return $mongoStore;
+}
+
+function progress_mongo_store(array $documents): array {
+    $users = [];
+    foreach ($documents as $document) {
+        if (!is_array($document)) continue;
+        if (($document['_id'] ?? '') === '__meta__') continue;
+        $userId = (string) ($document['user_id'] ?? '');
+        if ($userId === '') continue;
+        unset($document['_id'], $document['mirrored_at'], $document['user_id']);
+        $users[$userId] = $document;
+    }
+    return ['users' => $users];
+}
+
+function progress_store_users(array $store): array {
+    $users = [];
+    foreach ($store['users'] ?? [] as $userId => $progress) {
+        if (!is_array($progress)) continue;
+        $users[(string) $userId] = $progress;
+    }
+    ksort($users);
+    return $users;
+}
+
+function progress_parity_ok(array $jsonStore, array $mongoStore): bool {
+    $jsonUsers = progress_store_users($jsonStore);
+    $mongoUsers = progress_store_users($mongoStore);
+    if (array_keys($jsonUsers) !== array_keys($mongoUsers)) {
+        return false;
+    }
+    foreach ($jsonUsers as $userId => $progress) {
+        if (($mongoUsers[$userId] ?? null) != $progress) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function weak_points_live_read_enabled(): bool {
+    return atlas_primary_write_store_enabled('weak_points') || atlas_live_read_store_enabled('weak_points');
+}
+
+function weak_points_store(): array {
+    $jsonStore = storage_read('weak_points', weak_points_default());
+    if (!weak_points_live_read_enabled()) {
+        return $jsonStore;
+    }
+
+    $mongoDocuments = atlas_live_read_collection_documents('weak_points');
+    if ($mongoDocuments === null) {
+        return $jsonStore;
+    }
+
+    $mongoStore = weak_points_mongo_store($mongoDocuments);
+    if (!weak_points_parity_ok($jsonStore, $mongoStore)) {
+        atlas_live_read_log('parity_error', 'weak_points', [
+            'json_users' => count(weak_points_store_users($jsonStore)),
+            'mongo_users' => count(weak_points_store_users($mongoStore)),
+        ]);
+        return $jsonStore;
+    }
+
+    return $mongoStore;
+}
+
+function weak_points_mongo_store(array $documents): array {
+    $users = [];
+    foreach ($documents as $document) {
+        if (!is_array($document)) continue;
+        if (($document['_id'] ?? '') === '__meta__') continue;
+        $userId = (string) ($document['user_id'] ?? '');
+        $itemId = (string) ($document['item_id'] ?? '');
+        if ($userId === '' || $itemId === '') continue;
+        unset($document['_id'], $document['mirrored_at'], $document['user_id']);
+        $users[$userId] = is_array($users[$userId] ?? null) ? $users[$userId] : [];
+        $users[$userId][$itemId] = $document;
+    }
+    return ['users' => $users];
+}
+
+function weak_points_store_users(array $store): array {
+    $users = [];
+    foreach ($store['users'] ?? [] as $userId => $points) {
+        if (!is_array($points)) continue;
+        $normalizedPoints = [];
+        foreach ($points as $itemId => $point) {
+            if (!is_array($point)) continue;
+            $normalizedPoints[(string) $itemId] = $point;
+        }
+        ksort($normalizedPoints);
+        $users[(string) $userId] = $normalizedPoints;
+    }
+    ksort($users);
+    return $users;
+}
+
+function weak_points_parity_ok(array $jsonStore, array $mongoStore): bool {
+    $jsonUsers = weak_points_store_users($jsonStore);
+    $mongoUsers = weak_points_store_users($mongoStore);
+    if (array_keys($jsonUsers) !== array_keys($mongoUsers)) {
+        return false;
+    }
+    foreach ($jsonUsers as $userId => $jsonPoints) {
+        $mongoPoints = $mongoUsers[$userId] ?? null;
+        if (!is_array($mongoPoints) || array_keys($jsonPoints) !== array_keys($mongoPoints)) {
+            return false;
+        }
+        foreach ($jsonPoints as $itemId => $jsonPoint) {
+            if (($mongoPoints[$itemId] ?? null) != $jsonPoint) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+function watch_sessions_live_read_enabled(): bool {
+    return atlas_primary_write_store_enabled('watch_sessions') || atlas_live_read_store_enabled('watch_sessions');
+}
+
+function watch_sessions_store(): array {
+    $jsonStore = storage_read('watch_sessions', watch_sessions_default());
+    if (!watch_sessions_live_read_enabled()) {
+        return $jsonStore;
+    }
+
+    $mongoDocuments = atlas_live_read_collection_documents('watch_sessions');
+    if ($mongoDocuments === null) {
+        return $jsonStore;
+    }
+
+    $mongoStore = watch_sessions_mongo_store($mongoDocuments);
+    if (!watch_sessions_parity_ok($jsonStore, $mongoStore)) {
+        atlas_live_read_log('parity_error', 'watch_sessions', [
+            'json_sessions' => count(watch_sessions_store_sessions($jsonStore)),
+            'mongo_sessions' => count(watch_sessions_store_sessions($mongoStore)),
+        ]);
+        return $jsonStore;
+    }
+
+    return $mongoStore;
+}
+
+function watch_sessions_mongo_store(array $documents): array {
+    $sessions = [];
+    foreach ($documents as $document) {
+        if (!is_array($document)) continue;
+        if (($document['_id'] ?? '') === '__meta__') continue;
+        $sessionId = (string) (($document['session_id'] ?? '') ?: ($document['id'] ?? ''));
+        if ($sessionId === '') continue;
+        unset($document['_id'], $document['mirrored_at'], $document['session_id']);
+        $sessions[$sessionId] = $document;
+    }
+    return ['sessions' => $sessions];
+}
+
+function watch_sessions_store_sessions(array $store): array {
+    $sessions = [];
+    foreach ($store['sessions'] ?? [] as $sessionId => $session) {
+        if (!is_array($session)) continue;
+        $sessions[(string) $sessionId] = $session;
+    }
+    ksort($sessions);
+    return $sessions;
+}
+
+function watch_sessions_parity_ok(array $jsonStore, array $mongoStore): bool {
+    $jsonSessions = watch_sessions_store_sessions($jsonStore);
+    $mongoSessions = watch_sessions_store_sessions($mongoStore);
+    if (array_keys($jsonSessions) !== array_keys($mongoSessions)) {
+        return false;
+    }
+    foreach ($jsonSessions as $sessionId => $jsonSession) {
+        if (($mongoSessions[$sessionId] ?? null) != $jsonSession) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function watch_sessions_mutate(callable $callback): mixed {
+    $name = 'watch_sessions';
+    $lockPath = STORAGE_DIR . '/.' . preg_replace('/[^a-z0-9_.-]/i', '', $name) . '.lock';
+    $lock = fopen($lockPath, 'c+');
+    if (!$lock) {
+        json_response(500, ['ok' => false, 'error' => 'Storage lock unavailable']);
+    }
+    try {
+        flock($lock, LOCK_EX);
+        $data = storage_source_for_mutation($name, watch_sessions_default());
+        $result = $callback($data);
+        storage_persist_after_mutation($name, $data);
         return $result;
     } finally {
         flock($lock, LOCK_UN);
@@ -476,7 +1281,7 @@ function visible_question(array $question, array $item): array {
 }
 
 function user_progress(string $userId): array {
-    $store = storage_read('progress', progress_default());
+    $store = progress_store();
     $default = [
         'skip_cleanup_count' => 0,
         'completed_watches' => 0,
@@ -487,9 +1292,9 @@ function user_progress(string $userId): array {
 }
 
 function unresolved_weak_points(string $userId): array {
-    $store = storage_read('weak_points', weak_points_default());
+    $store = weak_points_store();
     $points = $store['users'][$userId] ?? [];
-    return array_filter($points, static fn($point) => empty($point['resolved_at']));
+    return array_filter($points, static fn($point) => is_array($point) && empty($point['resolved_at']));
 }
 
 function mark_weak_point(string $userId, array $item, string $reason, string $answer): void {

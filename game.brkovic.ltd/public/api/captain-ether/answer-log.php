@@ -16,13 +16,8 @@ $answerLimit = max(1, min(10, (int) ($_GET['answer_limit'] ?? 5)));
 $itemId = preg_replace('/[^a-z0-9_]/i', '', (string) ($_GET['item_id'] ?? ''));
 $kind = preg_replace('/[^a-z_]/i', '', (string) ($_GET['kind'] ?? ''));
 
-$store = storage_read('captain_answer_logs', captain_answer_logs_default());
-$entries = array_values(array_filter($store['entries'] ?? [], static function ($entry) use ($itemId, $kind) {
-    if (!is_array($entry)) return false;
-    if ($itemId !== '' && ($entry['item_id'] ?? '') !== $itemId) return false;
-    if ($kind !== '' && ($entry['log_kind'] ?? '') !== $kind) return false;
-    return true;
-}));
+$store = captain_answer_logs_store();
+$entries = captain_answer_log_filter_entries($store['entries'] ?? [], $itemId, $kind);
 
 $entries = array_reverse($entries);
 $summary = captain_answer_log_summary($entries);

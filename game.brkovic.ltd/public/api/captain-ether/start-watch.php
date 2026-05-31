@@ -392,7 +392,7 @@ foreach ($items as $i => $item) {
 }
 
 $sessionId = 'watch_' . bin2hex(random_bytes(8));
-storage_mutate('watch_sessions', watch_sessions_default(), function (array &$store) use ($sessionId, $user, $level, $questions) {
+watch_sessions_mutate(function (array &$store) use ($sessionId, $user, $level, $questions) {
     $store['sessions'][$sessionId] = [
         'id' => $sessionId,
         'user_id' => $user['id'],

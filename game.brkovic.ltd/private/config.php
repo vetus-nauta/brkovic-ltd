@@ -2,13 +2,13 @@
 declare(strict_types=1);
 
 return [
-    'app_env' => 'local',
+    'app_env' => 'production',
     'app_url' => 'https://game.brkovic.ltd',
     'session_cookie' => 'brk_game_session',
     'session_days' => 30,
     'login_code_ttl_minutes' => 10,
     'admin_emails' => [
-        'admin@example.com',
+        'vetus.nauta@gmail.com',
     ],
     'ecosystem_sso_enabled' => false,
     'ecosystem_sso_secret' => 'CHANGE_ME_SHARED_SECRET',
@@ -100,7 +100,7 @@ return [
         'timeout_ms' => (int) (getenv('CAPTAIN_ETHER_ATLAS_PRIMARY_WRITE_TIMEOUT_MS') ?: 15000),
         'error_log' => (string) (getenv('CAPTAIN_ETHER_ATLAS_PRIMARY_WRITE_ERROR_LOG') ?: (APP_ROOT . '/storage/atlas-primary-write-error.log')),
     ],
-    'smtp_config_path' => '',
+    'smtp_config_path' => '/home/brkovic/public_html/forms/config.php',
     'mail_from' => 'no-reply@brkovic.ltd',
     'mail_from_name' => 'Brkovic Maritime Games',
 ];

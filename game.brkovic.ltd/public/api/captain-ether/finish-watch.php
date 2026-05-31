@@ -10,7 +10,7 @@ require_csrf($user);
 $input = read_json_body();
 $sessionId = preg_replace('/[^a-z0-9_]/i', '', (string) ($input['watch_id'] ?? ''));
 
-$summary = storage_mutate('watch_sessions', watch_sessions_default(), function (array &$store) use ($sessionId, $user) {
+$summary = watch_sessions_mutate(function (array &$store) use ($sessionId, $user) {
     $watch = $store['sessions'][$sessionId] ?? null;
     if (!is_array($watch) || ($watch['user_id'] ?? '') !== $user['id']) {
         return ['error' => 'Watch not found', 'status' => 404];
