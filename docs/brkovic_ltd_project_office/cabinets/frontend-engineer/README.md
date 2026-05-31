@@ -43,6 +43,7 @@ docs/brkovic_ltd_project_office/task-registry.md
 docs/brkovic_ltd_full_handoff_2026-05-20.md
 docs/brkovic_ltd_project_knowledge.md
 docs/brkovic_ltd_navdesk_audit_2026-05-25.md
+docs/brkovic_ltd_project_office/cabinets/frontend-engineer/navdesk-tool-page-build-handoff.md
 ```
 
 ## Operating Rules
