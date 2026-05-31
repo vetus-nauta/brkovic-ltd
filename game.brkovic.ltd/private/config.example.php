@@ -13,6 +13,7 @@ return [
     'ecosystem_sso_enabled' => false,
     'ecosystem_sso_secret' => 'CHANGE_ME_SHARED_SECRET',
     'brkovic_login_url' => 'https://brkovic.ltd/login',
+    'atlas_secret_path' => '',
     'atlas_mirror' => [
         'enabled' => in_array(
             strtolower((string) (getenv('CAPTAIN_ETHER_ATLAS_MIRROR_ENABLED') ?: '0')),

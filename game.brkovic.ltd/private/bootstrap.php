@@ -5,9 +5,39 @@ const APP_ROOT = __DIR__ . '/..';
 const STORAGE_DIR = APP_ROOT . '/storage';
 const CONTENT_DIR = APP_ROOT . '/content';
 
+function app_merge_recursive(array $base, array $overrides): array {
+    foreach ($overrides as $key => $value) {
+        if (is_array($value) && isset($base[$key]) && is_array($base[$key])) {
+            $base[$key] = app_merge_recursive($base[$key], $value);
+            continue;
+        }
+        $base[$key] = $value;
+    }
+    return $base;
+}
+
+function app_load_config_with_secret_overrides(string $configPath, string $exampleConfigPath): array {
+    $config = is_file($configPath) ? require $configPath : require $exampleConfigPath;
+    if (!is_array($config)) {
+        return [];
+    }
+
+    $secretPath = trim((string) ($config['atlas_secret_path'] ?? ''));
+    if ($secretPath === '' || !is_file($secretPath)) {
+        return $config;
+    }
+
+    $secretOverrides = require $secretPath;
+    if (!is_array($secretOverrides)) {
+        return $config;
+    }
+
+    return app_merge_recursive($config, $secretOverrides);
+}
+
 $configPath = __DIR__ . '/config.php';
 $exampleConfigPath = __DIR__ . '/config.example.php';
-$appConfig = is_file($configPath) ? require $configPath : require $exampleConfigPath;
+$appConfig = app_load_config_with_secret_overrides($configPath, $exampleConfigPath);
 
 if (!is_dir(STORAGE_DIR)) {
     mkdir(STORAGE_DIR, 0775, true);
