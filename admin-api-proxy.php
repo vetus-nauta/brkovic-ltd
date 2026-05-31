@@ -105,6 +105,7 @@ if (!$isAllowed) {
 
 $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
 $targetUrl = $targetBase . $route . $query;
+$requestTimeout = preg_match('#/translations/generate$#', $route) ? 180 : 45;
 
 $storedCookies = $_SESSION['brkovic_live_cookies'] ?? [];
 if (!is_array($storedCookies)) {
@@ -115,9 +116,13 @@ $headers = ['Accept: application/json'];
 $cookiePairs = [];
 if (!empty($storedCookies['admin']) && is_string($storedCookies['admin'])) {
     $cookiePairs[] = $storedCookies['admin'];
+} elseif (!empty($_COOKIE['ship_journal_admin']) && is_string($_COOKIE['ship_journal_admin'])) {
+    $cookiePairs[] = 'ship_journal_admin=' . $_COOKIE['ship_journal_admin'];
 }
 if (!empty($storedCookies['toolUser']) && is_string($storedCookies['toolUser'])) {
     $cookiePairs[] = $storedCookies['toolUser'];
+} elseif (!empty($_COOKIE['ship_journal_tool_user']) && is_string($_COOKIE['ship_journal_tool_user'])) {
+    $cookiePairs[] = 'ship_journal_tool_user=' . $_COOKIE['ship_journal_tool_user'];
 }
 if (!empty($cookiePairs)) {
     $headers[] = 'Cookie: ' . implode('; ', $cookiePairs);
@@ -186,7 +191,7 @@ foreach ($attempts as $index => $attempt) {
       CURLOPT_FOLLOWLOCATION => false,
       CURLOPT_CUSTOMREQUEST => $method,
       CURLOPT_HTTPHEADER => $requestHeaders,
-      CURLOPT_TIMEOUT => 45,
+      CURLOPT_TIMEOUT => $requestTimeout,
       CURLOPT_SSL_VERIFYPEER => $attempt['verifyPeer'],
       CURLOPT_SSL_VERIFYHOST => $attempt['verifyHost'],
   ]);

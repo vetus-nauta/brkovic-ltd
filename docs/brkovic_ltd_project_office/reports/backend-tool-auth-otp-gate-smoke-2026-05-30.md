@@ -1,64 +1,86 @@
-# Backend auth OTP: код-доставка и TTL (проверка 2026-05-30)
+# Backend auth OTP: код-доставка и TTL (2026-05-30)
 
-## Дата
-2026-05-30
+## Task
 
-## Что проверено
+- Task ID: `BRK-MVP-BE-010`
+- Backend worktree: `/home/alexey/.local/share/brkovic-ltd/work/journal-backend`
+- Scope: NavDesk email-code auth gateway
 
-Запросы на живой API:
+## Diagnosis
+
+- `request-code` creates a `ToolUserCode` row with `requestedAt`, `expiresAt`, `attempts = 0`, and no `consumedAt`.
+- The immediate `CODE_EXPIRED` risk was in verification logic:
+  - active-code selection did not filter by `expiresAt`;
+  - expiry was derived from `requestedAt` after driver-side timestamp parsing;
+  - expiry was checked before code matching, so a wrong code could surface as `CODE_EXPIRED` when the selected row was stale.
+- Request cooldown also depended on parsed `requestedAt`, so it had the same timestamp-sensitivity.
+- Public `request-code` response only includes `debugCode` when `NODE_ENV !== 'production'`.
+- Debug latest-code endpoint now requires:
+  - non-production environment, or `TOOL_AUTH_DEBUG_ENABLED=true`;
+  - `TOOL_AUTH_DEBUG_TOKEN`;
+  - token length of at least 24 characters;
+  - matching `x-tool-auth-debug-token` header.
+- Debug latest-code endpoint does not return the raw code or code hash.
+- Production email delivery path requires SMTP env configuration and returns safe generic diagnostics on send failure; no provider error text or credentials are exposed in the public response.
+
+## Files changed
+
+- `/home/alexey/.local/share/brkovic-ltd/work/journal-backend/src/modules/auth/auth.service.ts`
+- `/home/alexey/.local/share/brkovic-ltd/work/journal-backend/src/modules/auth/auth.controller.ts`
+- `/home/alexey/GitHub/Revoyacht/brkovic-ltd/docs/brkovic_ltd_project_office/reports/backend-tool-auth-otp-gate-smoke-2026-05-30.md`
+
+## Implementation notes
+
+- Verification now selects the current active code in SQL:
+  - `consumedAt IS NULL`
+  - `expiresAt > now`
+  - newest `requestedAt`
+- Expired unconsumed rows are marked consumed only after no active code exists.
+- Wrong code against a fresh active row increments attempts and returns invalid-code behavior, not `CODE_EXPIRED`.
+- Request cooldown now selects recent requests in SQL instead of comparing a parsed `requestedAt` in JavaScript.
+- Email delivery now attempts SMTP whenever configured and not explicitly skipped via `TOOL_AUTH_SKIP_EMAIL_DELIVERY=true`; production fails closed when SMTP is missing.
+
+## Checks run
 
 ```bash
-EMAIL=navdesk-test-$(date +%s)@example.com
-curl -i -X POST https://brkovic.ltd/api/auth/user/request-code -H 'Content-Type: application/json' -d '{"email":"'$EMAIL'"}'
-curl -i -X POST https://brkovic.ltd/api/auth/user/verify-code -H 'Content-Type: application/json' -d '{"email":"'$EMAIL'","code":"123456"}'
-curl -i -X POST https://brkovic.ltd/api/auth/user/verify-code -H 'Content-Type: application/json' -d '{"email":"'$EMAIL'","code":"000000"}'
+npm run build
 ```
 
-Дополнительно проверен `request-code` на уже нагруженном адресе:
+Result: pass.
 
 ```bash
-EMAIL=vetus.nauta@gmail.com
-curl -i -X POST https://brkovic.ltd/api/auth/user/request-code -H 'Content-Type: application/json' -d '{"email":"'$EMAIL'"}'
+npm run lint
 ```
 
-## Наблюдаемое поведение
+Result: blocked before linting source. ESLint 9 requires `eslint.config.(js|mjs|cjs)`, and this worktree does not have one.
 
-- Новый адрес:
-  - `POST /api/auth/user/request-code` → `201`, `{"requested":true,"ttlSeconds":600,"provider":"email"}`.
-- Сразу после этого:
-  - `POST /api/auth/user/verify-code` → `401 CODE_EXPIRED`, даже с другим случайным 6-значным кодом.
-- На уже часто используемом адресе:
-  - `POST /api/auth/user/request-code` → `429 REQUEST_THROTTLED` («Too many code requests from this email»).
+## DB-backed smoke
 
-## Вывод
+Not run locally in this pass because a real/local `DATABASE_URL` was not provided, and the task explicitly forbids live DB mutation.
 
-Почти наверняка две проблемы:
+Command to run once a disposable/staging database is available:
 
-1. Проверка срока жизни кода в `verify-code` срабатывает некорректно (критичный blocker);
-2. Повторяемость запросов и лимитирование пока перекрывают рабочий цикл, поэтому пользователь получает ощущение «письмо не приходит».
+```bash
+npm run start:dev
+```
 
-## Почему это критично для UX
+Then smoke the local API with a disposable email address:
 
-- Пользователь не может пройти авторизацию для инструментов NavDesk;
-- Без доставляемого/видимого кода невозможно продолжать локальный workflow;
-- После локального `201` и мгновенного `CODE_EXPIRED` любой визуальный UX-этаж теряет смысл.
+```bash
+curl -i -X POST http://localhost:3000/auth/user/request-code -H 'Content-Type: application/json' -d '{"email":"qa-disposable@example.com"}'
+curl -i -X POST http://localhost:3000/auth/user/verify-code -H 'Content-Type: application/json' -d '{"email":"qa-disposable@example.com","code":"<wrong-six-digit-code>"}'
+```
 
-## Дальнейшее действие
+Expected local/staging behavior:
 
-Запущена задача:
-- `BRK-MVP-BE-010` — `docs/brkovic_ltd_project_office/cabinets/backend-engineer/task-0010-tool-auth-code-delivery-and-ttl.md`
+- fresh wrong code: `401 Invalid verification code`;
+- expired code only after TTL has actually elapsed: `401 CODE_EXPIRED`;
+- repeated rapid request: `429 REQUEST_THROTTLED`;
+- production/public `request-code`: no `debugCode`.
 
-Следующий шаг: backend implementer проводит разбор БД-логов OTP (`ToolUserCode`) и проверку конвейера доставки.
+## Remaining release requirements
 
-## 2026-05-30 — локальная правка (backend copy)
-
-### Что уже исправлено в рабочей копии backend
-
-- Исправил расчёт TTL в `verify-code`: `parseDbTimestamp()` больше не делает искусственный сдвиг `Date` через `getTimezoneOffset`.
-- Это устраняет эффект «`CODE_EXPIRED` сразу после запроса» на серверах с локальной timezone +2/+3.
-
-### Что осталось для закрытия `greenlight`
-
-- Деплой изменений в production и повторный smoke на живом `/api/auth/user/request-code` + `/verify-code`.
-- Подтверждение фактической доставки письма (или, если провайдер пока не доступен, получение корректного диагностического `EMAIL_NOT_CONFIGURED`).
-- После деплоя обновить статус `BRK-MVP-BE-010` и снять `Fail` по языковой блокировке/OTP.
+- Deploy backend changes to the target environment.
+- Confirm SMTP env is configured or receive safe `EMAIL_NOT_CONFIGURED`/`EMAIL_SEND_FAILED` diagnostics.
+- Run live/staging smoke against `/api/auth/user/request-code` and `/api/auth/user/verify-code` with a disposable address.
+- Confirm a delivered email through provider logs or mailbox receipt, without exposing OTP values in reports.

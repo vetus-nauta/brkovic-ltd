@@ -3,12 +3,12 @@
   const HINT_KEY = "brkovic_language_hint_dismissed";
   const HINT_VERSION = "2026-05-28-language-access";
   const LANGUAGE_OPTIONS = Object.freeze([
-    Object.freeze({ code: "en", name: "English", isDefault: true, isPrimary: true, isAvailable: true }),
+    Object.freeze({ code: "en", name: "English", isDefault: true, isAvailable: true }),
     Object.freeze({ code: "ru", name: "Русский", isAvailable: true }),
     Object.freeze({ code: "de", name: "Deutsch", isAvailable: true }),
     Object.freeze({ code: "it", name: "Italiano", isAvailable: true }),
     Object.freeze({ code: "es", name: "Español", isAvailable: true }),
-    Object.freeze({ code: "sr", name: "Srpski / crnogorski / hrvatski", isAvailable: true }),
+    Object.freeze({ code: "sr", name: "SRB / HR / MNE / BIH", isAvailable: true }),
     Object.freeze({ code: "zh", name: "中文 / Mandarin", isAvailable: true })
   ]);
   const SUPPORTED_LANGS = Object.freeze(LANGUAGE_OPTIONS
@@ -22,7 +22,6 @@
       code: option.code,
       name: option.name,
       isDefault: option.isDefault === true,
-      isPrimary: option.isPrimary === true,
       isAvailable: option.isAvailable !== false
     }));
   }
@@ -79,7 +78,7 @@
   }
 
   async function loadTranslations(lang) {
-    const langUrl = new URL(`../lang/${lang}.json?v=20260528-language-access-01`, scriptUrl);
+    const langUrl = new URL(`../lang/${lang}.json?v=20260531-language-menu-01`, scriptUrl);
     const response = await fetch(langUrl.href, { cache: "no-store" });
     if (!response.ok) throw new Error("Failed to load language file");
     return response.json();

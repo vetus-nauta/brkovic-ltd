@@ -33,22 +33,12 @@
         </div>
 
         <nav class="admin-section-nav" aria-label="Разделы админки">
+          <a href="admin.html">Admin panel</a>
           <a href="admin-posts.html">Посты</a>
           <a href="admin-comments.html" class="is-active">Комментарии</a>
           <a href="admin-management.html">Менеджмент</a>
+          <a href="admin-seo.html">SEO</a>
         </nav>
-
-        <form id="adminLoginForm" class="admin-login-form">
-          <label>
-            <span>Email</span>
-            <input type="email" id="adminEmail" value="vetus.nauta@gmail.com" required />
-          </label>
-          <label>
-            <span>Пароль</span>
-            <input type="password" id="adminPassword" required />
-          </label>
-          <button type="submit" class="btn btn--primary">Войти</button>
-        </form>
 
         <div id="adminStatus" class="admin-status"></div>
 
@@ -67,6 +57,7 @@
     </main>
   </div>
 
-  <script src="js/admin-comments.js?v=20260515-management-01"></script>
+  <script src="js/admin-auth.js?v=20260531-owner-session-01"></script>
+  <script src="js/admin-comments.js?v=20260531-owner-session-01"></script>
 </body>
 </html>

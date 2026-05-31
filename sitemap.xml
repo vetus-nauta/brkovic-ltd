@@ -1,42 +1,296 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="https://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://brkovic.ltd/</loc>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://brkovic.ltd/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://brkovic.ltd/" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://brkovic.ltd/?lang=ru" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://brkovic.ltd/?lang=de" />
+    <xhtml:link rel="alternate" hreflang="it" href="https://brkovic.ltd/?lang=it" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://brkovic.ltd/?lang=es" />
+    <xhtml:link rel="alternate" hreflang="sr" href="https://brkovic.ltd/?lang=sr" />
+    <xhtml:link rel="alternate" hreflang="zh" href="https://brkovic.ltd/?lang=zh" />
+    <lastmod>2026-05-31</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://brkovic.ltd/services/yacht-management.html</loc>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://brkovic.ltd/services/yacht-management.html" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://brkovic.ltd/services/yacht-management.html" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://brkovic.ltd/services/yacht-management.html?lang=ru" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://brkovic.ltd/services/yacht-management.html?lang=de" />
+    <xhtml:link rel="alternate" hreflang="it" href="https://brkovic.ltd/services/yacht-management.html?lang=it" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://brkovic.ltd/services/yacht-management.html?lang=es" />
+    <xhtml:link rel="alternate" hreflang="sr" href="https://brkovic.ltd/services/yacht-management.html?lang=sr" />
+    <xhtml:link rel="alternate" hreflang="zh" href="https://brkovic.ltd/services/yacht-management.html?lang=zh" />
+    <lastmod>2026-05-31</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
+    <loc>https://brkovic.ltd/copyright.html</loc>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://brkovic.ltd/copyright.html" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://brkovic.ltd/copyright.html" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://brkovic.ltd/copyright.html?lang=ru" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://brkovic.ltd/copyright.html?lang=de" />
+    <xhtml:link rel="alternate" hreflang="it" href="https://brkovic.ltd/copyright.html?lang=it" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://brkovic.ltd/copyright.html?lang=es" />
+    <xhtml:link rel="alternate" hreflang="sr" href="https://brkovic.ltd/copyright.html?lang=sr" />
+    <xhtml:link rel="alternate" hreflang="zh" href="https://brkovic.ltd/copyright.html?lang=zh" />
+    <lastmod>2026-05-31</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://brkovic.ltd/services/iyt-training.html</loc>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://brkovic.ltd/services/iyt-training.html" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://brkovic.ltd/services/iyt-training.html" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://brkovic.ltd/services/iyt-training.html?lang=ru" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://brkovic.ltd/services/iyt-training.html?lang=de" />
+    <xhtml:link rel="alternate" hreflang="it" href="https://brkovic.ltd/services/iyt-training.html?lang=it" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://brkovic.ltd/services/iyt-training.html?lang=es" />
+    <xhtml:link rel="alternate" hreflang="sr" href="https://brkovic.ltd/services/iyt-training.html?lang=sr" />
+    <xhtml:link rel="alternate" hreflang="zh" href="https://brkovic.ltd/services/iyt-training.html?lang=zh" />
+    <lastmod>2026-05-31</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://brkovic.ltd/services/skipper-service.html</loc>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://brkovic.ltd/services/skipper-service.html" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://brkovic.ltd/services/skipper-service.html" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://brkovic.ltd/services/skipper-service.html?lang=ru" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://brkovic.ltd/services/skipper-service.html?lang=de" />
+    <xhtml:link rel="alternate" hreflang="it" href="https://brkovic.ltd/services/skipper-service.html?lang=it" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://brkovic.ltd/services/skipper-service.html?lang=es" />
+    <xhtml:link rel="alternate" hreflang="sr" href="https://brkovic.ltd/services/skipper-service.html?lang=sr" />
+    <xhtml:link rel="alternate" hreflang="zh" href="https://brkovic.ltd/services/skipper-service.html?lang=zh" />
+    <lastmod>2026-05-31</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://brkovic.ltd/services/sailing-tours.html</loc>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://brkovic.ltd/services/sailing-tours.html" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://brkovic.ltd/services/sailing-tours.html" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://brkovic.ltd/services/sailing-tours.html?lang=ru" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://brkovic.ltd/services/sailing-tours.html?lang=de" />
+    <xhtml:link rel="alternate" hreflang="it" href="https://brkovic.ltd/services/sailing-tours.html?lang=it" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://brkovic.ltd/services/sailing-tours.html?lang=es" />
+    <xhtml:link rel="alternate" hreflang="sr" href="https://brkovic.ltd/services/sailing-tours.html?lang=sr" />
+    <xhtml:link rel="alternate" hreflang="zh" href="https://brkovic.ltd/services/sailing-tours.html?lang=zh" />
+    <lastmod>2026-05-31</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://brkovic.ltd/services/yacht-acceptance-delivery.html</loc>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://brkovic.ltd/services/yacht-acceptance-delivery.html" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://brkovic.ltd/services/yacht-acceptance-delivery.html" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://brkovic.ltd/services/yacht-acceptance-delivery.html?lang=ru" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://brkovic.ltd/services/yacht-acceptance-delivery.html?lang=de" />
+    <xhtml:link rel="alternate" hreflang="it" href="https://brkovic.ltd/services/yacht-acceptance-delivery.html?lang=it" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://brkovic.ltd/services/yacht-acceptance-delivery.html?lang=es" />
+    <xhtml:link rel="alternate" hreflang="sr" href="https://brkovic.ltd/services/yacht-acceptance-delivery.html?lang=sr" />
+    <xhtml:link rel="alternate" hreflang="zh" href="https://brkovic.ltd/services/yacht-acceptance-delivery.html?lang=zh" />
+    <lastmod>2026-05-31</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://brkovic.ltd/services/yacht-registration.html</loc>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://brkovic.ltd/services/yacht-registration.html" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://brkovic.ltd/services/yacht-registration.html" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://brkovic.ltd/services/yacht-registration.html?lang=ru" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://brkovic.ltd/services/yacht-registration.html?lang=de" />
+    <xhtml:link rel="alternate" hreflang="it" href="https://brkovic.ltd/services/yacht-registration.html?lang=it" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://brkovic.ltd/services/yacht-registration.html?lang=es" />
+    <xhtml:link rel="alternate" hreflang="sr" href="https://brkovic.ltd/services/yacht-registration.html?lang=sr" />
+    <xhtml:link rel="alternate" hreflang="zh" href="https://brkovic.ltd/services/yacht-registration.html?lang=zh" />
+    <lastmod>2026-05-31</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://brkovic.ltd/journal.html</loc>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://brkovic.ltd/journal.html" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://brkovic.ltd/journal.html" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://brkovic.ltd/journal.html?lang=ru" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://brkovic.ltd/journal.html?lang=de" />
+    <xhtml:link rel="alternate" hreflang="it" href="https://brkovic.ltd/journal.html?lang=it" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://brkovic.ltd/journal.html?lang=es" />
+    <xhtml:link rel="alternate" hreflang="sr" href="https://brkovic.ltd/journal.html?lang=sr" />
+    <xhtml:link rel="alternate" hreflang="zh" href="https://brkovic.ltd/journal.html?lang=zh" />
+    <lastmod>2026-05-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://brkovic.ltd/navdesk.html</loc>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://brkovic.ltd/navdesk.html" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://brkovic.ltd/navdesk.html" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://brkovic.ltd/navdesk.html?lang=ru" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://brkovic.ltd/navdesk.html?lang=de" />
+    <xhtml:link rel="alternate" hreflang="it" href="https://brkovic.ltd/navdesk.html?lang=it" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://brkovic.ltd/navdesk.html?lang=es" />
+    <xhtml:link rel="alternate" hreflang="sr" href="https://brkovic.ltd/navdesk.html?lang=sr" />
+    <xhtml:link rel="alternate" hreflang="zh" href="https://brkovic.ltd/navdesk.html?lang=zh" />
+    <lastmod>2026-05-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://brkovic.ltd/ship-cashbox/index.html</loc>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://brkovic.ltd/ship-cashbox/index.html" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://brkovic.ltd/ship-cashbox/index.html" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://brkovic.ltd/ship-cashbox/index.html?lang=ru" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://brkovic.ltd/ship-cashbox/index.html?lang=de" />
+    <xhtml:link rel="alternate" hreflang="it" href="https://brkovic.ltd/ship-cashbox/index.html?lang=it" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://brkovic.ltd/ship-cashbox/index.html?lang=es" />
+    <xhtml:link rel="alternate" hreflang="sr" href="https://brkovic.ltd/ship-cashbox/index.html?lang=sr" />
+    <xhtml:link rel="alternate" hreflang="zh" href="https://brkovic.ltd/ship-cashbox/index.html?lang=zh" />
+    <lastmod>2026-05-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://brkovic.ltd/navdesk-route.html</loc>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://brkovic.ltd/navdesk-route.html" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://brkovic.ltd/navdesk-route.html" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://brkovic.ltd/navdesk-route.html?lang=ru" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://brkovic.ltd/navdesk-route.html?lang=de" />
+    <xhtml:link rel="alternate" hreflang="it" href="https://brkovic.ltd/navdesk-route.html?lang=it" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://brkovic.ltd/navdesk-route.html?lang=es" />
+    <xhtml:link rel="alternate" hreflang="sr" href="https://brkovic.ltd/navdesk-route.html?lang=sr" />
+    <xhtml:link rel="alternate" hreflang="zh" href="https://brkovic.ltd/navdesk-route.html?lang=zh" />
+    <lastmod>2026-05-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://brkovic.ltd/navdesk-tides.html</loc>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://brkovic.ltd/navdesk-tides.html" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://brkovic.ltd/navdesk-tides.html" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://brkovic.ltd/navdesk-tides.html?lang=ru" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://brkovic.ltd/navdesk-tides.html?lang=de" />
+    <xhtml:link rel="alternate" hreflang="it" href="https://brkovic.ltd/navdesk-tides.html?lang=it" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://brkovic.ltd/navdesk-tides.html?lang=es" />
+    <xhtml:link rel="alternate" hreflang="sr" href="https://brkovic.ltd/navdesk-tides.html?lang=sr" />
+    <xhtml:link rel="alternate" hreflang="zh" href="https://brkovic.ltd/navdesk-tides.html?lang=zh" />
+    <lastmod>2026-05-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://brkovic.ltd/navdesk-ukv.html</loc>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://brkovic.ltd/navdesk-ukv.html" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://brkovic.ltd/navdesk-ukv.html" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://brkovic.ltd/navdesk-ukv.html?lang=ru" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://brkovic.ltd/navdesk-ukv.html?lang=de" />
+    <xhtml:link rel="alternate" hreflang="it" href="https://brkovic.ltd/navdesk-ukv.html?lang=it" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://brkovic.ltd/navdesk-ukv.html?lang=es" />
+    <xhtml:link rel="alternate" hreflang="sr" href="https://brkovic.ltd/navdesk-ukv.html?lang=sr" />
+    <xhtml:link rel="alternate" hreflang="zh" href="https://brkovic.ltd/navdesk-ukv.html?lang=zh" />
+    <lastmod>2026-05-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://brkovic.ltd/navdesk-watch.html</loc>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://brkovic.ltd/navdesk-watch.html" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://brkovic.ltd/navdesk-watch.html" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://brkovic.ltd/navdesk-watch.html?lang=ru" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://brkovic.ltd/navdesk-watch.html?lang=de" />
+    <xhtml:link rel="alternate" hreflang="it" href="https://brkovic.ltd/navdesk-watch.html?lang=it" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://brkovic.ltd/navdesk-watch.html?lang=es" />
+    <xhtml:link rel="alternate" hreflang="sr" href="https://brkovic.ltd/navdesk-watch.html?lang=sr" />
+    <xhtml:link rel="alternate" hreflang="zh" href="https://brkovic.ltd/navdesk-watch.html?lang=zh" />
+    <lastmod>2026-05-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://brkovic.ltd/navdesk-english.html</loc>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://brkovic.ltd/navdesk-english.html" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://brkovic.ltd/navdesk-english.html" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://brkovic.ltd/navdesk-english.html?lang=ru" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://brkovic.ltd/navdesk-english.html?lang=de" />
+    <xhtml:link rel="alternate" hreflang="it" href="https://brkovic.ltd/navdesk-english.html?lang=it" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://brkovic.ltd/navdesk-english.html?lang=es" />
+    <xhtml:link rel="alternate" hreflang="sr" href="https://brkovic.ltd/navdesk-english.html?lang=sr" />
+    <xhtml:link rel="alternate" hreflang="zh" href="https://brkovic.ltd/navdesk-english.html?lang=zh" />
+    <lastmod>2026-05-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://brkovic.ltd/journal.html?slug=uvazhenie-k-moryu</loc>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://brkovic.ltd/journal.html?slug=uvazhenie-k-moryu" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://brkovic.ltd/journal.html?slug=uvazhenie-k-moryu" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://brkovic.ltd/journal.html?slug=uvazhenie-k-moryu&amp;lang=ru" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://brkovic.ltd/journal.html?slug=uvazhenie-k-moryu&amp;lang=de" />
+    <xhtml:link rel="alternate" hreflang="it" href="https://brkovic.ltd/journal.html?slug=uvazhenie-k-moryu&amp;lang=it" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://brkovic.ltd/journal.html?slug=uvazhenie-k-moryu&amp;lang=es" />
+    <xhtml:link rel="alternate" hreflang="sr" href="https://brkovic.ltd/journal.html?slug=uvazhenie-k-moryu&amp;lang=sr" />
+    <xhtml:link rel="alternate" hreflang="zh" href="https://brkovic.ltd/journal.html?slug=uvazhenie-k-moryu&amp;lang=zh" />
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://brkovic.ltd/journal.html?slug=nikto-ne-vladeet-morem</loc>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://brkovic.ltd/journal.html?slug=nikto-ne-vladeet-morem" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://brkovic.ltd/journal.html?slug=nikto-ne-vladeet-morem" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://brkovic.ltd/journal.html?slug=nikto-ne-vladeet-morem&amp;lang=ru" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://brkovic.ltd/journal.html?slug=nikto-ne-vladeet-morem&amp;lang=de" />
+    <xhtml:link rel="alternate" hreflang="it" href="https://brkovic.ltd/journal.html?slug=nikto-ne-vladeet-morem&amp;lang=it" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://brkovic.ltd/journal.html?slug=nikto-ne-vladeet-morem&amp;lang=es" />
+    <xhtml:link rel="alternate" hreflang="sr" href="https://brkovic.ltd/journal.html?slug=nikto-ne-vladeet-morem&amp;lang=sr" />
+    <xhtml:link rel="alternate" hreflang="zh" href="https://brkovic.ltd/journal.html?slug=nikto-ne-vladeet-morem&amp;lang=zh" />
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://brkovic.ltd/journal.html?slug=More-ne-lyubit-spektakl</loc>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://brkovic.ltd/journal.html?slug=More-ne-lyubit-spektakl" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://brkovic.ltd/journal.html?slug=More-ne-lyubit-spektakl" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://brkovic.ltd/journal.html?slug=More-ne-lyubit-spektakl&amp;lang=ru" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://brkovic.ltd/journal.html?slug=More-ne-lyubit-spektakl&amp;lang=de" />
+    <xhtml:link rel="alternate" hreflang="it" href="https://brkovic.ltd/journal.html?slug=More-ne-lyubit-spektakl&amp;lang=it" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://brkovic.ltd/journal.html?slug=More-ne-lyubit-spektakl&amp;lang=es" />
+    <xhtml:link rel="alternate" hreflang="sr" href="https://brkovic.ltd/journal.html?slug=More-ne-lyubit-spektakl&amp;lang=sr" />
+    <xhtml:link rel="alternate" hreflang="zh" href="https://brkovic.ltd/journal.html?slug=More-ne-lyubit-spektakl&amp;lang=zh" />
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://brkovic.ltd/journal.html?slug=more-ne-lyubit-spektakl-part2</loc>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://brkovic.ltd/journal.html?slug=more-ne-lyubit-spektakl-part2" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://brkovic.ltd/journal.html?slug=more-ne-lyubit-spektakl-part2" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://brkovic.ltd/journal.html?slug=more-ne-lyubit-spektakl-part2&amp;lang=ru" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://brkovic.ltd/journal.html?slug=more-ne-lyubit-spektakl-part2&amp;lang=de" />
+    <xhtml:link rel="alternate" hreflang="it" href="https://brkovic.ltd/journal.html?slug=more-ne-lyubit-spektakl-part2&amp;lang=it" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://brkovic.ltd/journal.html?slug=more-ne-lyubit-spektakl-part2&amp;lang=es" />
+    <xhtml:link rel="alternate" hreflang="sr" href="https://brkovic.ltd/journal.html?slug=more-ne-lyubit-spektakl-part2&amp;lang=sr" />
+    <xhtml:link rel="alternate" hreflang="zh" href="https://brkovic.ltd/journal.html?slug=more-ne-lyubit-spektakl-part2&amp;lang=zh" />
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://brkovic.ltd/journal.html?collection=chelovecheskoe-i-morskoe</loc>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://brkovic.ltd/journal.html?collection=chelovecheskoe-i-morskoe" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://brkovic.ltd/journal.html?collection=chelovecheskoe-i-morskoe" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://brkovic.ltd/journal.html?collection=chelovecheskoe-i-morskoe&amp;lang=ru" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://brkovic.ltd/journal.html?collection=chelovecheskoe-i-morskoe&amp;lang=de" />
+    <xhtml:link rel="alternate" hreflang="it" href="https://brkovic.ltd/journal.html?collection=chelovecheskoe-i-morskoe&amp;lang=it" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://brkovic.ltd/journal.html?collection=chelovecheskoe-i-morskoe&amp;lang=es" />
+    <xhtml:link rel="alternate" hreflang="sr" href="https://brkovic.ltd/journal.html?collection=chelovecheskoe-i-morskoe&amp;lang=sr" />
+    <xhtml:link rel="alternate" hreflang="zh" href="https://brkovic.ltd/journal.html?collection=chelovecheskoe-i-morskoe&amp;lang=zh" />
+    <lastmod>2026-05-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>

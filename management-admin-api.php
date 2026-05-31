@@ -31,13 +31,46 @@ function is_local_request(): bool {
     return in_array($remote, $localRemotes, true) && in_array($host, $localHosts, true);
 }
 
+function has_live_admin_cookie(): bool {
+    if (!empty($_SESSION['brkovic_live_cookie'])) {
+        return true;
+    }
+
+    $cookie = $_SERVER['HTTP_COOKIE'] ?? '';
+    if ($cookie === '' || !str_contains($cookie, 'ship_journal_admin=')) {
+        return false;
+    }
+
+    $host = $_SERVER['HTTP_HOST'] ?? 'brkovic.ltd';
+    $url = 'https://' . $host . '/api/auth/me';
+    $context = stream_context_create([
+        'http' => [
+            'method' => 'GET',
+            'header' => "Cookie: {$cookie}\r\nAccept: application/json\r\n",
+            'timeout' => 8,
+            'ignore_errors' => true,
+        ],
+    ]);
+    $raw = @file_get_contents($url, false, $context);
+    if ($raw === false) {
+        return false;
+    }
+
+    $data = json_decode($raw, true);
+    $payload = $data['data']['data'] ?? $data['data'] ?? $data;
+    $authenticated = (bool) ($payload['authenticated'] ?? false);
+    if ($authenticated) {
+        $_SESSION['brkovic_live_cookie'] = true;
+    }
+    return $authenticated;
+}
+
 function require_admin(): void {
     if (is_local_request()) {
         return;
     }
 
-    $hasLocalSession = !empty($_SESSION['brkovic_live_cookie']);
-    if (!$hasLocalSession) {
+    if (!has_live_admin_cookie()) {
         fail(401, 'Нужно войти в админку');
     }
 }
@@ -46,7 +79,7 @@ function diagnostics_payload(): array {
     $dir = dirname(PRICING_FILE);
     return [
         'mode' => is_local_request() ? 'local' : 'live',
-        'authenticated' => is_local_request() || !empty($_SESSION['brkovic_live_cookie']),
+        'authenticated' => is_local_request() || has_live_admin_cookie(),
         'remoteAddr' => $_SERVER['REMOTE_ADDR'] ?? '',
         'host' => $_SERVER['HTTP_HOST'] ?? '',
         'pricingFile' => [

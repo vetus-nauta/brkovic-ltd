@@ -15,8 +15,10 @@
 | BE | `CHAT-BRK-BACKEND-001` | Journal translation control sprint: activation + stability of `/translations*` routes for posts/collections | For Review |
 | BEIMPL | `CHAT-BRK-BE-IMPL-001` | Live translation provider unblock + public user tool auth backend skeleton/API | In Progress |
 | BEIMPL | `CHAT-BRK-BE-IMPL-001` | BE-007 canonical auth-route deployment (`/api/auth/user/*` + `/api/auth/*` aliases) | Ready |
-| BEIMPL | `CHAT-BRK-BE-IMPL-001` | Tool auth delivery blocker (`BRK-MVP-BE-010`): email route TTL/cooldown + delivery proof | In Progress |
+| BEIMPL | `CHAT-BRK-BE-IMPL-001` | Tool auth delivery blocker (`BRK-MVP-BE-010`): local fix/build done; controlled deploy + live OTP smoke pending | For Review |
 | FEIMPL | `CHAT-BRK-FE-IMPL-001` | Tool access gating flow for public tools (Google + 6-digit email code) and safe read-only fallback | In Progress |
+| FEIMPL | `CHAT-BRK-FE-IMPL-001` | Vetus Nauta PWA install hint/modal after auth gate stabilization | Approved |
+| QAUX | `CHAT-BRK-QA-UX-001` | PWA install reminder smoke after FE-022 | Approved |
 | DEPLOY | `CHAT-BRK-DEPLOY-001` | Production upload | Closed until Director gate |
 | PRODQA | `CHAT-BRK-PROD-QA-001` | Post-deploy smoke and indexing | Closed until deploy |
 
@@ -43,3 +45,4 @@ Director final MVP report
 - Secrets and private configs are closed to every worker.
 - `game.brkovic.ltd/` is not part of the main brkovic.ltd release unless a separate Director decision says so.
 - Journal backend source/work copy is outside this frontend release flow unless Backend/Admin explicitly reports a blocker.
+- PWA install flow must remain removable and non-repetitive: no large modal on first paint, no auto-repeat on every reload, and a persistent menu item must open the modal manually.

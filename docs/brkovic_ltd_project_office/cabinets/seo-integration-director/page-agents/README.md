@@ -30,3 +30,4 @@ Each page agent owns one public page or tightly related page group. The SEO Inte
 | `BRK-MVP-SEOPAGE-012` | `/navdesk-route.html` | `page-012-navdesk-route.md` |
 | `BRK-MVP-SEOPAGE-013` | `/navdesk-ukv.html` | `page-013-navdesk-ukv.md` |
 | `BRK-MVP-SEOPAGE-014` | `/navdesk-english.html` | `page-014-maritime-english.md` |
+| `BRK-MVP-SEOPAGE-015` | `/ship-cashbox/index.html` | `page-015-ship-cashbox.md` |

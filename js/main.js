@@ -23,7 +23,6 @@
         code: String(option?.code || "").trim().toLowerCase(),
         name: String(option?.name || "").trim(),
         isDefault: option?.isDefault === true,
-        isPrimary: option?.isPrimary === true,
         isAvailable: option?.isAvailable !== false
       }))
       .filter((option) => option.code && option.name);
@@ -126,10 +125,9 @@
 
   function buildLanguageOptionButtons() {
     return getLanguageOptions().map((option) => `
-      <button type="button" class="site-menu-language__option${option.isAvailable ? "" : " is-unavailable"}${option.isPrimary ? " is-primary" : ""}" data-lang="${escapeHtml(option.code)}" aria-pressed="false"${option.isAvailable ? "" : " aria-disabled=\"true\" disabled"}>
+      <button type="button" class="site-menu-language__option${option.isAvailable ? "" : " is-unavailable"}" data-lang="${escapeHtml(option.code)}" aria-pressed="false"${option.isAvailable ? "" : " aria-disabled=\"true\" disabled"}>
         <span class="site-menu-language__name">${escapeHtml(option.name)}</span>
         <span class="site-menu-language__current" data-i18n="site_menu_language_current">${escapeHtml(t("site_menu_language_current", "Current"))}</span>
-        <span class="site-menu-language__primary" data-i18n="site_menu_language_primary">${escapeHtml(t("site_menu_language_primary", "Primary"))}</span>
         <span class="site-menu-language__pending" data-i18n="site_menu_language_pending">${escapeHtml(t("site_menu_language_pending", "Coming"))}</span>
       </button>
     `).join("");
@@ -151,7 +149,6 @@
           <span data-i18n="site_menu_language_current_label">${escapeHtml(t("site_menu_language_current_label", "Now"))}</span>
           <strong data-site-menu-current-language>${escapeHtml(languageOptionName(currentLanguage()))}</strong>
         </p>
-        <p class="site-menu-language__note" data-i18n="site_menu_language_note">${escapeHtml(t("site_menu_language_note", "English is the primary version. Other language versions will be enabled as translations are prepared."))}</p>
         <div class="site-menu-language__list" role="list">
           ${languageButtons}
         </div>
@@ -176,8 +173,10 @@
           <a href="/journal.html" data-management-modal-close data-i18n="site_menu_journal">${escapeHtml(t("site_menu_journal", "Deck Log"))}</a>
           <a href="/navdesk.html" data-management-modal-close data-i18n="site_menu_navdesk">${escapeHtml(t("site_menu_navdesk", "Nav Desk"))}</a>
           <a href="/index.html#contact" data-management-modal-close data-i18n="site_menu_contact">${escapeHtml(t("site_menu_contact", "Contact"))}</a>
+          <button type="button" class="management-modal-nav__button" data-open-pwa-install data-i18n="pwa_install_menu">${escapeHtml(t("pwa_install_menu", "Install app"))}</button>
+          <button type="button" class="management-modal-nav__button" data-tool-account-menu data-i18n="site_menu_login">${escapeHtml(t("site_menu_login", "Log in"))}</button>
           <a href="#" data-open-language-picker>
-            <span>${escapeHtml(t("site_menu_language", "Site language"))}</span>
+            <span data-i18n="site_menu_language">${escapeHtml(t("site_menu_language", "Site language"))}</span>
             <span class="site-menu-language-current" aria-hidden="true" data-site-menu-current-language>${escapeHtml(languageOptionName(currentLanguage()))}</span>
           </a>
         </nav>
@@ -311,8 +310,6 @@
       actions.appendChild(button);
     }
     topbar.classList.add("topbar--site-menu");
-    ensureToolAccountButton(actions);
-
     const modal = buildSiteMenuModal();
     const picker = buildSiteMenuPickerModal();
 
@@ -340,6 +337,17 @@
         closeSiteMenu(modal);
         openSiteMenu(picker);
       }
+      const installTrigger = event.target.closest?.("[data-open-pwa-install]");
+      if (installTrigger && modal.contains(installTrigger)) {
+        event.preventDefault();
+        closeSiteMenu(modal);
+        openPwaInstallModal("menu");
+      }
+      const accountTrigger = event.target.closest?.("[data-tool-account-menu]");
+      if (accountTrigger && modal.contains(accountTrigger)) {
+        event.preventDefault();
+        handleToolAccountMenuAction(accountTrigger, modal);
+      }
     });
     modal.querySelectorAll("a[data-management-modal-close]").forEach((link) => {
       link.addEventListener("click", () => closeSiteMenu(modal));
@@ -351,9 +359,382 @@
     });
   }
 
+  const PWA_INSTALL_STATE_KEY = "brkovic_pwa_install_state_v1";
+  const PWA_DISMISS_MS = 7 * 24 * 60 * 60 * 1000;
+  const PWA_INSTALLED_MS = 365 * 24 * 60 * 60 * 1000;
+  const PWA_RETURN_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+  let deferredPwaPrompt = null;
+  let pwaHintTimer = null;
+  let pwaAutoShown = false;
+
+  function storageGet(key) {
+    try {
+      return localStorage.getItem(key);
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function storageSet(key, value) {
+    try {
+      localStorage.setItem(key, value);
+    } catch (error) {}
+  }
+
+  function todayKey(date = new Date()) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
+  function readPwaInstallState() {
+    try {
+      const parsed = JSON.parse(storageGet(PWA_INSTALL_STATE_KEY) || "{}");
+      if (!parsed || typeof parsed !== "object") return {};
+      return {
+        visitDays: Array.isArray(parsed.visitDays) ? parsed.visitDays.filter(Boolean).map(String) : [],
+        dismissedUntil: Number(parsed.dismissedUntil || 0),
+        installedUntil: Number(parsed.installedUntil || 0),
+        lastAutoShownAt: Number(parsed.lastAutoShownAt || 0),
+        lastAutoShownDay: String(parsed.lastAutoShownDay || ""),
+      };
+    } catch (error) {
+      return {};
+    }
+  }
+
+  function writePwaInstallState(patch) {
+    const current = readPwaInstallState();
+    storageSet(PWA_INSTALL_STATE_KEY, JSON.stringify({ ...current, ...(patch || {}) }));
+  }
+
+  function pruneVisitDays(days, now = Date.now()) {
+    const cutoff = now - PWA_RETURN_WINDOW_MS;
+    return Array.from(new Set((days || []).filter((day) => {
+      const time = Date.parse(`${day}T00:00:00`);
+      return Number.isFinite(time) && time >= cutoff;
+    }))).sort();
+  }
+
+  function recordPwaVisitDay() {
+    const state = readPwaInstallState();
+    const visits = pruneVisitDays([...(state.visitDays || []), todayKey()]);
+    writePwaInstallState({ visitDays: visits });
+    return visits;
+  }
+
+  function isPwaStandalone() {
+    return window.matchMedia?.("(display-mode: standalone)")?.matches
+      || window.navigator.standalone === true
+      || document.referrer.startsWith("android-app://");
+  }
+
+  function pwaPlatform() {
+    const ua = window.navigator.userAgent || "";
+    const vendor = window.navigator.vendor || "";
+    const touchMac = /Macintosh/.test(ua) && Number(window.navigator.maxTouchPoints || 0) > 1;
+    const isiOS = /iPad|iPhone|iPod/.test(ua) || touchMac;
+    const isAndroid = /Android/i.test(ua);
+    const isChromium = /Chrome|CriOS|Edg|OPR/i.test(ua) && !/Firefox/i.test(ua);
+    const isFirefox = /Firefox|FxiOS/i.test(ua);
+    const isLinuxDesktop = /Linux/i.test(ua) && !isAndroid && !isiOS;
+    const isSafari = /Safari/i.test(ua) && /Apple/i.test(vendor) && !/Chrome|CriOS|FxiOS|Edg|OPR/i.test(ua);
+    return { isiOS, isAndroid, isChromium, isFirefox, isLinuxDesktop, isSafari };
+  }
+
+  function pwaCanAutoRemind() {
+    const state = readPwaInstallState();
+    const now = Date.now();
+    if (isPwaStandalone()) return false;
+    if (state.installedUntil && now < state.installedUntil) return false;
+    if (state.dismissedUntil && now < state.dismissedUntil) return false;
+    if (state.lastAutoShownDay === todayKey()) return false;
+    if (state.lastAutoShownAt) {
+      const shownDay = todayKey(new Date(state.lastAutoShownAt));
+      const visitsSinceLastHint = pruneVisitDays(state.visitDays || [])
+        .filter((day) => day >= shownDay);
+      if (visitsSinceLastHint.length < 3) return false;
+    }
+    return true;
+  }
+
+  function hasReturnVisitInterest() {
+    return pruneVisitDays(readPwaInstallState().visitDays || []).length >= 3;
+  }
+
+  function shouldOfferPwaInstall() {
+    if (!pwaCanAutoRemind()) return false;
+    const platform = pwaPlatform();
+    return Boolean(
+      deferredPwaPrompt
+      || platform.isiOS
+      || platform.isAndroid
+      || platform.isChromium
+      || platform.isLinuxDesktop
+      || platform.isSafari,
+    );
+  }
+
+  function pwaInstructionCopy() {
+    const platform = pwaPlatform();
+    if (deferredPwaPrompt) {
+      if (platform.isLinuxDesktop) {
+        return {
+          title: "Linux desktop",
+          text: "Нажмите установку ниже. Chrome, Chromium, Brave или Edge добавят Vetus Nauta в меню системы и откроют его как отдельное окно.",
+          button: "Установить на Linux",
+          canPrompt: true,
+        };
+      }
+      return {
+        title: "Быстрая установка",
+        text: "Нажмите кнопку установки ниже. Браузер покажет короткое системное подтверждение.",
+        button: "Установить",
+        canPrompt: true,
+      };
+    }
+    if (platform.isiOS) {
+      return {
+        title: "iPhone или iPad",
+        text: "Откройте меню Поделиться в Safari и выберите «На экран Домой».",
+        button: "Понятно",
+        canPrompt: false,
+      };
+    }
+    if (platform.isAndroid) {
+      return {
+        title: "Android",
+        text: "Откройте меню браузера и выберите «Установить приложение» или «Добавить на главный экран».",
+        button: "Понятно",
+        canPrompt: false,
+      };
+    }
+    if (platform.isLinuxDesktop) {
+      return {
+        title: "Linux desktop",
+        text: platform.isFirefox
+          ? "В Firefox сохраните сайт в закладки или закрепите вкладку. Для отдельного приложения откройте Vetus Nauta в Chrome, Chromium, Brave или Edge и выберите «Установить приложение»."
+          : "В Chrome, Chromium, Brave или Edge откройте меню браузера или значок в адресной строке и выберите «Установить приложение». Vetus Nauta появится в меню системы как отдельное окно.",
+        button: "Понятно",
+        canPrompt: false,
+      };
+    }
+    return {
+      title: "Компьютер",
+      text: "В Chrome, Edge и Safari установка обычно находится в адресной строке или меню браузера.",
+      button: "Понятно",
+      canPrompt: false,
+    };
+  }
+
+  function hidePwaHint(suppress = false) {
+    const hint = document.getElementById("pwaInstallHint");
+    if (hint) hint.remove();
+    if (suppress) {
+      writePwaInstallState({ dismissedUntil: Date.now() + PWA_DISMISS_MS });
+    }
+  }
+
+  function showPwaHint(reason = "interest") {
+    if (pwaAutoShown || !shouldOfferPwaInstall() || document.getElementById("pwaInstallHint")) return;
+    pwaAutoShown = true;
+    writePwaInstallState({ lastAutoShownAt: Date.now(), lastAutoShownDay: todayKey() });
+    const hint = document.createElement("aside");
+    hint.id = "pwaInstallHint";
+    hint.className = "pwa-install-hint";
+    hint.setAttribute("role", "status");
+    hint.setAttribute("aria-live", "polite");
+    hint.dataset.reason = reason;
+    hint.innerHTML = `
+      <div class="pwa-install-hint__copy">
+        <strong>Vetus Nauta под рукой</strong>
+        <span>Добавьте сайт на главный экран для быстрого доступа к справочникам и ручным расчётам.</span>
+      </div>
+      <div class="pwa-install-hint__actions">
+        <button type="button" class="pwa-install-hint__install">Открыть</button>
+        <button type="button" class="pwa-install-hint__close" aria-label="Скрыть напоминание">×</button>
+      </div>
+    `;
+    document.body.appendChild(hint);
+    requestAnimationFrame(() => hint.classList.add("is-visible"));
+    hint.querySelector(".pwa-install-hint__install")?.addEventListener("click", () => {
+      hidePwaHint(false);
+      openPwaInstallModal("hint");
+    });
+    hint.querySelector(".pwa-install-hint__close")?.addEventListener("click", () => {
+      hidePwaHint(true);
+    });
+  }
+
+  async function runPwaBrowserPrompt(statusEl, actionButton) {
+    if (!deferredPwaPrompt) return false;
+    const promptEvent = deferredPwaPrompt;
+    deferredPwaPrompt = null;
+    if (actionButton) {
+      actionButton.disabled = true;
+      actionButton.textContent = "Открываем...";
+    }
+    try {
+      promptEvent.prompt();
+      const choice = await promptEvent.userChoice;
+      if (choice?.outcome === "accepted") {
+        writePwaInstallState({ installedUntil: Date.now() + PWA_INSTALLED_MS });
+        if (statusEl) statusEl.textContent = "Готово. Если значок ещё не появился, проверьте главный экран или меню приложений.";
+      } else {
+        writePwaInstallState({ dismissedUntil: Date.now() + PWA_DISMISS_MS });
+        if (statusEl) statusEl.textContent = "Хорошо, больше не будем напоминать несколько дней.";
+      }
+      return true;
+    } catch (error) {
+      if (statusEl) statusEl.textContent = "Браузер не показал установку. Используйте подсказку ниже для вашего устройства.";
+      return false;
+    } finally {
+      if (actionButton) {
+        const copy = pwaInstructionCopy();
+        actionButton.disabled = false;
+        actionButton.textContent = copy.button;
+      }
+    }
+  }
+
+  function buildPwaInstallModal() {
+    const existing = document.getElementById("pwaInstallModal");
+    if (existing) existing.remove();
+    const copy = pwaInstructionCopy();
+    const modal = document.createElement("div");
+    modal.className = "management-modal site-menu-modal pwa-install-modal";
+    modal.id = "pwaInstallModal";
+    modal.setAttribute("aria-hidden", "true");
+    modal.innerHTML = `
+      <div class="management-modal__backdrop" data-pwa-install-close></div>
+      <div class="management-modal__dialog management-modal__dialog--compact" role="dialog" aria-modal="true" aria-labelledby="pwaInstallTitle">
+        <div class="management-modal__header">
+          <div>
+            <p class="section-heading__eyebrow">Vetus Nauta</p>
+            <h3 id="pwaInstallTitle">Добавьте Vetus Nauta на главный экран.</h3>
+          </div>
+          <button type="button" class="management-modal__close" data-pwa-install-close aria-label="Закрыть">×</button>
+        </div>
+        <div class="pwa-install-modal__body">
+          <p class="pwa-install-modal__lead">Справочники и ручные расчёты можно открыть даже без устойчивой связи. Сложные расчёты вроде приливов, поиска мест и подготовки перехода лучше выполнить заранее, пока есть интернет.</p>
+          <div class="pwa-install-modal__benefits" role="list">
+            <span role="listitem">Быстрый запуск с главного экрана</span>
+            <span role="listitem">Часть данных доступна без связи</span>
+            <span role="listitem">Сохранённые страницы остаются под рукой</span>
+          </div>
+          <section class="pwa-install-modal__instructions" aria-labelledby="pwaInstallInstructionTitle">
+            <h4 id="pwaInstallInstructionTitle">${escapeHtml(copy.title)}</h4>
+            <p>${escapeHtml(copy.text)}</p>
+          </section>
+          <p class="pwa-install-modal__status" data-pwa-install-status aria-live="polite"></p>
+          <div class="pwa-install-modal__actions">
+            <button type="button" class="btn btn--primary" data-pwa-install-action>${escapeHtml(copy.button)}</button>
+            <button type="button" class="btn btn--secondary" data-pwa-install-close>Позже</button>
+          </div>
+          <p class="pwa-install-modal__foot">Для свежих данных по приливам, поиску мест и онлайн-проверкам нужен интернет. Сохранённые страницы и ручные расчёты остаются под рукой.</p>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    setupPwaInstallModal(modal);
+    return modal;
+  }
+
+  function setupPwaInstallModal(modal) {
+    const close = () => {
+      if (modal.dataset.source !== "menu") {
+        writePwaInstallState({ dismissedUntil: Date.now() + PWA_DISMISS_MS });
+      }
+      modal.classList.remove("is-open");
+      modal.setAttribute("aria-hidden", "true");
+      if (!document.querySelector(".management-modal.is-open")) {
+        document.body.classList.remove("management-modal-open");
+      }
+    };
+    modal.querySelectorAll("[data-pwa-install-close]").forEach((button) => {
+      button.addEventListener("click", close);
+    });
+    modal.querySelector("[data-pwa-install-action]")?.addEventListener("click", async (event) => {
+      const statusEl = modal.querySelector("[data-pwa-install-status]");
+      const copy = pwaInstructionCopy();
+      if (copy.canPrompt) {
+        await runPwaBrowserPrompt(statusEl, event.currentTarget);
+        return;
+      }
+      close();
+    });
+  }
+
+  function openPwaInstallModal(source = "manual") {
+    hidePwaHint(false);
+    const modal = buildPwaInstallModal();
+    modal.dataset.source = source;
+    modal.classList.add("is-open");
+    modal.setAttribute("aria-hidden", "false");
+    document.body.classList.add("management-modal-open");
+    setTimeout(() => modal.querySelector("button, [href]")?.focus(), 20);
+  }
+
+  function setupPwaInterestTriggers() {
+    if (!shouldOfferPwaInstall()) return;
+    const trigger = (reason) => {
+      if (!shouldOfferPwaInstall()) return;
+      showPwaHint(reason);
+      window.removeEventListener("scroll", onScroll);
+      if (pwaHintTimer) clearTimeout(pwaHintTimer);
+    };
+    const onScroll = () => {
+      const doc = document.documentElement;
+      const scrollable = Math.max(1, doc.scrollHeight - window.innerHeight);
+      const progress = Math.max(window.scrollY || doc.scrollTop || 0, 0) / scrollable;
+      if (progress >= 0.35) trigger("scroll");
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    pwaHintTimer = setTimeout(() => trigger("time"), 45000);
+    if (hasReturnVisitInterest()) {
+      setTimeout(() => trigger("return-visit"), 1500);
+    }
+  }
+
+  function registerMainSiteServiceWorker() {
+    if (!("serviceWorker" in navigator)) return;
+    if (!/^https?:$/.test(window.location.protocol)) return;
+    navigator.serviceWorker.register("/pwa-service-worker.js", { scope: "/" }).catch(() => {});
+  }
+
+  function setupPwaInstallFlow() {
+    recordPwaVisitDay();
+    window.addEventListener("beforeinstallprompt", (event) => {
+      event.preventDefault();
+      deferredPwaPrompt = event;
+    });
+    window.addEventListener("appinstalled", () => {
+      deferredPwaPrompt = null;
+      hidePwaHint(false);
+      writePwaInstallState({ installedUntil: Date.now() + PWA_INSTALLED_MS });
+    });
+    registerMainSiteServiceWorker();
+    setupPwaInterestTriggers();
+  }
+
   function applyContactLinks() {
     const c = window.BRKOVIC_CONFIG;
     if (!c) return;
+    const footerBrandline = document.querySelector('.footer.footer--site .footer__brandline');
+    if (footerBrandline && !document.getElementById('instagramFooterLink')) {
+      const link = document.createElement('a');
+      link.className = 'footer-social-link footer-social-link--instagram';
+      link.id = 'instagramFooterLink';
+      link.href = '#';
+      link.target = '_blank';
+      link.rel = 'noopener';
+      link.setAttribute('aria-label', 'Instagram');
+      link.setAttribute('data-i18n-aria-label', 'a11y_instagram');
+      link.innerHTML = '<img src="/images/icons/instagram.svg" alt="" /><span>Instagram</span>';
+      const copy = footerBrandline.querySelector('.footer__copy');
+      footerBrandline.insertBefore(link, copy || null);
+    }
     const map = {
       instagramTopLink: c.instagramUrl,
       instagramLink: c.instagramUrl,
@@ -606,11 +987,9 @@
     const panel = root.querySelector?.('[data-tool-account-panel]');
     if (!panel) return;
     const isAuthenticated = Boolean(profile?.authenticated);
-    panel.hidden = !isAuthenticated;
-    if (!isAuthenticated) {
-      panel.innerHTML = '';
-      return;
-    }
+    panel.hidden = true;
+    panel.innerHTML = '';
+    if (!isAuthenticated) return;
 
     const displayName = profile.displayName || profile.email || 'Brkovic account';
     const email = profile.email || '';
@@ -642,6 +1021,24 @@
         if (openModal) closeSiteMenu(openModal);
       }, { once: true });
     }
+  }
+
+  async function handleToolAccountMenuAction(trigger, modal) {
+    const cached = readToolAuthCache();
+    const isAuthenticated = Boolean(cached?.authenticated);
+    if (!isAuthenticated) {
+      closeSiteMenu(modal);
+      await openToolAuthPrompt();
+      return;
+    }
+
+    trigger.disabled = true;
+    trigger.textContent = t('site_menu_logging_out', 'Signing out...');
+    await toolAuthFetch('/api/auth/user/logout', { method: 'POST' }).catch(() => null);
+    clearToolAuthCache();
+    syncToolAccountUi(null);
+    closeSiteMenu(modal);
+    trigger.disabled = false;
   }
 
   function buildToolAccountModal() {
@@ -696,19 +1093,21 @@
     const isAuthenticated = Boolean(cached?.authenticated);
     const button = document.getElementById('toolAccountButton');
     const topbar = document.querySelector('.topbar');
-    if (topbar) topbar.classList.toggle('topbar--tool-account-active', isAuthenticated);
+    if (topbar) topbar.classList.remove('topbar--tool-account-active');
     if (button) {
-      button.hidden = !isAuthenticated;
-      if (isAuthenticated) {
-        button.setAttribute('aria-label', `Аккаунт ${cached.email || ''}`.trim());
-        renderToolAccountAvatar(button.querySelector('[data-tool-account-avatar]'), cached);
-      }
+      button.hidden = true;
     }
+    document.querySelectorAll('[data-tool-account-menu]').forEach((menuButton) => {
+      menuButton.disabled = false;
+      menuButton.dataset.i18n = isAuthenticated ? 'site_menu_logout' : 'site_menu_login';
+      menuButton.textContent = isAuthenticated ? t('site_menu_logout', 'Log out') : t('site_menu_login', 'Log in');
+    });
     renderToolAccountPanel(cached);
     syncAuthenticatedContactEmail(cached);
   }
 
-  async function fetchToolAuthStatus() {
+  async function fetchToolAuthStatus(options = {}) {
+    const allowCachedFallback = options.allowCachedFallback !== false;
     if (toolAuthStatusPromise) {
       return toolAuthStatusPromise;
     }
@@ -723,7 +1122,7 @@
       }
 
       const cached = readToolAuthCache();
-      if (cached && cached.authenticated) {
+      if (allowCachedFallback && cached && cached.authenticated) {
         syncToolAccountUi(cached);
         return cached;
       }
@@ -893,7 +1292,17 @@
           </div>
       <div class="tool-auth-prompt__body">
         <p class="tool-auth-prompt__note">Откройте доступ к рабочим инструментам Brkovic.ltd.</p>
-        <button type="button" class="btn btn--secondary" id="toolAuthGoogle" disabled>${escapeHtml(messages.google)}</button>
+        <button type="button" class="tool-auth-google" id="toolAuthGoogle" disabled>
+          <span class="tool-auth-google__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false">
+              <path fill="#4285F4" d="M21.6 12.23c0-.76-.07-1.49-.19-2.19H12v4.14h5.38a4.6 4.6 0 0 1-1.99 3.02v2.51h3.23c1.89-1.74 2.98-4.3 2.98-7.48Z" />
+              <path fill="#34A853" d="M12 22c2.7 0 4.96-.89 6.62-2.29l-3.23-2.51c-.9.6-2.05.95-3.39.95-2.6 0-4.8-1.75-5.59-4.11H3.08v2.59A10 10 0 0 0 12 22Z" />
+              <path fill="#FBBC05" d="M6.41 14.04A6 6 0 0 1 6.1 12c0-.71.11-1.4.31-2.04V7.37H3.08A10 10 0 0 0 2 12c0 1.61.39 3.13 1.08 4.63l3.33-2.59Z" />
+              <path fill="#EA4335" d="M12 5.85c1.47 0 2.79.51 3.82 1.5l2.87-2.87A9.6 9.6 0 0 0 12 2a10 10 0 0 0-8.92 5.37l3.33 2.59C7.2 7.6 9.4 5.85 12 5.85Z" />
+            </svg>
+          </span>
+          <span>${escapeHtml(messages.google)}</span>
+        </button>
         <div class="tool-auth-prompt__label">
           <label for="toolAuthEmail">${escapeHtml('Email')}</label>
           <input id="toolAuthEmail" class="tool-auth-prompt__input" type="email" autocomplete="email" inputmode="email" placeholder="${escapeHtml(messages.emailPlaceholder)}" />
@@ -1238,20 +1647,31 @@
     });
   }
 
-  async function ensureToolAccess() {
+  function isToolAuthRequiredError(error) {
+    const message = String(error?.message || error?.payload?.error?.message || '').toLowerCase();
+    return Number(error?.status || 0) === 401
+      || message.includes('tool auth is required')
+      || message.includes('нужно войти')
+      || message.includes('unauthorized');
+  }
+
+  async function ensureToolAccess(options = {}) {
+    const requireLive = options.requireLive === true;
     const cached = readToolAuthCache();
-    if (cached && cached.authenticated) {
+    if (!requireLive && cached && cached.authenticated) {
       return true;
     }
 
-    const status = await fetchToolAuthStatus().catch(() => null);
+    const status = await fetchToolAuthStatus({ allowCachedFallback: !requireLive }).catch(() => null);
     if (status && status.authenticated) {
       return true;
     }
 
     const result = await openToolAuthPrompt();
     if (result && result.authenticated) {
-      return true;
+      if (!requireLive) return true;
+      const liveStatus = await fetchToolAuthStatus({ allowCachedFallback: false }).catch(() => null);
+      return Boolean(liveStatus && liveStatus.authenticated);
     }
 
     return false;
@@ -1282,11 +1702,11 @@
     }
   }
 
-  async function resolveGameAuthHref(target) {
-    const directHref = target?.getAttribute?.('href') || 'https://game.brkovic.ltd/';
+  async function resolveGameAuthHref(target, options = {}) {
     const returnTo = gameReturnPath(target);
+    const retryOnAuthFailure = options.retryOnAuthFailure !== false;
 
-    try {
+    const requestGameHref = async () => {
       const payload = await toolAuthFetch(`/api/auth/user/ecosystem-token?returnTo=${encodeURIComponent(returnTo)}`);
       const data = payload?.data || payload || {};
       if (typeof data.loginUrl === 'string' && data.loginUrl) return data.loginUrl;
@@ -1296,15 +1716,29 @@
         loginUrl.searchParams.set('token', data.token);
         return loginUrl.toString();
       }
+      throw new Error('Сервер не вернул ссылку единого входа в обучающие игры.');
+    };
+
+    try {
+      return await requestGameHref();
     } catch (error) {
+      if (retryOnAuthFailure && isToolAuthRequiredError(error)) {
+        clearToolAuthCache();
+        syncToolAccountUi(null);
+        const allowed = await ensureToolAccess({ requireLive: true });
+        if (allowed) {
+          return requestGameHref();
+        }
+      }
       throw new Error('Не удалось подготовить единый вход в обучающие игры. Попробуйте ещё раз.');
     }
-
-    throw new Error('Сервер не вернул ссылку единого входа в обучающие игры.');
   }
 
   function isToolActionCandidate(target) {
     if (!target) return false;
+    if (target.closest('[data-game-promo-open]')) {
+      return false;
+    }
     if (target.closest('[data-tool-auth-action]')) {
       return true;
     }
@@ -1324,6 +1758,130 @@
     if (target.closest('.navdesk-hero__actions')) return false;
     if (target.id === 'navdeskModalAccept') return false;
     return /(save|print|pdf|share|copy|entry|gps|sign|apply|add|run|load|calc|schedule|manual|watch|entries|reset|export|watch)/i.test(id);
+  }
+
+  const ADMIN_LINK_ALLOWED_EMAILS = new Set([
+    'sailor040381@gmail.com',
+    'vetus.nauta@gmail.com',
+  ]);
+
+  function isAdminPageHref(href) {
+    if (!href) return false;
+    try {
+      const url = new URL(href, window.location.href);
+      if (url.origin !== window.location.origin) return false;
+      const page = url.pathname.split('/').pop() || '';
+      return /^admin(?:-[a-z0-9]+)?\.html$/i.test(page);
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function unwrapAuthPayload(payload) {
+    let value = payload;
+    for (let i = 0; i < 3; i += 1) {
+      if (!value || typeof value !== 'object') return value;
+      if (value.data && typeof value.data === 'object') {
+        value = value.data;
+        continue;
+      }
+      break;
+    }
+    return value;
+  }
+
+  function authPayloadEmail(payload) {
+    const data = unwrapAuthPayload(payload);
+    return normalizeEmail(
+      data?.email
+      || data?.user?.email
+      || data?.profile?.email
+      || payload?.email
+      || payload?.user?.email
+      || ''
+    );
+  }
+
+  function authPayloadIsAuthenticated(payload) {
+    const data = unwrapAuthPayload(payload);
+    return data?.authenticated === true
+      || data?.user?.authenticated === true
+      || payload?.authenticated === true;
+  }
+
+  async function fetchAdminAccessProfile(route) {
+    try {
+      return await toolAuthFetch(route, { method: 'GET' });
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function directAdminAccessRoute(route) {
+    const value = String(route || '');
+    if (value.startsWith('/api/')) return value;
+    return `/api${value.startsWith('/') ? value : `/${value}`}`;
+  }
+
+  async function fetchDirectAdminAccessProfile(route) {
+    try {
+      const response = await fetch(directAdminAccessRoute(route), {
+        credentials: 'same-origin',
+        headers: { 'Accept': 'application/json' },
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || !payload) return null;
+      return payload;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async function hasSilentAdminLinkAccess() {
+    const routes = ['/auth/me', '/api/auth/user/me'];
+    for (const route of routes) {
+      const payloads = [
+        await fetchDirectAdminAccessProfile(route),
+        await fetchAdminAccessProfile(route),
+      ];
+      for (const payload of payloads) {
+        if (!payload) continue;
+        const email = authPayloadEmail(payload);
+        if (authPayloadIsAuthenticated(payload) && ADMIN_LINK_ALLOWED_EMAILS.has(email)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  function openAdminHref(anchor) {
+    const href = anchor?.getAttribute?.('href') || '';
+    if (!href) return;
+    const url = new URL(href, window.location.href).toString();
+    window.location.href = url;
+  }
+
+  function bindSilentAdminLinkGate() {
+    if (!document.querySelector('a[href*="admin"]')) return;
+
+    document.addEventListener('click', async (event) => {
+      const anchor = event.target.closest?.('a[href]');
+      if (!anchor || !isAdminPageHref(anchor.getAttribute('href'))) return;
+      if (anchor.dataset.adminGateReplay === '1') {
+        delete anchor.dataset.adminGateReplay;
+        return;
+      }
+
+      event.preventDefault();
+      event.stopImmediatePropagation();
+
+      const allowed = await hasSilentAdminLinkAccess();
+      if (!allowed) return;
+
+      anchor.dataset.adminGateReplay = '1';
+      openAdminHref(anchor);
+    }, { capture: true });
   }
 
   function bindToolActionAuthGate() {
@@ -1350,12 +1908,13 @@
       event.preventDefault();
       event.stopImmediatePropagation();
       try {
-        const allowed = await ensureToolAccess();
+        const gameLink = isGameLink(target);
+        const allowed = await ensureToolAccess({ requireLive: gameLink });
         if (!allowed) return;
 
         target.dataset.toolAuthReplay = '1';
         if (target.tagName === 'A') {
-          const href = isGameLink(target)
+          const href = gameLink
             ? await resolveGameAuthHref(target)
             : target.getAttribute('href');
           if (href) window.location.href = href;
@@ -1408,6 +1967,8 @@
     setupCvTriggers();
     setupServiceRequestFromUrl();
     setupMobileCollapsibles();
+    bindSilentAdminLinkGate();
     bindToolActionAuthGate();
+    setupPwaInstallFlow();
   });
 })();

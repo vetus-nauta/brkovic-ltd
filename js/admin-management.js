@@ -1266,6 +1266,9 @@
   }
 
   async function checkSession() {
+    if (window.BRKOVIC_ADMIN_AUTH?.checkSession) {
+      return window.BRKOVIC_ADMIN_AUTH.checkSession();
+    }
     try {
       const data = await authApi('/auth/me', { method: 'GET' });
       return !!data?.authenticated;
@@ -2589,7 +2592,7 @@
       }
     } else {
       setLoggedInUI(false);
-      setStatus('Войдите тем же логином, что используется для постов и комментариев.');
+      setStatus('Общая авторизация владельца не найдена.');
     }
   })();
 })();

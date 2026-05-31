@@ -4590,7 +4590,7 @@ body.journal-page--collection .journal-collection-book__nav {
   margin: 0;
   padding: 12px;
   border: 0;
-  border-bottom: 1px solid rgba(63,50,32,.11);
+  border-top: 1px solid rgba(63,50,32,.11);
   border-radius: 0;
   background: rgba(255,252,244,.94);
   box-shadow: none;

@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="css/variables.css" />
   <link rel="stylesheet" href="css/main.css" />
   <link rel="stylesheet" href="css/responsive.css" />
-  <link rel="stylesheet" href="css/admin-posts.css?v=20260528-locale-status-ui-01" />
+  <link rel="stylesheet" href="css/admin-posts.css?v=20260531-collection-cover-upload-01" />
 </head>
 <body>
   <div class="site-shell">
@@ -33,22 +33,12 @@
         </div>
 
         <nav class="admin-section-nav" aria-label="Разделы админки">
+          <a href="admin.html">Admin panel</a>
           <a href="admin-posts.html" class="is-active">Посты</a>
           <a href="admin-comments.html">Комментарии</a>
           <a href="admin-management.html">Менеджмент</a>
+          <a href="admin-seo.html">SEO</a>
         </nav>
-
-        <form id="adminPostsLoginForm" class="admin-posts-login">
-          <label>
-            <span>Email</span>
-            <input type="email" id="adminPostsEmail" value="vetus.nauta@gmail.com" required />
-          </label>
-          <label>
-            <span>Пароль</span>
-            <input type="password" id="adminPostsPassword" required />
-          </label>
-          <button type="submit" class="btn btn--primary">Войти</button>
-        </form>
 
         <div id="adminPostsStatus" class="admin-posts-status"></div>
 
@@ -108,21 +98,21 @@
               </div>
 
               <label>
-                <span>Заголовок RU</span>
+                <span>Заголовок</span>
                 <input type="text" id="titleRu" required />
               </label>
 
               <label>
-                <span>Краткое описание RU</span>
+                <span>Краткое описание</span>
                 <textarea id="excerptRu" rows="3"></textarea>
               </label>
 
               <label>
-                <span>Текст RU</span>
+                <span>Текст</span>
                 <textarea id="contentRu" rows="8" required></textarea>
               </label>
 
-              <div class="post-editor-advanced-toggle">
+              <div class="post-editor-advanced-toggle" hidden>
                 <button type="button" id="toggleAdvancedFields" class="btn btn--secondary">Переводы и SEO</button>
                 <span id="advancedFieldsSummary" class="post-editor-advanced-summary">Свернуто</span>
               </div>
@@ -163,13 +153,13 @@
               </label>
 
               <div class="post-editor-actions">
-                <button type="button" id="generateAiPostTranslationsBtn" class="btn btn--secondary">Сгенерировать локализации (AI)</button>
-                <button type="button" id="generateAiPostMissingTranslationsBtn" class="btn btn--secondary">Сгенерировать отсутствующие локализации</button>
-                <button type="button" id="refreshPostAiTranslationStatusBtn" class="btn btn--secondary">Проверить статусы локализаций</button>
-                <button type="submit" class="btn btn--primary">Сохранить пост</button>
+                <button type="button" id="generateAiPostTranslationsBtn" class="btn btn--secondary">Сгенерировать все переводы</button>
+                <button type="button" id="generateAiPostMissingTranslationsBtn" class="btn btn--secondary" hidden>Сгенерировать отсутствующие локализации</button>
+                <button type="button" id="refreshPostAiTranslationStatusBtn" class="btn btn--secondary" hidden>Проверить статусы локализаций</button>
+                <button type="submit" id="savePostBtn" class="btn btn--primary">Сохранить</button>
                 <a id="openPublicPostLink" class="btn btn--secondary" href="journal.html" target="_blank" rel="noopener">Открыть публикацию</a>
               </div>
-              <div id="postAiTranslationOptions" class="admin-translation-options" aria-label="Параметры AI-перевода">
+              <div id="postAiTranslationOptions" class="admin-translation-options" aria-label="Параметры AI-перевода" hidden>
                 <label><input type="checkbox" name="postTranslationLanguage" value="en" checked /> en</label>
                 <label><input type="checkbox" name="postTranslationLanguage" value="de" checked /> de</label>
                 <label><input type="checkbox" name="postTranslationLanguage" value="it" checked /> it</label>
@@ -218,7 +208,7 @@
 
               <div class="post-editor-grid">
                 <label>
-                  <span>Название обложки RU</span>
+                  <span>Название очерка / книги / серии</span>
                   <input type="text" id="collectionTitleRu" required />
                 </label>
                 <label>
@@ -247,20 +237,31 @@
                   </select>
                 </label>
                 <label>
-                  <span>Авторство</span>
+                  <span>Автор</span>
                   <input type="text" id="collectionAuthorLine" value="Vetus Nauta - Brkovic" />
                 </label>
               </div>
 
               <label>
-                <span>Короткое описание обложки RU</span>
+                <span>Описание книги / серии</span>
                 <textarea id="collectionExcerptRu" rows="3"></textarea>
               </label>
 
-              <label>
-                <span>ID медиа для обложки</span>
-                <input type="text" id="collectionCoverMediaId" placeholder="Можно оставить пустым" />
-              </label>
+              <input type="hidden" id="collectionCoverMediaId" />
+              <div class="collection-cover-upload">
+                <div class="collection-cover-upload__head">
+                  <div>
+                    <span>Обложка</span>
+                    <p>Загружайте чистое изображение без текста. Автор, название и описание выводятся отдельными строками.</p>
+                  </div>
+                  <div id="collectionCoverPreview" class="collection-cover-upload__preview"></div>
+                </div>
+                <div class="collection-cover-upload__controls">
+                  <input type="file" id="collectionCoverFile" accept="image/*" />
+                  <button type="button" id="uploadCollectionCoverBtn" class="btn btn--secondary">Загрузить обложку</button>
+                </div>
+                <div id="collectionCoverUploadStatus" class="admin-post-meta"></div>
+              </div>
 
               <div class="collection-pages-picker">
                 <div class="collection-pages-picker__head">
@@ -271,13 +272,13 @@
               </div>
 
               <div class="post-editor-actions">
-                <button type="button" id="generateAiCollectionTranslationsBtn" class="btn btn--secondary">Сгенерировать локализации (AI)</button>
-                <button type="button" id="generateAiMissingCollectionTranslationsBtn" class="btn btn--secondary">Сгенерировать отсутствующие локализации</button>
-                <button type="button" id="refreshCollectionAiTranslationStatusBtn" class="btn btn--secondary">Проверить статусы локализаций</button>
-                <button type="submit" id="saveCollectionBtn" class="btn btn--primary">Сохранить многостраничную запись</button>
+                <button type="button" id="generateAiCollectionTranslationsBtn" class="btn btn--secondary">Сгенерировать все переводы</button>
+                <button type="button" id="generateAiMissingCollectionTranslationsBtn" class="btn btn--secondary" hidden>Сгенерировать отсутствующие локализации</button>
+                <button type="button" id="refreshCollectionAiTranslationStatusBtn" class="btn btn--secondary" hidden>Проверить статусы локализаций</button>
+                <button type="submit" id="saveCollectionBtn" class="btn btn--primary">Сохранить</button>
                 <a id="openPublicCollectionLink" class="btn btn--secondary" href="journal.html" target="_blank" rel="noopener">Открыть</a>
               </div>
-              <div id="collectionAiTranslationOptions" class="admin-translation-options" aria-label="Параметры AI-перевода">
+              <div id="collectionAiTranslationOptions" class="admin-translation-options" aria-label="Параметры AI-перевода" hidden>
                 <label><input type="checkbox" name="collectionTranslationLanguage" value="en" checked /> en</label>
                 <label><input type="checkbox" name="collectionTranslationLanguage" value="de" checked /> de</label>
                 <label><input type="checkbox" name="collectionTranslationLanguage" value="it" checked /> it</label>
@@ -297,6 +298,7 @@
     </main>
   </div>
 
-  <script src="js/admin-posts.js?v=20260529-ai-route-recovery-01"></script>
+  <script src="js/admin-auth.js?v=20260531-owner-session-01"></script>
+  <script src="js/admin-posts.js?v=20260531-owner-session-01"></script>
 </body>
 </html>

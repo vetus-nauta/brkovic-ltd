@@ -1,12 +1,22 @@
 # BRKOVIC.LTD Director Handoff For New Chat
 
-**Updated:** 2026-05-30
+**Updated:** 2026-06-01
 **Project:** `brkovic.ltd`
 **Local root:** `/home/alexey/GitHub/Revoyacht/brkovic-ltd`
 **Branch:** `handoff-2026-05-20-full`
 **Role:** Director of BRKOVIC.LTD MVP
 
 This is the first file for the next Director chat.
+
+## Latest June 1 Handoff
+
+Read this current handoff before continuing production work:
+
+```text
+docs/brkovic_ltd_project_office/director-reports/2026-06-01-project-handoff-and-release.md
+```
+
+It records the June 1 live upload, Ship Cashbox fixes, game promo/auth fixes, current deployment discipline, and the next-chat operating notes. It intentionally contains no secrets.
 
 ## Start Exactly Here
 
@@ -310,6 +320,43 @@ Important old notes:
 docs/brkovic_ltd_backend_ftp_access_notes_2026-05-25.md
 docs/brkovic_ltd_journal_audit_2026-05-25.md
 ```
+
+### 10. Ship Cashbox Current State
+
+`Ship Cashbox` is now an implemented Nav Desk tool and should not be rethought from zero in the next chat.
+
+Current technical state:
+
+- tool root:
+  - `ship-cashbox/index.html`
+  - `ship-cashbox/assets/app.js`
+  - `ship-cashbox/assets/app.css`
+  - `ship-cashbox/api/index.php`
+  - `ship-cashbox/sw.js`
+- entry card exists in `navdesk.html`;
+- page is already under the accepted Nav Desk tool shell;
+- stale post-login runtime was fixed through `ship-cashbox` service-worker/cache changes;
+- participant + treasurer notebooks, sync, archive/reopen, print/PDF, receipt attachments and light PDF scan are already implemented;
+- financial model was reworked to a single user-facing flow:
+  - participants may spend personally;
+  - participants may hand money to the treasurer at any moment;
+  - treasurer may then spend from physically held group money;
+  - settlement auto-resolves between direct transfers and treasurer-mediated payout/top-up behavior.
+
+Do not restart this feature as a redesign task by default.
+
+Read before assigning more work:
+
+```text
+docs/brkovic_ltd_project_office/reports/frontend-ship-cashbox-delivery-2026-05-31.md
+docs/brkovic_ltd_project_office/director-reports/2026-05-31-ship-cashbox-review-handoff.md
+```
+
+Current review expectation:
+
+- Frontend Manager checks shell/runtime/page-discipline fit;
+- QA Director / QA-UX reruns browser/device and financial scenarios;
+- SEO Director checks copy/metadata honesty and no accidental surface drift.
 
 ## Current Office Map
 

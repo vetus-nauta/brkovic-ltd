@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta name="robots" content="noindex,nofollow,noarchive" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BRKOVIC — Admin Panel</title>
+  <meta name="theme-color" content="#10243a" />
+  <link rel="icon" href="images/icons/favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/variables.css" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+  <link rel="stylesheet" href="css/admin-seo.css?v=20260531-admin-seo-01" />
+</head>
+<body class="admin-hub-page">
+  <div class="site-shell">
+    <header class="topbar">
+      <a href="index.html#hero" class="brand" aria-label="BRKOVIC home">
+        <span class="brand__word">BRKO<span class="brand__sail">V</span>IC</span>
+        <span class="brand__tag">Admin Panel</span>
+      </a>
+    </header>
+
+    <main class="section admin-hub">
+      <section class="section--paper admin-shell-card">
+        <div class="admin-hero-line">
+          <div class="section-heading">
+            <p class="section-heading__eyebrow">Единый вход</p>
+            <h1>Admin Panel</h1>
+            <p>Один вход для публикаций, комментариев, SEO и будущих рабочих разделов.</p>
+          </div>
+          <div class="admin-device-map" aria-label="Адаптивные режимы">
+            <span>Desktop</span>
+            <span>Tablet</span>
+            <span>Mobile</span>
+          </div>
+        </div>
+
+        <div id="adminHubStatus" class="admin-status" aria-live="polite"></div>
+
+        <div id="adminHubSections" class="admin-hub-grid" aria-label="Разделы админки">
+          <a class="admin-hub-card" href="admin-posts.html">
+            <span class="admin-hub-card__kicker">Content</span>
+            <strong>Post Admin</strong>
+            <span>Записи, медиа, серии, локализации и AI-переводы журнала.</span>
+          </a>
+          <a class="admin-hub-card" href="admin-comments.html">
+            <span class="admin-hub-card__kicker">Moderation</span>
+            <strong>Comment Admin</strong>
+            <span>Проверка, одобрение и отклонение комментариев.</span>
+          </a>
+          <a class="admin-hub-card admin-hub-card--accent" href="admin-seo.html">
+            <span class="admin-hub-card__kicker">Growth</span>
+            <strong>SEO Admin</strong>
+            <span>Карта SEO, идентификаторы, безопасная консоль и основа для AI-задач.</span>
+          </a>
+          <a class="admin-hub-card" href="admin-management.html">
+            <span class="admin-hub-card__kicker">Operations</span>
+            <strong>Management Admin</strong>
+            <span>Рабочие управленческие инструменты и документы.</span>
+          </a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="js/admin-auth.js?v=20260531-owner-session-01"></script>
+  <script src="js/admin-panel.js?v=20260531-owner-session-01"></script>
+</body>
+</html>

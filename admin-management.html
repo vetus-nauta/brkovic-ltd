@@ -33,22 +33,12 @@
         </div>
 
         <nav class="admin-section-nav" aria-label="Разделы админки">
+          <a href="admin.html">Admin panel</a>
           <a href="admin-posts.html">Посты</a>
           <a href="admin-comments.html">Комментарии</a>
           <a href="admin-management.html" class="is-active">Менеджмент</a>
+          <a href="admin-seo.html">SEO</a>
         </nav>
-
-        <form id="adminManagementLoginForm" class="admin-management-login">
-          <label>
-            <span>Email</span>
-            <input type="email" id="adminManagementEmail" value="vetus.nauta@gmail.com" required />
-          </label>
-          <label>
-            <span>Пароль</span>
-            <input type="password" id="adminManagementPassword" autocomplete="current-password" required />
-          </label>
-          <button type="submit" class="btn btn--primary">Войти</button>
-        </form>
 
         <div id="adminManagementStatus" class="admin-management-status"></div>
         <div id="adminManagementDiagnostics" class="admin-management-diagnostics" hidden></div>
@@ -322,6 +312,7 @@
     </main>
   </div>
 
-  <script src="js/admin-management.js?v=20260519-04"></script>
+  <script src="js/admin-auth.js?v=20260531-owner-session-01"></script>
+  <script src="js/admin-management.js?v=20260531-owner-session-01"></script>
 </body>
 </html>

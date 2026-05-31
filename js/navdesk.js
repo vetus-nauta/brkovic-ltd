@@ -31,6 +31,15 @@
   window.initNavdeskConsent = () => {
     if (window.__navdeskConsentInitialized) return;
 
+    const consentScope = document.body?.dataset.navdeskConsent || '';
+    const isToolPage = !!document.querySelector('.navdesk-tool-page');
+    const isNavdeskLanding = /(?:^|\/)navdesk(?:\.html)?$/.test(window.location.pathname)
+      && !!document.querySelector('main.navdesk-page:not(.navdesk-tool-page)');
+    if (consentScope === 'off' || (consentScope !== 'on' && (isToolPage || !isNavdeskLanding))) {
+      window.__navdeskConsentInitialized = true;
+      return;
+    }
+
     const navdeskModal = document.getElementById('navdeskModal');
     const navdeskModalAccept = document.getElementById('navdeskModalAccept');
     const siteShell = document.querySelector('.site-shell');

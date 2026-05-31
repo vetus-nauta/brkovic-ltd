@@ -14,6 +14,12 @@
 /api/delivery-distance.config.php
 /api/openai.config.php
 /data/management-projects.json
+/ship-cashbox/storage/index.json
+/ship-cashbox/storage/.ship-cashbox-secret
+/ship-cashbox/storage/sessions/**/*.json
+/ship-cashbox/storage/exports/*
+!/ship-cashbox/storage/exports/.gitkeep
+!/ship-cashbox/storage/.htaccess
 /error_log
 /.ftpquota
 /.listing

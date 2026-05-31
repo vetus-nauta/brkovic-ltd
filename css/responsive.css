@@ -452,8 +452,6 @@
   display: none;
 }
 
-}
-
 
 
 /* FINAL HEADER LOGO SWITCH */
@@ -1575,5 +1573,357 @@
   .service-page .management-card__summary::after {
     top: 22px;
     right: 18px;
+  }
+}
+
+/* === Final mobile heading calm layer 20260530 === */
+@media (max-width: 640px) {
+  .hero h1,
+  .section-heading h2,
+  .service-hero__copy h1,
+  .service-page .service-hero__copy h1,
+  .service-quick__card h2,
+  .service-panel h2,
+  .service-cta h2,
+  .contact-note strong,
+  .feature-item h3,
+  .service-card h3,
+  .destination-card strong {
+    max-width: 100% !important;
+    font-weight: 720 !important;
+    letter-spacing: 0 !important;
+    line-height: 1.12 !important;
+    overflow-wrap: break-word !important;
+    word-break: normal !important;
+    hyphens: auto !important;
+    text-wrap: balance;
+  }
+
+  .hero h1,
+  .home-page .hero h1,
+  .service-hero__copy h1,
+  .service-page .service-hero__copy h1 {
+    font-size: clamp(1.9rem, 7.6vw, 2.45rem) !important;
+  }
+
+  .section-heading h2,
+  .service-quick__card h2,
+  .service-panel h2,
+  .service-cta h2 {
+    font-size: clamp(1.52rem, 6.6vw, 2.05rem) !important;
+  }
+
+  .feature-item h3,
+  .service-card h3,
+  .destination-card strong,
+  .contact-note strong,
+  .service-page .service-panel__summary span,
+  .service-page .delivery-term-card__summary span {
+    font-size: clamp(1.18rem, 5vw, 1.45rem) !important;
+    line-height: 1.16 !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .hero h1,
+  .home-page .hero h1,
+  .service-hero__copy h1,
+  .service-page .service-hero__copy h1 {
+    font-size: clamp(1.72rem, 7.1vw, 2.18rem) !important;
+  }
+
+  .section-heading h2,
+  .service-quick__card h2,
+  .service-panel h2,
+  .service-cta h2 {
+    font-size: clamp(1.38rem, 6vw, 1.78rem) !important;
+  }
+}
+
+/* === Site menu button responsive lock 20260531 === */
+.topbar.topbar--site-menu .site-menu-button,
+.site-menu-button {
+  --site-menu-button-height: 48px;
+  --site-menu-button-icon: 18px;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 auto !important;
+  gap: 9px !important;
+  width: auto !important;
+  min-width: 0 !important;
+  height: var(--site-menu-button-height) !important;
+  min-height: var(--site-menu-button-height) !important;
+  padding: 0 18px !important;
+  box-sizing: border-box !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+
+.topbar.topbar--site-menu .site-menu-button__icon,
+.site-menu-button__icon {
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 var(--site-menu-button-icon) !important;
+  width: var(--site-menu-button-icon) !important;
+  min-width: var(--site-menu-button-icon) !important;
+  height: var(--site-menu-button-icon) !important;
+  min-height: var(--site-menu-button-icon) !important;
+  margin: 0 !important;
+  transform: none !important;
+}
+
+.topbar.topbar--site-menu .site-menu-button__icon span,
+.site-menu-button__icon span {
+  position: absolute !important;
+  left: 50% !important;
+  width: var(--site-menu-button-icon) !important;
+  min-width: var(--site-menu-button-icon) !important;
+  height: 2px !important;
+  transform: translate(-50%, -50%) !important;
+}
+
+.topbar.topbar--site-menu .site-menu-button__icon span:nth-child(1),
+.site-menu-button__icon span:nth-child(1) {
+  top: calc(50% - 6px) !important;
+}
+
+.topbar.topbar--site-menu .site-menu-button__icon span:nth-child(2),
+.site-menu-button__icon span:nth-child(2) {
+  top: 50% !important;
+}
+
+.topbar.topbar--site-menu .site-menu-button__icon span:nth-child(3),
+.site-menu-button__icon span:nth-child(3) {
+  top: calc(50% + 6px) !important;
+}
+
+.topbar.topbar--site-menu .site-menu-button > span:last-child,
+.site-menu-button > span:last-child {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 1em !important;
+  min-height: 1em !important;
+  line-height: 1 !important;
+  transform: none !important;
+}
+
+@media (max-width: 360px) {
+  .site-menu-button {
+    padding: 0 14px !important;
+  }
+}
+
+/* === Local polish sprint 20260531 === */
+@media (max-width: 720px) {
+  .service-page .brand__picture--home .brand__logo-image--desktop {
+    display: block !important;
+    height: 54px !important;
+    max-width: min(58vw, 230px) !important;
+  }
+
+  .service-page .brand__picture--home .brand__logo-image--mobile {
+    display: none !important;
+  }
+
+  .service-page .topbar.topbar--site-menu {
+    border-radius: 18px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .home-page #services .cards-grid--editorial {
+    grid-auto-rows: auto !important;
+  }
+
+  .home-page #services .service-card {
+    min-height: 0 !important;
+    padding: 18px !important;
+  }
+
+  .home-page #services .service-card h3 {
+    min-height: 0 !important;
+    max-width: 100%;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 520px) and (hover: none) and (pointer: coarse) {
+  .topbar,
+  .home-page .topbar,
+  .service-page .topbar,
+  .management-page .topbar {
+    position: static !important;
+    top: auto !important;
+  }
+
+  .site-shell {
+    padding-top: 10px !important;
+  }
+}
+
+/* === Home mobile card rhythm 20260531 === */
+@media (max-width: 640px) {
+  .home-page .site-shell {
+    padding-inline: 12px !important;
+  }
+
+  .home-page .section {
+    padding-block: 10px !important;
+  }
+
+  .home-page .section--paper,
+  .home-page .section--accent {
+    padding: 18px !important;
+    border-radius: 22px !important;
+  }
+
+  .home-page .section-heading {
+    margin-bottom: 16px !important;
+  }
+
+  .home-page .section-heading__eyebrow,
+  .home-page .editorial-kicker {
+    letter-spacing: .13em !important;
+    font-size: .68rem !important;
+    line-height: 1.35 !important;
+  }
+
+  .home-page .section-heading h2 {
+    font-size: clamp(1.48rem, 6.1vw, 1.86rem) !important;
+    line-height: 1.1 !important;
+    text-wrap: balance;
+  }
+
+  .home-page .section-heading p {
+    max-width: none !important;
+    font-size: .94rem !important;
+    line-height: 1.5 !important;
+  }
+
+  .home-page .hero__editorial {
+    padding: 20px !important;
+  }
+
+  .home-page .hero h1 {
+    max-width: 100% !important;
+    font-size: clamp(2rem, 8.2vw, 2.55rem) !important;
+    line-height: 1.06 !important;
+    text-wrap: balance;
+  }
+
+  .home-page .hero__lead,
+  .home-page .hero__support {
+    max-width: none !important;
+    font-size: .94rem !important;
+    line-height: 1.52 !important;
+  }
+
+  .home-page #services .cards-grid--editorial,
+  .home-page .feature-list,
+  .home-page .destination-strip {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    grid-auto-rows: auto !important;
+  }
+
+  .home-page #services .service-card,
+  .home-page .feature-item,
+  .home-page .destination-card {
+    display: grid !important;
+    align-content: start !important;
+    gap: 8px !important;
+    min-height: 0 !important;
+    padding: 18px !important;
+    border-radius: 18px !important;
+  }
+
+  .home-page #services .service-card h3,
+  .home-page .feature-item h3,
+  .home-page .destination-card strong {
+    max-width: min(100%, 20ch) !important;
+    margin: 0 !important;
+    font-family: var(--font-primary) !important;
+    font-size: clamp(1.08rem, 4.4vw, 1.28rem) !important;
+    line-height: 1.18 !important;
+    font-weight: 780 !important;
+    text-wrap: balance;
+  }
+
+  .home-page #services .service-card p,
+  .home-page .feature-item p,
+  .home-page .destination-card span {
+    max-width: none !important;
+    margin: 0 !important;
+    color: var(--color-muted) !important;
+    font-size: .94rem !important;
+    line-height: 1.46 !important;
+  }
+
+  .home-page #services .service-card__brand-row {
+    margin: 0 0 2px !important;
+  }
+
+  .home-page #services .service-card::after {
+    right: 16px !important;
+    bottom: 16px !important;
+    width: 86px !important;
+    height: 54px !important;
+    opacity: .16 !important;
+    transform: none !important;
+  }
+
+  .home-page .feature-item {
+    min-height: 112px !important;
+  }
+
+  .home-page .destination-card {
+    min-height: 118px !important;
+  }
+
+  .home-page #contact .section-heading h2 {
+    font-size: clamp(1.46rem, 6vw, 1.82rem) !important;
+  }
+
+  .pwa-install-hint {
+    left: 12px !important;
+    right: 12px !important;
+    bottom: calc(12px + env(safe-area-inset-bottom)) !important;
+    width: auto !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    gap: 10px !important;
+    padding: 10px !important;
+    border-radius: 18px !important;
+  }
+
+  .pwa-install-hint__copy {
+    gap: 0 !important;
+  }
+
+  .pwa-install-hint__copy strong {
+    font-size: .92rem !important;
+    line-height: 1.18 !important;
+  }
+
+  .pwa-install-hint__copy span {
+    display: none !important;
+  }
+
+  .pwa-install-hint__actions {
+    gap: 6px !important;
+  }
+
+  .pwa-install-hint__install {
+    flex: 0 0 auto !important;
+    min-height: 38px !important;
+    padding-inline: 14px !important;
+  }
+
+  .pwa-install-hint__close {
+    width: 38px !important;
+    height: 38px !important;
   }
 }

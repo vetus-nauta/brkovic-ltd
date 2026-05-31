@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta name="robots" content="noindex,nofollow,noarchive" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BRKOVIC — SEO Admin</title>
+  <meta name="theme-color" content="#10243a" />
+  <link rel="icon" href="images/icons/favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/variables.css" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+  <link rel="stylesheet" href="css/admin-seo.css?v=20260531-admin-seo-03" />
+</head>
+<body class="admin-shell-page seo-console-page">
+  <div class="site-shell">
+    <header class="topbar">
+      <a href="index.html#hero" class="brand" aria-label="BRKOVIC home">
+        <span class="brand__word">BRKO<span class="brand__sail">V</span>IC</span>
+        <span class="brand__tag">SEO Admin</span>
+      </a>
+    </header>
+
+    <main class="section">
+      <section class="section--paper admin-shell-card seo-console-card">
+        <div class="admin-hero-line">
+          <div class="section-heading">
+            <p class="section-heading__eyebrow">SEO Admin</p>
+            <h1>Пульт жизни сайта</h1>
+            <p>Проверки, идентификаторы, безопасная SEO Console, IndexNow и AI-черновики через серверные команды с белым списком.</p>
+          </div>
+          <div class="admin-device-map" aria-label="Адаптивные режимы">
+            <span>Desktop</span>
+            <span>Tablet</span>
+            <span>Mobile</span>
+          </div>
+        </div>
+
+        <nav class="admin-section-nav" aria-label="Разделы админки">
+          <a href="admin.html">Admin panel</a>
+          <a href="admin-posts.html">Посты</a>
+          <a href="admin-comments.html">Комментарии</a>
+          <a href="admin-management.html">Менеджмент</a>
+          <a href="admin-seo.html" class="is-active">SEO</a>
+        </nav>
+
+        <div id="seoStatus" class="admin-status" aria-live="polite"></div>
+
+        <section id="seoWorkspace" class="seo-workspace" hidden>
+          <div class="seo-top-grid">
+            <article class="seo-help-card">
+              <h2>Короткая инструкция</h2>
+              <p>Сначала нажмите <strong>Серверный аудит</strong>. Если есть красные пункты, откройте страницу в списке и смотрите подсказку. Идентификаторы сохраняются на сервере, IndexNow умеет создать key-файл, AI возвращает только черновик без автопубликации.</p>
+              <ul>
+                <li><strong>Серверный аудит</strong> — общий аудит страниц, sitemap и robots на backend.</li>
+                <li><strong>Карта URL</strong> — показывает публичные URL для контроля карты сайта.</li>
+                <li><strong>IndexNow key</strong> — создает key-файл в корне сайта.</li>
+                <li><strong>Отправить IndexNow</strong> — отправляет URL в IndexNow для Bing/Yandex.</li>
+                <li><strong>AI черновик</strong> — готовит SEO-рекомендации через OpenAI без автопубликации.</li>
+              </ul>
+            </article>
+            <div class="seo-status-grid" id="seoSummaryCards"></div>
+          </div>
+
+          <section class="seo-settings-panel">
+            <div class="seo-panel-head">
+              <div>
+                <p class="section-heading__eyebrow">Идентификаторы</p>
+                <h2>Счетчики и подтверждения</h2>
+              </div>
+              <button type="button" class="btn btn--secondary" id="saveSeoSettingsBtn" data-admin-tooltip="Сохранить карту идентификаторов на сервере. Ключи OpenAI здесь не хранятся.">Сохранить карту</button>
+            </div>
+            <div class="seo-settings-grid">
+              <label><span>Google Search Console Host</span><input id="gscVerificationHost" placeholder="@" /></label>
+              <label><span>Google Search Console TXT</span><input id="gscVerificationValue" placeholder="google-site-verification=..." /></label>
+              <label><span>GA4 Measurement ID</span><input id="ga4MeasurementId" placeholder="G-XXXXXXXXXX" /></label>
+              <label><span>Google Tag Manager</span><input id="gtmContainerId" placeholder="GTM-XXXXXXX" /></label>
+              <label><span>Bing Webmaster</span><input id="bingVerification" placeholder="msvalidate.01 или meta token" /></label>
+              <label><span>Yandex Webmaster</span><input id="yandexVerification" placeholder="yandex-verification token" /></label>
+              <label><span>Microsoft Clarity</span><input id="clarityId" placeholder="Clarity project id" /></label>
+              <label><span>Meta Pixel</span><input id="metaPixelId" placeholder="Pixel ID, если понадобится" /></label>
+              <label><span>IndexNow key</span><input id="indexNowKey" placeholder="8-128 символов" /></label>
+            </div>
+            <p class="seo-muted">Это серверная рабочая карта. Реальные коды подключаем управляемо, чтобы не получить дубли счетчиков.</p>
+          </section>
+
+          <section class="seo-console-layout">
+            <aside class="seo-inspector-panel">
+              <div class="seo-panel-head seo-panel-head--compact">
+                <h2>Страницы</h2>
+                <button type="button" class="btn btn--secondary" id="refreshSeoPagesBtn" data-admin-tooltip="Обновить список страниц и результаты последней проверки.">Обновить</button>
+              </div>
+              <div class="admin-filters" aria-label="Фильтр SEO страниц">
+                <button class="admin-filter is-active" type="button" data-seo-filter="all">Все</button>
+                <button class="admin-filter" type="button" data-seo-filter="error">Ошибки</button>
+                <button class="admin-filter" type="button" data-seo-filter="warning">Проверить</button>
+                <button class="admin-filter" type="button" data-seo-filter="ok">Готово</button>
+              </div>
+              <div id="seoPageList" class="seo-page-list"></div>
+            </aside>
+
+            <section class="seo-console-window" aria-label="SEO Console">
+              <div class="seo-console-window__bar">
+                <span class="seo-console-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                <strong>SEO Console</strong>
+                <span>server whitelist only</span>
+              </div>
+              <div class="seo-command-row">
+                <button type="button" class="btn btn--primary" id="runFullAuditBtn" data-admin-tooltip="Проверить sitemap, robots и все публичные SEO-страницы на сервере.">Серверный аудит</button>
+                <button type="button" class="btn btn--secondary" id="runSitemapAuditBtn" data-admin-tooltip="Проверить XML-карту, hreflang и наличие copyright.html.">Sitemap</button>
+                <button type="button" class="btn btn--secondary" id="runRobotsAuditBtn" data-admin-tooltip="Проверить robots.txt и ссылку на sitemap.">Robots</button>
+                <button type="button" class="btn btn--secondary" id="prepareSitemapBuildBtn" data-admin-tooltip="Показать список публичных URL для контроля sitemap.">Карта URL</button>
+                <button type="button" class="btn btn--secondary" id="prepareIndexNowBtn" data-admin-tooltip="Создать или проверить IndexNow key-файл в корне сайта.">IndexNow key</button>
+                <button type="button" class="btn btn--secondary" id="submitIndexNowBtn" data-admin-tooltip="Отправить публичные URL через IndexNow. Не относится к Google.">Отправить IndexNow</button>
+                <button type="button" class="btn btn--secondary" id="prepareAiTaskBtn" data-admin-tooltip="Сформировать AI-черновик SEO-аудита выбранной страницы через серверный OpenAI ключ.">AI черновик</button>
+              </div>
+              <div id="seoConsoleLog" class="seo-console-window__body" role="log" aria-live="polite"></div>
+            </section>
+
+            <aside class="seo-details-panel">
+              <h2>Детали</h2>
+              <div id="seoDetails" class="seo-details"></div>
+            </aside>
+          </section>
+
+          <section class="seo-ai-panel">
+            <div class="seo-panel-head">
+              <div>
+                <p class="section-heading__eyebrow">AI Core</p>
+                <h2>Основа для AI-помощника</h2>
+              </div>
+              <button type="button" class="btn btn--secondary" id="copyAiPromptBtn" data-admin-tooltip="Скопировать подготовленное ТЗ для AI без автосохранения на сайт.">Копировать ТЗ</button>
+            </div>
+            <textarea id="seoAiPrompt" rows="8" readonly>Выберите страницу и нажмите “AI черновик”.</textarea>
+            <p class="seo-muted">Дисциплина AI: сначала черновик и рекомендации, затем ручное принятие, затем сохранение. Автопубликация отключена.</p>
+          </section>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <script src="js/admin-auth.js?v=20260531-owner-session-01"></script>
+  <script src="js/admin-seo.js?v=20260531-owner-session-01"></script>
+</body>
+</html>

@@ -1347,6 +1347,91 @@ button { cursor: pointer; }
 .footer__links a:hover {
   background: rgba(16,36,58,.045);
 }
+
+.legal-page .legal-hero {
+  max-width: 940px;
+  margin: 42px auto 24px;
+  padding: clamp(32px, 6vw, 68px) 0 clamp(10px, 3vw, 24px);
+}
+.legal-page .legal-hero h1 {
+  max-width: 12ch;
+  margin: 0;
+  color: var(--color-brand);
+  font-size: clamp(2.2rem, 6vw, 5.4rem);
+  line-height: .96;
+  letter-spacing: 0;
+}
+.legal-page .legal-hero p:last-child {
+  max-width: 780px;
+  margin: 22px 0 0;
+  color: var(--color-muted);
+  font-size: clamp(1rem, 1.6vw, 1.18rem);
+  line-height: 1.75;
+}
+.legal-content {
+  max-width: 940px;
+  margin-inline: auto;
+  display: grid;
+  gap: 0;
+  padding: 4px 0;
+  background: transparent;
+}
+.legal-block {
+  padding: 28px 0;
+  border-top: 1px solid rgba(16,36,58,.12);
+}
+.legal-block:first-child {
+  border-top: 0;
+}
+.legal-block h2 {
+  margin: 0 0 10px;
+  color: var(--color-brand);
+  font-size: clamp(1.18rem, 2vw, 1.55rem);
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+.legal-block p {
+  max-width: 760px;
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 1rem;
+  line-height: 1.75;
+}
+.legal-block--contact {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px 28px;
+  align-items: center;
+}
+.legal-block--contact h2,
+.legal-block--contact p {
+  grid-column: 1;
+}
+.legal-block--contact .btn {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .legal-page .legal-hero {
+    margin-top: 24px;
+  }
+  .legal-page .legal-hero h1 {
+    max-width: 11ch;
+    font-size: clamp(2rem, 14vw, 3.65rem);
+  }
+  .legal-block--contact {
+    grid-template-columns: 1fr;
+  }
+  .legal-block--contact .btn {
+    grid-column: 1;
+    grid-row: auto;
+    width: max-content;
+    max-width: 100%;
+  }
+}
 .footer-admin-links,
 .footer .journal-footer-admin {
   display: flex;
@@ -1917,6 +2002,35 @@ html[lang="en"] .hero-highlight p {
   background: currentColor;
 }
 
+/* Header control alignment polish 20260530 */
+.site-menu-button {
+  flex: 0 0 auto;
+  min-height: 0;
+  height: 48px;
+  padding: 0 17px;
+  box-sizing: border-box;
+  line-height: 1;
+}
+
+.site-menu-button__icon {
+  flex: 0 0 18px;
+  place-content: center;
+  height: 18px;
+}
+
+.site-menu-button > span:last-child {
+  display: inline-flex;
+  align-items: center;
+  min-height: 18px;
+  line-height: 1;
+}
+
+.site-menu-button__icon span {
+  width: 18px;
+  min-width: 18px;
+  opacity: 1;
+}
+
 .tool-account-button {
   display: inline-grid;
   place-items: center;
@@ -2159,6 +2273,26 @@ html[lang="en"] .hero-highlight p {
   width: min(480px, calc(100vw - 32px));
 }
 
+@media (min-width: 760px) {
+  .site-menu-modal .management-modal__dialog--compact {
+    width: min(640px, calc(100vw - 64px));
+    padding: 28px;
+  }
+
+  .site-menu-language-modal .management-modal__dialog--compact {
+    width: min(760px, calc(100vw - 72px));
+  }
+
+  #toolAuthPromptModal .management-modal__dialog--compact,
+  .tool-account-modal .management-modal__dialog--compact {
+    width: min(640px, calc(100vw - 64px));
+  }
+
+  .pwa-install-modal .management-modal__dialog--compact {
+    width: min(720px, calc(100vw - 72px));
+  }
+}
+
 .tool-auth-prompt__body {
   display: grid;
   gap: 12px;
@@ -2174,6 +2308,66 @@ html[lang="en"] .hero-highlight p {
   color: #2d5232;
   font-size: .9rem;
   line-height: 1.45;
+}
+
+.tool-auth-google {
+  width: 100%;
+  min-height: 54px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 0 18px;
+  border: 1px solid rgba(60,64,67,.18);
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  color: #1f2937;
+  box-shadow:
+    0 10px 24px rgba(16,36,58,.10),
+    inset 0 1px 0 rgba(255,255,255,.95);
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1;
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease, opacity .18s ease;
+}
+
+.tool-auth-google:hover:not(:disabled),
+.tool-auth-google:focus-visible {
+  border-color: rgba(66,133,244,.42);
+  background: #ffffff;
+  box-shadow:
+    0 14px 30px rgba(66,133,244,.14),
+    0 4px 12px rgba(16,36,58,.08);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.tool-auth-google:disabled {
+  cursor: wait;
+  opacity: .76;
+  filter: saturate(.9);
+}
+
+.tool-auth-google[aria-busy="false"]:disabled {
+  cursor: not-allowed;
+}
+
+.tool-auth-google__icon {
+  width: 26px;
+  height: 26px;
+  flex: 0 0 26px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(60,64,67,.18);
+}
+
+.tool-auth-google__icon svg {
+  width: 18px;
+  height: 18px;
+  display: block;
 }
 
 .tool-auth-prompt__label {
@@ -2325,6 +2519,7 @@ body.management-modal-open {
 }
 
 .management-modal-nav a,
+.management-modal-nav__button,
 .site-menu-settings {
   min-height: 52px;
   display: flex;
@@ -2337,6 +2532,13 @@ body.management-modal-open {
   background: rgba(16,36,58,.035);
   color: var(--color-brand);
   font-weight: 800;
+}
+
+.management-modal-nav__button {
+  width: 100%;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
 }
 
 .site-menu-settings {
@@ -2581,6 +2783,185 @@ body.management-modal-open {
   font-weight: 800;
 }
 
+.pwa-install-hint {
+  position: fixed;
+  right: 18px;
+  bottom: calc(18px + env(safe-area-inset-bottom));
+  z-index: 9998;
+  width: min(420px, calc(100vw - 32px));
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 13px 13px 15px;
+  border: 1px solid rgba(16,36,58,.12);
+  border-radius: 16px;
+  background: rgba(255,255,255,.98);
+  color: var(--color-brand);
+  box-shadow: 0 18px 42px rgba(16,36,58,.18);
+  transform: translateY(18px);
+  opacity: 0;
+  transition: opacity .22s ease, transform .22s ease;
+}
+
+.pwa-install-hint.is-visible {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.pwa-install-hint__copy {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.pwa-install-hint__copy strong {
+  font-size: .95rem;
+  line-height: 1.2;
+}
+
+.pwa-install-hint__copy span {
+  color: var(--color-muted);
+  font-size: .86rem;
+  line-height: 1.35;
+}
+
+.pwa-install-hint__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.pwa-install-hint__install,
+.pwa-install-hint__close {
+  border: 1px solid rgba(16,36,58,.14);
+  background: #fff;
+  color: var(--color-brand);
+  font-weight: 800;
+}
+
+.pwa-install-hint__install {
+  min-height: 38px;
+  padding: 0 12px;
+  border-radius: 999px;
+}
+
+.pwa-install-hint__close {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.pwa-install-modal__body {
+  display: grid;
+  gap: 14px;
+}
+
+.pwa-install-modal__lead,
+.pwa-install-modal__instructions p,
+.pwa-install-modal__status,
+.pwa-install-modal__foot {
+  margin: 0;
+  line-height: 1.55;
+}
+
+.pwa-install-modal__lead {
+  color: var(--color-ink);
+}
+
+.pwa-install-modal__benefits {
+  display: grid;
+  gap: 8px;
+}
+
+.pwa-install-modal__benefits span,
+.pwa-install-modal__instructions {
+  padding: 11px 12px;
+  border: 1px solid rgba(16,36,58,.10);
+  border-radius: 14px;
+  background: rgba(16,36,58,.035);
+}
+
+.pwa-install-modal__benefits span {
+  color: var(--color-brand);
+  font-size: .92rem;
+  font-weight: 800;
+}
+
+.pwa-install-modal__instructions {
+  display: grid;
+  gap: 5px;
+}
+
+.pwa-install-modal__instructions h4 {
+  margin: 0;
+  color: var(--color-brand);
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.pwa-install-modal__instructions p,
+.pwa-install-modal__status,
+.pwa-install-modal__foot {
+  color: var(--color-muted);
+  font-size: .9rem;
+}
+
+.pwa-install-modal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.pwa-install-modal__actions .btn {
+  min-height: 46px;
+}
+
+.pwa-install-modal__foot {
+  padding-top: 2px;
+  font-size: .84rem;
+}
+
+@media (min-width: 760px) {
+  .site-menu-language-modal .site-menu-language {
+    padding: 16px;
+  }
+
+  .site-menu-language-modal .site-menu-language__list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .site-menu-language-modal .site-menu-language__option {
+    min-height: 54px;
+    padding: 12px 13px;
+  }
+
+  .tool-auth-prompt__body {
+    gap: 14px;
+  }
+
+  .tool-auth-prompt__actions .btn {
+    min-height: 50px;
+  }
+
+  .pwa-install-modal__body {
+    gap: 16px;
+  }
+
+  .pwa-install-modal__benefits {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .pwa-install-modal__benefits span,
+  .pwa-install-modal__instructions {
+    padding: 14px;
+  }
+}
+
 body.navdesk-theme-night .site-menu-modal .site-menu-language {
   border-color: rgba(214,197,170,.14);
   background: rgba(0,0,0,.14);
@@ -2588,6 +2969,7 @@ body.navdesk-theme-night .site-menu-modal .site-menu-language {
 
 body.navdesk-theme-night .site-menu-modal .site-menu-language__icon,
 body.navdesk-theme-night .site-menu-modal .site-menu-language__option,
+body.navdesk-theme-night .site-menu-modal .management-modal-nav__button,
 body.navdesk-theme-night .language-hint button {
   border-color: rgba(214,197,170,.16);
   background: rgba(0,0,0,.20);
@@ -2674,6 +3056,35 @@ body.navdesk-theme-night .tool-account-button {
   box-shadow: none;
 }
 
+body.navdesk-theme-night .pwa-install-hint,
+body.navdesk-theme-night .pwa-install-modal .management-modal__dialog {
+  border-color: rgba(214,197,170,.16);
+  background: rgba(18,24,26,.98);
+  color: rgba(232,221,199,.88);
+}
+
+body.navdesk-theme-night .pwa-install-hint__copy strong,
+body.navdesk-theme-night .pwa-install-modal__lead,
+body.navdesk-theme-night .pwa-install-modal__benefits span,
+body.navdesk-theme-night .pwa-install-modal__instructions h4 {
+  color: #f0d5a8;
+}
+
+body.navdesk-theme-night .pwa-install-hint__copy span,
+body.navdesk-theme-night .pwa-install-modal__instructions p,
+body.navdesk-theme-night .pwa-install-modal__status,
+body.navdesk-theme-night .pwa-install-modal__foot {
+  color: rgba(232,221,199,.68);
+}
+
+body.navdesk-theme-night .pwa-install-hint__install,
+body.navdesk-theme-night .pwa-install-hint__close,
+body.navdesk-theme-night .pwa-install-modal__benefits span,
+body.navdesk-theme-night .pwa-install-modal__instructions {
+  border-color: rgba(214,197,170,.16);
+  background: rgba(0,0,0,.18);
+}
+
 .management-dock button {
   display: flex;
   flex-direction: column;
@@ -2697,10 +3108,29 @@ body.navdesk-theme-night .tool-account-button {
 @media print {
   .management-modal,
   .site-menu-modal,
+  .pwa-install-hint,
   .language-hint,
   .management-logic-card,
   .management-command-row {
     display: none !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .pwa-install-hint {
+    left: 12px;
+    right: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    width: auto;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pwa-install-hint__actions {
+    justify-content: space-between;
+  }
+
+  .pwa-install-hint__install {
+    flex: 1 1 auto;
   }
 }
 
@@ -3060,7 +3490,7 @@ body.navdesk-theme-night .tool-account-button {
   box-shadow: inset 0 -2px 0 rgba(0,0,0,.12);
 }
 
-.service-card__brand-mark--sailskill {
+.service-card__brand-mark--partner-school {
   color: #0b6941;
   border: 1px solid rgba(11,105,65,.22);
   background: rgba(255,255,255,.72);
@@ -3105,4 +3535,353 @@ body.navdesk-theme-night .tool-account-button {
 
 .home-page .messenger-grid {
   gap: 12px;
+}
+
+/* === Mobile heading calm layer 20260530 === */
+@media (max-width: 640px) {
+  .hero h1,
+  .section-heading h2,
+  .service-hero__copy h1,
+  .service-quick__card h2,
+  .service-panel h2,
+  .service-cta h2,
+  .contact-note strong,
+  .feature-item h3,
+  .service-card h3,
+  .destination-card strong {
+    max-width: 100% !important;
+    font-weight: 720 !important;
+    letter-spacing: 0 !important;
+    line-height: 1.12 !important;
+    overflow-wrap: break-word !important;
+    word-break: normal !important;
+    hyphens: auto !important;
+    text-wrap: balance;
+  }
+
+  .hero h1,
+  .service-hero__copy h1 {
+    font-size: clamp(1.9rem, 7.6vw, 2.45rem) !important;
+  }
+
+  .section-heading h2,
+  .service-quick__card h2,
+  .service-panel h2,
+  .service-cta h2 {
+    font-size: clamp(1.52rem, 6.6vw, 2.05rem) !important;
+  }
+
+  .feature-item h3,
+  .service-card h3,
+  .destination-card strong,
+  .contact-note strong {
+    font-size: clamp(1.22rem, 5.1vw, 1.5rem) !important;
+  }
+
+  .hero__lead,
+  .hero__support,
+  .section-heading p,
+  .service-hero__copy p {
+    font-size: .98rem !important;
+    line-height: 1.58 !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .hero h1,
+  .service-hero__copy h1 {
+    font-size: clamp(1.72rem, 7.1vw, 2.18rem) !important;
+  }
+
+  .section-heading h2,
+  .service-quick__card h2,
+  .service-panel h2,
+  .service-cta h2 {
+    font-size: clamp(1.38rem, 6vw, 1.78rem) !important;
+  }
+}
+
+/* === Site menu button unified component 20260531 === */
+.site-menu-button {
+  --site-menu-button-height: 48px;
+  --site-menu-button-icon: 18px;
+  appearance: none;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 auto !important;
+  gap: 9px !important;
+  min-width: 0;
+  height: var(--site-menu-button-height) !important;
+  min-height: var(--site-menu-button-height) !important;
+  padding: 0 18px !important;
+  box-sizing: border-box;
+  border-radius: 999px !important;
+  line-height: 1 !important;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.site-menu-button__icon {
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 var(--site-menu-button-icon) !important;
+  width: var(--site-menu-button-icon) !important;
+  min-width: var(--site-menu-button-icon) !important;
+  height: var(--site-menu-button-icon) !important;
+  min-height: var(--site-menu-button-icon) !important;
+  margin: 0 !important;
+  color: currentColor !important;
+  transform: none !important;
+}
+
+.site-menu-button__icon span {
+  position: absolute !important;
+  left: 50% !important;
+  display: block !important;
+  width: var(--site-menu-button-icon) !important;
+  min-width: var(--site-menu-button-icon) !important;
+  height: 2px !important;
+  border-radius: 99px !important;
+  background: currentColor !important;
+  opacity: 1 !important;
+  transform: translate(-50%, -50%) !important;
+}
+
+.site-menu-button__icon span:nth-child(1) {
+  top: calc(50% - 6px) !important;
+}
+
+.site-menu-button__icon span:nth-child(2) {
+  top: 50% !important;
+}
+
+.site-menu-button__icon span:nth-child(3) {
+  top: calc(50% + 6px) !important;
+}
+
+.site-menu-button > span:last-child {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 1em !important;
+  min-height: 1em !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 1 !important;
+  text-align: center !important;
+  transform: none !important;
+}
+
+/* === Local polish sprint 20260531 === */
+.home-page #services .cards-grid--editorial {
+  grid-auto-rows: auto !important;
+  align-items: stretch;
+}
+
+.home-page #services .service-card {
+  min-height: clamp(148px, 13vw, 178px) !important;
+  padding: 20px 22px 24px;
+}
+
+.home-page #services .service-card h3 {
+  min-height: 0 !important;
+  max-width: calc(100% - 34px);
+  margin-bottom: 10px;
+  font-size: clamp(1.18rem, 1.32vw, 1.42rem);
+}
+
+.home-page #services .service-card p {
+  max-width: 34ch;
+  line-height: 1.54;
+}
+
+.home-page #services .service-card::after {
+  opacity: .24;
+  transform: scale(.82);
+  transform-origin: right bottom;
+}
+
+.home-page .destination-strip {
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)) !important;
+  grid-auto-rows: auto !important;
+}
+
+.home-page #contact .section-heading {
+  margin-bottom: 18px;
+}
+
+.home-page #contact .contact-form {
+  margin-top: 0;
+}
+
+.tool-account-button {
+  display: none !important;
+}
+
+/* === Home mobile card rhythm 20260531 === */
+@media (max-width: 640px) {
+  .home-page .site-shell {
+    padding-inline: 12px !important;
+  }
+
+  .home-page .section {
+    padding-block: 10px !important;
+  }
+
+  .home-page .section--paper,
+  .home-page .section--accent {
+    padding: 18px !important;
+    border-radius: 22px !important;
+  }
+
+  .home-page .section-heading {
+    margin-bottom: 16px !important;
+  }
+
+  .home-page .section-heading__eyebrow,
+  .home-page .editorial-kicker {
+    letter-spacing: .13em !important;
+    font-size: .68rem !important;
+    line-height: 1.35 !important;
+  }
+
+  .home-page .section-heading h2 {
+    font-size: clamp(1.48rem, 6.1vw, 1.86rem) !important;
+    line-height: 1.1 !important;
+    text-wrap: balance;
+  }
+
+  .home-page .section-heading p {
+    max-width: none !important;
+    font-size: .94rem !important;
+    line-height: 1.5 !important;
+  }
+
+  .home-page .hero__editorial {
+    padding: 20px !important;
+  }
+
+  .home-page .hero h1 {
+    max-width: 100% !important;
+    font-size: clamp(2rem, 8.2vw, 2.55rem) !important;
+    line-height: 1.06 !important;
+    text-wrap: balance;
+  }
+
+  .home-page .hero__lead,
+  .home-page .hero__support {
+    max-width: none !important;
+    font-size: .94rem !important;
+    line-height: 1.52 !important;
+  }
+
+  .home-page #services .cards-grid--editorial,
+  .home-page .feature-list,
+  .home-page .destination-strip {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    grid-auto-rows: auto !important;
+  }
+
+  .home-page #services .service-card,
+  .home-page .feature-item,
+  .home-page .destination-card {
+    display: grid !important;
+    align-content: start !important;
+    gap: 8px !important;
+    min-height: 0 !important;
+    padding: 18px !important;
+    border-radius: 18px !important;
+  }
+
+  .home-page #services .service-card h3,
+  .home-page .feature-item h3,
+  .home-page .destination-card strong {
+    max-width: min(100%, 20ch) !important;
+    margin: 0 !important;
+    font-family: var(--font-primary) !important;
+    font-size: clamp(1.08rem, 4.4vw, 1.28rem) !important;
+    line-height: 1.18 !important;
+    font-weight: 780 !important;
+    text-wrap: balance;
+  }
+
+  .home-page #services .service-card p,
+  .home-page .feature-item p,
+  .home-page .destination-card span {
+    max-width: none !important;
+    margin: 0 !important;
+    color: var(--color-muted) !important;
+    font-size: .94rem !important;
+    line-height: 1.46 !important;
+  }
+
+  .home-page #services .service-card__brand-row {
+    margin: 0 0 2px !important;
+  }
+
+  .home-page #services .service-card::after {
+    right: 16px !important;
+    bottom: 16px !important;
+    width: 86px !important;
+    height: 54px !important;
+    opacity: .16 !important;
+    transform: none !important;
+  }
+
+  .home-page .feature-item {
+    min-height: 112px !important;
+  }
+
+  .home-page .destination-card {
+    min-height: 118px !important;
+  }
+
+  .home-page #contact .section-heading h2 {
+    font-size: clamp(1.46rem, 6vw, 1.82rem) !important;
+  }
+
+  .pwa-install-hint {
+    left: 12px !important;
+    right: 12px !important;
+    bottom: calc(12px + env(safe-area-inset-bottom)) !important;
+    width: auto !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    gap: 10px !important;
+    padding: 10px !important;
+    border-radius: 18px !important;
+  }
+
+  .pwa-install-hint__copy {
+    gap: 0 !important;
+  }
+
+  .pwa-install-hint__copy strong {
+    font-size: .92rem !important;
+    line-height: 1.18 !important;
+  }
+
+  .pwa-install-hint__copy span {
+    display: none !important;
+  }
+
+  .pwa-install-hint__actions {
+    gap: 6px !important;
+  }
+
+  .pwa-install-hint__install {
+    flex: 0 0 auto !important;
+    min-height: 38px !important;
+    padding-inline: 14px !important;
+  }
+
+  .pwa-install-hint__close {
+    width: 38px !important;
+    height: 38px !important;
+  }
 }

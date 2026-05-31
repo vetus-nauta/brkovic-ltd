@@ -31,7 +31,37 @@
   };
 let lightboxJustClosedAt = 0;
   function getLang() {
-    return document.documentElement.lang === 'ru' ? 'ru' : 'en';
+    const candidate = typeof window.BRKOVIC_LANGUAGE?.getCurrentLang === 'function'
+      ? window.BRKOVIC_LANGUAGE.getCurrentLang()
+      : document.documentElement.lang;
+    const lang = String(candidate || 'en').trim().toLowerCase().split('-')[0];
+    return ['ru', 'en', 'de', 'it', 'es', 'sr', 'zh'].includes(lang) ? lang : 'en';
+  }
+
+  function pickLocalized(map, lang = getLang(), fallback = '') {
+    if (!map || typeof map !== 'object') return fallback;
+    return String(map[lang] || map.en || map.ru || fallback || '').trim();
+  }
+
+  function publishedTranslations(item) {
+    return Array.isArray(item?.translations)
+      ? item.translations.filter((translation) => String(translation?.status || '').toUpperCase() === 'PUBLISHED')
+      : [];
+  }
+
+  function buildLocalizedMap(item, translationField, ruValue = '', enValue = '') {
+    const map = {
+      ru: String(ruValue || '').trim(),
+      en: String(enValue || '').trim(),
+    };
+
+    publishedTranslations(item).forEach((translation) => {
+      const language = String(translation?.language || '').trim().toLowerCase();
+      const value = String(translation?.[translationField] || '').trim();
+      if (language && value) map[language] = value;
+    });
+
+    return map;
   }
 
   function getTranslations() {
@@ -71,8 +101,17 @@ let lightboxJustClosedAt = 0;
 
   function formatDate(value) {
     const lang = getLang();
+    const locales = {
+      ru: 'ru-RU',
+      en: 'en-US',
+      de: 'de-DE',
+      it: 'it-IT',
+      es: 'es-ES',
+      sr: 'sr-Latn-ME',
+      zh: 'zh-CN',
+    };
     try {
-      return new Intl.DateTimeFormat(lang === 'ru' ? 'ru-RU' : 'en-US', {
+      return new Intl.DateTimeFormat(locales[lang] || 'en-US', {
         year: 'numeric',
         month: 'long',
         day: 'numeric'
@@ -292,17 +331,15 @@ let lightboxJustClosedAt = 0;
       const src = resolveApiAssetUrl(m.filePath || m.thumbPath || m.posterPath || '');
       const captionRu = String(m.altRu || '').trim();
       const captionEn = String(m.altEn || '').trim();
-      const caption = {
-        ru: captionRu || captionEn,
-        en: captionEn || captionRu
-      };
+      const caption = buildLocalizedMap(m, 'caption', captionRu || captionEn, captionEn || captionRu);
+      const alt = buildLocalizedMap(m, 'alt', captionRu || captionEn || fallbackTitle, captionEn || captionRu || fallbackTitle);
       const gps = gpsMetaByPath[src] || {};
       return {
         id: m.id,
         type: m.type === 'VIDEO' || m.type === 'video' ? 'video' : 'image',
         src,
         poster: resolveApiAssetUrl(m.posterPath || ''),
-        alt: (caption.ru || caption.en || fallbackTitle || '').trim(),
+        alt,
         caption,
         gpsLatLabel: gps.gpsLatLabel || '',
         gpsLonLabel: gps.gpsLonLabel || '',
@@ -316,20 +353,11 @@ let lightboxJustClosedAt = 0;
       entryType: 'post',
       id: item.id,
       slug: item.slug,
-      title: {
-        ru: item.titleRu || '',
-        en: item.titleEn || ''
-      },
+      title: buildLocalizedMap(item, 'title', item.titleRu || '', item.titleEn || ''),
       date: item.publishedAt || item.createdAt,
       location: '',
-      text: {
-        ru: item.contentRu || '',
-        en: item.contentEn || ''
-      },
-      excerpt: {
-        ru: item.excerptRu || '',
-        en: item.excerptEn || ''
-      },
+      text: buildLocalizedMap(item, 'content', item.contentRu || '', item.contentEn || ''),
+      excerpt: buildLocalizedMap(item, 'excerpt', item.excerptRu || '', item.excerptEn || ''),
       groupId: item.groupId || '',
       groupOrder: Number(item.groupOrder || 0),
       group: item.group ? {
@@ -373,19 +401,10 @@ let lightboxJustClosedAt = 0;
       entryType: 'collection',
       id: item.id,
       slug: item.slug,
-      title: {
-        ru: item.titleRu || '',
-        en: item.titleEn || ''
-      },
+      title: buildLocalizedMap(item, 'title', item.titleRu || '', item.titleEn || ''),
       date: item.publishedAt || item.createdAt,
-      excerpt: {
-        ru: item.excerptRu || '',
-        en: item.excerptEn || ''
-      },
-      text: {
-        ru: '',
-        en: ''
-      },
+      excerpt: buildLocalizedMap(item, 'excerpt', item.excerptRu || '', item.excerptEn || ''),
+      text: buildLocalizedMap(item, 'content', '', ''),
       media: coverMedia.length ? coverMedia : firstPageMedia,
       authorLine: item.authorLine || 'Vetus Nauta - Brkovic',
       pages,
@@ -496,15 +515,12 @@ let lightboxJustClosedAt = 0;
   async function resolveEntryText(entry, lang) {
     const copy = JSON.parse(JSON.stringify(entry));
 
-    if (lang === 'ru') {
-      if (!copy.title.ru && copy.title.en) copy.title.ru = copy.title.en;
-      if (!copy.text.ru && copy.text.en) copy.text.ru = copy.text.en;
-      return copy;
-    }
-
-    if (!copy.title.en && copy.title.ru) copy.title.en = await translateFree(copy.title.ru, 'en');
-    if (!copy.text.en && copy.text.ru) copy.text.en = await translateFree(copy.text.ru, 'en');
-
+    copy.title = copy.title && typeof copy.title === 'object' ? copy.title : {};
+    copy.text = copy.text && typeof copy.text === 'object' ? copy.text : {};
+    copy.excerpt = copy.excerpt && typeof copy.excerpt === 'object' ? copy.excerpt : {};
+    if (!copy.title?.[lang]) copy.title[lang] = pickLocalized(copy.title, lang);
+    if (!copy.text?.[lang]) copy.text[lang] = pickLocalized(copy.text, lang);
+    if (!copy.excerpt?.[lang]) copy.excerpt[lang] = pickLocalized(copy.excerpt, lang);
     return copy;
   }
 
@@ -512,13 +528,13 @@ let lightboxJustClosedAt = 0;
     const caption = item && item.caption;
     if (!caption) return '';
     if (typeof caption === 'string') return caption.trim();
-    return getLang() === 'ru'
-      ? String(caption.ru || caption.en || '').trim()
-      : String(caption.en || caption.ru || '').trim();
+    return pickLocalized(caption, getLang(), pickLocalized(item.alt, getLang()));
   }
 
   function mediaAlt(item) {
-    return String((item && item.alt) || mediaCaption(item) || '').trim();
+    const alt = item && item.alt;
+    if (alt && typeof alt === 'object') return pickLocalized(alt, getLang(), mediaCaption(item));
+    return String(alt || mediaCaption(item) || '').trim();
   }
 
   function mediaMarkup(media, entrySlug = '') {
@@ -962,9 +978,7 @@ let lightboxJustClosedAt = 0;
 
     for (const entry of entries) {
       const resolved = await resolveEntryText(entry, lang);
-      const title = lang === 'ru'
-        ? (resolved.title.ru || resolved.title.en || '')
-        : (resolved.title.en || resolved.title.ru || '');
+      const title = entryTitle(resolved, lang);
       const mediaItems = (entry.media || []).filter((item) => {
         if (!item.src) return false;
         return filter === 'video' ? item.type === 'video' : item.type === 'image';
@@ -998,21 +1012,51 @@ let lightboxJustClosedAt = 0;
   }
 
   function entryTitle(entry, lang = getLang()) {
-    return lang === 'ru'
-      ? (entry?.title?.ru || entry?.title?.en || entry?.slug || '')
-      : (entry?.title?.en || entry?.title?.ru || entry?.slug || '');
+    return pickLocalized(entry?.title, lang, entry?.slug || '');
   }
 
   function entryExcerpt(entry, lang = getLang()) {
-    return lang === 'ru'
-      ? (entry?.excerpt?.ru || entry?.excerpt?.en || '')
-      : (entry?.excerpt?.en || entry?.excerpt?.ru || '');
+    return pickLocalized(entry?.excerpt, lang, '');
   }
 
   function entryText(entry, lang = getLang()) {
-    return lang === 'ru'
-      ? (entry?.text?.ru || entry?.text?.en || '')
-      : (entry?.text?.en || entry?.text?.ru || '');
+    return pickLocalized(entry?.text, lang, '');
+  }
+
+  function entrySeoDescription(entry, lang = getLang()) {
+    const excerpt = entryExcerpt(entry, lang);
+    if (excerpt) return excerpt;
+    const text = entryText(entry, lang).replace(/\s+/g, ' ').trim();
+    return text.length > 160 ? `${text.slice(0, 157).trim()}...` : text;
+  }
+
+  function entrySeoImage(entry) {
+    const media = Array.isArray(entry?.media) ? entry.media.find((item) => item.type === 'image' && item.src) : null;
+    if (!media?.src) return 'https://brkovic.ltd/images/hero/brkovic-ocean-winner-hero.jpg';
+    try {
+      return new URL(media.src, window.location.origin).href;
+    } catch {
+      return media.src;
+    }
+  }
+
+  function updateJournalEntrySeo(entry, kind, lang = getLang()) {
+    if (!entry?.slug || !window.BRKOVIC_SEO || typeof window.BRKOVIC_SEO.setContentMetadata !== 'function') return;
+    const title = entryTitle(entry, lang);
+    const description = entrySeoDescription(entry, lang) || title;
+    const url = kind === 'collection'
+      ? `https://brkovic.ltd/journal.html?collection=${encodeURIComponent(entry.slug)}${lang && lang !== 'en' ? `&lang=${encodeURIComponent(lang)}` : ''}`
+      : `https://brkovic.ltd/journal.html?slug=${encodeURIComponent(entry.slug)}${lang && lang !== 'en' ? `&lang=${encodeURIComponent(lang)}` : ''}`;
+    window.BRKOVIC_SEO.setContentMetadata({
+      title: `${title} | VETUS NAUTA - Brkovic`,
+      description,
+      url,
+      image: entrySeoImage(entry),
+      schemaType: kind === 'collection' ? 'CreativeWork' : 'Article',
+      ogType: 'article',
+      author: entry.authorLine || 'VETUS NAUTA - Brkovic',
+      datePublished: entry.date || undefined,
+    });
   }
 
   function getCollectionPageSlugs(collections = journalCollections) {
@@ -1255,6 +1299,7 @@ let lightboxJustClosedAt = 0;
     const totalBookPages = bookPages.length + 1;
     const firstProgress = tf('journal_collection_cover_progress_template', 'Cover · 1 of {total}', { total: totalBookPages });
     const coverArt = collectionCoverArtMarkup(collection, title, excerpt, lang);
+    updateJournalEntrySeo(collection, 'collection', lang);
 
     const article = document.createElement('article');
     article.className = 'journal-post journal-post--single journal-collection-single';
@@ -1262,17 +1307,6 @@ let lightboxJustClosedAt = 0;
     article.dataset.kind = 'collection';
     article.innerHTML = `
       <div class="journal-collection-book" data-collection-book>
-        <div class="journal-collection-book__nav">
-          <button class="journal-collection-book__button" type="button" data-collection-step="-1" disabled>
-            <span aria-hidden="true">‹</span>
-            ${escapeHtml(t('journal_collection_back', 'Back'))}
-          </button>
-          <div class="journal-collection-book__progress" data-collection-progress>${escapeHtml(firstProgress)}</div>
-          <button class="journal-collection-book__button" type="button" data-collection-step="1">
-            ${escapeHtml(t('journal_collection_next', 'Next'))}
-            <span aria-hidden="true">›</span>
-          </button>
-        </div>
         <div class="journal-collection-book__viewport">
           <div class="journal-collection-book__track" data-collection-track>
             <section class="journal-collection-page journal-collection-page--cover" data-collection-page data-book-label="${escapeHtml(firstProgress)}">
@@ -1295,6 +1329,17 @@ let lightboxJustClosedAt = 0;
             </section>
             ${pagesMarkup || `<section class="journal-collection-page" data-collection-page><div class="journal-empty">${escapeHtml(t('journal_empty', 'No entries yet.'))}</div></section>`}
           </div>
+        </div>
+        <div class="journal-collection-book__nav">
+          <button class="journal-collection-book__button" type="button" data-collection-step="-1" disabled>
+            <span aria-hidden="true">‹</span>
+            ${escapeHtml(t('journal_collection_back', 'Back'))}
+          </button>
+          <div class="journal-collection-book__progress" data-collection-progress>${escapeHtml(firstProgress)}</div>
+          <button class="journal-collection-book__button" type="button" data-collection-step="1">
+            ${escapeHtml(t('journal_collection_next', 'Next'))}
+            <span aria-hidden="true">›</span>
+          </button>
         </div>
         <div class="journal-collection-book__engagement">
           <p class="journal-post__rights">${escapeHtml(t('journal_rights_notice', lang === 'ru' ? '© BRKOVIC / VETUS NAUTA. Текст и медиа защищены авторским правом. Использование только с письменного разрешения.' : '© BRKOVIC / VETUS NAUTA. Text and media are protected by copyright. Use only with written permission.'))}</p>
@@ -1374,14 +1419,9 @@ let lightboxJustClosedAt = 0;
       }
 
       const resolved = await resolveEntryText(entry, lang);
-
-      const title = lang === 'ru'
-        ? (resolved.title.ru || resolved.title.en || '')
-        : (resolved.title.en || resolved.title.ru || '');
-
-      const text = lang === 'ru'
-        ? (resolved.text.ru || resolved.text.en || '')
-        : (resolved.text.en || resolved.text.ru || '');
+      const title = entryTitle(resolved, lang);
+      const text = entryText(resolved, lang);
+      if (isSingleMode) updateJournalEntrySeo(resolved, 'post', lang);
 
       const approvedComments = Array.isArray(entry.comments) ? entry.comments : [];
       const likeState = likeStateBySlug[likeStateKey('post', entry.slug)] || {
@@ -1442,7 +1482,6 @@ let lightboxJustClosedAt = 0;
             <button class="btn btn--secondary" type="submit">${escapeHtml(t('journal_comment_submit', 'Send'))}</button>
           </form>
           <div class="journal-comment-status" data-comment-status-for="${entry.id}"></div>
-          ${lang === 'en' && entry.text.ru && !entry.text.en ? `<div class="journal-translation-note">${escapeHtml(t('journal_translation_note','English text is generated automatically with free translation tools and can be edited later.'))}</div>` : ''}
         </div>
       `;
 
@@ -1691,8 +1730,8 @@ let lightboxJustClosedAt = 0;
       const track = book.querySelector('[data-collection-track]');
       const pages = Array.from(book.querySelectorAll('[data-collection-page]'));
       const progress = book.querySelector('[data-collection-progress]');
-      const prevButton = book.querySelector('[data-collection-step="-1"]');
-      const nextButton = book.querySelector('[data-collection-step="1"]');
+      const prevButtons = Array.from(book.querySelectorAll('[data-collection-step="-1"]'));
+      const nextButtons = Array.from(book.querySelectorAll('[data-collection-step="1"]'));
       if (!track || !pages.length) return;
 
       const currentIndex = () => Math.max(0, Math.min(
@@ -1712,8 +1751,8 @@ let lightboxJustClosedAt = 0;
         if (progress) {
           progress.textContent = pages[next]?.dataset.bookLabel || `${next + 1} / ${pages.length}`;
         }
-        if (prevButton) prevButton.disabled = next <= 0;
-        if (nextButton) nextButton.disabled = next >= pages.length - 1;
+        prevButtons.forEach((button) => { button.disabled = next <= 0; });
+        nextButtons.forEach((button) => { button.disabled = next >= pages.length - 1; });
         updateHeight(next);
       };
 

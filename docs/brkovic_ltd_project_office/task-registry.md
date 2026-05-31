@@ -47,6 +47,7 @@
 | `BRK-MVP-SEOPAGE-012` | SEO page agent: NavDesk route | `CHAT-BRK-SEO-DIR-001` | Ready | `cabinets/seo-integration-director/page-agents/page-012-navdesk-route.md` |
 | `BRK-MVP-SEOPAGE-013` | SEO page agent: NavDesk UKV/VHF | `CHAT-BRK-SEO-DIR-001` | Ready | `cabinets/seo-integration-director/page-agents/page-013-navdesk-ukv.md` |
 | `BRK-MVP-SEOPAGE-014` | SEO page agent: Maritime English | `CHAT-BRK-SEO-DIR-001` | Ready | `cabinets/seo-integration-director/page-agents/page-014-maritime-english.md` |
+| `BRK-MVP-SEOPAGE-015` | SEO page agent: Ship Cashbox | `CHAT-BRK-SEO-DIR-001` | Ready | `cabinets/seo-integration-director/page-agents/page-015-ship-cashbox.md` |
 | `BRK-MVP-LOC-001` | Localization architecture and language-surface inventory | `CHAT-BRK-LOC-001` | Ready | `reports/localization-surface-inventory-2026-05-27.md` |
 | `BRK-MVP-LOC-002` | NavDesk watch log localization surface follow-up | `CHAT-BRK-LOC-001` | Ready | `reports/navdesk-watch-localization-2026-05-27.md` |
 | `BRK-MVP-LOC-003` | Ship Journal translation work order | `CHAT-BRK-LOC-001` | For Review | `reports/journal-localization-work-order-2026-05-28.md` |
@@ -64,7 +65,11 @@
 | `BRK-MVP-BE-005` | Translation route activation for admin UI | `CHAT-BRK-BACKEND-001` | For Review | `reports/backend-admin-translation-route-activation-2026-05-28.md` |
 | `BRK-MVP-BE-007` | Public user auth gateway for protected tools (Google / email code) | `CHAT-BRK-BE-IMPL-001` | Approved | `reports/backend-engineer-tool-auth-gateway-2026-05-29.md` |
 | `BRK-MVP-BE-007-A` | Canonical /api/auth/user route + migration aliases deployment order | `CHAT-BRK-BE-IMPL-001` | Ready | `cabinets/backend-engineer/task-0009-be007-canonical-route-deployment.md` |
-| `BRK-MVP-BE-010` | Tool auth code delivery and TTL consistency fix | `CHAT-BRK-BE-IMPL-001` | Ready | `cabinets/backend-engineer/task-0010-tool-auth-code-delivery-and-ttl.md` |
+| `BRK-MVP-BE-010` | Tool auth code delivery and TTL consistency fix | `CHAT-BRK-BE-IMPL-001` | For Review | `cabinets/backend-engineer/task-0010-tool-auth-code-delivery-and-ttl.md` |
+| `BRK-MVP-BE-011` | MongoDB Atlas bootstrap and initial PostgreSQL load | `CHAT-BRK-BE-IMPL-001` | For Review | `director-reports/2026-05-31-mongodb-atlas-bootstrap-and-initial-load.md` |
+| `BRK-MVP-BE-012` | MongoDB backend public journal bridge | `CHAT-BRK-BE-IMPL-001` | For Review | `director-reports/2026-05-31-mongodb-backend-public-bridge.md` |
+| `BRK-MVP-BE-013` | MongoDB backend admin/auth bridge | `CHAT-BRK-BE-IMPL-001` | For Review | `director-reports/2026-05-31-mongodb-backend-admin-auth-bridge.md` |
+| `BRK-MVP-BE-014` | MongoDB production cutover package and Atlas network gate | `CHAT-BRK-BE-IMPL-001` | Completed | `director-reports/2026-05-31-mongodb-final-cutover-and-audit.md` |
 | `BRK-MVP-BEIMPL-001` | OpenAI language desk backend skeleton plan | `CHAT-BRK-BE-IMPL-001` | For Review | `reports/backend-engineer-openai-language-desk-skeleton-2026-05-27.md` |
 | `BRK-MVP-BEIMPL-002` | NavDesk tides place search expansion | `CHAT-BRK-BE-IMPL-001` | For Review | `reports/navdesk-tides-search-expansion-2026-05-27.md` |
 | `BRK-MVP-BEIMPL-003` | NavDesk tides weekly graph API | `CHAT-BRK-BE-IMPL-001` | For Review | `reports/navdesk-tides-weekly-graph-api-2026-05-27.md` |
@@ -92,6 +97,7 @@
 | `BRK-MVP-FE-019` | NavDesk small calculator i18n alias | `CHAT-BRK-FE-IMPL-001` | For Review | `reports/frontend-navdesk-small-calculator-i18n-alias-2026-05-28.md` |
 | `BRK-MVP-FE-020` | Language menu modal window and per-language variants | `CHAT-BRK-FE-IMPL-001` | For Review | `reports/frontend-language-menu-modal-window-2026-05-29.md` |
 | `BRK-MVP-FE-021` | Tool access gating flow (Google + 6-digit code) | `CHAT-BRK-FE-IMPL-001` | For Review | `reports/frontend-tool-auth-gating-flow-2026-05-29.md` |
+| `BRK-MVP-FE-022` | Vetus Nauta PWA install reminder flow | `CHAT-BRK-FE-IMPL-001` | Approved | `reports/frontend-pwa-install-reminder-flow-2026-05-30.md` |
 | `BRK-MVP-QAUX-005` | NavDesk functional and print/PDF audit | `CHAT-BRK-QA-UX-001` | Assigned | `reports/navdesk-functional-print-audit-2026-05-27.md` |
 | `BRK-MVP-QAUX-006` | Language menu and system-language hint QA | `CHAT-BRK-QA-UX-001` | Superseded | `reports/language-menu-qa-2026-05-28.md` |
 | `BRK-MVP-QAUX-012` | Language menu and system-language hint re-check after modal rollout | `CHAT-BRK-QA-UX-001` | In Progress | `reports/language-menu-qa-2026-05-29.md` |
@@ -101,7 +107,8 @@
 | `BRK-MVP-QAUX-010` | Language Sprint 02 delivery smoke | `CHAT-BRK-QA-UX-001` | For Review | `reports/language-sprint-02-delivery-smoke-2026-05-28.md` |
 | `BRK-MVP-QAUX-011` | NavDesk small calculator i18n smoke | `CHAT-BRK-QA-UX-001` | For Review | `reports/navdesk-small-calculator-i18n-smoke-2026-05-28.md` |
 | `BRK-MVP-QAUX-013` | Tool auth gate smoke (desktop/tablet/mobile) | `CHAT-BRK-QA-UX-001` | In Review | `reports/qa-tool-auth-gate-smoke-2026-05-29.md` |
-| `BRK-MVP-QAUX-014` | Tool auth OTP re-check after BE-010 | `CHAT-BRK-QA-UX-001` | In Review | `reports/backend-tool-auth-otp-gate-smoke-2026-05-30.md` |
+| `BRK-MVP-QAUX-014` | Tool auth OTP re-check after BE-010 | `CHAT-BRK-QA-UX-001` | Ready After Deploy | `reports/backend-tool-auth-otp-gate-smoke-2026-05-30.md` |
+| `BRK-MVP-QAUX-015` | PWA install reminder smoke | `CHAT-BRK-QA-UX-001` | Approved | `reports/qa-pwa-install-reminder-smoke-2026-05-30.md` |
 | `BRK-MVP-BE-003` | NavDesk tides function audit | `CHAT-BRK-BACKEND-001` | For Review | `reports/navdesk-tides-audit-2026-05-27.md` |
 | `BRK-MVP-DEPLOY-001` | Controlled production deploy | `CHAT-BRK-DEPLOY-001` | Gate Closed | `reports/deploy-report-2026-05-27.md` |
 | `BRK-MVP-PRODQA-001` | Production smoke and indexing QA | `CHAT-BRK-PROD-QA-001` | Gate Closed | `reports/production-smoke-seo-indexing-2026-05-27.md` |
@@ -110,12 +117,10 @@
 
 Run these active streams in order:
 
-1. Deliver `BRK-MVP-FE-021` and align tool action flow in shared UI.
-2. Launch `BRK-MVP-BE-010` (OTP delivery/TTL fix).
-3. Run `BRK-MVP-QAUX-014` one-shot smoke after `BRK-MVP-BE-010` (desktop/tablet/mobile).
-4. Keep `BRK-MVP-QAUX-013` for tool-action smoke on completed UI points.
-5. Keep `BRK-MVP-BEIMPL-005/006` and `BRK-MVP-QAUX-012` on the previously agreed single-shot backend-translation release control.
-6. Do not open production deploy until both gates are green and Director approves.
+1. Keep PostgreSQL as rollback source during the first Mongo cutover window.
+2. Run post-cutover QA for frontend/API contract alignment, especially live images, menu buttons, NavDesk tool pages and admin-management entry.
+3. Separate cosmetic/live frontend fixes from database migration work.
+4. Schedule a second-day Mongo health and admin write-path check after real usage.
 
 Owner chats to keep in sync:
 
