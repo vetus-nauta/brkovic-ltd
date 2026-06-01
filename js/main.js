@@ -1734,6 +1734,14 @@
     }
   }
 
+  function closeGamePromoForAuth() {
+    const modal = document.getElementById('gamePromoModal');
+    if (!modal || !modal.classList.contains('is-open')) return;
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('game-promo-modal-open');
+  }
+
   function isToolActionCandidate(target) {
     if (!target) return false;
     if (target.closest('[data-game-promo-open]')) {
@@ -1909,6 +1917,7 @@
       event.stopImmediatePropagation();
       try {
         const gameLink = isGameLink(target);
+        if (gameLink) closeGamePromoForAuth();
         const allowed = await ensureToolAccess({ requireLive: gameLink });
         if (!allowed) return;
 

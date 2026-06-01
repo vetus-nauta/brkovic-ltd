@@ -147,7 +147,12 @@ function auth_request(string $route, string $method = 'GET', array $payload = []
         $cookie = trim(substr($line, 11));
         $pair = explode(';', $cookie, 2)[0] ?? '';
         if (stripos($pair, 'ship_journal_admin=') === 0) {
+            $_SESSION['brkovic_live_cookies']['admin'] = $pair;
             $_SESSION['brkovic_live_cookie'] = $pair;
+            continue;
+        }
+        if (stripos($pair, 'ship_journal_tool_user=') === 0) {
+            $_SESSION['brkovic_live_cookies']['toolUser'] = $pair;
         }
     }
 
@@ -156,25 +161,39 @@ function auth_request(string $route, string $method = 'GET', array $payload = []
 }
 
 function auth_cookie_header(): string {
-    $sessionCookie = $_SESSION['brkovic_live_cookie'] ?? '';
-    if (is_string($sessionCookie) && $sessionCookie !== '' && $sessionCookie !== '1') {
-        return $sessionCookie;
-    }
-
-    $raw = $_SERVER['HTTP_COOKIE'] ?? '';
-    if (!is_string($raw) || $raw === '' || !str_contains($raw, 'ship_journal_admin=')) {
-        return '';
-    }
-
     $pairs = [];
-    foreach (explode(';', $raw) as $part) {
-        $pair = trim($part);
-        if (stripos($pair, 'ship_journal_admin=') === 0) {
-            $pairs[] = $pair;
+    $stored = $_SESSION['brkovic_live_cookies'] ?? [];
+    if (is_array($stored)) {
+        foreach (['admin', 'toolUser'] as $key) {
+            $cookie = $stored[$key] ?? '';
+            if (is_string($cookie) && $cookie !== '' && $cookie !== '1') {
+                $pairs[] = $cookie;
+            }
         }
     }
 
-    return implode('; ', $pairs);
+    $sessionCookie = $_SESSION['brkovic_live_cookie'] ?? '';
+    if (is_string($sessionCookie) && $sessionCookie !== '' && $sessionCookie !== '1') {
+        $pairs[] = $sessionCookie;
+    }
+
+    $raw = $_SERVER['HTTP_COOKIE'] ?? '';
+    if (is_string($raw) && $raw !== '') {
+        foreach (explode(';', $raw) as $part) {
+            $pair = trim($part);
+            if (stripos($pair, 'ship_journal_admin=') === 0 || stripos($pair, 'ship_journal_tool_user=') === 0) {
+                $pairs[] = $pair;
+            }
+        }
+    }
+
+    $unique = [];
+    foreach ($pairs as $pair) {
+        $name = strtolower(strtok($pair, '=') ?: $pair);
+        $unique[$name] = $pair;
+    }
+
+    return implode('; ', array_values($unique));
 }
 
 function has_shared_site_auth(): bool {
@@ -187,7 +206,6 @@ function has_shared_site_auth(): bool {
         $auth = auth_request($route);
         $payload = $auth['data']['data']['data'] ?? $auth['data']['data'] ?? $auth['data'];
         if (($auth['status'] ?? 500) < 400 && (bool) ($payload['authenticated'] ?? false)) {
-            $_SESSION['brkovic_live_cookie'] = $cookie;
             return true;
         }
     }
@@ -205,11 +223,17 @@ function authenticated(): bool {
     if (has_shared_site_auth()) {
         return true;
     }
-    if (empty($_SESSION['brkovic_live_cookie'])) {
+    if (auth_cookie_header() === '') {
         return false;
     }
-    $me = auth_request('/auth/me');
-    return (bool) ($me['data']['authenticated'] ?? false);
+    foreach (['/auth/me', '/auth/user/me'] as $route) {
+        $me = auth_request($route);
+        $payload = $me['data']['data']['data'] ?? $me['data']['data'] ?? $me['data'];
+        if ((bool) ($payload['authenticated'] ?? false)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 function require_auth(): void {
