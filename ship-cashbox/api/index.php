@@ -12,7 +12,7 @@ session_set_cookie_params([
 ]);
 session_start();
 
-const APP_VERSION = '2026.06.01-ship-cashbox-batches-01';
+const APP_VERSION = '2026.06.01-ship-cashbox-mail-01';
 const AUTH_BASE = 'https://brkovic.ltd/api';
 const STORAGE_DIR = __DIR__ . '/../storage';
 const SESSIONS_DIR = STORAGE_DIR . '/sessions';
@@ -365,6 +365,10 @@ function money_input(mixed $value): float {
 function clean_email(mixed $value): string {
     $email = strtolower(trim((string) $value));
     return filter_var($email, FILTER_VALIDATE_EMAIL) ? $email : '';
+}
+
+function html_escape(mixed $value): string {
+    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 }
 
 function notebook_hash(string $text): string {
@@ -1431,53 +1435,97 @@ function create_new_session(array $payload = []): array {
     return $saved;
 }
 
-function send_invite_email_message(string $to, string $name, string $link, array $session): bool {
+function encoded_mail_subject(string $subject): string {
+    return function_exists('mb_encode_mimeheader')
+        ? mb_encode_mimeheader($subject, 'UTF-8', 'B', "\r\n")
+        : $subject;
+}
+
+function cashbox_mail_shell(string $title, string $preheader, string $bodyHtml, string $buttonLabel = '', string $buttonUrl = ''): string {
+    $button = $buttonLabel !== '' && $buttonUrl !== ''
+        ? '<p style="margin:28px 0;"><a href="' . html_escape($buttonUrl) . '" style="display:inline-block;padding:15px 22px;border-radius:14px;background:#10243a;color:#fff;text-decoration:none;font-weight:800;">' . html_escape($buttonLabel) . '</a></p>'
+        : '';
+    $fallback = $buttonUrl !== ''
+        ? '<p style="margin:24px 0 0;color:#64717c;font-size:13px;">Если кнопка не открылась, используйте ссылку:<br><a href="' . html_escape($buttonUrl) . '" style="color:#10243a;">' . html_escape($buttonUrl) . '</a></p>'
+        : '';
+
+    return '<!doctype html><html><body style="margin:0;padding:0;background:#f6f3ea;color:#10243a;font-family:Arial,Helvetica,sans-serif;">'
+        . '<div style="display:none;max-height:0;overflow:hidden;color:transparent;">' . html_escape($preheader) . '</div>'
+        . '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f6f3ea;padding:24px 12px;"><tr><td align="center">'
+        . '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:620px;background:#ffffff;border:1px solid #e3ddd0;border-radius:22px;overflow:hidden;">'
+        . '<tr><td style="padding:22px 24px;background:#10243a;color:#f7ead0;"><div style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;">VETUS NAUTA - Brkovic</div><h1 style="margin:10px 0 0;font-size:25px;line-height:1.18;">' . html_escape($title) . '</h1></td></tr>'
+        . '<tr><td style="padding:24px;font-size:16px;line-height:1.58;">' . $bodyHtml . $button . $fallback
+        . '</td></tr></table></td></tr></table></body></html>';
+}
+
+function send_multipart_mail(string $to, string $subject, string $textBody, string $htmlBody, string $messagePrefix): bool {
     if (is_local_request()) {
         return true;
     }
 
-    $subject = 'Vetus Nauta / Ship Cashbox invitation';
-    $safeName = $name !== '' ? $name : 'crew member';
-    $encodedSubject = function_exists('mb_encode_mimeheader')
-        ? mb_encode_mimeheader($subject, 'UTF-8', 'B', "\r\n")
-        : $subject;
-    $body = "Hello {$safeName},\n\n"
-        . "You have been invited to the Ship Cashbox for:\n"
-        . ($session['title'] ?? 'Ship Cashbox') . "\n\n"
-        . "Open your personal cashbox notebook here:\n"
-        . $link . "\n\n"
-        . "This link is personal. Inside this group you are a participant, not the treasurer.\n"
-        . "You will see and edit only your own cashbox notebook and settlement instructions.\n\n"
-        . "VETUS NAUTA - Brkovic\n";
-
+    $boundary = '=_cashbox_' . bin2hex(random_bytes(16));
     $headers = [
         'From: VETUS NAUTA - Brkovic <' . MAIL_FROM_ADDRESS . '>',
         'Sender: ' . MAIL_FROM_ADDRESS,
         'Reply-To: ' . MAIL_REPLY_TO,
         'Return-Path: ' . MAIL_FROM_ADDRESS,
-        'Content-Type: text/plain; charset=UTF-8',
-        'Content-Transfer-Encoding: 8bit',
         'MIME-Version: 1.0',
+        'Content-Type: multipart/alternative; boundary="' . $boundary . '"',
         'Date: ' . date(DATE_RFC2822),
-        'Message-ID: <cashbox-' . bin2hex(random_bytes(8)) . '@brkovic.ltd>',
+        'Message-ID: <' . $messagePrefix . '-' . bin2hex(random_bytes(8)) . '@brkovic.ltd>',
         'X-Mailer: PHP/' . PHP_VERSION,
     ];
 
-    $params = '-f ' . escapeshellarg(MAIL_FROM_ADDRESS);
-    return mail($to, $encodedSubject, $body, implode("\r\n", $headers), $params);
+    $body = '--' . $boundary . "\r\n"
+        . "Content-Type: text/plain; charset=UTF-8\r\n"
+        . "Content-Transfer-Encoding: 8bit\r\n\r\n"
+        . $textBody . "\r\n\r\n"
+        . '--' . $boundary . "\r\n"
+        . "Content-Type: text/html; charset=UTF-8\r\n"
+        . "Content-Transfer-Encoding: 8bit\r\n\r\n"
+        . $htmlBody . "\r\n\r\n"
+        . '--' . $boundary . "--\r\n";
+
+    return mail($to, encoded_mail_subject($subject), $body, implode("\r\n", $headers), '-f ' . escapeshellarg(MAIL_FROM_ADDRESS));
+}
+
+function send_invite_email_message(string $to, string $name, string $link, array $session): bool {
+    $groupTitle = trim((string) ($session['title'] ?? 'Ship Cashbox')) ?: 'Ship Cashbox';
+    $safeName = trim($name) !== '' ? trim($name) : 'участник';
+    $subject = 'Вас пригласили в группу «' . $groupTitle . '»';
+    $textBody = "Здравствуйте, {$safeName}.\n\n"
+        . "Вас пригласили в судовую кассу группы «{$groupTitle}».\n\n"
+        . "Принять приглашение:\n{$link}\n\n"
+        . "Что откроется:\n"
+        . "- ваш личный блокнот расходов внутри этой группы;\n"
+        . "- карточки отправленных записей;\n"
+        . "- итоговый расчет после закрытия кассы.\n\n"
+        . "В этой группе вы участник, не казначей. Вы видите и редактируете только свои записи. Казначей видит сводку группы.\n\n"
+        . "Как не потерять группу: сохраните это письмо, добавьте Судовую кассу на главный экран или заходите через меню приложения -> Группа.\n\n"
+        . "VETUS NAUTA - Brkovic\n";
+
+    $htmlBody = cashbox_mail_shell(
+        'Вас пригласили в группу «' . $groupTitle . '»',
+        'Откройте личный блокнот расходов и примите участие в судовой кассе.',
+        '<p>Здравствуйте, <strong>' . html_escape($safeName) . '</strong>.</p>'
+        . '<p>Казначей пригласил вас в судовую кассу группы <strong>«' . html_escape($groupTitle) . '»</strong>.</p>'
+        . '<div style="padding:16px;border-radius:16px;background:#f6f3ea;border:1px solid #e3ddd0;"><strong>Что откроет программа</strong><ul style="margin:10px 0 0;padding-left:20px;"><li>личный блокнот расходов только для этой группы;</li><li>карточки отправленных записей с датой и суммой;</li><li>финальный расчет после закрытия кассы.</li></ul></div>'
+        . '<p>В этой группе вы участник, не казначей. Вы видите и редактируете свои расходы, а казначей видит общую сводку.</p>'
+        . '<p><strong>Как не потерять группу:</strong> сохраните это письмо, добавьте Судовую кассу на главный экран или возвращайтесь через меню приложения: <em>Группа</em>.</p>',
+        'Принять приглашение',
+        $link
+    );
+
+    return send_multipart_mail($to, $subject, $textBody, $htmlBody, 'cashbox-invite');
 }
 
 function send_settlement_email_message(string $to, array $participant, array $session, array $totals, array $lines): bool {
-    if (is_local_request()) {
-        return true;
-    }
-
-    $subject = 'Vetus Nauta / Ship Cashbox settlement';
-    $encodedSubject = function_exists('mb_encode_mimeheader')
-        ? mb_encode_mimeheader($subject, 'UTF-8', 'B', "\r\n")
-        : $subject;
     $currency = (string) ($session['currency'] ?? 'EUR');
+    $groupTitle = trim((string) ($session['title'] ?? 'Ship Cashbox')) ?: 'Ship Cashbox';
+    $participantName = trim((string) ($participant['display_name'] ?? 'участник')) ?: 'участник';
     $participantId = (string) ($participant['id'] ?? '');
+    $personalLink = build_invite_link((string) ($participant['invite_token'] ?? ''));
+    $subject = 'Итог судовой кассы «' . $groupTitle . '»';
     $relevantLines = array_values(array_filter($lines, static function (array $line) use ($participantId, $participant): bool {
         if (($participant['role'] ?? '') === 'treasurer') {
             return true;
@@ -1485,7 +1533,7 @@ function send_settlement_email_message(string $to, array $participant, array $se
         return ($line['from_participant_id'] ?? '') === $participantId || ($line['to_participant_id'] ?? '') === $participantId;
     }));
 
-    $lineText = "No transfers required.";
+    $lineText = "Переводы не требуются.";
     if ($relevantLines) {
         $lineText = implode("\n", array_map(static function (array $line) use ($currency): string {
             return sprintf(
@@ -1499,31 +1547,34 @@ function send_settlement_email_message(string $to, array $participant, array $se
     }
 
     $summary = $totals['participants'][$participantId] ?? ['contributions' => 0, 'expenses' => 0, 'balance' => 0];
-    $body = "Hello " . ($participant['display_name'] ?? 'crew member') . ",\n\n"
-        . "The Ship Cashbox has been closed for:\n"
-        . ($session['title'] ?? 'Ship Cashbox') . "\n\n"
-        . "Your summary:\n"
-        . "Given to treasurer: {$currency} " . number_format((float) ($summary['contributions'] ?? 0), 2, '.', ' ') . "\n"
-        . "Expenses: {$currency} " . number_format((float) ($summary['expenses'] ?? 0), 2, '.', ' ') . "\n"
-        . "Balance: {$currency} " . number_format((float) ($summary['balance'] ?? 0), 2, '.', ' ') . "\n\n"
-        . "Settlement:\n"
-        . $lineText . "\n\n"
+    $textBody = "Здравствуйте, {$participantName}.\n\n"
+        . "Судовая касса группы «{$groupTitle}» закрыта.\n\n"
+        . "Ваш итог:\n"
+        . "Передано казначею: {$currency} " . number_format((float) ($summary['contributions'] ?? 0), 2, '.', ' ') . "\n"
+        . "Ваши расходы: {$currency} " . number_format((float) ($summary['expenses'] ?? 0), 2, '.', ' ') . "\n"
+        . "Баланс: {$currency} " . number_format((float) ($summary['balance'] ?? 0), 2, '.', ' ') . "\n\n"
+        . "Расчет:\n{$lineText}\n\n"
+        . "Открыть свой расчет:\n{$personalLink}\n\n"
         . "VETUS NAUTA - Brkovic\n";
 
-    $headers = [
-        'From: VETUS NAUTA - Brkovic <' . MAIL_FROM_ADDRESS . '>',
-        'Sender: ' . MAIL_FROM_ADDRESS,
-        'Reply-To: ' . MAIL_REPLY_TO,
-        'Return-Path: ' . MAIL_FROM_ADDRESS,
-        'Content-Type: text/plain; charset=UTF-8',
-        'Content-Transfer-Encoding: 8bit',
-        'MIME-Version: 1.0',
-        'Date: ' . date(DATE_RFC2822),
-        'Message-ID: <cashbox-settlement-' . bin2hex(random_bytes(8)) . '@brkovic.ltd>',
-        'X-Mailer: PHP/' . PHP_VERSION,
-    ];
+    $lineRows = $relevantLines
+        ? implode('', array_map(static function (array $line) use ($currency): string {
+            return '<tr><td style="padding:8px;border-bottom:1px solid #e3ddd0;">' . html_escape($line['from_display_name'] ?? '') . '</td><td style="padding:8px;border-bottom:1px solid #e3ddd0;">' . html_escape($line['to_display_name'] ?? '') . '</td><td style="padding:8px;border-bottom:1px solid #e3ddd0;text-align:right;">' . html_escape($currency . ' ' . number_format((float) ($line['amount'] ?? 0), 2, '.', ' ')) . '</td></tr>';
+        }, $relevantLines))
+        : '<tr><td colspan="3" style="padding:10px;color:#64717c;">Переводы не требуются.</td></tr>';
 
-    return mail($to, $encodedSubject, $body, implode("\r\n", $headers), '-f ' . escapeshellarg(MAIL_FROM_ADDRESS));
+    $htmlBody = cashbox_mail_shell(
+        'Итог судовой кассы «' . $groupTitle . '»',
+        'Касса закрыта, расчет готов.',
+        '<p>Здравствуйте, <strong>' . html_escape($participantName) . '</strong>.</p>'
+        . '<p>Касса группы <strong>«' . html_escape($groupTitle) . '»</strong> закрыта. Ниже ваш личный итог.</p>'
+        . '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:16px 0;border:1px solid #e3ddd0;border-radius:14px;overflow:hidden;"><tr><td style="padding:10px;background:#f6f3ea;">Передано казначею</td><td style="padding:10px;text-align:right;font-weight:800;">' . html_escape($currency . ' ' . number_format((float) ($summary['contributions'] ?? 0), 2, '.', ' ')) . '</td></tr><tr><td style="padding:10px;background:#f6f3ea;">Ваши расходы</td><td style="padding:10px;text-align:right;font-weight:800;">' . html_escape($currency . ' ' . number_format((float) ($summary['expenses'] ?? 0), 2, '.', ' ')) . '</td></tr><tr><td style="padding:10px;background:#f6f3ea;">Баланс</td><td style="padding:10px;text-align:right;font-weight:800;">' . html_escape($currency . ' ' . number_format((float) ($summary['balance'] ?? 0), 2, '.', ' ')) . '</td></tr></table>'
+        . '<p><strong>Расчет переводов</strong></p><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">' . $lineRows . '</table>',
+        'Открыть свой расчет',
+        $personalLink
+    );
+
+    return send_multipart_mail($to, $subject, $textBody, $htmlBody, 'cashbox-settlement');
 }
 
 function send_settlement_emails(array $session, array $totals, array $lines): array {
