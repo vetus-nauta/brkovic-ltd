@@ -1,4 +1,6 @@
 (function () {
+  let managementModalScrollY = 0;
+
   function escapeHtml(value) {
     return String(value || "")
       .replace(/&/g, "&amp;")
@@ -108,6 +110,26 @@
         closeSiteMenu(modal);
       }
     });
+  }
+
+  function lockManagementModalScroll() {
+    if (!document.body.classList.contains("management-modal-open")) {
+      managementModalScrollY = window.scrollY || document.documentElement.scrollTop || 0;
+      document.body.style.top = `-${managementModalScrollY}px`;
+    }
+    document.documentElement.classList.add("management-modal-open");
+    document.body.classList.add("management-modal-open");
+  }
+
+  function unlockManagementModalScroll() {
+    if (document.querySelector(".management-modal.is-open")) return;
+    document.documentElement.classList.remove("management-modal-open");
+    document.body.classList.remove("management-modal-open");
+    document.body.style.top = "";
+    if (managementModalScrollY > 0) {
+      window.scrollTo(0, managementModalScrollY);
+    }
+    managementModalScrollY = 0;
   }
 
   function languageIconMarkup() {
@@ -269,7 +291,7 @@
     if (!modal) return;
     modal.classList.add("is-open");
     modal.setAttribute("aria-hidden", "false");
-    document.body.classList.add("management-modal-open");
+    lockManagementModalScroll();
     const focusTarget = modal.querySelector("button, [href], input, select, textarea");
     if (focusTarget) setTimeout(() => focusTarget.focus(), 20);
   }
@@ -278,9 +300,7 @@
     if (!modal) return;
     modal.classList.remove("is-open");
     modal.setAttribute("aria-hidden", "true");
-    if (!document.querySelector(".management-modal.is-open")) {
-      document.body.classList.remove("management-modal-open");
-    }
+    unlockManagementModalScroll();
   }
 
   function setupSiteMenu() {
@@ -648,9 +668,7 @@
       }
       modal.classList.remove("is-open");
       modal.setAttribute("aria-hidden", "true");
-      if (!document.querySelector(".management-modal.is-open")) {
-        document.body.classList.remove("management-modal-open");
-      }
+      unlockManagementModalScroll();
     };
     modal.querySelectorAll("[data-pwa-install-close]").forEach((button) => {
       button.addEventListener("click", close);
@@ -672,7 +690,7 @@
     modal.dataset.source = source;
     modal.classList.add("is-open");
     modal.setAttribute("aria-hidden", "false");
-    document.body.classList.add("management-modal-open");
+    lockManagementModalScroll();
     setTimeout(() => modal.querySelector("button, [href]")?.focus(), 20);
   }
 
@@ -1278,7 +1296,7 @@
       const modal = document.createElement('div');
 
       modal.id = TOOL_AUTH_PROMPT_ID;
-      modal.className = 'management-modal site-menu-modal';
+      modal.className = 'management-modal site-menu-modal tool-auth-modal';
       modal.setAttribute('aria-hidden', 'false');
       modal.innerHTML = `
         <div class="management-modal__backdrop" data-tool-auth-close></div>
@@ -1291,7 +1309,7 @@
             <button type="button" class="management-modal__close" data-tool-auth-close aria-label="${escapeHtml(messages.closeAria)}">×</button>
           </div>
       <div class="tool-auth-prompt__body">
-        <p class="tool-auth-prompt__note">Откройте доступ к рабочим инструментам Brkovic.ltd.</p>
+        <p class="tool-auth-prompt__note">Вход нужен один раз для всех рабочих инструментов Brkovic.ltd.</p>
         <button type="button" class="tool-auth-google" id="toolAuthGoogle" disabled>
           <span class="tool-auth-google__icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" focusable="false">
@@ -1303,21 +1321,27 @@
           </span>
           <span>${escapeHtml(messages.google)}</span>
         </button>
-        <div class="tool-auth-prompt__label">
-          <label for="toolAuthEmail">${escapeHtml('Email')}</label>
-          <input id="toolAuthEmail" class="tool-auth-prompt__input" type="email" autocomplete="email" inputmode="email" placeholder="${escapeHtml(messages.emailPlaceholder)}" />
+        <div class="tool-auth-divider"><span>или код на email</span></div>
+        <div class="tool-auth-step tool-auth-step--email" data-tool-auth-email-step>
+          <div class="tool-auth-prompt__label">
+            <label for="toolAuthEmail">${escapeHtml('Email')}</label>
+            <input id="toolAuthEmail" class="tool-auth-prompt__input" type="email" autocomplete="email" inputmode="email" placeholder="${escapeHtml(messages.emailPlaceholder)}" />
+          </div>
+          <button type="button" class="btn btn--primary tool-auth-request" id="toolAuthRequestCode">${escapeHtml(messages.request)}</button>
         </div>
-        <div class="tool-auth-prompt__actions">
-          <button type="button" class="btn btn--primary" id="toolAuthRequestCode">${escapeHtml(messages.request)}</button>
+        <div class="tool-auth-step tool-auth-step--code" data-tool-auth-code-step hidden>
+          <div class="tool-auth-code-summary">
+            <span>Код отправлен на</span>
+            <strong data-tool-auth-email-summary></strong>
+            <button type="button" id="toolAuthChangeEmail">Изменить</button>
+          </div>
+          <div class="tool-auth-prompt__label">
+            <label for="toolAuthCode">${escapeHtml(messages.codeHint)}</label>
+            <input id="toolAuthCode" class="tool-auth-prompt__input tool-auth-code-input" type="text" maxlength="6" placeholder="000000" inputmode="numeric" pattern="[0-9]{6}" />
+          </div>
+          <button type="button" class="btn btn--primary btn--full tool-auth-verify" id="toolAuthVerify">${escapeHtml(messages.verify)}</button>
         </div>
         <p id="toolAuthStatus" data-tool-auth-status role="status" class="tool-auth-prompt__status" aria-live="polite"></p>
-        <div class="tool-auth-prompt__label">
-          <label for="toolAuthCode">${escapeHtml(messages.codeHint)}</label>
-          <input id="toolAuthCode" class="tool-auth-prompt__input" type="text" maxlength="6" placeholder="000000" inputmode="numeric" pattern="[0-9]{6}" />
-        </div>
-        <div class="tool-auth-prompt__actions">
-          <button type="button" class="btn btn--primary btn--full" id="toolAuthVerify">${escapeHtml(messages.verify)}</button>
-        </div>
           </div>
         </div>
       `;
@@ -1336,16 +1360,33 @@
       const googleBtn = modal.querySelector('#toolAuthGoogle');
       const emailInput = modal.querySelector('#toolAuthEmail');
       const codeInput = modal.querySelector('#toolAuthCode');
+      const emailStep = modal.querySelector('[data-tool-auth-email-step]');
+      const codeStep = modal.querySelector('[data-tool-auth-code-step]');
+      const emailSummary = modal.querySelector('[data-tool-auth-email-summary]');
+      const changeEmailBtn = modal.querySelector('#toolAuthChangeEmail');
       const closeButtons = modal.querySelectorAll('[data-tool-auth-close]');
       const close = (result = null) => {
         modal.setAttribute('aria-hidden', 'true');
         modal.classList.remove('is-open');
         modal.dispatchEvent(new Event('closeToolAuthPrompt'));
-        if (!document.querySelector('.management-modal.is-open')) {
-          document.body.classList.remove('management-modal-open');
-        }
+        unlockManagementModalScroll();
         restoreFocus();
         resolve(result === null ? { authenticated: false } : result);
+      };
+
+      const showEmailStep = () => {
+        modal.classList.remove('is-code-step');
+        if (emailStep) emailStep.hidden = false;
+        if (codeStep) codeStep.hidden = true;
+        if (emailInput) emailInput.focus();
+      };
+
+      const showCodeStep = (email) => {
+        modal.classList.add('is-code-step');
+        if (emailSummary) emailSummary.textContent = email;
+        if (emailStep) emailStep.hidden = true;
+        if (codeStep) codeStep.hidden = false;
+        if (codeInput) codeInput.focus();
       };
 
       const setStatus = (message) => {
@@ -1479,7 +1520,7 @@
           } else {
             setStatus(`${messageRequested} ${statusHint}`);
           }
-          if (codeInput) codeInput.focus();
+          showCodeStep(email);
           requestPending = false;
           startCooldown(parseCooldownSeconds(payload, 55));
         } catch (error) {
@@ -1622,6 +1663,7 @@
       if (requestBtn) requestBtn.addEventListener('click', tryRequestCode, { once: false });
       if (verifyBtn) verifyBtn.addEventListener('click', tryVerify, { once: false });
       if (googleBtn) googleBtn.addEventListener('click', tryGoogle, { once: false });
+      if (changeEmailBtn) changeEmailBtn.addEventListener('click', showEmailStep, { once: false });
       window.addEventListener('message', onGoogleMessage, { once: false });
       syncGoogleButton();
       closeButtons.forEach((button) => button.addEventListener('click', close, { once: false }));
@@ -1631,7 +1673,7 @@
       }, { once: false });
 
       modal.classList.add('is-open');
-      document.body.classList.add('management-modal-open');
+      lockManagementModalScroll();
       if (emailInput) {
         emailInput.value = normalizeEmail(localStorage.getItem('brkovic_tool_auth_email') || '');
         emailInput.focus();
@@ -1968,6 +2010,7 @@
 
   window.ensureToolAccess = ensureToolAccess;
   window.openToolAuthPrompt = openToolAuthPrompt;
+  window.fetchToolAuthStatus = fetchToolAuthStatus;
 
   document.addEventListener('DOMContentLoaded', () => {
     setupSiteMenu();

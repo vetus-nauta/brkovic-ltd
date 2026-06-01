@@ -2295,7 +2295,7 @@ html[lang="en"] .hero-highlight p {
 
 .tool-auth-prompt__body {
   display: grid;
-  gap: 12px;
+  gap: 14px;
   margin-top: 6px;
 }
 
@@ -2312,16 +2312,15 @@ html[lang="en"] .hero-highlight p {
 
 .tool-auth-google {
   width: 100%;
-  min-height: 54px;
+  min-height: 50px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 12px;
   padding: 0 18px;
   border: 1px solid rgba(60,64,67,.18);
-  border-radius: 14px;
-  background:
-    linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 12px;
+  background: #ffffff;
   color: #1f2937;
   box-shadow:
     0 10px 24px rgba(16,36,58,.10),
@@ -2341,6 +2340,85 @@ html[lang="en"] .hero-highlight p {
     0 4px 12px rgba(16,36,58,.08);
   outline: none;
   transform: translateY(-1px);
+}
+
+.tool-auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--color-muted);
+  font-size: .78rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.tool-auth-divider::before,
+.tool-auth-divider::after {
+  content: "";
+  height: 1px;
+  flex: 1 1 auto;
+  background: rgba(16,36,58,.12);
+}
+
+.tool-auth-step {
+  display: grid;
+  gap: 10px;
+}
+
+.tool-auth-code-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 3px 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid rgba(83,120,76,.18);
+  border-radius: 12px;
+  background: rgba(83,120,76,.07);
+}
+
+.tool-auth-code-summary span {
+  color: var(--color-muted);
+  font-size: .82rem;
+}
+
+.tool-auth-code-summary strong {
+  min-width: 0;
+  color: var(--color-brand);
+  font-size: .94rem;
+  overflow-wrap: anywhere;
+}
+
+.tool-auth-code-summary button {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid rgba(16,36,58,.14);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--color-brand);
+  font-size: .78rem;
+  font-weight: 800;
+}
+
+.tool-auth-code-input {
+  text-align: center;
+  font-size: 1.2rem;
+  font-weight: 900;
+  letter-spacing: .18em;
+}
+
+.tool-auth-request {
+  width: 100%;
+}
+
+.tool-auth-verify {
+  min-height: 50px;
+  background: #10243a;
+  border-color: #10243a;
+  color: #fff;
+  box-shadow: 0 14px 30px rgba(16,36,58,.22);
 }
 
 .tool-auth-google:disabled {
@@ -2460,8 +2538,17 @@ html[lang="en"] .hero-highlight p {
   justify-content: flex-end;
 }
 
+html.management-modal-open,
 body.management-modal-open {
   overflow: hidden;
+  overscroll-behavior: none;
+}
+
+body.management-modal-open {
+  position: fixed;
+  left: 0;
+  right: 0;
+  width: 100%;
 }
 
 .management-disclaimer-modal .management-modal__dialog {

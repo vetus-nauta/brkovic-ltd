@@ -53,7 +53,9 @@ function isModalOpen(id) {
 }
 
 function anyModalOpen() {
-  return isModalOpen("qrModal") || isModalOpen("attachmentSheet") || isModalOpen("workspaceModal") || isModalOpen("cashboxExitModal");
+  const appMenu = $("cashboxAppMenuModal");
+  const isAppMenuOpen = Boolean(appMenu?.classList.contains("is-open"));
+  return isModalOpen("qrModal") || isModalOpen("attachmentSheet") || isModalOpen("workspaceModal") || isModalOpen("cashboxExitModal") || isAppMenuOpen;
 }
 
 function lockModalScroll() {
@@ -793,7 +795,9 @@ function renderGuest() {
 
   $("guestSiteLoginButton")?.addEventListener("click", async () => {
     try {
-      if (typeof window.openToolAuthPrompt === "function") {
+      if (typeof window.ensureToolAccess === "function") {
+        await window.ensureToolAccess({ requireLive: true });
+      } else if (typeof window.openToolAuthPrompt === "function") {
         await window.openToolAuthPrompt();
       }
       await checkViewer();
@@ -881,9 +885,9 @@ function openAppMenu() {
   renderAppMenuAccount();
   renderAppMenuGroup();
   applyTheme();
+  lockModalScroll();
   modal.classList.add("is-open");
   modal.setAttribute("aria-hidden", "false");
-  document.body.classList.add("management-modal-open");
 }
 
 function closeAppMenu() {
@@ -891,16 +895,16 @@ function closeAppMenu() {
   if (!modal) return;
   modal.classList.remove("is-open");
   modal.setAttribute("aria-hidden", "true");
-  if (!document.querySelector(".management-modal.is-open")) {
-    document.body.classList.remove("management-modal-open");
-  }
+  unlockModalScroll();
 }
 
 async function handleAppAccountAction() {
   const profile = readToolAuthProfile();
   if (!profile?.authenticated) {
     closeAppMenu();
-    if (typeof window.openToolAuthPrompt === "function") {
+    if (typeof window.ensureToolAccess === "function") {
+      await window.ensureToolAccess({ requireLive: true }).catch(() => null);
+    } else if (typeof window.openToolAuthPrompt === "function") {
       await window.openToolAuthPrompt().catch(() => null);
     }
     await checkViewer();
@@ -2723,6 +2727,20 @@ async function checkViewer() {
       return;
     }
   } catch (error) {}
+
+  const cachedProfile = readToolAuthProfile();
+  if (cachedProfile?.authenticated && typeof window.fetchToolAuthStatus === "function") {
+    try {
+      const liveProfile = await window.fetchToolAuthStatus({ allowCachedFallback: false });
+      if (liveProfile?.authenticated) {
+        const me = await api("me");
+        if (me.authenticated) {
+          await loadTreasurerBoot();
+          return;
+        }
+      }
+    } catch (error) {}
+  }
 
   stopParticipantSchedule();
   stopTreasurerAutosave();

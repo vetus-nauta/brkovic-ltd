@@ -172,6 +172,10 @@ function auth_cookie_header(): string {
         }
     }
 
+    foreach (proxy_session_auth_cookies() as $cookie) {
+        $pairs[] = $cookie;
+    }
+
     $sessionCookie = $_SESSION['brkovic_live_cookie'] ?? '';
     if (is_string($sessionCookie) && $sessionCookie !== '' && $sessionCookie !== '1') {
         $pairs[] = $sessionCookie;
@@ -194,6 +198,41 @@ function auth_cookie_header(): string {
     }
 
     return implode('; ', array_values($unique));
+}
+
+function proxy_session_auth_cookies(): array {
+    $proxySessionId = (string) ($_COOKIE['brkovic_local_admin'] ?? '');
+    if ($proxySessionId === '' || !preg_match('/^[a-zA-Z0-9,-]{16,128}$/', $proxySessionId)) {
+        return [];
+    }
+
+    $currentName = session_name();
+    $currentId = session_id();
+    $currentData = $_SESSION;
+    session_write_close();
+
+    $cookies = [];
+    session_name('brkovic_local_admin');
+    session_id($proxySessionId);
+    if (@session_start(['read_and_close' => true])) {
+        $stored = $_SESSION['brkovic_live_cookies'] ?? [];
+        if (is_array($stored)) {
+            foreach (['admin', 'toolUser'] as $key) {
+                $cookie = $stored[$key] ?? '';
+                if (is_string($cookie) && $cookie !== '' && $cookie !== '1') {
+                    $cookies[] = $cookie;
+                }
+            }
+        }
+    }
+
+    $_SESSION = [];
+    session_name($currentName);
+    session_id($currentId);
+    session_start();
+    $_SESSION = $currentData;
+
+    return $cookies;
 }
 
 function has_shared_site_auth(): bool {

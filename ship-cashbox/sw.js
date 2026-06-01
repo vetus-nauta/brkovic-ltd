@@ -1,13 +1,13 @@
-const CACHE_NAME = "ship-cashbox-shell-v20260601-08";
+const CACHE_NAME = "ship-cashbox-shell-v20260601-09";
 const SHELL = [
   "./index.html",
-  "./assets/app.css?v=20260601-cashbox-pwa-08",
-  "./assets/app.js?v=20260601-cashbox-pwa-08",
+  "./assets/app.css?v=20260601-cashbox-pwa-09",
+  "./assets/app.js?v=20260601-cashbox-pwa-09",
   "./manifest.webmanifest",
   "../js/config.js",
   "../js/language.js?v=20260531-language-menu-01",
   "../js/seo.js?v=20260531-clarity-01",
-  "../js/main.js?v=20260601-game-sso-02",
+  "../js/main.js?v=20260601-auth-modal-01",
   "../js/navdesk.js?v=20260531-tool-consent-01",
   "../lang/ru.json",
   "../lang/en.json",
@@ -17,7 +17,7 @@ const SHELL = [
   "../lang/sr.json",
   "../lang/zh.json",
   "../css/variables.css",
-  "../css/main.css?v=20260531-google-auth-01",
+  "../css/main.css?v=20260601-auth-modal-01",
   "../css/responsive.css?v=20260531-google-auth-01",
   "../css/navdesk.css?v=20260531-shipcashbox-card-01",
   "../brand/logo-header-inline-light.png",
