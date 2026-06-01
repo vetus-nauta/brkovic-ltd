@@ -1078,6 +1078,10 @@ function renderParticipantRows(participants) {
           <span>${escapeHtml(participant.id === treasurerId ? t("treasurerSelfLabel") : t("participantNameLabel"))}</span>
           <input type="text" class="participant-name-input" value="${escapeHtml(participant.display_name)}">
         </label>
+        <label class="shipcashbox-field">
+          <span>${escapeHtml(t("participantEmailLabel"))}</span>
+          <input type="email" class="participant-email-input" value="${escapeHtml(participant.email || "")}" ${participant.role === "treasurer" ? "disabled" : ""}>
+        </label>
         <label class="shipcashbox-field shipcashbox-field--compact">
           <span>${escapeHtml(t("cashboxContributionLabel"))}</span>
           <input type="text" class="participant-contribution-input" inputmode="decimal" value="${escapeHtml(String(participant.cashbox_contribution ?? 0))}">
@@ -1085,6 +1089,7 @@ function renderParticipantRows(participants) {
       </div>
       <div class="shipcashbox-participant-row__stats">
         <span class="shipcashbox-pill participant-auth-pill">${escapeHtml(participant.authorized_at ? `${t("authConfirmed")}: ${formatDateTime(participant.authorized_at)}` : t("authPending"))}</span>
+        ${participant.role !== "treasurer" ? `<span class="shipcashbox-pill">${escapeHtml(participant.invite_sent_at ? `${t("inviteEmailSentAt")}: ${formatDateTime(participant.invite_sent_at)}` : t("inviteEmailNotSent"))}</span>` : ""}
         <span class="shipcashbox-pill">${escapeHtml(`${t("summaryExpenses")}: ${money(participant.expenses, state.boot.session.currency)}`)}</span>
         <span class="shipcashbox-pill">${escapeHtml(participant.last_synced_at ? `${t("syncLast")}: ${formatDateTime(participant.last_synced_at)}` : t("syncNever"))}</span>
       </div>
@@ -1097,6 +1102,7 @@ function renderParticipantRows(participants) {
       </div>
       ${participant.role !== "treasurer" && !participant.authorized_at ? `<p class="shipcashbox-note shipcashbox-participant-row__hint">${escapeHtml(t("participantChainPending"))}</p>` : ""}
       <div class="shipcashbox-share-actions">
+        ${participant.role !== "treasurer" ? `<button class="btn btn--primary send-invite-email-btn" type="button" data-participant-id="${escapeHtml(participant.id)}" title="${escapeHtml(t("sendInviteEmailHelp"))}" aria-label="${escapeHtml(t("sendInviteEmailHelp"))}">${escapeHtml(t("sendInviteEmail"))}</button>` : ""}
         ${participant.role !== "treasurer" ? `<button class="btn btn--secondary copy-invite-btn" type="button" data-link="${escapeHtml(participant.invite_link)}" title="${escapeHtml(t("copyInviteHelp"))}" aria-label="${escapeHtml(t("copyInviteHelp"))}">${escapeHtml(t("copyInvite"))}</button>` : ""}
         ${participant.role !== "treasurer" ? `<button class="btn btn--secondary share-invite-btn" type="button" data-link="${escapeHtml(participant.invite_link)}" data-name="${escapeHtml(participant.display_name)}" title="${escapeHtml(t("shareInviteHelp"))}" aria-label="${escapeHtml(t("shareInviteHelp"))}">${escapeHtml(t("shareInvite"))}</button>` : ""}
         ${participant.role !== "treasurer" ? `<button class="btn btn--secondary qr-invite-btn" type="button" data-link="${escapeHtml(participant.invite_link)}" data-name="${escapeHtml(participant.display_name)}" title="${escapeHtml(t("qrInviteHelp"))}" aria-label="${escapeHtml(t("qrInviteHelp"))}">${escapeHtml(t("qrInvite"))}</button>` : ""}
@@ -1112,6 +1118,10 @@ function renderParticipantDraftRow(tempId) {
         <label class="shipcashbox-field">
           <span>${escapeHtml(t("participantNameLabel"))}</span>
           <input type="text" class="participant-name-input" value="">
+        </label>
+        <label class="shipcashbox-field">
+          <span>${escapeHtml(t("participantEmailLabel"))}</span>
+          <input type="email" class="participant-email-input" value="">
         </label>
         <label class="shipcashbox-field shipcashbox-field--compact">
           <span>${escapeHtml(t("cashboxContributionLabel"))}</span>
@@ -1683,13 +1693,6 @@ function workspaceWindowPayload(windowName) {
         body: renderParticipantSettlementWindow(),
       };
     }
-    if (windowName === "crew") {
-      return {
-        eyebrow: t("crewNotebooks"),
-        title: t("crewNotebooks"),
-        body: renderCrewDirectory(participant.directory || []),
-      };
-    }
     if (windowName === "service") {
       return {
         eyebrow: t("workspaceServiceTitle"),
@@ -1798,6 +1801,7 @@ function collectParticipantDrafts() {
       id: row.dataset.participantId,
       role: isTreasurer ? "treasurer" : "participant",
       display_name: row.querySelector(".participant-name-input").value.trim() || (isTreasurer ? "Treasurer" : "Crew member"),
+      email: row.querySelector(".participant-email-input")?.value.trim() || "",
       active: true,
       included_in_split: isTreasurer ? included : true,
       cashbox_contribution: contributionInput ? (contributionInput.value.trim() || "0") : "0",
@@ -1810,6 +1814,7 @@ function participantsPayloadFromState() {
     id: participant.id,
     role: participant.role,
     display_name: participant.display_name,
+    email: participant.email || "",
     active: participant.active,
     included_in_split: participant.included_in_split,
     cashbox_contribution: participant.cashbox_contribution,
@@ -1838,6 +1843,29 @@ async function saveSessionMeta(extra = {}, options = {}) {
   localStorage.setItem(ENGAGED_KEY, "1");
   render({ preserveWorkspace: true });
   if (!options.silent) setFlash(t("saved"));
+  return payload;
+}
+
+async function sendParticipantInvite(participantId) {
+  const row = document.querySelector(`.shipcashbox-participant-row[data-participant-id="${CSS.escape(participantId)}"]`);
+  const email = row?.querySelector(".participant-email-input")?.value.trim() || "";
+  if (!email) {
+    setFlash(t("inviteEmailMissing"), true);
+    return null;
+  }
+  const payload = await api("send-invite", {
+    method: "POST",
+    body: JSON.stringify({
+      id: state.boot.session.id,
+      participant_id: participantId,
+      email,
+    }),
+  });
+  state.boot = payload;
+  state.treasurerDraft = normalizedText((payload.session?.participants || []).find((participant) => participant.id === payload.session?.treasurer_participant_id)?.notebook_text || "");
+  saveCache(BOOT_CACHE_KEY, payload);
+  render({ preserveWorkspace: true });
+  setFlash(t("inviteEmailSent"));
   return payload;
 }
 
@@ -2230,6 +2258,9 @@ function bindParticipantRowActions() {
   document.querySelectorAll(".qr-invite-btn").forEach((button) => {
     button.onclick = () => openQrModal(button.dataset.name || "", button.dataset.link || "");
   });
+  document.querySelectorAll(".send-invite-email-btn").forEach((button) => {
+    button.onclick = () => sendParticipantInvite(button.dataset.participantId || "").catch((error) => setFlash(error.message || t("loadFailed"), true));
+  });
 }
 
 function refreshParticipantEditorUi() {
@@ -2253,6 +2284,8 @@ function refreshParticipantEditorUi() {
     }
     const removeBtn = row.querySelector(".remove-participant-btn");
     if (removeBtn) removeBtn.hidden = role === "treasurer";
+    const emailInput = row.querySelector(".participant-email-input");
+    if (emailInput) emailInput.disabled = role === "treasurer";
   });
 }
 
@@ -2262,7 +2295,8 @@ function addParticipantDraftRow({ focus = true } = {}) {
   const emptyDraft = Array.from(editor.querySelectorAll(".shipcashbox-participant-row--draft")).find((row) => {
     const name = row.querySelector(".participant-name-input")?.value.trim() || "";
     const contribution = row.querySelector(".participant-contribution-input")?.value.trim() || "0";
-    return name === "" && (contribution === "" || contribution === "0");
+    const email = row.querySelector(".participant-email-input")?.value.trim() || "";
+    return name === "" && email === "" && (contribution === "" || contribution === "0");
   });
   const row = emptyDraft || (() => {
     const tempId = `draft-${Date.now()}`;

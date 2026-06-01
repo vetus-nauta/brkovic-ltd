@@ -840,7 +840,7 @@ body.shipcashbox-modal-open {
 }
 
 .shipcashbox-participant-row__top--editor {
-  grid-template-columns: minmax(0, 1fr) minmax(150px, 180px);
+  grid-template-columns: minmax(0, 1fr) minmax(190px, 0.8fr) minmax(150px, 180px);
   align-items: start;
 }
 

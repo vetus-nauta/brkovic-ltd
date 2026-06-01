@@ -1230,5 +1230,12 @@
   "navdesk_watch_speed_label": "Brzina",
   "navdesk_watch_position_label": "Pozicija",
   "navdesk_watch_no_crew": "Nema posade",
-  "navdesk_watch_no_keeper": "Nema"
+  "navdesk_watch_no_keeper": "Nema",
+  "participantEmailLabel": "Email učesnika",
+  "sendInviteEmail": "Pošalji email",
+  "sendInviteEmailHelp": "Pošaljite učesniku lični link emailom.",
+  "inviteEmailSent": "Email poziv je poslat.",
+  "inviteEmailSentAt": "Poziv poslat",
+  "inviteEmailNotSent": "Email još nije poslat",
+  "inviteEmailMissing": "Prvo unesite email učesnika."
 }

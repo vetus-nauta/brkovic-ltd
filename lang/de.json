@@ -1230,5 +1230,12 @@
   "navdesk_watch_speed_label": "Geschwindigkeit",
   "navdesk_watch_position_label": "Position",
   "navdesk_watch_no_crew": "Keine Crew",
-  "navdesk_watch_no_keeper": "Keine"
+  "navdesk_watch_no_keeper": "Keine",
+  "participantEmailLabel": "E-Mail des Teilnehmers",
+  "sendInviteEmail": "E-Mail senden",
+  "sendInviteEmailHelp": "Sendet dem Teilnehmer den persönlichen Link per E-Mail.",
+  "inviteEmailSent": "Einladungs-E-Mail gesendet.",
+  "inviteEmailSentAt": "Einladung gesendet",
+  "inviteEmailNotSent": "E-Mail noch nicht gesendet",
+  "inviteEmailMissing": "Geben Sie zuerst die E-Mail des Teilnehmers ein."
 }

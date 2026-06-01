@@ -1230,5 +1230,12 @@
   "navdesk_watch_speed_label": "Скорость",
   "navdesk_watch_position_label": "Позиция",
   "navdesk_watch_no_crew": "Нет экипажа",
-  "navdesk_watch_no_keeper": "Нет"
+  "navdesk_watch_no_keeper": "Нет",
+  "participantEmailLabel": "Email участника",
+  "sendInviteEmail": "Отправить email",
+  "sendInviteEmailHelp": "Отправить участнику личную ссылку на email.",
+  "inviteEmailSent": "Email-приглашение отправлено.",
+  "inviteEmailSentAt": "Приглашение отправлено",
+  "inviteEmailNotSent": "Email еще не отправлен",
+  "inviteEmailMissing": "Сначала укажите email участника."
 }

@@ -12,7 +12,7 @@ session_set_cookie_params([
 ]);
 session_start();
 
-const APP_VERSION = '2026.05.31-ship-cashbox-001';
+const APP_VERSION = '2026.06.01-ship-cashbox-groups-01';
 const AUTH_BASE = 'https://brkovic.ltd/api';
 const STORAGE_DIR = __DIR__ . '/../storage';
 const SESSIONS_DIR = STORAGE_DIR . '/sessions';
@@ -252,6 +252,47 @@ function has_shared_site_auth(): bool {
     return false;
 }
 
+function auth_payload_from_response(array $auth): array {
+    return $auth['data']['data']['data'] ?? $auth['data']['data'] ?? $auth['data'];
+}
+
+function current_auth_profile(): array {
+    if (is_local_request()) {
+        return [
+            'authenticated' => true,
+            'email' => 'local@brkovic.ltd',
+            'displayName' => 'Local treasurer',
+        ];
+    }
+
+    if (auth_cookie_header() === '' && !has_local_auth_cookie()) {
+        return ['authenticated' => false];
+    }
+
+    foreach (['/auth/me', '/auth/user/me'] as $route) {
+        $auth = auth_request($route);
+        $payload = auth_payload_from_response($auth);
+        if (($auth['status'] ?? 500) < 400 && (bool) ($payload['authenticated'] ?? false)) {
+            return [
+                'authenticated' => true,
+                'email' => clean_email($payload['email'] ?? $payload['user']['email'] ?? ''),
+                'displayName' => trim((string) ($payload['displayName'] ?? $payload['user']['displayName'] ?? $payload['name'] ?? '')),
+            ];
+        }
+    }
+
+    return ['authenticated' => has_local_auth_cookie()];
+}
+
+function current_auth_email(): string {
+    $profile = current_auth_profile();
+    $email = clean_email($profile['email'] ?? '');
+    if ($email !== '') {
+        return $email;
+    }
+    return is_local_request() || has_local_auth_cookie() ? 'local@brkovic.ltd' : '';
+}
+
 function authenticated(): bool {
     if (is_local_request()) {
         return true;
@@ -317,6 +358,11 @@ function money_input(mixed $value): float {
         $value = str_replace(',', '.', trim($value));
     }
     return money_round((float) $value);
+}
+
+function clean_email(mixed $value): string {
+    $email = strtolower(trim((string) $value));
+    return filter_var($email, FILTER_VALIDATE_EMAIL) ? $email : '';
 }
 
 function notebook_hash(string $text): string {
@@ -403,9 +449,12 @@ function normalize_participant(array $participant, bool $treasurerFallback = fal
         'display_name' => trim((string) ($participant['display_name'] ?? '')) ?: ($role === 'treasurer' ? 'Treasurer' : 'Crew member'),
         'role' => $role,
         'active' => array_key_exists('active', $participant) ? (bool) $participant['active'] : true,
+        'email' => clean_email($participant['email'] ?? ''),
         'included_in_split' => array_key_exists('included_in_split', $participant) ? bool_value($participant['included_in_split'], true) : true,
         'cashbox_contribution' => array_key_exists('cashbox_contribution', $participant) ? max(0, money_input($participant['cashbox_contribution'])) : 0.0,
         'authorized_at' => $participant['authorized_at'] ?? ($role === 'treasurer' ? now_iso() : null),
+        'invite_sent_at' => $participant['invite_sent_at'] ?? null,
+        'invite_last_error' => trim((string) ($participant['invite_last_error'] ?? '')) ?: null,
         'invite_token' => (string) ($participant['invite_token'] ?? bin2hex(random_bytes(16))),
         'joined_at' => (string) ($participant['joined_at'] ?? now_iso()),
         'notebook_text' => str_replace("\r", '', (string) ($participant['notebook_text'] ?? '')),
@@ -662,11 +711,12 @@ function build_settlement_lines(array $participantTotals): array {
     return build_direct_settlement_lines($participantTotals, 'balance');
 }
 
-function default_session(): array {
+function default_session(string $ownerEmail = ''): array {
     $createdAt = now_iso();
     $treasurer = normalize_participant([
         'display_name' => 'Treasurer',
         'role' => 'treasurer',
+        'email' => $ownerEmail,
         'active' => true,
         'included_in_split' => true,
         'cashbox_contribution' => 0,
@@ -679,6 +729,7 @@ function default_session(): array {
         'id' => rand_id('cashbox'),
         'title' => 'Ship Cashbox',
         'currency' => 'EUR',
+        'owner_email' => $ownerEmail,
         'treasurer_expense_mode' => 'auto',
         'status' => 'active',
         'created_at' => $createdAt,
@@ -742,6 +793,7 @@ function normalize_session(array $session): array {
         'created_at' => (string) ($session['created_at'] ?? now_iso()),
         'updated_at' => (string) ($session['updated_at'] ?? now_iso()),
         'closed_at' => $session['closed_at'] ?? null,
+        'owner_email' => clean_email($session['owner_email'] ?? ''),
         'treasurer_participant_id' => $treasurerId,
         'participants' => $participants,
         'attachment_post_id' => trim((string) ($session['attachment_post_id'] ?? '')) ?: null,
@@ -768,6 +820,39 @@ function find_session(string $id): ?array {
         }
     }
     return null;
+}
+
+function session_owner_email(array $session): string {
+    return clean_email($session['owner_email'] ?? '');
+}
+
+function owns_session(array $session, string $ownerEmail): bool {
+    $sessionOwner = session_owner_email($session);
+    return $ownerEmail !== '' && ($sessionOwner === '' || $sessionOwner === $ownerEmail);
+}
+
+function require_session_owner(array $session): void {
+    $ownerEmail = current_auth_email();
+    if (!owns_session($session, $ownerEmail)) {
+        fail('Нет доступа к этой кассе', 403);
+    }
+}
+
+function find_active_session_for_owner(string $ownerEmail): ?array {
+    $legacy = null;
+    foreach (list_sessions() as $session) {
+        if (($session['status'] ?? '') !== 'active') {
+            continue;
+        }
+        $sessionOwner = session_owner_email($session);
+        if ($sessionOwner !== '' && $sessionOwner === $ownerEmail) {
+            return $session;
+        }
+        if ($sessionOwner === '' && $legacy === null) {
+            $legacy = $session;
+        }
+    }
+    return $legacy;
 }
 
 function find_session_by_token(string $token): ?array {
@@ -858,10 +943,13 @@ function build_treasurer_payload(?array $session): array {
                     'id' => $participant['id'],
                     'display_name' => $participant['display_name'],
                     'role' => $participant['role'],
+                    'email' => clean_email($participant['email'] ?? ''),
                     'active' => $participant['active'],
                     'included_in_split' => bool_value($participant['included_in_split'] ?? true, true),
                     'cashbox_contribution' => money_input($participant['cashbox_contribution'] ?? 0),
                     'authorized_at' => $participant['authorized_at'] ?? null,
+                    'invite_sent_at' => $participant['invite_sent_at'] ?? null,
+                    'invite_last_error' => $participant['invite_last_error'] ?? null,
                     'invite_token' => $participant['invite_token'],
                     'invite_link' => build_invite_link($participant['invite_token']),
                     'notebook_text' => $participant['notebook_text'],
@@ -908,31 +996,6 @@ function build_participant_payload(array $session, array $participant): array {
         }
     }
 
-    $viewParticipantId = trim((string) ($_GET['view'] ?? ''));
-    $requestedView = $viewParticipantId !== '' ? participant_for_session($session, $viewParticipantId) : null;
-    $viewTarget = $requestedView ?: $participant;
-    $viewSummary = $totals['participants'][$viewTarget['id']] ?? [
-        'contributions' => 0.0,
-        'expenses' => 0.0,
-        'balance' => 0.0,
-        'entries' => [],
-    ];
-    $readOnlyView = $viewTarget['id'] !== $participant['id'] || (($session['status'] ?? '') === 'closed');
-
-    $directory = [];
-    foreach (($session['participants'] ?? []) as $item) {
-        if (!($item['active'] ?? true)) {
-            continue;
-        }
-        $directory[] = [
-            'id' => $item['id'],
-            'display_name' => $item['display_name'],
-            'role' => $item['role'],
-            'is_self' => $item['id'] === $participant['id'],
-            'read_link' => build_invite_link($participant['invite_token']) . '&view=' . rawurlencode($item['id']),
-        ];
-    }
-
     return [
         'session' => [
             'id' => $session['id'],
@@ -946,6 +1009,7 @@ function build_participant_payload(array $session, array $participant): array {
             'id' => $participant['id'],
             'display_name' => $participant['display_name'],
             'role' => $participant['role'],
+            'email' => clean_email($participant['email'] ?? ''),
             'included_in_split' => bool_value($participant['included_in_split'] ?? true, true),
             'cashbox_contribution' => money_input($participant['cashbox_contribution'] ?? 0),
             'authorized_at' => $participant['authorized_at'] ?? null,
@@ -962,23 +1026,24 @@ function build_participant_payload(array $session, array $participant): array {
             'last_sync_source' => $participant['last_sync_source'] ?? '',
             'read_only' => (($session['status'] ?? '') === 'closed'),
             'settlement_lines' => $instructions,
-            'directory' => $directory,
+            'directory' => [],
             'viewing' => [
-                'id' => $viewTarget['id'],
-                'display_name' => $viewTarget['display_name'],
-                'role' => $viewTarget['role'],
-                'included_in_split' => bool_value($viewTarget['included_in_split'] ?? true, true),
-                'cashbox_contribution' => money_input($viewTarget['cashbox_contribution'] ?? 0),
-                'authorized_at' => $viewTarget['authorized_at'] ?? null,
-                'notebook_text' => $viewTarget['notebook_text'],
-                'entries' => $viewTarget['entries'],
-                'contributions' => $viewSummary['contributions'],
-                'expenses' => $viewSummary['expenses'],
-                'personal_expenses' => $viewSummary['personal_expenses'],
-                'cashbox_expenses' => $viewSummary['cashbox_expenses'],
-                'balance' => $viewSummary['balance'],
-                'read_only' => $readOnlyView,
-                'is_self' => $viewTarget['id'] === $participant['id'],
+                'id' => $participant['id'],
+                'display_name' => $participant['display_name'],
+                'role' => $participant['role'],
+                'email' => clean_email($participant['email'] ?? ''),
+                'included_in_split' => bool_value($participant['included_in_split'] ?? true, true),
+                'cashbox_contribution' => money_input($participant['cashbox_contribution'] ?? 0),
+                'authorized_at' => $participant['authorized_at'] ?? null,
+                'notebook_text' => $participant['notebook_text'],
+                'entries' => $participant['entries'],
+                'contributions' => $summary['contributions'],
+                'expenses' => $summary['expenses'],
+                'personal_expenses' => $summary['personal_expenses'],
+                'cashbox_expenses' => $summary['cashbox_expenses'],
+                'balance' => $summary['balance'],
+                'read_only' => (($session['status'] ?? '') === 'closed'),
+                'is_self' => true,
             ],
         ],
     ];
@@ -996,6 +1061,7 @@ function save_session_meta(array $payload): array {
     if (!$session || ($session['status'] ?? '') !== 'active') {
         fail('Активная касса не найдена', 404);
     }
+    require_session_owner($session);
 
     $inputParticipants = array_values(array_filter($payload['participants'] ?? [], 'is_array'));
     if (!$inputParticipants) {
@@ -1018,6 +1084,7 @@ function save_session_meta(array $payload): array {
             'id' => $id !== '' ? $id : rand_id('part'),
             'display_name' => trim((string) ($item['display_name'] ?? '')),
             'role' => $role,
+            'email' => clean_email($item['email'] ?? ($base['email'] ?? '')),
             'active' => array_key_exists('active', $item) ? (bool) $item['active'] : true,
             'included_in_split' => $role === 'treasurer'
                 ? bool_value($item['included_in_split'] ?? ($base['included_in_split'] ?? true), true)
@@ -1026,6 +1093,8 @@ function save_session_meta(array $payload): array {
                 ? 0
                 : money_input($item['cashbox_contribution'] ?? ($base['cashbox_contribution'] ?? 0)),
             'authorized_at' => $base['authorized_at'] ?? ($role === 'treasurer' ? now_iso() : null),
+            'invite_sent_at' => $base['invite_sent_at'] ?? null,
+            'invite_last_error' => $base['invite_last_error'] ?? null,
             'invite_token' => $base['invite_token'] ?? null,
             'joined_at' => $base['joined_at'] ?? null,
             'notebook_text' => $base['notebook_text'] ?? '',
@@ -1052,6 +1121,9 @@ function save_session_meta(array $payload): array {
 
     $session['title'] = trim((string) ($payload['title'] ?? $session['title'])) ?: 'Ship Cashbox';
     $session['currency'] = trim((string) ($payload['currency'] ?? $session['currency'])) ?: 'EUR';
+    if (session_owner_email($session) === '') {
+        $session['owner_email'] = current_auth_email();
+    }
     $session['treasurer_expense_mode'] = in_array(($payload['treasurer_expense_mode'] ?? null), ['auto', 'cashbox', 'personal'], true)
         ? (string) $payload['treasurer_expense_mode']
         : normalized_treasurer_expense_mode($session);
@@ -1135,6 +1207,7 @@ function save_treasurer_notebook(array $payload): array {
     if (!$session || ($session['status'] ?? '') !== 'active') {
         fail('Активная касса не найдена', 404);
     }
+    require_session_owner($session);
 
     $treasurerId = (string) ($session['treasurer_participant_id'] ?? '');
     foreach ($session['participants'] as &$participant) {
@@ -1153,7 +1226,12 @@ function save_treasurer_notebook(array $payload): array {
 }
 
 function create_new_session(array $payload = []): array {
-    $session = default_session();
+    $ownerEmail = current_auth_email();
+    $current = find_active_session_for_owner($ownerEmail);
+    if ($current && ($current['status'] ?? '') === 'active') {
+        fail('У вас уже есть активная касса', 409);
+    }
+    $session = default_session($ownerEmail);
     if (trim((string) ($payload['title'] ?? '')) !== '') {
         $session['title'] = trim((string) $payload['title']);
     }
@@ -1163,6 +1241,78 @@ function create_new_session(array $payload = []): array {
     $saved = save_session($session);
     write_index(['active_session_id' => $saved['id']]);
     return $saved;
+}
+
+function send_invite_email_message(string $to, string $name, string $link, array $session): bool {
+    if (is_local_request()) {
+        return true;
+    }
+
+    $subject = 'Vetus Nauta / Ship Cashbox invitation';
+    $safeName = $name !== '' ? $name : 'crew member';
+    $body = "Hello {$safeName},\n\n"
+        . "You have been invited to the Ship Cashbox for:\n"
+        . ($session['title'] ?? 'Ship Cashbox') . "\n\n"
+        . "Open your personal cashbox notebook here:\n"
+        . $link . "\n\n"
+        . "This link is personal. Inside this group you are a participant, not the treasurer.\n"
+        . "You will see and edit only your own cashbox notebook and settlement instructions.\n\n"
+        . "VETUS NAUTA - Brkovic\n";
+
+    $headers = [
+        'From: VETUS NAUTA - Brkovic <no-reply@brkovic.ltd>',
+        'Reply-To: vetus.nauta@gmail.com',
+        'Content-Type: text/plain; charset=UTF-8',
+    ];
+
+    return mail($to, $subject, $body, implode("\r\n", $headers));
+}
+
+function send_participant_invite(array $payload): array {
+    $session = find_session((string) ($payload['id'] ?? ''));
+    if (!$session || ($session['status'] ?? '') !== 'active') {
+        fail('Активная касса не найдена', 404);
+    }
+    require_session_owner($session);
+
+    $participantId = trim((string) ($payload['participant_id'] ?? ''));
+    if ($participantId === '') {
+        fail('Нужен участник', 422);
+    }
+
+    foreach ($session['participants'] as &$participant) {
+        if (($participant['id'] ?? '') !== $participantId) {
+            continue;
+        }
+        if (($participant['role'] ?? '') === 'treasurer') {
+            fail('Казначей не получает приглашение участника', 422);
+        }
+
+        $email = clean_email($payload['email'] ?? '');
+        if ($email === '') {
+            $email = clean_email($participant['email'] ?? '');
+        }
+        if ($email === '') {
+            fail('Укажите email участника', 422);
+        }
+
+        $participant['email'] = $email;
+        $link = build_invite_link((string) $participant['invite_token']);
+        $sent = send_invite_email_message($email, (string) ($participant['display_name'] ?? ''), $link, $session);
+        if (!$sent) {
+            $participant['invite_last_error'] = 'mail_failed';
+            save_session($session);
+            fail('Не удалось отправить email приглашение', 502);
+        }
+
+        $participant['invite_sent_at'] = now_iso();
+        $participant['invite_last_error'] = null;
+        $saved = save_session($session);
+        return $saved;
+    }
+    unset($participant);
+
+    fail('Участник не найден', 404);
 }
 
 function export_year_dir(array $session): string {
@@ -1472,13 +1622,11 @@ function reopen_session(string $id): array {
     if (!$session || ($session['status'] ?? '') !== 'closed') {
         fail('Закрытая касса не найдена', 404);
     }
+    require_session_owner($session);
 
-    $index = read_index();
-    if (!empty($index['active_session_id'])) {
-        $current = find_session((string) $index['active_session_id']);
-        if ($current && ($current['status'] ?? '') === 'active' && $current['id'] !== $session['id']) {
-            fail('Сначала завершите или закройте текущую активную кассу', 409);
-        }
+    $current = find_active_session_for_owner(current_auth_email());
+    if ($current && ($current['status'] ?? '') === 'active' && $current['id'] !== $session['id']) {
+        fail('Сначала завершите или закройте текущую активную кассу', 409);
     }
 
     $session['status'] = 'active';
@@ -1572,14 +1720,7 @@ if ($action === 'participant-save') {
 require_auth();
 
 if ($action === 'boot') {
-    $index = read_index();
-    $session = null;
-    if (!empty($index['active_session_id'])) {
-        $candidate = find_session((string) $index['active_session_id']);
-        if ($candidate && ($candidate['status'] ?? '') === 'active') {
-            $session = $candidate;
-        }
-    }
+    $session = find_active_session_for_owner(current_auth_email());
     respond(build_treasurer_payload($session) + ['version' => APP_VERSION]);
 }
 
@@ -1589,6 +1730,10 @@ if ($action === 'create-session') {
 
 if ($action === 'save-session') {
     respond(build_treasurer_payload(save_session_meta(input_json())) + ['version' => APP_VERSION]);
+}
+
+if ($action === 'send-invite') {
+    respond(build_treasurer_payload(send_participant_invite(input_json())) + ['version' => APP_VERSION]);
 }
 
 if ($action === 'save-treasurer-notebook') {
@@ -1608,6 +1753,7 @@ if ($action === 'archive-session') {
     if (!$session || ($session['status'] ?? '') !== 'closed') {
         fail('Закрытая касса не найдена', 404);
     }
+    require_session_owner($session);
     respond(build_treasurer_payload($session) + ['version' => APP_VERSION]);
 }
 

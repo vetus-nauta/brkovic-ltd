@@ -1230,5 +1230,12 @@
   "navdesk_watch_speed_label": "速度",
   "navdesk_watch_position_label": "位置",
   "navdesk_watch_no_crew": "无船员",
-  "navdesk_watch_no_keeper": "无"
+  "navdesk_watch_no_keeper": "无",
+  "participantEmailLabel": "参与者邮箱",
+  "sendInviteEmail": "发送邮件",
+  "sendInviteEmailHelp": "通过邮件向参与者发送个人链接。",
+  "inviteEmailSent": "邮件邀请已发送。",
+  "inviteEmailSentAt": "邀请已发送",
+  "inviteEmailNotSent": "邮件尚未发送",
+  "inviteEmailMissing": "请先输入参与者邮箱。"
 }
