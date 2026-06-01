@@ -1280,6 +1280,7 @@ function v2_state_response(array $state): array {
 
 function v2_handle_bootstrap(array $payload): array {
     $state = v2_load_state();
+    $changed = false;
     $state = v2_ensure_bootstrap($state, $payload, $changed);
     if ($changed) {
         $state = v2_save_state($state, 'v2_bootstrap', ['changed' => true]);
@@ -1292,6 +1293,7 @@ function v2_handle_bootstrap(array $payload): array {
 
 function v2_handle_state(): array {
     $state = v2_load_state();
+    $changed = false;
     $state = v2_ensure_bootstrap($state, [], $changed);
     if ($changed) {
         $state = v2_save_state($state, 'v2_bootstrap_from_state', ['changed' => true]);
