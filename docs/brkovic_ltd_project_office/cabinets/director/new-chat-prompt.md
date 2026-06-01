@@ -18,6 +18,33 @@ docs/brkovic_ltd_project_office/director-reports/2026-06-01-project-handoff-and-
 
 It records the June 1 live upload, Ship Cashbox fixes, game promo/auth fixes, current deployment discipline, and the next-chat operating notes. It intentionally contains no secrets.
 
+## Protected Local Access Notes
+
+Future chats on this machine must read local access notes here:
+
+```text
+/home/alexey/.config/brkovic-ltd/README.md
+```
+
+MongoDB Atlas secrets are not stored in Git. Use the protected local files:
+
+```text
+/home/alexey/.config/brkovic-ltd/mongodb.env
+/home/alexey/.config/brkovic-ltd/mongodb-reserve-user.env
+```
+
+Atlas context:
+
+```text
+Project: brkovic.ltd
+Cluster: brkovic-prod
+Database: brkovic_prod
+Primary DB user: vetusnauta_db_user
+Reserve DB user: vetusnauta_db_brkovic
+```
+
+Do not print passwords or full MongoDB URIs into reports or chat summaries.
+
 ## Start Exactly Here
 
 ```bash
