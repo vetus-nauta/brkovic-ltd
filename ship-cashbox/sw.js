@@ -1,4 +1,4 @@
-const CACHE_NAME = "ship-cashbox-shell-v20260601-09";
+const CACHE_NAME = "ship-cashbox-shell-v20260601-10";
 const SHELL = [
   "./index.html",
   "./assets/app.css?v=20260601-cashbox-pwa-09",
@@ -8,7 +8,7 @@ const SHELL = [
   "../js/language.js?v=20260531-language-menu-01",
   "../js/seo.js?v=20260531-clarity-01",
   "../js/main.js?v=20260601-auth-modal-01",
-  "../js/navdesk.js?v=20260531-tool-consent-01",
+  "../js/navdesk.js?v=20260601-runtime-i18n-01",
   "../lang/ru.json",
   "../lang/en.json",
   "../lang/de.json",

@@ -77,29 +77,29 @@
     }());
   </script>
   <div class="site-shell">
-    <header class="shipcashbox-appbar" aria-label="Ship Cashbox">
+    <header class="shipcashbox-appbar" aria-label="Bordkasse" data-i18n-aria-label="navdesk_tool_cashbox_title">
       <div class="shipcashbox-appbar__brand">
         <span class="shipcashbox-appbar__mark">VN</span>
         <div>
-          <strong id="appbarTitle">Ship Cashbox</strong>
+          <strong id="appbarTitle" data-i18n="navdesk_tool_cashbox_title">Bordkasse</strong>
           <span>VETUS NAUTA - Brkovic</span>
         </div>
       </div>
       <div class="shipcashbox-appbar__actions">
         <button type="button" class="site-menu-button shipcashbox-menu-button" id="cashboxAppMenuButton" aria-haspopup="dialog" aria-controls="cashboxAppMenuModal">
           <span class="site-menu-button__icon" aria-hidden="true"><span></span><span></span><span></span></span>
-          <span id="cashboxAppMenuButtonText">Menu</span>
+          <span id="cashboxAppMenuButtonText" data-i18n="cashboxAppMenuButton">Menü</span>
         </button>
       </div>
     </header>
 
     <main class="navdesk-page navdesk-tool-page navdesk-shipcashbox-page shipcashbox-page">
-      <div class="shipcashbox-mobile-masthead" aria-label="Ship Cashbox">
-        <span id="mobileMastheadTitle">Ship Cashbox</span>
+      <div class="shipcashbox-mobile-masthead" aria-label="Bordkasse" data-i18n-aria-label="navdesk_tool_cashbox_title">
+        <span id="mobileMastheadTitle" data-i18n="navdesk_tool_cashbox_title">Bordkasse</span>
         <strong>VETUS NAUTA - Brkovic</strong>
         <button type="button" class="site-menu-button shipcashbox-menu-button shipcashbox-menu-button--mobile" id="cashboxMobileMenuButton" aria-haspopup="dialog" aria-controls="cashboxAppMenuModal">
           <span class="site-menu-button__icon" aria-hidden="true"><span></span><span></span><span></span></span>
-          <span id="cashboxMobileMenuButtonText">Menu</span>
+          <span id="cashboxMobileMenuButtonText" data-i18n="cashboxAppMenuButton">Menü</span>
         </button>
       </div>
 
@@ -108,7 +108,7 @@
           <div class="navdesk-hero__copy">
             <div class="section-heading section-heading--editorial navdesk-hero__heading">
               <p class="section-heading__eyebrow" id="heroEyebrow">Vetus Nauta / Nav Desk</p>
-              <h1 id="heroTitle">Ship Cashbox</h1>
+              <h1 id="heroTitle" data-i18n="navdesk_tool_cashbox_title">Bordkasse</h1>
               <p id="heroIntro">Shared onboard money notebook with automatic settlement.</p>
               <p class="navdesk-hero__description" id="heroDescription">One working note for expenses, crew sync, contributions into the common pot, and final settlement without duplicate entries.</p>
             </div>
@@ -125,8 +125,8 @@
         <div class="section--paper navdesk-card shipcashbox-workspace-card">
           <div class="shipcashbox-shell">
             <div class="shipcashbox-statusline shipcashbox-statusline--workspace">
-              <span class="shipcashbox-statusline__item" id="onlineStatus">Online</span>
-              <span class="shipcashbox-statusline__item" id="viewerBadge">Guest</span>
+              <span class="shipcashbox-statusline__item" id="onlineStatus" data-i18n="online">Online</span>
+              <span class="shipcashbox-statusline__item" id="viewerBadge" data-i18n="viewerGuest">Gast</span>
             </div>
 
             <div id="flashMessage" class="shipcashbox-flash" hidden></div>
@@ -182,19 +182,19 @@
       <div class="management-modal__dialog management-modal__dialog--compact" role="dialog" aria-modal="true" aria-labelledby="cashboxAppMenuTitle">
         <div class="management-modal__header">
           <div>
-            <p class="section-heading__eyebrow" id="cashboxAppMenuEyebrow">Ship Cashbox</p>
-            <h3 id="cashboxAppMenuTitle">Cashbox menu</h3>
+            <p class="section-heading__eyebrow" id="cashboxAppMenuEyebrow" data-i18n="navdesk_tool_cashbox_title">Bordkasse</p>
+            <h3 id="cashboxAppMenuTitle" data-i18n="workspaceMenuTitle">Kassenmenü</h3>
           </div>
-          <button type="button" class="management-modal__close" data-close-app-menu="1" aria-label="Close">×</button>
+          <button type="button" class="management-modal__close" data-close-app-menu="1" aria-label="Schließen" data-i18n-aria-label="close">×</button>
         </div>
-        <nav class="management-modal-nav shipcashbox-app-menu__nav" aria-label="Ship Cashbox menu">
+        <nav class="management-modal-nav shipcashbox-app-menu__nav" aria-label="Kassenmenü" data-i18n-aria-label="workspaceMenuTitle">
           <a href="../navdesk.html" id="cashboxMenuNavdesk" data-i18n="cashboxMenuNavdesk">Nav Desk</a>
-          <button type="button" class="management-modal-nav__button" id="cashboxMenuWorkspace">Cashbox menu</button>
+          <button type="button" class="management-modal-nav__button" id="cashboxMenuWorkspace" data-i18n="workspaceMenuTitle">Kassenmenü</button>
           <button type="button" class="management-modal-nav__button shipcashbox-app-menu__group" id="cashboxMenuGroup">
-            <span id="cashboxMenuGroupText">Group</span>
+            <span id="cashboxMenuGroupText" data-i18n="cashboxMenuGroup">Gruppe</span>
             <span class="shipcashbox-app-menu__group-dot" id="cashboxMenuGroupDot" aria-hidden="true" hidden></span>
           </button>
-          <button type="button" class="management-modal-nav__button" id="cashboxMenuInstall">Install app</button>
+          <button type="button" class="management-modal-nav__button" id="cashboxMenuInstall" data-i18n="pwa_install_menu">App installieren</button>
         </nav>
         <section class="site-menu-language shipcashbox-app-menu__language" aria-labelledby="cashboxLanguageTitle">
           <div class="site-menu-language__head">
@@ -207,18 +207,18 @@
               </svg>
             </span>
             <div>
-              <p class="site-menu-language__kicker" id="cashboxLanguageKicker">Language</p>
-              <h4 id="cashboxLanguageTitle">Language versions</h4>
+              <p class="site-menu-language__kicker" id="cashboxLanguageKicker" data-i18n="cashboxMenuLanguage">Sprache</p>
+              <h4 id="cashboxLanguageTitle" data-i18n="site_menu_language_title">Sprachversionen</h4>
             </div>
           </div>
-          <p class="site-menu-language__status"><span id="cashboxLanguageNowLabel">Now</span> <strong id="cashboxLanguageCurrent">RU</strong></p>
+          <p class="site-menu-language__status"><span id="cashboxLanguageNowLabel" data-i18n="site_menu_language_current_label">Jetzt</span> <strong id="cashboxLanguageCurrent">RU</strong></p>
           <div class="site-menu-language__list" role="list" id="cashboxLanguageList"></div>
         </section>
         <section class="site-menu-settings shipcashbox-app-menu__settings">
-          <div class="site-menu-settings__label" id="cashboxThemeLabel">Theme</div>
-          <div class="navdesk-theme-switch shipcashbox-app-menu__theme" role="group" aria-label="Screen mode">
-            <button type="button" class="navdesk-theme-switch__btn is-active" data-cashbox-theme="day" aria-label="Day mode" title="Day mode">☀</button>
-            <button type="button" class="navdesk-theme-switch__btn" data-cashbox-theme="night" aria-label="Night mode" title="Night mode">☾</button>
+          <div class="site-menu-settings__label" id="cashboxThemeLabel" data-i18n="cashboxMenuTheme">Design</div>
+          <div class="navdesk-theme-switch shipcashbox-app-menu__theme" role="group" aria-label="Bildschirmmodus" data-i18n-aria-label="a11y_screen_mode">
+            <button type="button" class="navdesk-theme-switch__btn is-active" data-cashbox-theme="day" aria-label="Tagmodus" title="Tagmodus" data-i18n-aria-label="a11y_day_mode" data-i18n-title="a11y_day_mode">☀</button>
+            <button type="button" class="navdesk-theme-switch__btn" data-cashbox-theme="night" aria-label="Nachtmodus" title="Nachtmodus" data-i18n-aria-label="a11y_night_mode" data-i18n-title="a11y_night_mode">☾</button>
           </div>
         </section>
         <section class="site-menu-account shipcashbox-app-menu__account" id="cashboxAccountPanel"></section>
@@ -230,12 +230,12 @@
       <section class="shipcashbox-modal__card section--paper" role="dialog" aria-modal="true" aria-labelledby="qrModalTitle">
         <div class="shipcashbox-modal__head">
           <div>
-            <p class="section-heading__eyebrow" id="qrModalEyebrow">Invite</p>
-            <h2 id="qrModalTitle">Join cashbox</h2>
+            <p class="section-heading__eyebrow" id="qrModalEyebrow" data-i18n="qrEyebrow">Einladung</p>
+            <h2 id="qrModalTitle" data-i18n="qrTitle">Kasse beitreten</h2>
           </div>
-          <button type="button" class="btn btn--secondary" data-close-qr="1" id="qrCloseButton">Close</button>
+          <button type="button" class="btn btn--secondary" data-close-qr="1" id="qrCloseButton" data-i18n="close">Schließen</button>
         </div>
-        <img id="qrModalImage" class="shipcashbox-qr" alt="Invite QR code">
+        <img id="qrModalImage" class="shipcashbox-qr" alt="Kasse beitreten" data-i18n-alt="qrTitle">
         <p class="shipcashbox-qr__link" id="qrModalLink"></p>
       </section>
     </div>
@@ -248,7 +248,7 @@
             <p class="section-heading__eyebrow" id="attachmentSheetEyebrow" data-i18n="attachmentSheetEyebrow">Anhang</p>
             <h2 id="attachmentSheetTitle" data-i18n="attachmentSheetTitle">Foto oder Scan</h2>
           </div>
-          <button type="button" class="btn btn--secondary" data-close-attachment="1" id="attachmentSheetCloseButton" data-i18n="closeAction">Close</button>
+          <button type="button" class="btn btn--secondary" data-close-attachment="1" id="attachmentSheetCloseButton" data-i18n="close">Schließen</button>
         </div>
         <p class="shipcashbox-note" id="attachmentSheetText" data-i18n="attachmentSheetText">Wählen Sie ein normales Foto, eine Kameraufnahme oder einen leichten PDF-Belegscan.</p>
         <div class="shipcashbox-sheet-actions">
@@ -276,12 +276,12 @@
       <section class="shipcashbox-modal__card shipcashbox-modal__card--workspace section--paper" role="dialog" aria-modal="true" aria-labelledby="workspaceModalTitle">
         <div class="shipcashbox-modal__head">
           <div>
-            <p class="section-heading__eyebrow" id="workspaceModalEyebrow">Menu</p>
-            <h2 id="workspaceModalTitle">Workspace</h2>
+            <p class="section-heading__eyebrow" id="workspaceModalEyebrow" data-i18n="workspaceMenuAction">Kassenmenü</p>
+            <h2 id="workspaceModalTitle" data-i18n="workspaceMenuTitle">Kassenmenü</h2>
           </div>
           <div class="shipcashbox-inline-actions">
-            <button type="button" class="btn btn--secondary" id="workspaceModalMenuButton">Menu</button>
-            <button type="button" class="btn btn--secondary" data-close-workspace="1" id="workspaceCloseButton">Close</button>
+            <button type="button" class="btn btn--secondary" id="workspaceModalMenuButton" data-i18n="workspaceMenuAction">Kassenmenü</button>
+            <button type="button" class="btn btn--secondary" data-close-workspace="1" id="workspaceCloseButton" data-i18n="close">Schließen</button>
           </div>
         </div>
         <div class="shipcashbox-modal__body" id="workspaceModalBody"></div>
@@ -293,16 +293,16 @@
       <section class="shipcashbox-modal__card section--paper" role="dialog" aria-modal="true" aria-labelledby="cashboxExitTitle">
         <div class="shipcashbox-modal__head">
           <div>
-            <p class="section-heading__eyebrow" id="cashboxExitEyebrow">Exit</p>
-            <h2 id="cashboxExitTitle">Return to brkovic.ltd?</h2>
+            <p class="section-heading__eyebrow" id="cashboxExitEyebrow" data-i18n="cashboxExitEyebrow">Kasse verlassen</p>
+            <h2 id="cashboxExitTitle" data-i18n="cashboxExitTitle">Zurück zu brkovic.ltd?</h2>
           </div>
         </div>
         <div class="shipcashbox-exit">
-          <p class="shipcashbox-note" id="cashboxExitText">Your cashbox data is saved before leaving.</p>
-          <p class="shipcashbox-pill shipcashbox-pill--wide" id="cashboxExitAccount">Account: current session</p>
+          <p class="shipcashbox-note" id="cashboxExitText" data-i18n="cashboxExitText">Die Daten gehen nicht verloren: Vor dem Verlassen speichert die Kasse die aktuellen Notizen und bleibt über Nav Desk verfügbar.</p>
+          <p class="shipcashbox-pill shipcashbox-pill--wide" id="cashboxExitAccount">Cashbox account: current authenticated session</p>
           <div class="shipcashbox-actions shipcashbox-actions--exit">
-            <button type="button" class="btn btn--secondary" data-close-exit="1" id="cashboxExitStayButton">Stay here</button>
-            <button type="button" class="btn btn--primary" id="cashboxExitConfirmButton">Return</button>
+            <button type="button" class="btn btn--secondary" data-close-exit="1" id="cashboxExitStayButton" data-i18n="cashboxExitStay">In der Kasse bleiben</button>
+            <button type="button" class="btn btn--primary" id="cashboxExitConfirmButton" data-i18n="cashboxExitConfirm">Zurück</button>
           </div>
         </div>
       </section>
@@ -313,7 +313,7 @@
   <script src="/js/language.js?v=20260531-language-menu-01"></script>
   <script src="/js/seo.js?v=20260531-clarity-01"></script>
   <script src="/js/main.js?v=20260601-auth-modal-01"></script>
-  <script src="/js/navdesk.js?v=20260531-tool-consent-01"></script>
+  <script src="/js/navdesk.js?v=20260601-runtime-i18n-01"></script>
   <script src="/ship-cashbox/assets/app.js?v=20260601-cashbox-pwa-09"></script>
 </body>
 </html>
