@@ -188,28 +188,18 @@ input, textarea, select {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.fd-group-row {
+.fd-card-board {
   display: grid;
-  grid-template-columns: minmax(230px, 280px) minmax(0, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
   gap: 10px;
-  align-items: stretch;
 }
-.fd-admin-slot {
-  min-width: 0;
-}
-.fd-participant-strip {
-  min-width: 0;
-  display: flex;
-  gap: 10px;
-  overflow-x: auto;
-  padding-bottom: 4px;
-  scroll-snap-type: x proximity;
-  -webkit-overflow-scrolling: touch;
-}
-.fd-card {
-  width: 100%;
-  min-height: 152px;
-  padding: 12px;
+.fd-person-button {
+  position: relative;
+  min-height: 76px;
+  display: grid;
+  align-content: center;
+  gap: 5px;
+  padding: 12px 14px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: rgba(255,255,255,.9);
@@ -217,17 +207,157 @@ input, textarea, select {
   box-shadow: none;
   text-align: left;
 }
-.fd-admin-card {
+.fd-person-button.admin {
+  border-color: rgba(17,24,39,.24);
+}
+.fd-card-name {
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 760;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fd-card-balance {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.2;
+}
+.fd-card-dots {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  display: inline-flex;
+  gap: 5px;
+}
+.fd-card-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.fd-card-dot.orange { background: var(--orange); }
+.fd-card-dot.red { background: var(--red); }
+.fd-card-dot.green { background: var(--green); }
+.fd-card-view {
+  min-height: calc(100vh - 58px);
+  display: block;
+}
+.findesk-screen.card-open {
+  min-height: var(--app-height);
+}
+.findesk-screen.card-open .fd-topbar,
+.findesk-screen.card-open .fd-group-surface,
+.findesk-screen.card-open .fd-details {
+  display: none;
+}
+.fd-workspace {
+  min-height: calc(100vh - 36px);
   display: grid;
   align-content: start;
+  gap: 12px;
+}
+.fd-work-head {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 0 0 8px;
+  background: rgba(247,248,251,.94);
+  backdrop-filter: blur(18px);
+}
+.fd-work-head > div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+.fd-work-head strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fd-work-head span {
+  color: var(--muted);
+  font-size: 12px;
+}
+.fd-work-head .fd-card-dots {
+  position: static;
+}
+.fd-work-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.fd-work-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 10px;
 }
-.fd-person-card {
-  flex: 0 0 min(286px, 78vw);
+.fd-work-panel {
+  min-width: 0;
   display: grid;
   align-content: start;
   gap: 10px;
-  scroll-snap-align: start;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255,255,255,.9);
+}
+.fd-work-panel h3 {
+  margin: 0;
+  font-size: 14px;
+}
+.fd-work-empty {
+  color: var(--muted);
+  font-size: 13px;
+}
+.fd-report-state {
+  width: fit-content;
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(17,24,39,.07);
+  color: var(--ink);
+  font-size: 11px;
+}
+.fd-report-state.submitted {
+  background: rgba(255,149,0,.14);
+  color: #a94e00;
+}
+.fd-report-metrics {
+  display: grid;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.fd-report-metrics strong {
+  color: var(--ink);
+}
+.fd-report-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+.fd-child-list {
+  display: grid;
+  gap: 8px;
+}
+.fd-child-report {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-radius: 8px;
+  background: rgba(17,24,39,.05);
+  color: var(--ink);
+  box-shadow: none;
 }
 .fd-card-head {
   display: flex;
@@ -784,19 +914,19 @@ input, textarea, select {
     display: grid;
     gap: 2px;
   }
-  .fd-group-row {
+  .fd-card-board {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .fd-person-button {
+    min-height: 70px;
+    padding: 11px 12px;
+  }
+  .fd-workspace {
+    min-height: calc(var(--app-height) - 20px);
+  }
+  .fd-work-grid {
     grid-template-columns: 1fr;
-  }
-  .fd-participant-strip {
-    margin: 0 -10px;
-    padding: 0 10px 6px;
-  }
-  .fd-admin-card,
-  .fd-person-card {
-    min-height: 138px;
-  }
-  .fd-person-card {
-    flex-basis: min(284px, 84vw);
   }
   .fd-detail-actions {
     display: grid;

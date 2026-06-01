@@ -1,4 +1,4 @@
-const APP_VERSION = '2026.06.01-captain-fin-018';
+const APP_VERSION = '2026.06.01-captain-fin-019';
 const PUBLIC_WEB_APP_URL = 'https://brkovic.ltd/captain-fin/';
 const DRIVE_FOLDER_URL = 'https://drive.google.com/drive/folders/1x9m41AUYPocx7H0UezF_lZnFvzWO54zQ?usp=sharing';
 const $ = (id) => document.getElementById(id);
@@ -20,6 +20,7 @@ let finDeskMode = 'owner';
 let finDeskGroupId = null;
 let finDeskOpenPayouts = new Set();
 let finDeskIssueDraft = null;
+let finDeskActiveCard = null;
 
 function isMobileLayout() {
   return window.matchMedia('(max-width: 920px)').matches;
@@ -549,6 +550,34 @@ function newClientOperationId() {
   return `issue-${Date.now()}-${randomPart}`;
 }
 
+function balanceCurrent(person = {}) {
+  return firstValue(pick(person.balance || {}, ['current', 'current_amount']), 0);
+}
+
+function balanceCurrency(person = {}, fallback = 'EUR') {
+  return firstValue(pick(person.balance || {}, ['currency', 'ccy']), fallback);
+}
+
+function formatPersonBalance(person = {}, fallbackCurrency = 'EUR') {
+  return formatCurrency(balanceCurrent(person), balanceCurrency(person, fallbackCurrency));
+}
+
+function groupParticipantsBalance(group = {}) {
+  return (group.participants || []).reduce((sum, person) => {
+    const current = parseAmount(balanceCurrent(person));
+    return sum + (current === null ? 0 : current);
+  }, 0);
+}
+
+function renderFinDeskCardMarkers(person = {}) {
+  const markers = [];
+  const latest = (person.payouts || [])[0] || null;
+  if (person.liveSubmitted) markers.push('<span class="fd-card-dot orange" title="Отчет сдан"></span>');
+  if (latest?.status === 'pending') markers.push('<span class="fd-card-dot red" title="Ожидает подпись"></span>');
+  if (latest?.status === 'confirmed') markers.push('<span class="fd-card-dot green" title="Подписано"></span>');
+  return markers.length ? `<span class="fd-card-dots">${markers.join('')}</span>` : '';
+}
+
 function renderLiveMarker(person) {
   return person.liveSubmitted ? '<span class="fd-live-marker">Отчет сдан</span>' : '';
 }
@@ -615,44 +644,121 @@ function renderPayoutBlock(person) {
   `;
 }
 
-function renderAdminCard(group) {
-  const admin = group?.admin || normalizePerson({}, 'admin', 0);
-  const payoutBlock = finDeskMode === 'owner' ? renderPayoutBlock(admin) : '';
-  const finalizeAction = finDeskMode === 'owner'
-    ? '<div class="fd-card-actions"><button class="soft" type="button" id="fdFinalizeSession">Создать общий отчет</button></div>'
-    : '';
+function renderFinDeskCard(person, type, group) {
+  const label = type === 'admin' ? 'Администратор' : person.name;
   return `
-    <article class="fd-card fd-admin-card" role="button" tabindex="0" id="fdAdminCard">
-      <div class="fd-card-head">
-        <div class="fd-person-main">
-          <strong>${escapeAttr(admin.name)}</strong>
-          <span>${escapeAttr(admin.meta || group?.name || 'Администратор группы')}</span>
-        </div>
-        <span class="fd-role-chip">Админ</span>
-      </div>
-      ${renderBalanceLine(admin)}
-      ${renderLiveMarker(admin)}
-      ${payoutBlock}
-      ${finalizeAction}
-    </article>
+    <button class="fd-person-button ${type === 'admin' ? 'admin' : 'participant'}" type="button" data-fd-open-card="${type}" data-fd-open-person="${escapeAttr(person.id)}">
+      <span class="fd-card-name">${escapeAttr(label)}</span>
+      <span class="fd-card-balance">Остаток ${formatPersonBalance(person, group.currency)}</span>
+      ${renderFinDeskCardMarkers(person)}
+    </button>
   `;
 }
 
-function renderParticipantCard(person) {
+function renderFinDeskBoard(group) {
+  const cards = [];
+  if (finDeskMode === 'owner') cards.push(renderFinDeskCard(group.admin, 'admin', group));
+  (group.participants || []).forEach((person) => cards.push(renderFinDeskCard(person, 'participant', group)));
+  return cards.length ? cards.join('') : '<div class="empty-list">В этой активной группе пока нет доступных участников.</div>';
+}
+
+function reportFromPerson(person = {}) {
+  return firstValue(pick(person.raw || {}, ['report', 'live_report', 'liveReport', 'current_report', 'currentReport']), {});
+}
+
+function renderLiveReportPanel(person = {}, title = 'Отчет из быстрых записей') {
+  const report = reportFromPerson(person);
+  const entries = asCollection(report.entries);
+  const computed = report.computed || {};
+  const hasReport = entries.length || person.liveSubmitted || report.notes;
+  if (!hasReport) {
+    return `
+      <section class="fd-work-panel">
+        <h3>${escapeAttr(title)}</h3>
+        <div class="fd-work-empty">Отчет еще не сдан.</div>
+      </section>
+    `;
+  }
   return `
-    <article class="fd-card fd-person-card" data-fd-person="${escapeAttr(person.id)}" tabindex="0">
-      <div class="fd-card-head">
-        <div class="fd-person-main">
-          <strong>${escapeAttr(person.name)}</strong>
-          <span>${escapeAttr(person.meta || person.role || 'participant')}</span>
-        </div>
-        <span class="fd-role-chip">Участник</span>
+    <section class="fd-work-panel">
+      <h3>${escapeAttr(title)}</h3>
+      <div class="fd-report-state ${person.liveSubmitted ? 'submitted' : ''}">${person.liveSubmitted ? 'Сдан' : 'В работе'}</div>
+      <div class="fd-report-metrics">
+        <span>Приход ${formatCurrency(computed.income ?? 0, balanceCurrency(person))}</span>
+        <span>Расход ${formatCurrency(computed.expense ?? 0, balanceCurrency(person))}</span>
+        <strong>Остаток ${formatCurrency(computed.current ?? balanceCurrent(person), balanceCurrency(person))}</strong>
       </div>
-      ${renderBalanceLine(person)}
-      ${renderLiveMarker(person)}
-      ${renderPayoutBlock(person)}
-      ${finDeskMode === 'owner' ? `<div class="fd-card-actions"><button class="soft" type="button" data-fd-issue="${escapeAttr(person.id)}">Выдать</button></div>` : ''}
-    </article>
+      ${report.notes ? `<p class="fd-report-note">${escapeAttr(String(report.notes).slice(0, 180))}</p>` : ''}
+    </section>
+  `;
+}
+
+function renderAdminChildrenPanel(group) {
+  const submitted = (group.participants || []).filter((person) => person.liveSubmitted);
+  if (!submitted.length) {
+    return `
+      <section class="fd-work-panel">
+        <h3>Отчеты сотрудников</h3>
+        <div class="fd-work-empty">Сданных отчетов пока нет.</div>
+      </section>
+    `;
+  }
+  return `
+    <section class="fd-work-panel">
+      <h3>Отчеты сотрудников</h3>
+      <div class="fd-child-list">
+        ${submitted.map((person) => `
+          <button class="fd-child-report" type="button" data-fd-open-card="participant" data-fd-open-person="${escapeAttr(person.id)}">
+            <span>${escapeAttr(person.name)}</span>
+            <strong>${formatPersonBalance(person, group.currency)}</strong>
+          </button>
+        `).join('')}
+      </div>
+    </section>
+  `;
+}
+
+function activeFinDeskPerson(group) {
+  if (!finDeskActiveCard) return null;
+  if (finDeskActiveCard.type === 'admin') return group.admin;
+  return (group.participants || []).find((person) => person.id === finDeskActiveCard.id) || null;
+}
+
+function renderFinDeskCardView(group) {
+  const person = activeFinDeskPerson(group);
+  if (!person) return '';
+  const isAdmin = finDeskActiveCard.type === 'admin';
+  const title = isAdmin ? 'Администратор' : person.name;
+  const issueAction = !isAdmin && finDeskMode === 'owner'
+    ? `<button type="button" data-fd-issue="${escapeAttr(person.id)}">Выдать деньги</button>`
+    : '';
+  const finalizeAction = isAdmin && finDeskMode === 'owner'
+    ? '<button type="button" id="fdFinalizeSession">Создать и утвердить общий отчет</button>'
+    : '';
+  const payoutPanel = !isAdmin
+    ? `<section class="fd-work-panel"><h3>Выдачи</h3>${renderPayoutBlock(person)}</section>`
+    : '';
+  const childrenPanel = isAdmin && finDeskMode === 'owner' ? renderAdminChildrenPanel(group) : '';
+  return `
+    <div class="fd-workspace">
+      <header class="fd-work-head">
+        <button class="soft" type="button" id="fdBackToBoard">Назад</button>
+        <div>
+          <strong>${escapeAttr(title)}</strong>
+          <span>${formatPersonBalance(person, group.currency)}</span>
+        </div>
+        ${renderFinDeskCardMarkers(person)}
+      </header>
+      <div class="fd-work-actions">
+        ${issueAction}
+        ${finalizeAction}
+      </div>
+      <div class="fd-work-grid">
+        ${renderLiveReportPanel(person, isAdmin ? 'Мой отчет' : 'Отчет сотрудника')}
+        ${payoutPanel}
+        ${childrenPanel}
+      </div>
+    </div>
   `;
 }
 
@@ -740,6 +846,22 @@ async function finalizeFinDeskSession() {
 }
 
 function bindFinDeskCards() {
+  document.querySelectorAll('[data-fd-open-card]').forEach((button) => {
+    button.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      finDeskActiveCard = {
+        type: button.dataset.fdOpenCard || 'participant',
+        id: button.dataset.fdOpenPerson || ''
+      };
+      renderFinDesk();
+    });
+  });
+  const backButton = $('fdBackToBoard');
+  if (backButton) backButton.addEventListener('click', () => {
+    finDeskActiveCard = null;
+    renderFinDesk();
+  });
   document.querySelectorAll('[data-fd-payout-toggle]').forEach((button) => {
     button.addEventListener('click', (event) => {
       event.preventDefault();
@@ -774,31 +896,6 @@ function bindFinDeskCards() {
     event.stopPropagation();
     finalizeFinDeskSession().catch((error) => setFinDeskStatus(error.message));
   });
-  document.querySelectorAll('[data-fd-person]').forEach((card) => {
-    const selectCard = () => setFinDeskStatus(`Участник выбран: ${card.querySelector('strong')?.textContent || card.dataset.fdPerson}`);
-    card.addEventListener('click', (event) => {
-      if (event.target.closest('button')) return;
-      selectCard();
-    });
-    card.addEventListener('keydown', (event) => {
-      if (event.key !== 'Enter' && event.key !== ' ') return;
-      event.preventDefault();
-      selectCard();
-    });
-  });
-  const adminCard = $('fdAdminCard');
-  if (adminCard) {
-    const selectAdmin = () => setFinDeskStatus('Администратор группы выбран.');
-    adminCard.addEventListener('click', (event) => {
-      if (event.target.closest('button')) return;
-      selectAdmin();
-    });
-    adminCard.addEventListener('keydown', (event) => {
-      if (event.key !== 'Enter' && event.key !== ' ') return;
-      event.preventDefault();
-      selectAdmin();
-    });
-  }
 }
 
 function renderFinDesk() {
@@ -813,18 +910,22 @@ function renderFinDesk() {
     finDeskGroupId = group.id;
     $('fdGroupSelect').value = group.id;
     $('finDeskTitle').textContent = group.name;
-    $('fdGroupMeta').textContent = `${finDeskMode === 'owner' ? 'владелец' : 'участник'} · ${group.participants.length} участников`;
-    $('fdAdminSlot').innerHTML = renderAdminCard(group);
-    $('fdParticipantStrip').innerHTML = group.participants.length
-      ? group.participants.map(renderParticipantCard).join('')
-      : '<div class="empty-list">В этой активной группе пока нет участников.</div>';
+    $('fdGroupMeta').textContent = `Админ ${formatPersonBalance(group.admin, group.currency)} · сотрудники ${formatCurrency(groupParticipantsBalance(group), group.currency)}`;
+    if (finDeskActiveCard && !activeFinDeskPerson(group)) finDeskActiveCard = null;
+    $('finDeskScreen').classList.toggle('card-open', Boolean(finDeskActiveCard));
+    $('fdCardBoard').innerHTML = renderFinDeskBoard(group);
+    $('fdCardView').innerHTML = finDeskActiveCard ? renderFinDeskCardView(group) : '';
+    $('fdCardView').classList.toggle('hidden', !finDeskActiveCard);
   } else {
     $('finDeskTitle').textContent = 'Активная группа';
     $('fdGroupMeta').textContent = 'Данные группы не найдены';
-    $('fdAdminSlot').innerHTML = '<div class="fd-card fd-payout-empty">Карточка администратора недоступна.</div>';
-    $('fdParticipantStrip').innerHTML = '<div class="empty-list">Активная группа не найдена.</div>';
+    finDeskActiveCard = null;
+    $('finDeskScreen').classList.remove('card-open');
+    $('fdCardBoard').innerHTML = '<div class="empty-list">Активная группа не найдена.</div>';
+    $('fdCardView').innerHTML = '';
+    $('fdCardView').classList.add('hidden');
   }
-  if ($('fdDetails')) $('fdDetails').classList.toggle('hidden', finDeskMode !== 'owner');
+  if ($('fdDetails')) $('fdDetails').classList.toggle('hidden', finDeskMode !== 'owner' || Boolean(finDeskActiveCard));
   document.querySelectorAll('[data-fd-mode]').forEach((button) => {
     button.classList.toggle('active', button.dataset.fdMode === finDeskMode);
   });
@@ -1241,11 +1342,13 @@ $('fdIssueBackdrop').addEventListener('click', closeFinDeskIssueDialog);
 $('fdGroupSelect').addEventListener('change', () => {
   finDeskGroupId = $('fdGroupSelect').value;
   finDeskOpenPayouts = new Set();
+  finDeskActiveCard = null;
   renderFinDesk();
 });
 document.querySelectorAll('[data-fd-mode]').forEach((button) => {
   button.addEventListener('click', async () => {
     finDeskMode = button.dataset.fdMode || 'owner';
+    finDeskActiveCard = null;
     if (window.localStorage) window.localStorage.setItem('captain-fin-v2-mode', finDeskMode);
     renderFinDesk();
     try {
