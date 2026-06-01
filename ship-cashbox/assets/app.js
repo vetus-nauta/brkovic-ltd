@@ -167,6 +167,18 @@ function activeSession() {
   return state.viewer === "treasurer" ? state.boot?.session : state.participant?.session;
 }
 
+function hasActiveGroup() {
+  const session = activeSession();
+  return Boolean(session && session.status === "active");
+}
+
+function groupWindowForViewer() {
+  if (!hasActiveGroup()) return "menu";
+  if (state.viewer === "treasurer") return "team";
+  if (state.viewer === "participant") return "participant-settlement";
+  return "menu";
+}
+
 function currentParticipantPayload() {
   if (state.viewer === "participant") {
     const participant = state.participant?.participant;
@@ -617,6 +629,7 @@ function updateTopbarText() {
   if ($("cashboxAppMenuTitle")) $("cashboxAppMenuTitle").textContent = t("workspaceMenuTitle");
   if ($("cashboxMenuNavdesk")) $("cashboxMenuNavdesk").textContent = t("cashboxMenuNavdesk");
   if ($("cashboxMenuWorkspace")) $("cashboxMenuWorkspace").textContent = t("workspaceMenuTitle");
+  if ($("cashboxMenuGroupText")) $("cashboxMenuGroupText").textContent = t("cashboxMenuGroup");
   if ($("cashboxMenuInstall")) $("cashboxMenuInstall").textContent = t("pwa_install_menu");
   if ($("cashboxLanguageKicker")) $("cashboxLanguageKicker").textContent = t("cashboxMenuLanguage");
   if ($("cashboxLanguageTitle")) $("cashboxLanguageTitle").textContent = t("site_menu_language_title");
@@ -645,6 +658,7 @@ function updateTopbarText() {
   });
   renderAppMenuLanguage();
   renderAppMenuAccount();
+  renderAppMenuGroup();
 }
 
 function installInstructionText() {
@@ -750,19 +764,9 @@ function renderGuest() {
           </div>
         </div>
         <p class="shipcashbox-note">${escapeHtml(t("guestTreasurerText"))}</p>
-        <form class="shipcashbox-form" id="loginForm">
-          <label class="shipcashbox-field">
-            <span>${escapeHtml(t("guestEmail"))}</span>
-            <input type="email" id="loginEmail" autocomplete="username">
-          </label>
-          <label class="shipcashbox-field">
-            <span>${escapeHtml(t("guestPassword"))}</span>
-            <input type="password" id="loginPassword" autocomplete="current-password">
-          </label>
-          <div class="shipcashbox-actions">
-            <button class="btn btn--primary" type="submit">${escapeHtml(t("guestLogin"))}</button>
-          </div>
-        </form>
+        <div class="shipcashbox-actions">
+          <button class="btn btn--primary" type="button" id="guestSiteLoginButton">${escapeHtml(t("site_menu_login"))}</button>
+        </div>
       </section>
 
       <section class="shipcashbox-card">
@@ -787,19 +791,12 @@ function renderGuest() {
     </div>
   `;
 
-  const loginForm = $("loginForm");
-  loginForm?.addEventListener("submit", async (event) => {
-    event.preventDefault();
+  $("guestSiteLoginButton")?.addEventListener("click", async () => {
     try {
-      await api("login", {
-        method: "POST",
-        body: JSON.stringify({
-          email: $("loginEmail").value.trim(),
-          password: $("loginPassword").value,
-        }),
-      });
-      await clearShipCashboxCaches();
-      window.location.replace(window.location.pathname);
+      if (typeof window.openToolAuthPrompt === "function") {
+        await window.openToolAuthPrompt();
+      }
+      await checkViewer();
     } catch (error) {
       setFlash(error.message || t("loginFailed"));
     }
@@ -864,9 +861,17 @@ function renderAppMenuAccount() {
         ${profile.email ? `<span>${escapeHtml(profile.email)}</span>` : ""}
       </div>
     </div>
-    <div class="site-menu-account__meta"><span>${escapeHtml(provider)}</span><span>${escapeHtml(t("viewerTreasurer"))}</span></div>
+    <div class="site-menu-account__meta"><span>${escapeHtml(provider)}</span><span>${escapeHtml(t("cashboxMenuAccount"))}</span></div>
     <button type="button" class="btn btn--secondary btn--full" id="cashboxAccountAction">${escapeHtml(t("site_menu_logout"))}</button>
   `;
+}
+
+function renderAppMenuGroup() {
+  const dot = $("cashboxMenuGroupDot");
+  const button = $("cashboxMenuGroup");
+  if (!dot || !button) return;
+  dot.hidden = !hasActiveGroup();
+  button.classList.toggle("has-active-group", hasActiveGroup());
 }
 
 function openAppMenu() {
@@ -874,6 +879,7 @@ function openAppMenu() {
   if (!modal) return;
   renderAppMenuLanguage();
   renderAppMenuAccount();
+  renderAppMenuGroup();
   applyTheme();
   modal.classList.add("is-open");
   modal.setAttribute("aria-hidden", "false");
@@ -1342,7 +1348,6 @@ function renderWorkspaceMenu() {
     return `
       <div class="shipcashbox-window-menu">
         ${renderWindowMenuButton("participant-settlement", t("settlementTitle"), t("workspaceParticipantSettlementText"))}
-        ${renderWindowMenuButton("crew", t("crewNotebooks"), t("workspaceCrewText"))}
         ${renderWindowMenuButton("service", t("workspaceServiceTitle"), t("workspaceServiceText"))}
       </div>
     `;
@@ -2872,6 +2877,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   $("cashboxMenuWorkspace")?.addEventListener("click", () => {
     closeAppMenu();
     openWorkspaceModal("menu");
+  });
+  $("cashboxMenuGroup")?.addEventListener("click", () => {
+    closeAppMenu();
+    openWorkspaceModal(groupWindowForViewer());
   });
   $("cashboxMenuNavdesk")?.addEventListener("click", (event) => {
     event.preventDefault();

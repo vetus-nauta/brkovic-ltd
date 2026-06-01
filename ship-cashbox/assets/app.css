@@ -111,6 +111,22 @@ body.navdesk-theme-night.shipcashbox-body {
   min-height: 48px;
 }
 
+.shipcashbox-app-menu__group {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.shipcashbox-app-menu__group-dot {
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #24a55a;
+  box-shadow: 0 0 0 4px rgba(36, 165, 90, 0.16);
+}
+
 .shipcashbox-app-menu__settings {
   display: flex;
   align-items: center;

@@ -106,8 +106,9 @@ function auth_request(string $route, string $method = 'GET', array $payload = []
     }
 
     $headers = ['Accept: application/json'];
-    if (!empty($_SESSION['brkovic_live_cookie'])) {
-        $headers[] = 'Cookie: ' . $_SESSION['brkovic_live_cookie'];
+    $authCookie = auth_cookie_header();
+    if ($authCookie !== '') {
+        $headers[] = 'Cookie: ' . $authCookie;
     }
     if ($method !== 'GET') {
         $headers[] = 'Content-Type: application/json';
@@ -154,11 +155,54 @@ function auth_request(string $route, string $method = 'GET', array $payload = []
     return ['status' => $status, 'data' => is_array($data) ? $data : []];
 }
 
+function auth_cookie_header(): string {
+    $sessionCookie = $_SESSION['brkovic_live_cookie'] ?? '';
+    if (is_string($sessionCookie) && $sessionCookie !== '' && $sessionCookie !== '1') {
+        return $sessionCookie;
+    }
+
+    $raw = $_SERVER['HTTP_COOKIE'] ?? '';
+    if (!is_string($raw) || $raw === '' || !str_contains($raw, 'ship_journal_admin=')) {
+        return '';
+    }
+
+    $pairs = [];
+    foreach (explode(';', $raw) as $part) {
+        $pair = trim($part);
+        if (stripos($pair, 'ship_journal_admin=') === 0) {
+            $pairs[] = $pair;
+        }
+    }
+
+    return implode('; ', $pairs);
+}
+
+function has_shared_site_auth(): bool {
+    $cookie = auth_cookie_header();
+    if ($cookie === '') {
+        return false;
+    }
+
+    foreach (['/auth/me', '/auth/user/me'] as $route) {
+        $auth = auth_request($route);
+        $payload = $auth['data']['data']['data'] ?? $auth['data']['data'] ?? $auth['data'];
+        if (($auth['status'] ?? 500) < 400 && (bool) ($payload['authenticated'] ?? false)) {
+            $_SESSION['brkovic_live_cookie'] = $cookie;
+            return true;
+        }
+    }
+
+    return false;
+}
+
 function authenticated(): bool {
     if (is_local_request()) {
         return true;
     }
     if (has_local_auth_cookie()) {
+        return true;
+    }
+    if (has_shared_site_auth()) {
         return true;
     }
     if (empty($_SESSION['brkovic_live_cookie'])) {
