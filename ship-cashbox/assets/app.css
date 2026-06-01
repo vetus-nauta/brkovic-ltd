@@ -1,3 +1,18 @@
+.shipcashbox-body {
+  min-height: 100dvh;
+  background:
+    radial-gradient(circle at 14% 10%, rgba(58, 125, 170, 0.16), transparent 34%),
+    radial-gradient(circle at 86% 2%, rgba(211, 138, 44, 0.14), transparent 30%),
+    linear-gradient(145deg, #f9f6ee 0%, #eef4f7 54%, #f7f2e8 100%);
+}
+
+body.navdesk-theme-night.shipcashbox-body {
+  background:
+    radial-gradient(circle at 12% 8%, rgba(76, 150, 194, 0.18), transparent 34%),
+    radial-gradient(circle at 86% 0%, rgba(211, 138, 44, 0.12), transparent 32%),
+    linear-gradient(145deg, #071014 0%, #0b1721 56%, #10151b 100%);
+}
+
 .shipcashbox-page {
   display: grid;
   gap: 18px;
@@ -10,6 +25,117 @@
 
 .shipcashbox-mobile-masthead {
   display: none;
+}
+
+.shipcashbox-appbar {
+  position: sticky;
+  top: max(12px, env(safe-area-inset-top));
+  z-index: 32;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 74px;
+  padding: 12px 14px;
+  border: 1px solid rgba(16, 36, 58, 0.12);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 18px 42px rgba(16, 36, 58, 0.11);
+  backdrop-filter: blur(18px);
+}
+
+.shipcashbox-appbar__brand,
+.shipcashbox-appbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.shipcashbox-appbar__brand > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.shipcashbox-appbar__brand strong,
+.shipcashbox-appbar__brand span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shipcashbox-appbar__brand strong {
+  color: var(--color-brand);
+  font-size: clamp(1.08rem, 2vw, 1.34rem);
+  line-height: 1.08;
+}
+
+.shipcashbox-appbar__brand span {
+  color: var(--color-muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.shipcashbox-appbar__mark {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 46px;
+  height: 46px;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #10243a, #245575);
+  color: #f7ead0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 12px 22px rgba(16, 36, 58, 0.18);
+  font-weight: 900;
+  letter-spacing: 0.02em;
+}
+
+.shipcashbox-external-link {
+  white-space: nowrap;
+}
+
+.shipcashbox-menu-button {
+  flex: 0 0 auto;
+}
+
+.shipcashbox-app-menu .management-modal-nav {
+  grid-template-columns: 1fr;
+}
+
+.shipcashbox-app-menu .management-modal-nav a,
+.shipcashbox-app-menu .management-modal-nav__button {
+  min-height: 48px;
+}
+
+.shipcashbox-app-menu__settings {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 14px;
+}
+
+.shipcashbox-app-menu__theme {
+  flex: 0 0 auto;
+}
+
+.shipcashbox-app-menu__account {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.shipcashbox-app-menu .site-menu-language {
+  margin-top: 14px;
+}
+
+.shipcashbox-app-menu .site-menu-language__list {
+  max-height: min(280px, 34dvh);
+  overflow-y: auto;
 }
 
 html.shipcashbox-modal-open,
@@ -32,6 +158,12 @@ body.shipcashbox-modal-open {
 
 .shipcashbox-workspace-card {
   padding: 18px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.88), rgba(245, 250, 252, 0.72)),
+    rgba(255, 255, 255, 0.78);
+  border-color: rgba(16, 36, 58, 0.12);
+  box-shadow: 0 22px 52px rgba(16, 36, 58, 0.10);
+  backdrop-filter: blur(14px);
 }
 
 .shipcashbox-hero,
@@ -50,7 +182,7 @@ body.shipcashbox-modal-open {
 .shipcashbox-statusline {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 6px;
 }
 
 .shipcashbox-statusline--workspace {
@@ -63,13 +195,14 @@ body.shipcashbox-modal-open {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 34px;
-  padding: 8px 12px;
+  min-height: 28px;
+  padding: 5px 10px;
   border-radius: 999px;
   border: 1px solid rgba(16, 36, 58, 0.12);
   background: rgba(16, 36, 58, 0.04);
   color: var(--color-brand);
-  font-size: 0.92rem;
+  font-size: 0.78rem;
+  font-weight: 700;
   line-height: 1;
 }
 
@@ -132,7 +265,10 @@ body.shipcashbox-modal-open {
   padding: 16px;
   border-radius: 18px;
   border: 1px solid rgba(16, 36, 58, 0.09);
-  background: rgba(255, 255, 255, 0.95);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(247, 250, 251, 0.86)),
+    rgba(255, 255, 255, 0.95);
+  box-shadow: 0 12px 30px rgba(16, 36, 58, 0.06);
 }
 
 .shipcashbox-card__head,
@@ -148,6 +284,23 @@ body.shipcashbox-modal-open {
 
 .shipcashbox-card__head {
   align-items: flex-start;
+}
+
+.shipcashbox-workhead {
+  align-items: center;
+}
+
+.shipcashbox-work-title {
+  margin: 0;
+  font-size: clamp(1.28rem, 2.8vw, 1.72rem);
+  line-height: 1.08;
+}
+
+.shipcashbox-work-meta {
+  margin: 5px 0 0;
+  color: var(--color-muted);
+  font-size: 0.82rem;
+  line-height: 1.35;
 }
 
 .shipcashbox-card--window {
@@ -664,6 +817,10 @@ body.shipcashbox-modal-open {
   gap: 14px;
 }
 
+.shipcashbox-window-menu {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
 .shipcashbox-modal__body {
   min-height: 0;
   overflow-y: auto;
@@ -695,11 +852,12 @@ body.shipcashbox-modal-open {
   padding: 16px 18px;
   border: 1px solid rgba(16, 36, 58, 0.08);
   border-radius: 16px;
-  background: rgba(16, 36, 58, 0.03);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.88), rgba(16, 36, 58, 0.04));
   color: var(--color-brand);
   text-align: left;
   font: inherit;
   cursor: pointer;
+  box-shadow: 0 10px 24px rgba(16, 36, 58, 0.05);
 }
 
 .shipcashbox-window-link span {
@@ -812,8 +970,26 @@ body.navdesk-theme-night .shipcashbox-statusline__item,
 body.navdesk-theme-night .shipcashbox-install,
 body.navdesk-theme-night .shipcashbox-modal__card,
 body.navdesk-theme-night .shipcashbox-window-link {
-  background: rgba(20, 30, 40, 0.92);
+  background:
+    linear-gradient(145deg, rgba(22, 35, 47, 0.94), rgba(11, 18, 26, 0.9)),
+    rgba(20, 30, 40, 0.92);
   border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.22);
+}
+
+body.navdesk-theme-night .shipcashbox-appbar {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(11, 18, 26, 0.72);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.32);
+}
+
+body.navdesk-theme-night .shipcashbox-appbar__brand strong {
+  color: #f3f6fa;
+}
+
+body.navdesk-theme-night .shipcashbox-appbar__mark {
+  background: linear-gradient(145deg, #e2bd76, #8b5f2c);
+  color: #08131f;
 }
 
 body.navdesk-theme-night .shipcashbox-info-hint {
@@ -899,6 +1075,7 @@ body.navdesk-theme-night .shipcashbox-qr {
     padding-top: 10px;
   }
 
+  .shipcashbox-appbar,
   .shipcashbox-body .navdesk-header-card,
   .shipcashbox-body .shipcashbox-hero,
   .shipcashbox-body .footer--site {
@@ -912,9 +1089,11 @@ body.navdesk-theme-night .shipcashbox-qr {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
+    gap: 8px;
+    width: 100%;
     min-height: 42px;
     padding: 10px 12px;
+    box-sizing: border-box;
     border: 1px solid rgba(16, 36, 58, 0.1);
     border-radius: 16px;
     background: rgba(250, 248, 242, 0.96);
@@ -936,11 +1115,31 @@ body.navdesk-theme-night .shipcashbox-qr {
     font-weight: 800;
   }
 
-  .shipcashbox-mobile-masthead strong {
+  .shipcashbox-mobile-masthead > strong {
     color: var(--color-muted);
     font-size: 0.74rem;
     letter-spacing: 0.04em;
     text-transform: uppercase;
+  }
+
+  @media (max-width: 430px) {
+    .shipcashbox-mobile-masthead > strong {
+      display: none;
+    }
+  }
+
+  .shipcashbox-menu-button--mobile {
+    --site-menu-button-height: 34px;
+    --site-menu-button-icon: 15px;
+    flex: 0 0 auto;
+    padding: 0 10px !important;
+    border-radius: 999px !important;
+    font-size: 0.82rem !important;
+  }
+
+  .shipcashbox-menu-button--mobile .site-menu-button__icon {
+    width: 15px !important;
+    height: 15px !important;
   }
 
   .shipcashbox-workspace-section {
@@ -964,23 +1163,32 @@ body.navdesk-theme-night .shipcashbox-qr {
   }
 
   .shipcashbox-statusline--workspace {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
-    justify-content: stretch;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 6px;
+    justify-content: flex-end;
   }
 
   .shipcashbox-statusline__item,
   .shipcashbox-pill,
   .shipcashbox-archive__status {
-    min-height: 32px;
-    padding: 7px 10px;
-    font-size: 0.84rem;
+    min-height: 28px;
+    padding: 5px 9px;
+    font-size: 0.76rem;
   }
 
   .shipcashbox-card h2 {
-    font-size: clamp(1.12rem, 6vw, 1.5rem);
+    font-size: clamp(1.05rem, 5.2vw, 1.38rem);
     line-height: 1.12;
+  }
+
+  .shipcashbox-work-title {
+    font-size: clamp(1.2rem, 6vw, 1.55rem);
+  }
+
+  .shipcashbox-work-meta {
+    max-width: 25ch;
+    font-size: 0.76rem;
   }
 
   .shipcashbox-modal {
@@ -1039,6 +1247,15 @@ body.navdesk-theme-night .shipcashbox-qr {
     grid-template-columns: 1fr;
   }
 
+  .shipcashbox-metrics--compact {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .shipcashbox-metric {
+    padding: 12px;
+    border-radius: 15px;
+  }
+
   .shipcashbox-field--notebook textarea {
     min-height: 46svh;
   }
@@ -1083,6 +1300,10 @@ body.navdesk-theme-night .shipcashbox-qr {
   .shipcashbox-inline-actions .btn,
   .shipcashbox-notebook-footer__actions .btn {
     min-height: 42px;
+  }
+
+  .shipcashbox-window-menu {
+    grid-template-columns: 1fr;
   }
 
   body.navdesk-theme-night .shipcashbox-mobile-masthead {

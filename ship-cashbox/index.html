@@ -55,7 +55,7 @@
   <link rel="stylesheet" href="../css/main.css?v=20260531-site-menu-button-01" />
   <link rel="stylesheet" href="../css/responsive.css?v=20260531-site-menu-button-01" />
   <link rel="stylesheet" href="../css/navdesk.css?v=20260531-shipcashbox-card-01" />
-  <link rel="stylesheet" href="assets/app.css?v=20260601-cashbox-audit-01" />
+  <link rel="stylesheet" href="assets/app.css?v=20260601-cashbox-pwa-06" />
   <link rel="icon" type="image/png" href="../favicons/favicon-clean.png?v=2" />
   <link rel="apple-touch-icon" href="../favicons/apple-touch-icon-clean.png?v=2" />
 </head>
@@ -67,29 +67,30 @@
     }());
   </script>
   <div class="site-shell">
-    <div class="navdesk-header-card">
-      <header class="topbar">
-        <a href="../index.html#hero" class="brand brand--image" aria-label="VETUS NAUTA - Brkovic home" data-i18n-aria-label="a11y_brand_home">
-          <span class="brand__picture brand__picture--home">
-            <img src="../brand/logo-header-inline-light.png" alt="VETUS NAUTA - Brkovic" class="brand__logo-image brand__logo-image--desktop navdesk-logo" />
-            <img src="../brand/logo-header-mobile.png" alt="VETUS NAUTA - Brkovic" class="brand__logo-image brand__logo-image--mobile navdesk-logo navdesk-logo--mobile" />
-          </span>
-        </a>
-        <div class="topbar__actions">
-          <div class="navdesk-header-theme navdesk-theme-compact" id="navdesk-theme-card">
-            <div class="navdesk-theme-switch" role="group" aria-label="Screen mode" data-i18n-aria-label="a11y_screen_mode">
-              <button type="button" class="navdesk-theme-switch__btn is-active" data-navdesk-theme="day" aria-label="Дневной режим" title="Дневной режим" data-i18n-aria-label="a11y_day_mode" data-i18n-title="a11y_day_mode">☀</button>
-              <button type="button" class="navdesk-theme-switch__btn" data-navdesk-theme="night" aria-label="Ночной режим" title="Ночной режим" data-i18n-aria-label="a11y_night_mode" data-i18n-title="a11y_night_mode">☾</button>
-            </div>
-          </div>
+    <header class="shipcashbox-appbar" aria-label="Ship Cashbox">
+      <div class="shipcashbox-appbar__brand">
+        <span class="shipcashbox-appbar__mark">VN</span>
+        <div>
+          <strong id="appbarTitle">Судовая касса</strong>
+          <span>VETUS NAUTA - Brkovic</span>
         </div>
-      </header>
-    </div>
+      </div>
+      <div class="shipcashbox-appbar__actions">
+        <button type="button" class="site-menu-button shipcashbox-menu-button" id="cashboxAppMenuButton" aria-haspopup="dialog" aria-controls="cashboxAppMenuModal">
+          <span class="site-menu-button__icon" aria-hidden="true"><span></span><span></span><span></span></span>
+          <span id="cashboxAppMenuButtonText">Меню</span>
+        </button>
+      </div>
+    </header>
 
     <main class="navdesk-page navdesk-tool-page navdesk-shipcashbox-page shipcashbox-page">
       <div class="shipcashbox-mobile-masthead" aria-label="Ship Cashbox">
         <span id="mobileMastheadTitle">Судовая касса</span>
         <strong>VETUS NAUTA - Brkovic</strong>
+        <button type="button" class="site-menu-button shipcashbox-menu-button shipcashbox-menu-button--mobile" id="cashboxMobileMenuButton" aria-haspopup="dialog" aria-controls="cashboxAppMenuModal">
+          <span class="site-menu-button__icon" aria-hidden="true"><span></span><span></span><span></span></span>
+          <span id="cashboxMobileMenuButtonText">Меню</span>
+        </button>
       </div>
 
       <section class="section navdesk-hero section--paper shipcashbox-hero">
@@ -103,7 +104,7 @@
             </div>
 
             <div class="navdesk-hero__actions">
-              <a href="../index.html#hero" class="btn btn--secondary" id="backToMainSite">BRKOVIC.LTD</a>
+              <a href="../index.html#hero" target="_blank" rel="noopener" class="btn btn--secondary" id="backToMainSite">BRKOVIC.LTD</a>
               <a href="../navdesk.html" class="btn btn--secondary" id="backToNavDesk">Nav Desk</a>
             </div>
           </div>
@@ -163,6 +164,50 @@
         <h2 class="navdesk-modal__title" id="navdeskModalTitle" data-i18n="navdesk_modal_title">Условия использования</h2>
         <p class="navdesk-modal__text" data-i18n="navdesk_modal_text">Инструмент Nav Desk предоставляет справочную информацию и предварительные расчёты. Данные по приливам и отливам и расчёты окна прохода не должны использоваться как единственное основание для навигационных решений, обеспечения безопасности плавания или предотвращения ущерба людям, судну и имуществу. Продолжая использование, вы принимаете эти условия.</p>
         <button type="button" class="navdesk-modal__accept" id="navdeskModalAccept" data-i18n="navdesk_modal_accept">Принимаю</button>
+      </div>
+    </div>
+
+    <div class="management-modal site-menu-modal shipcashbox-app-menu" id="cashboxAppMenuModal" aria-hidden="true">
+      <div class="management-modal__backdrop" data-close-app-menu="1"></div>
+      <div class="management-modal__dialog management-modal__dialog--compact" role="dialog" aria-modal="true" aria-labelledby="cashboxAppMenuTitle">
+        <div class="management-modal__header">
+          <div>
+            <p class="section-heading__eyebrow" id="cashboxAppMenuEyebrow">Ship Cashbox</p>
+            <h3 id="cashboxAppMenuTitle">Меню кассы</h3>
+          </div>
+          <button type="button" class="management-modal__close" data-close-app-menu="1" aria-label="Закрыть">×</button>
+        </div>
+        <nav class="management-modal-nav shipcashbox-app-menu__nav" aria-label="Ship Cashbox menu">
+          <a href="../navdesk.html" id="cashboxMenuNavdesk">Штурманский стол</a>
+          <button type="button" class="management-modal-nav__button" id="cashboxMenuWorkspace">Меню кассы</button>
+          <button type="button" class="management-modal-nav__button" id="cashboxMenuInstall">Установить приложение</button>
+        </nav>
+        <section class="site-menu-language shipcashbox-app-menu__language" aria-labelledby="cashboxLanguageTitle">
+          <div class="site-menu-language__head">
+            <span class="site-menu-language__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <circle cx="12" cy="12" r="9"></circle>
+                <path d="M3 12h18"></path>
+                <path d="M12 3a14 14 0 0 1 0 18"></path>
+                <path d="M12 3a14 14 0 0 0 0 18"></path>
+              </svg>
+            </span>
+            <div>
+              <p class="site-menu-language__kicker" id="cashboxLanguageKicker">Язык</p>
+              <h4 id="cashboxLanguageTitle">Языковые версии</h4>
+            </div>
+          </div>
+          <p class="site-menu-language__status"><span id="cashboxLanguageNowLabel">Сейчас</span> <strong id="cashboxLanguageCurrent">RU</strong></p>
+          <div class="site-menu-language__list" role="list" id="cashboxLanguageList"></div>
+        </section>
+        <section class="site-menu-settings shipcashbox-app-menu__settings">
+          <div class="site-menu-settings__label" id="cashboxThemeLabel">Тема</div>
+          <div class="navdesk-theme-switch shipcashbox-app-menu__theme" role="group" aria-label="Screen mode">
+            <button type="button" class="navdesk-theme-switch__btn is-active" data-cashbox-theme="day" aria-label="Дневной режим" title="Дневной режим">☀</button>
+            <button type="button" class="navdesk-theme-switch__btn" data-cashbox-theme="night" aria-label="Ночной режим" title="Ночной режим">☾</button>
+          </div>
+        </section>
+        <section class="site-menu-account shipcashbox-app-menu__account" id="cashboxAccountPanel"></section>
       </div>
     </div>
 
@@ -255,6 +300,6 @@
   <script src="../js/seo.js?v=20260531-clarity-01"></script>
   <script src="../js/main.js?v=20260531-google-auth-01"></script>
   <script src="../js/navdesk.js?v=20260531-tool-consent-01"></script>
-  <script src="assets/app.js?v=20260601-cashbox-audit-01"></script>
+  <script src="assets/app.js?v=20260601-cashbox-pwa-06"></script>
 </body>
 </html>

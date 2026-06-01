@@ -226,6 +226,46 @@ function readToolAuthEmail() {
   }
 }
 
+function readToolAuthProfile() {
+  try {
+    const profile = JSON.parse(localStorage.getItem("brkovic_tool_auth_session_v1") || "null");
+    return profile && typeof profile === "object" ? profile : null;
+  } catch (error) {
+    return null;
+  }
+}
+
+function clearToolAuthProfile() {
+  try {
+    localStorage.removeItem("brkovic_tool_auth_session_v1");
+  } catch (error) {}
+}
+
+function toolAccountInitial(profile) {
+  const source = String(profile?.displayName || profile?.email || "B").trim();
+  return (source[0] || "B").toUpperCase();
+}
+
+function languageOptions() {
+  const api = window.BRKOVIC_LANGUAGE;
+  const raw = api && typeof api.getLanguageOptions === "function"
+    ? api.getLanguageOptions()
+    : window.BRKOVIC_LANGUAGE_OPTIONS;
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((item) => ({
+      code: String(item?.code || "").trim().toLowerCase(),
+      name: String(item?.name || item?.label || "").trim(),
+      isAvailable: item?.isAvailable !== false,
+    }))
+    .filter((item) => item.code && item.name);
+}
+
+function languageName(code) {
+  const normalized = normalizeToolLang(code) || state.lang;
+  return languageOptions().find((item) => item.code === normalized)?.name || normalized.toUpperCase();
+}
+
 function openCashboxPrintWindow(docHtml) {
   const html = String(docHtml || "").trim();
   if (!html) return false;
@@ -385,6 +425,14 @@ function saveTreasurerDraft(text) {
   } catch (error) {}
 }
 
+function clearTreasurerDraft(sessionId) {
+  state.treasurerDraft = "";
+  if (!sessionId) return;
+  try {
+    localStorage.removeItem(treasurerDraftKey(sessionId));
+  } catch (error) {}
+}
+
 async function api(action, options = {}) {
   const [name, query = ""] = String(action).split(/(?=&)/, 2);
   const response = await fetch(`${API_BASE}${encodeURIComponent(name)}${query}`, {
@@ -502,15 +550,84 @@ function applyTheme() {
   const mode = localStorage.getItem(THEME_KEY) === "night" ? "night" : "day";
   document.body.classList.toggle("navdesk-theme-night", mode === "night");
   document.body.classList.toggle("navdesk-theme-day", mode !== "night");
+  document.querySelectorAll("[data-cashbox-theme]").forEach((button) => {
+    const active = button.dataset.cashboxTheme === mode;
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-pressed", active ? "true" : "false");
+  });
+}
+
+function isStandalonePwa() {
+  return window.matchMedia?.("(display-mode: standalone)")?.matches || window.navigator.standalone === true;
+}
+
+function resolvedAppUrl(href) {
+  return new URL(href || "../navdesk.html", window.location.href).toString();
+}
+
+function isNavDeskHref(href) {
+  try {
+    return new URL(href || "../navdesk.html", window.location.href).pathname.endsWith("/navdesk.html");
+  } catch (error) {
+    return false;
+  }
+}
+
+function sameOriginOpener() {
+  try {
+    if (!window.opener || window.opener.closed) return null;
+    if (window.opener.location.origin !== window.location.origin) return null;
+    return window.opener;
+  } catch (error) {
+    return null;
+  }
+}
+
+function returnToNavDesk(href = "../navdesk.html") {
+  const url = resolvedAppUrl(href);
+  const opener = sameOriginOpener();
+  if (opener) {
+    try {
+      if (!opener.location.pathname.endsWith("/navdesk.html")) {
+        opener.location.href = url;
+      }
+      opener.focus();
+    } catch (error) {
+      window.location.href = url;
+      return;
+    }
+    window.close();
+    if (!window.closed) {
+      window.location.href = url;
+    }
+    return;
+  }
+  const navdeskWindow = window.open(url, "brkovic_navdesk", "noopener");
+  if (!navdeskWindow) {
+    window.location.href = url;
+  }
 }
 
 function updateTopbarText() {
   document.documentElement.lang = state.lang;
+  if ($("appbarTitle")) $("appbarTitle").textContent = t("heroTitle");
+  if ($("cashboxAppMenuButtonText")) $("cashboxAppMenuButtonText").textContent = t("cashboxAppMenuButton");
+  if ($("cashboxMobileMenuButtonText")) $("cashboxMobileMenuButtonText").textContent = t("cashboxAppMenuButton");
+  if ($("cashboxAppMenuEyebrow")) $("cashboxAppMenuEyebrow").textContent = t("heroTitle");
+  if ($("cashboxAppMenuTitle")) $("cashboxAppMenuTitle").textContent = t("workspaceMenuTitle");
+  if ($("cashboxMenuNavdesk")) $("cashboxMenuNavdesk").textContent = t("cashboxMenuNavdesk");
+  if ($("cashboxMenuWorkspace")) $("cashboxMenuWorkspace").textContent = t("workspaceMenuTitle");
+  if ($("cashboxMenuInstall")) $("cashboxMenuInstall").textContent = t("pwa_install_menu");
+  if ($("cashboxLanguageKicker")) $("cashboxLanguageKicker").textContent = t("cashboxMenuLanguage");
+  if ($("cashboxLanguageTitle")) $("cashboxLanguageTitle").textContent = t("site_menu_language_title");
+  if ($("cashboxLanguageNowLabel")) $("cashboxLanguageNowLabel").textContent = t("site_menu_language_current_label");
+  if ($("cashboxThemeLabel")) $("cashboxThemeLabel").textContent = t("cashboxMenuTheme");
   if ($("heroEyebrow")) $("heroEyebrow").textContent = t("heroEyebrow");
   if ($("heroTitle")) $("heroTitle").textContent = t("heroTitle");
   if ($("heroIntro")) $("heroIntro").textContent = t("heroIntro");
   if ($("heroDescription")) $("heroDescription").textContent = t("heroDescription");
   if ($("mobileMastheadTitle")) $("mobileMastheadTitle").textContent = t("heroTitle");
+  if ($("openMainSiteNew")) $("openMainSiteNew").textContent = t("backToMainSite");
   if ($("backToMainSite")) $("backToMainSite").textContent = t("backToMainSite");
   if ($("backToNavDesk")) $("backToNavDesk").textContent = t("backToNavDesk");
   if ($("cashboxExitStayButton")) $("cashboxExitStayButton").textContent = t("cashboxExitStay");
@@ -526,6 +643,8 @@ function updateTopbarText() {
   document.querySelectorAll(".lang-switch__btn").forEach((button) => {
     button.classList.toggle("is-active", button.dataset.lang === state.lang);
   });
+  renderAppMenuLanguage();
+  renderAppMenuAccount();
 }
 
 function installInstructionText() {
@@ -698,6 +817,113 @@ function renderGuest() {
   });
 }
 
+function renderAppMenuLanguage() {
+  const list = $("cashboxLanguageList");
+  if (!list) return;
+  const options = languageOptions();
+  $("cashboxLanguageCurrent") && ($("cashboxLanguageCurrent").textContent = languageName(state.lang));
+  list.innerHTML = options.map((option) => {
+    const active = option.code === state.lang;
+    return `
+      <button type="button" class="site-menu-language__option${active ? " is-active" : ""}${option.isAvailable ? "" : " is-unavailable"}" data-cashbox-lang="${escapeHtml(option.code)}" aria-pressed="${active ? "true" : "false"}"${option.isAvailable ? "" : " aria-disabled=\"true\" disabled"}>
+        <span class="site-menu-language__name">${escapeHtml(option.name)}</span>
+        <span class="site-menu-language__current">${escapeHtml(t("site_menu_language_current"))}</span>
+        <span class="site-menu-language__pending">${escapeHtml(t("site_menu_language_pending"))}</span>
+      </button>
+    `;
+  }).join("");
+}
+
+function renderAppMenuAccount() {
+  const panel = $("cashboxAccountPanel");
+  if (!panel) return;
+  const profile = readToolAuthProfile();
+  const isAuthenticated = Boolean(profile?.authenticated);
+  if (!isAuthenticated) {
+    panel.innerHTML = `
+      <div class="site-menu-account__head">
+        <span class="site-menu-account__avatar"><span>?</span></span>
+        <div>
+          <p class="site-menu-account__label">${escapeHtml(t("cashboxMenuAccount"))}</p>
+          <strong>${escapeHtml(t("site_menu_login"))}</strong>
+          <span>${escapeHtml(t("cashboxMenuAccountText"))}</span>
+        </div>
+      </div>
+      <button type="button" class="btn btn--primary btn--full" id="cashboxAccountAction">${escapeHtml(t("site_menu_login"))}</button>
+    `;
+    return;
+  }
+  const displayName = profile.displayName || profile.email || "Brkovic account";
+  const provider = String(profile.authProvider || "account").toUpperCase();
+  panel.innerHTML = `
+    <div class="site-menu-account__head">
+      <span class="site-menu-account__avatar">${profile.avatarUrl ? `<img src="${escapeHtml(profile.avatarUrl)}" alt="" referrerpolicy="no-referrer">` : `<span>${escapeHtml(toolAccountInitial(profile))}</span>`}</span>
+      <div>
+        <p class="site-menu-account__label">${escapeHtml(t("cashboxMenuAccount"))}</p>
+        <strong>${escapeHtml(displayName)}</strong>
+        ${profile.email ? `<span>${escapeHtml(profile.email)}</span>` : ""}
+      </div>
+    </div>
+    <div class="site-menu-account__meta"><span>${escapeHtml(provider)}</span><span>${escapeHtml(t("viewerTreasurer"))}</span></div>
+    <button type="button" class="btn btn--secondary btn--full" id="cashboxAccountAction">${escapeHtml(t("site_menu_logout"))}</button>
+  `;
+}
+
+function openAppMenu() {
+  const modal = $("cashboxAppMenuModal");
+  if (!modal) return;
+  renderAppMenuLanguage();
+  renderAppMenuAccount();
+  applyTheme();
+  modal.classList.add("is-open");
+  modal.setAttribute("aria-hidden", "false");
+  document.body.classList.add("management-modal-open");
+}
+
+function closeAppMenu() {
+  const modal = $("cashboxAppMenuModal");
+  if (!modal) return;
+  modal.classList.remove("is-open");
+  modal.setAttribute("aria-hidden", "true");
+  if (!document.querySelector(".management-modal.is-open")) {
+    document.body.classList.remove("management-modal-open");
+  }
+}
+
+async function handleAppAccountAction() {
+  const profile = readToolAuthProfile();
+  if (!profile?.authenticated) {
+    closeAppMenu();
+    if (typeof window.openToolAuthPrompt === "function") {
+      await window.openToolAuthPrompt().catch(() => null);
+    }
+    await checkViewer();
+    return;
+  }
+  await fetch("/api/auth/user/logout", { method: "POST", credentials: "same-origin" }).catch(() => null);
+  await api("logout", { method: "POST", body: "{}" }).catch(() => null);
+  clearToolAuthProfile();
+  closeAppMenu();
+  await checkViewer();
+}
+
+async function handleAppInstallAction() {
+  closeAppMenu();
+  if (isStandalonePwa()) {
+    setFlash(t("installTitle"));
+    return;
+  }
+  if (!state.installPrompt) {
+    setFlash(installInstructionText());
+    return;
+  }
+  state.installPrompt.prompt();
+  await state.installPrompt.userChoice.catch(() => null);
+  state.installPrompt = null;
+  localStorage.setItem(DISMISSED_INSTALL_KEY, "1");
+  render();
+}
+
 function participantStatusLabel(status) {
   return status === "closed" ? t("archiveStatus") : t("statusActive");
 }
@@ -797,20 +1023,20 @@ function renderParticipant() {
     : (viewing.is_self ? "" : `<a class="btn btn--secondary" href="?invite=${encodeURIComponent(participant.invite_token)}">${escapeHtml(t("backToMyNotebook"))}</a>`);
   $("participantView").innerHTML = `
     <section class="shipcashbox-card shipcashbox-card--sticky shipcashbox-card--notebook">
-      <div class="shipcashbox-card__head">
+      <div class="shipcashbox-card__head shipcashbox-workhead">
         <div>
           <p class="section-heading__eyebrow">${escapeHtml(session.title)}</p>
-          <h2>${renderTitleWithHint("participantNotebookTitle", "notebookHelp")}</h2>
-          <p class="shipcashbox-note">${escapeHtml(t("notebookAutosaveLabel"))}</p>
+          <h2 class="shipcashbox-work-title">${renderTitleWithHint("participantNotebookTitle", "notebookHelp")}</h2>
+          <p class="shipcashbox-work-meta" id="participantSyncMeta">${escapeHtml(viewing.is_self ? syncMeta : t("viewingReadonly"))}</p>
         </div>
         <div class="shipcashbox-inline-actions">
           ${headerMetric}
           <button class="btn btn--secondary" type="button" id="openWorkspaceMenuButton" title="${escapeHtml(t("workspaceMenuHelp"))}" aria-label="${escapeHtml(t("workspaceMenuHelp"))}">${escapeHtml(t("workspaceMenuAction"))}</button>
         </div>
       </div>
-      ${viewing.is_self ? `<p class="shipcashbox-note" id="participantSyncMeta">${escapeHtml(syncMeta)}</p>` : `<p class="shipcashbox-note">${escapeHtml(t("currentView"))}: ${escapeHtml(viewing.display_name)}. ${escapeHtml(t("viewingReadonly"))}</p>`}
+      ${!viewing.is_self ? `<p class="shipcashbox-note">${escapeHtml(t("currentView"))}: ${escapeHtml(viewing.display_name)}</p>` : ""}
       <div class="shipcashbox-notebook-shell">
-        <textarea id="participantNotebook" class="shipcashbox-notebook-textarea" placeholder="${escapeHtml(t("notebookPlaceholder"))}" aria-label="${escapeHtml(t("participantNotebookTitle"))}" ${readOnly ? "readonly" : ""}>${escapeHtml(viewing.is_self ? (state.participantDraft || participant.notebook_text || "") : (viewing.notebook_text || ""))}</textarea>
+        <textarea id="participantNotebook" class="shipcashbox-notebook-textarea" placeholder="${escapeHtml(t("notebookPlaceholder"))}" aria-label="${escapeHtml(t("participantNotebookTitle"))}" ${readOnly ? "readonly" : ""}>${escapeHtml(viewing.is_self ? state.participantDraft : (viewing.notebook_text || ""))}</textarea>
         ${renderNotebookLockOverlay()}
       </div>
       ${readOnly && viewing.is_self && !state.editorLocked ? `<p class="shipcashbox-note">${escapeHtml(t("participantReadonly"))}</p>` : ""}
@@ -1055,7 +1281,10 @@ function renderArchiveRows(archive = [], canReopen = false) {
       <div class="shipcashbox-archive__meta">${escapeHtml(t("archivedOn"))}: ${escapeHtml(item.closed_at || "")}</div>
       <div class="shipcashbox-archive__meta">${escapeHtml(`${item.participants} · ${money(item.cashbox_balance, item.currency, true)}`)}</div>
       ${renderExports(item.exports)}
-      ${canReopen ? `<div class="shipcashbox-actions"><button class="btn btn--secondary reopen-session-btn" type="button" data-id="${escapeHtml(item.id)}" title="${escapeHtml(t("reopenCashboxHelp"))}" aria-label="${escapeHtml(t("reopenCashboxHelp"))}">${escapeHtml(t("reopenCashbox"))}</button></div>` : ""}
+      <div class="shipcashbox-actions">
+        <button class="btn btn--primary open-archive-session-btn" type="button" data-id="${escapeHtml(item.id)}" title="${escapeHtml(t("openArchiveSnapshot"))}" aria-label="${escapeHtml(t("openArchiveSnapshot"))}">${escapeHtml(t("openArchiveSnapshot"))}</button>
+        ${canReopen ? `<button class="btn btn--secondary reopen-session-btn" type="button" data-id="${escapeHtml(item.id)}" title="${escapeHtml(t("reopenCashboxHelp"))}" aria-label="${escapeHtml(t("reopenCashboxHelp"))}">${escapeHtml(t("reopenCashbox"))}</button>` : ""}
+      </div>
     </article>
   `).join("");
 }
@@ -1089,6 +1318,14 @@ function renderWindowMenuButton(windowName, label, note = "") {
 
 function renderWorkspaceMenu() {
   if (state.viewer === "treasurer") {
+    if (!state.boot?.session) {
+      return `
+        <div class="shipcashbox-window-menu">
+          ${renderWindowMenuButton("archive", t("archiveTitle"), t("workspaceArchiveText"))}
+          ${renderWindowMenuButton("service", t("workspaceServiceTitle"), t("workspaceServiceText"))}
+        </div>
+      `;
+    }
     return `
       <div class="shipcashbox-window-menu">
         ${renderWindowMenuButton("snapshot", t("summaryTitle"), t("workspaceSnapshotText"))}
@@ -1233,6 +1470,58 @@ function renderTreasurerSettlementWindow(session) {
   `;
 }
 
+function renderArchiveDetailWindow(session) {
+  const participants = session.participants || [];
+  const totals = session.totals || {};
+  return `
+    <div class="shipcashbox-stack">
+      <section class="shipcashbox-card shipcashbox-card--window shipcashbox-card--archive-detail">
+        <div class="shipcashbox-card__head">
+          <div>
+            <p class="section-heading__eyebrow">${escapeHtml(t("archiveStatus"))}</p>
+            <h2>${escapeHtml(session.title || t("archiveSnapshotTitle"))}</h2>
+            <p class="shipcashbox-note">${escapeHtml(t("archivedOn"))}: ${escapeHtml(session.closed_at || "")}</p>
+          </div>
+        </div>
+        <div class="shipcashbox-metrics shipcashbox-metrics--compact">
+          <div class="shipcashbox-metric"><span>${escapeHtml(t("summaryCash"))}</span><strong>${escapeHtml(money(totals.cashbox_balance, session.currency, true))}</strong></div>
+          <div class="shipcashbox-metric"><span>${escapeHtml(t("summaryExpenses"))}</span><strong>${escapeHtml(money(totals.total_expenses, session.currency))}</strong></div>
+          <div class="shipcashbox-metric"><span>${escapeHtml(t("summaryContributions"))}</span><strong>${escapeHtml(money(totals.total_contributions, session.currency))}</strong></div>
+          <div class="shipcashbox-metric"><span>${escapeHtml(t("summaryShare"))}</span><strong>${escapeHtml(money(totals.share, session.currency))}</strong></div>
+        </div>
+        ${renderExports(session.exports || [])}
+      </section>
+      <section class="shipcashbox-card shipcashbox-card--window">
+        <div class="shipcashbox-card__head">
+          <div>
+            <p class="section-heading__eyebrow">${escapeHtml(t("settlementTitle"))}</p>
+            <h2>${escapeHtml(t("settlementTitle"))}</h2>
+          </div>
+        </div>
+        <div class="shipcashbox-lines">${renderSettlementLines(session.settlement_preview?.lines || [], session.currency)}</div>
+      </section>
+      <section class="shipcashbox-card shipcashbox-card--window">
+        <div class="shipcashbox-card__head">
+          <div>
+            <p class="section-heading__eyebrow">${escapeHtml(t("participantOverviewTitle"))}</p>
+            <h2>${escapeHtml(t("participantOverviewTitle"))}</h2>
+          </div>
+        </div>
+        <div class="shipcashbox-summary">${renderSummaryCards(participants, session.currency)}</div>
+      </section>
+      <section class="shipcashbox-card shipcashbox-card--window">
+        <div class="shipcashbox-card__head">
+          <div>
+            <p class="section-heading__eyebrow">${escapeHtml(t("logTitle"))}</p>
+            <h2>${escapeHtml(t("logTreeTitle"))}</h2>
+          </div>
+        </div>
+        <div class="shipcashbox-log">${renderLogGroups(participants)}</div>
+      </section>
+    </div>
+  `;
+}
+
 function renderParticipantSettlementWindow() {
   const payload = state.participant;
   if (!payload) return "";
@@ -1333,6 +1622,22 @@ function workspaceWindowPayload(windowName) {
     };
   }
 
+  if (state.viewer === "treasurer" && state.boot && windowName === "archive") {
+    return {
+      eyebrow: t("archiveTitle"),
+      title: t("archiveTitle"),
+      body: `<section class="shipcashbox-card shipcashbox-card--window"><div class="shipcashbox-archive">${renderArchiveRows(state.boot.archive || [], false)}</div></section>`,
+    };
+  }
+
+  if (state.viewer === "treasurer" && windowName === "service") {
+    return {
+      eyebrow: t("workspaceServiceTitle"),
+      title: t("workspaceServiceTitle"),
+      body: renderServiceWindow(),
+    };
+  }
+
   if (state.viewer === "treasurer" && state.boot?.session) {
     const { session, archive } = state.boot;
     if (windowName === "snapshot") {
@@ -1361,20 +1666,6 @@ function workspaceWindowPayload(windowName) {
         eyebrow: t("workspaceReportsTitle"),
         title: t("workspaceReportsTitle"),
         body: renderTreasurerReportsWindow(session),
-      };
-    }
-    if (windowName === "archive") {
-      return {
-        eyebrow: t("archiveTitle"),
-        title: t("archiveTitle"),
-        body: `<section class="shipcashbox-card shipcashbox-card--window"><div class="shipcashbox-archive">${renderArchiveRows(archive, false)}</div></section>`,
-      };
-    }
-    if (windowName === "service") {
-      return {
-        eyebrow: t("workspaceServiceTitle"),
-        title: t("workspaceServiceTitle"),
-        body: renderServiceWindow(),
       };
     }
   }
@@ -1446,7 +1737,7 @@ function renderTreasurer() {
 
   const participants = session.participants || [];
   const treasurer = participants.find((participant) => participant.id === session.treasurer_participant_id) || participants[0];
-  const notebookText = normalizedText(state.treasurerDraft || treasurer?.notebook_text || "");
+  const notebookText = normalizedText(state.treasurerDraft);
   const totals = session.totals || {};
   const readOnly = session.status !== "active" || state.editorLocked;
   const attachmentAction = session.status === "active"
@@ -1455,11 +1746,11 @@ function renderTreasurer() {
   $("treasurerView").innerHTML = `
     <div class="shipcashbox-stack">
       <section class="shipcashbox-card shipcashbox-card--sticky shipcashbox-card--notebook">
-        <div class="shipcashbox-card__head">
+        <div class="shipcashbox-card__head shipcashbox-workhead">
           <div>
             <p class="section-heading__eyebrow">${escapeHtml(session.title)}</p>
-            <h2>${renderTitleWithHint("treasurerNotebookTitle", "notebookHelp")}</h2>
-            <p class="shipcashbox-note">${escapeHtml(t("notebookAutosaveLabel"))}</p>
+            <h2 class="shipcashbox-work-title">${renderTitleWithHint("treasurerNotebookTitle", "notebookHelp")}</h2>
+            <p class="shipcashbox-work-meta" id="treasurerSaveMeta">${escapeHtml(treasurerNotebookSummary())}</p>
           </div>
           <div class="shipcashbox-inline-actions">
             ${renderMetricPill(t("contributionShort"), money(treasurer?.contributions || 0, session.currency))}
@@ -1481,7 +1772,6 @@ function renderTreasurer() {
           </div>
           ${renderTreasurerAttachments(session)}
         </div>
-        <p class="shipcashbox-note" id="treasurerSaveMeta">${escapeHtml(treasurerNotebookSummary())}</p>
         ${session.status !== "active" && !state.editorLocked ? `<p class="shipcashbox-note">${escapeHtml(t("participantReadonly"))}</p>` : ""}
         ${renderNotebookFooter({
           label: t("spentFooterLabel"),
@@ -1779,6 +2069,27 @@ async function deleteCashboxAttachment(attachmentId) {
   await refreshCashboxAttachments(postId);
 }
 
+async function openArchiveSession(id) {
+  if (!id || !$("workspaceModalBody")) return;
+  const previousTitle = $("workspaceModalTitle")?.textContent || "";
+  const previousBody = $("workspaceModalBody").innerHTML;
+  if ($("workspaceModalEyebrow")) $("workspaceModalEyebrow").textContent = t("archiveTitle");
+  if ($("workspaceModalTitle")) $("workspaceModalTitle").textContent = t("archiveSnapshotTitle");
+  $("workspaceModalBody").innerHTML = `<section class="shipcashbox-card shipcashbox-card--window"><p class="shipcashbox-empty">${escapeHtml(t("loading"))}</p></section>`;
+  try {
+    const payload = await api(`archive-session&id=${encodeURIComponent(id)}`);
+    if (!payload.session) throw new Error(t("archiveEmpty"));
+    $("workspaceModal").dataset.window = "archive-detail";
+    $("workspaceModalBody").innerHTML = renderArchiveDetailWindow(payload.session);
+    bindWorkspaceModalUi();
+  } catch (error) {
+    if ($("workspaceModalTitle")) $("workspaceModalTitle").textContent = previousTitle;
+    $("workspaceModalBody").innerHTML = previousBody;
+    bindWorkspaceModalUi();
+    setFlash(error.message || t("loadFailed"), true);
+  }
+}
+
 function bindTreasurerUi() {
   $("createSessionButton")?.addEventListener("click", async () => {
     try {
@@ -1787,6 +2098,7 @@ function bindTreasurerUi() {
         body: JSON.stringify({}),
       });
       state.boot = payload;
+      clearTreasurerDraft(payload.session?.id);
       saveCache(BOOT_CACHE_KEY, payload);
       render();
     } catch (error) {
@@ -1857,6 +2169,12 @@ function bindTreasurerUi() {
       } catch (error) {
         setFlash(error.message || t("activeCashboxExists"));
       }
+    });
+  });
+  document.querySelectorAll(".open-archive-session-btn").forEach((button) => {
+    button.addEventListener("click", () => {
+      openWorkspaceModal("archive");
+      window.requestAnimationFrame(() => openArchiveSession(button.dataset.id || ""));
     });
   });
   bindParticipantRowActions();
@@ -2008,6 +2326,10 @@ let pendingExitHref = "";
 function openExitModal(href) {
   const modal = $("cashboxExitModal");
   if (!modal) {
+    if (isNavDeskHref(href)) {
+      returnToNavDesk(href);
+      return;
+    }
     window.location.href = href;
     return;
   }
@@ -2044,6 +2366,10 @@ async function confirmCashboxExit() {
     }
   } catch (error) {
     setFlash(error.message || t("loadFailed"), true);
+    return;
+  }
+  if (isNavDeskHref(href)) {
+    returnToNavDesk(href);
     return;
   }
   window.location.href = href;
@@ -2110,6 +2436,9 @@ function bindWorkspaceModalUi() {
         setFlash(error.message || t("activeCashboxExists"));
       }
     };
+  });
+  document.querySelectorAll(".open-archive-session-btn").forEach((button) => {
+    button.onclick = () => openArchiveSession(button.dataset.id || "");
   });
   if ($("participantsEditor")) {
     bindParticipantRowActions();
@@ -2524,21 +2853,65 @@ document.addEventListener("click", (event) => {
   if (target instanceof HTMLElement && target.dataset.closeExit === "1") {
     closeExitModal();
   }
+  if (target instanceof HTMLElement && target.dataset.closeAppMenu === "1") {
+    closeAppMenu();
+  }
 });
 
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
     closeHelpPopovers();
+    closeAppMenu();
   }
 });
 
 document.addEventListener("DOMContentLoaded", async () => {
+  document.querySelectorAll("#cashboxAppMenuButton, #cashboxMobileMenuButton").forEach((button) => {
+    button.addEventListener("click", openAppMenu);
+  });
+  $("cashboxMenuWorkspace")?.addEventListener("click", () => {
+    closeAppMenu();
+    openWorkspaceModal("menu");
+  });
+  $("cashboxMenuNavdesk")?.addEventListener("click", (event) => {
+    event.preventDefault();
+    closeAppMenu();
+    openExitModal($("cashboxMenuNavdesk")?.getAttribute("href") || "../navdesk.html");
+  });
+  $("cashboxMenuInstall")?.addEventListener("click", () => {
+    handleAppInstallAction().catch((error) => setFlash(error.message || t("loadFailed"), true));
+  });
+  $("cashboxLanguageList")?.addEventListener("click", async (event) => {
+    const button = event.target.closest?.("[data-cashbox-lang]");
+    if (!button || button.disabled) return;
+    const api = window.BRKOVIC_LANGUAGE;
+    if (!api || typeof api.setLanguage !== "function") return;
+    button.disabled = true;
+    try {
+      await api.setLanguage(button.dataset.cashboxLang);
+      syncLanguageState(button.dataset.cashboxLang);
+      updateTopbarText();
+    } finally {
+      button.disabled = false;
+    }
+  });
+  document.querySelector(".shipcashbox-app-menu__theme")?.addEventListener("click", (event) => {
+    const button = event.target.closest?.("[data-cashbox-theme]");
+    if (!button) return;
+    localStorage.setItem(THEME_KEY, button.dataset.cashboxTheme === "night" ? "night" : "day");
+    applyTheme();
+  });
+  $("cashboxAccountPanel")?.addEventListener("click", (event) => {
+    if (!event.target.closest?.("#cashboxAccountAction")) return;
+    handleAppAccountAction().catch((error) => setFlash(error.message || t("loadFailed"), true));
+  });
   $("workspaceModalMenuButton")?.addEventListener("click", () => openWorkspaceModal("menu"));
   document.querySelector(".topbar .brand")?.addEventListener("click", (event) => {
     event.preventDefault();
     openExitModal(event.currentTarget?.getAttribute("href") || "../index.html#hero");
   });
   $("backToMainSite")?.addEventListener("click", (event) => {
+    if (event.currentTarget?.getAttribute("target") === "_blank") return;
     event.preventDefault();
     openExitModal($("backToMainSite")?.getAttribute("href") || "../index.html#hero");
   });

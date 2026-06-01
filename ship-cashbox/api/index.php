@@ -1404,6 +1404,30 @@ if ($action === 'login') {
     respond(['authenticated' => true, 'version' => APP_VERSION]);
 }
 
+if ($action === 'logout') {
+    $_SESSION = [];
+    if (ini_get('session.use_cookies')) {
+        $params = session_get_cookie_params();
+        setcookie(session_name(), '', [
+            'expires' => time() - 42000,
+            'path' => $params['path'] ?: '/',
+            'domain' => $params['domain'] ?: '',
+            'secure' => (bool) $params['secure'],
+            'httponly' => (bool) $params['httponly'],
+            'samesite' => $params['samesite'] ?? 'Lax',
+        ]);
+    }
+    setcookie(AUTH_COOKIE, '', [
+        'expires' => time() - 42000,
+        'path' => '/',
+        'secure' => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
+    session_destroy();
+    respond(['authenticated' => false, 'version' => APP_VERSION]);
+}
+
 if ($action === 'me') {
     respond(['authenticated' => authenticated(), 'version' => APP_VERSION]);
 }
@@ -1467,6 +1491,19 @@ if ($action === 'save-treasurer-notebook') {
 if ($action === 'confirm-settlement') {
     respond(confirm_settlement(input_json()) + ['version' => APP_VERSION]);
 }
+
+if ($action === 'archive-session') {
+    $id = trim((string) ($_GET['id'] ?? ''));
+    if ($id === '') {
+        fail('Нужен id архива', 422);
+    }
+    $session = find_session($id);
+    if (!$session || ($session['status'] ?? '') !== 'closed') {
+        fail('Закрытая касса не найдена', 404);
+    }
+    respond(build_treasurer_payload($session) + ['version' => APP_VERSION]);
+}
+
 if ($action === 'reopen-session') {
     $payload = input_json();
     respond(build_treasurer_payload(reopen_session((string) ($payload['id'] ?? ''))) + ['version' => APP_VERSION]);

@@ -1,12 +1,12 @@
 {
-  "name": "Vetus Nauta / Ship Cashbox",
-  "short_name": "Ship Cashbox",
+  "name": "VETUS NAUTA - Ship Cashbox",
+  "short_name": "Cashbox",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#f3f5f8",
+  "background_color": "#eef4f7",
   "theme_color": "#10243a",
-  "description": "Shared onboard money notebook inside Vetus Nauta / Nav Desk.",
+  "description": "Standalone onboard cashbox for crew expenses, contributions, archive and settlement.",
   "icons": [
     {
       "src": "../favicons/android-chrome-192x192.png",
