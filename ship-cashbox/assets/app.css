@@ -416,6 +416,79 @@ body.shipcashbox-modal-open {
   line-height: 1.1;
 }
 
+.shipcashbox-submitted-records {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(16, 36, 58, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.shipcashbox-submitted-records__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--color-brand);
+}
+
+.shipcashbox-submitted-records__head span {
+  color: var(--color-muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.shipcashbox-submitted-records__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+}
+
+.shipcashbox-submitted-record {
+  min-width: 0;
+}
+
+.shipcashbox-submitted-record__button {
+  width: 100%;
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid rgba(16, 36, 58, 0.12);
+  border-radius: 14px;
+  background: rgba(250, 248, 242, 0.88);
+  color: var(--color-brand);
+  text-align: left;
+  cursor: pointer;
+}
+
+.shipcashbox-submitted-record__button:hover,
+.shipcashbox-submitted-record__button:focus-visible {
+  border-color: rgba(27, 55, 88, 0.28);
+  box-shadow: 0 10px 22px rgba(16, 36, 58, 0.10);
+  outline: none;
+}
+
+.shipcashbox-submitted-record__button span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.shipcashbox-submitted-record__button small {
+  color: var(--color-muted);
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.shipcashbox-submitted-record__sum {
+  flex: 0 0 auto;
+  font-weight: 900;
+}
+
 .shipcashbox-lock {
   position: absolute;
   inset: 0;
@@ -584,6 +657,10 @@ body.shipcashbox-modal-open {
   gap: 10px;
 }
 
+.shipcashbox-actions > .shipcashbox-share-actions {
+  display: contents;
+}
+
 .shipcashbox-actions--lead {
   justify-content: flex-start;
   margin-top: 2px;
@@ -652,6 +729,31 @@ body.shipcashbox-modal-open {
   border-radius: 16px;
   border: 1px solid rgba(16, 36, 58, 0.08);
   background: rgba(16, 36, 58, 0.03);
+}
+
+.shipcashbox-archive__row--selectable {
+  position: relative;
+  min-height: 116px;
+  cursor: pointer;
+}
+
+.shipcashbox-archive__row--selectable:hover {
+  border-color: rgba(27, 55, 88, 0.22);
+  box-shadow: 0 16px 30px rgba(16, 36, 58, 0.08);
+}
+
+.shipcashbox-archive__cover {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+
+.shipcashbox-archive__cover:focus-visible {
+  outline: 3px solid rgba(27, 55, 88, 0.22);
+  outline-offset: 3px;
 }
 
 .shipcashbox-summary-grid {
@@ -1077,7 +1179,9 @@ body.navdesk-theme-night .shipcashbox-pill,
 body.navdesk-theme-night .shipcashbox-statusline__item,
 body.navdesk-theme-night .shipcashbox-install,
 body.navdesk-theme-night .shipcashbox-modal__card,
-body.navdesk-theme-night .shipcashbox-window-link {
+body.navdesk-theme-night .shipcashbox-window-link,
+body.navdesk-theme-night .shipcashbox-submitted-records,
+body.navdesk-theme-night .shipcashbox-submitted-record__button {
   background:
     linear-gradient(145deg, rgba(22, 35, 47, 0.94), rgba(11, 18, 26, 0.9)),
     rgba(20, 30, 40, 0.92);
@@ -1428,8 +1532,7 @@ body.navdesk-theme-night .shipcashbox-qr {
 
   body.shipcashbox-notebook-focused .shipcashbox-card--notebook .shipcashbox-work-meta,
   body.shipcashbox-notebook-focused .shipcashbox-card--notebook .shipcashbox-metrics,
-  body.shipcashbox-notebook-focused .shipcashbox-card--notebook .shipcashbox-stack,
-  body.shipcashbox-notebook-focused .shipcashbox-notebook-footer {
+  body.shipcashbox-notebook-focused .shipcashbox-card--notebook .shipcashbox-stack {
     display: none;
   }
 
@@ -1439,8 +1542,8 @@ body.navdesk-theme-night .shipcashbox-qr {
   }
 
   body.shipcashbox-notebook-focused .shipcashbox-notebook-textarea {
-    min-height: max(260px, calc(var(--cashbox-vvh, 100svh) - 142px - env(safe-area-inset-bottom)));
-    max-height: max(260px, calc(var(--cashbox-vvh, 100svh) - 142px - env(safe-area-inset-bottom)));
+    min-height: max(240px, calc(var(--cashbox-vvh, 100svh) - 210px - env(safe-area-inset-bottom)));
+    max-height: max(240px, calc(var(--cashbox-vvh, 100svh) - 210px - env(safe-area-inset-bottom)));
     resize: none;
   }
 

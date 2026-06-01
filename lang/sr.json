@@ -1241,5 +1241,19 @@
   "groupNameLabel": "Naziv grupe",
   "groupNamePlaceholder": "Jahta, prelaz ili čarter",
   "cashboxFlowTitle": "Prirodan tok",
-  "participantRemoved": "Učesnik je uklonjen."
+  "participantRemoved": "Učesnik je uklonjen.",
+  "saveNotebookHelp": "Sačuvajte trenutni nacrt odmah. Automatsko čuvanje nastavlja da radi u pozadini.",
+  "submitNotebook": "Pošalji zapise",
+  "submitNotebookHelp": "Pošaljite trenutne redove kao karticu sa datumom i očistite polje za unos.",
+  "emptyNotebookSubmit": "Prvo unesite redove troškova.",
+  "notebookSubmitted": "Zapisi su poslati. Polje za unos je očišćeno.",
+  "submittedRecordsTitle": "Poslati zapisi",
+  "submittedRecordsCount": "{count} zapisa",
+  "submittedRecord": "Zapis",
+  "submittedRecordRestored": "Zapis je vraćen u beležnicu.",
+  "restoreNotebookBatchHelp": "Vratite ovaj zapis u beležnicu radi izmene.",
+  "deleteArchive": "Obriši",
+  "deleteArchiveHelp": "Sakrijte ovaj arhivirani izveštaj sada. Na serveru ostaje 10 dana za oporavak.",
+  "deleteArchiveConfirm": "Obrisati ovu arhivsku karticu? Na serveru ostaje još 10 dana.",
+  "archiveDeleted": "Arhivska kartica je obrisana."
 }

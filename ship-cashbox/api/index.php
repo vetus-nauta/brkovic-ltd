@@ -12,7 +12,7 @@ session_set_cookie_params([
 ]);
 session_start();
 
-const APP_VERSION = '2026.06.01-ship-cashbox-flow-03';
+const APP_VERSION = '2026.06.01-ship-cashbox-batches-01';
 const AUTH_BASE = 'https://brkovic.ltd/api';
 const STORAGE_DIR = __DIR__ . '/../storage';
 const SESSIONS_DIR = STORAGE_DIR . '/sessions';
@@ -445,6 +445,13 @@ function normalize_participant(array $participant, bool $treasurerFallback = fal
         }
         $entries[] = normalize_entry($entry, $index);
     }
+    $notebookBatches = [];
+    foreach (($participant['notebook_batches'] ?? []) as $index => $batch) {
+        if (!is_array($batch)) {
+            continue;
+        }
+        $notebookBatches[] = normalize_notebook_batch($batch, $index);
+    }
 
     return [
         'id' => (string) ($participant['id'] ?? rand_id('part')),
@@ -464,6 +471,7 @@ function normalize_participant(array $participant, bool $treasurerFallback = fal
         'last_synced_at' => $participant['last_synced_at'] ?? null,
         'last_sync_source' => (string) ($participant['last_sync_source'] ?? ''),
         'entries' => $entries,
+        'notebook_batches' => $notebookBatches,
     ];
 }
 
@@ -522,6 +530,62 @@ function parse_notebook(string $text): array {
     }
 
     return $entries;
+}
+
+function notebook_entries_total(array $entries): float {
+    $total = 0.0;
+    foreach ($entries as $entry) {
+        if (($entry['entry_kind'] ?? '') === 'expense') {
+            $total += abs((float) ($entry['amount'] ?? 0));
+        }
+    }
+    return money_round($total);
+}
+
+function create_notebook_batch(string $text, string $source = 'manual'): ?array {
+    $rawText = trim(str_replace("\r", '', $text));
+    if ($rawText === '') {
+        return null;
+    }
+    return normalize_notebook_batch([
+        'id' => rand_id('batch'),
+        'raw_text' => $rawText,
+        'entries' => parse_notebook($rawText),
+        'submitted_at' => now_iso(),
+        'source' => $source,
+    ]);
+}
+
+function normalize_notebook_batch(array $batch, int $index = 0): array {
+    $rawText = str_replace("\r", '', (string) ($batch['raw_text'] ?? $batch['notebook_text'] ?? ''));
+    $entries = [];
+    foreach (($batch['entries'] ?? parse_notebook($rawText)) as $entryIndex => $entry) {
+        if (!is_array($entry)) {
+            continue;
+        }
+        $entries[] = normalize_entry($entry, $entryIndex);
+    }
+
+    return [
+        'id' => (string) ($batch['id'] ?? rand_id('batch')),
+        'batch_index' => $index,
+        'raw_text' => $rawText,
+        'entries' => $entries,
+        'total_expenses' => notebook_entries_total($entries),
+        'submitted_at' => (string) ($batch['submitted_at'] ?? now_iso()),
+        'source' => in_array(($batch['source'] ?? ''), ['manual', 'scheduled'], true) ? (string) $batch['source'] : 'manual',
+    ];
+}
+
+function participant_all_entries(array $participant): array {
+    $entries = [];
+    foreach (($participant['notebook_batches'] ?? []) as $batch) {
+        if (!is_array($batch)) {
+            continue;
+        }
+        $entries = array_merge($entries, array_values(array_filter($batch['entries'] ?? [], 'is_array')));
+    }
+    return array_merge($entries, array_values(array_filter($participant['entries'] ?? [], 'is_array')));
 }
 
 function normalized_treasurer_expense_mode(array $session): string {
@@ -649,7 +713,7 @@ function compute_totals(array $session): array {
         $cashboxExpenses = 0.0;
         $notes = [];
         $usesCashbox = (($participant['id'] ?? '') === $treasurerId) && $resolvedTreasurerMode === 'cashbox';
-        foreach (($participant['entries'] ?? []) as $entry) {
+        foreach (participant_all_entries($participant) as $entry) {
             $kind = $entry['entry_kind'] ?? 'note';
             if ($kind === 'expense') {
                 $amount = abs((float) ($entry['amount'] ?? 0));
@@ -677,7 +741,7 @@ function compute_totals(array $session): array {
             'balance' => 0.0,
             'direct_balance' => 0.0,
             'notes' => $notes,
-            'entries' => $participant['entries'] ?? [],
+            'entries' => participant_all_entries($participant),
         ];
     }
 
@@ -725,6 +789,7 @@ function default_session(string $ownerEmail = ''): array {
         'authorized_at' => $createdAt,
         'notebook_text' => '',
         'entries' => [],
+        'notebook_batches' => [],
     ], true);
 
     return [
@@ -791,7 +856,7 @@ function normalize_session(array $session): array {
         'title' => trim((string) ($session['title'] ?? 'Ship Cashbox')) ?: 'Ship Cashbox',
         'currency' => trim((string) ($session['currency'] ?? 'EUR')) ?: 'EUR',
         'treasurer_expense_mode' => normalized_treasurer_expense_mode($session),
-        'status' => in_array($session['status'] ?? '', ['active', 'closed'], true) ? $session['status'] : 'active',
+        'status' => in_array($session['status'] ?? '', ['active', 'closed', 'deleted'], true) ? $session['status'] : 'active',
         'created_at' => (string) ($session['created_at'] ?? now_iso()),
         'updated_at' => (string) ($session['updated_at'] ?? now_iso()),
         'closed_at' => $session['closed_at'] ?? null,
@@ -958,7 +1023,8 @@ function build_treasurer_payload(?array $session): array {
                     'notebook_hash' => $participant['notebook_hash'] ?? notebook_hash((string) ($participant['notebook_text'] ?? '')),
                     'last_synced_at' => $participant['last_synced_at'] ?? null,
                     'last_sync_source' => $participant['last_sync_source'] ?? '',
-                    'entries' => $participant['entries'],
+                    'entries' => $summary['entries'],
+                    'notebook_batches' => $participant['notebook_batches'] ?? [],
                     'contributions' => $summary['contributions'],
                     'expenses' => $summary['expenses'],
                     'personal_expenses' => $summary['personal_expenses'],
@@ -1016,7 +1082,8 @@ function build_participant_payload(array $session, array $participant): array {
             'cashbox_contribution' => money_input($participant['cashbox_contribution'] ?? 0),
             'authorized_at' => $participant['authorized_at'] ?? null,
             'notebook_text' => $participant['notebook_text'],
-            'entries' => $participant['entries'],
+            'entries' => $summary['entries'],
+            'notebook_batches' => $participant['notebook_batches'] ?? [],
             'contributions' => $summary['contributions'],
             'expenses' => $summary['expenses'],
             'personal_expenses' => $summary['personal_expenses'],
@@ -1038,7 +1105,8 @@ function build_participant_payload(array $session, array $participant): array {
                 'cashbox_contribution' => money_input($participant['cashbox_contribution'] ?? 0),
                 'authorized_at' => $participant['authorized_at'] ?? null,
                 'notebook_text' => $participant['notebook_text'],
-                'entries' => $participant['entries'],
+                'entries' => $summary['entries'],
+                'notebook_batches' => $participant['notebook_batches'] ?? [],
                 'contributions' => $summary['contributions'],
                 'expenses' => $summary['expenses'],
                 'personal_expenses' => $summary['personal_expenses'],
@@ -1104,6 +1172,7 @@ function save_session_meta(array $payload): array {
             'last_synced_at' => $base['last_synced_at'] ?? null,
             'last_sync_source' => $base['last_sync_source'] ?? '',
             'entries' => $base['entries'] ?? [],
+            'notebook_batches' => $base['notebook_batches'] ?? [],
         ], $role === 'treasurer');
         if ($role === 'treasurer') {
             $treasurerId = $participant['id'];
@@ -1140,7 +1209,7 @@ function save_session_meta(array $payload): array {
     return save_session($session);
 }
 
-function save_notebook_text(string $token, string $text, string $source = 'manual'): array {
+function save_notebook_text(string $token, string $text, string $source = 'manual', bool $submit = false): array {
     $session = find_session_by_token($token);
     if (!$session) {
         fail('Инвайт не найден', 404);
@@ -1155,6 +1224,22 @@ function save_notebook_text(string $token, string $text, string $source = 'manua
 
     foreach ($session['participants'] as &$participant) {
         if (($participant['invite_token'] ?? '') !== $token) {
+            continue;
+        }
+        if ($submit) {
+            $batch = create_notebook_batch($text, $source);
+            if (!$batch) {
+                fail('Сначала внесите строки расходов', 422);
+            }
+            $participant['notebook_batches'] = array_values(array_filter($participant['notebook_batches'] ?? [], 'is_array'));
+            $participant['notebook_batches'][] = $batch;
+            $participant['notebook_text'] = '';
+            $participant['notebook_hash'] = notebook_hash('');
+            $participant['entries'] = [];
+            $participant['joined_at'] = $participant['joined_at'] ?: now_iso();
+            $participant['authorized_at'] = $participant['authorized_at'] ?? now_iso();
+            $participant['last_synced_at'] = now_iso();
+            $participant['last_sync_source'] = $source;
             continue;
         }
         if (($participant['notebook_hash'] ?? notebook_hash((string) ($participant['notebook_text'] ?? ''))) === $incomingHash) {
@@ -1183,7 +1268,52 @@ function save_notebook_text(string $token, string $text, string $source = 'manua
         fail('Участник не найден', 404);
     }
     $payload = build_participant_payload($saved, $participant);
-    $payload['sync_result'] = 'updated';
+    $payload['sync_result'] = $submit ? 'submitted' : 'updated';
+    return $payload;
+}
+
+function restore_notebook_batch_by_token(string $token, string $batchId): array {
+    $session = find_session_by_token($token);
+    if (!$session || ($session['status'] ?? '') !== 'active') {
+        fail('Активная касса не найдена', 404);
+    }
+
+    foreach ($session['participants'] as &$participant) {
+        if (($participant['invite_token'] ?? '') !== $token) {
+            continue;
+        }
+        $restoredText = '';
+        $remaining = [];
+        foreach (($participant['notebook_batches'] ?? []) as $batch) {
+            $normalized = is_array($batch) ? normalize_notebook_batch($batch) : null;
+            if ($normalized && $normalized['id'] === $batchId && $restoredText === '') {
+                $restoredText = $normalized['raw_text'];
+                continue;
+            }
+            if ($normalized) {
+                $remaining[] = $normalized;
+            }
+        }
+        if ($restoredText === '') {
+            fail('Запись не найдена', 404);
+        }
+        $currentText = str_replace("\r", '', (string) ($participant['notebook_text'] ?? ''));
+        $participant['notebook_text'] = trim($currentText) === '' ? $restoredText : trim($currentText) . "\n" . $restoredText;
+        $participant['notebook_hash'] = notebook_hash($participant['notebook_text']);
+        $participant['entries'] = parse_notebook($participant['notebook_text']);
+        $participant['notebook_batches'] = $remaining;
+        $participant['last_synced_at'] = now_iso();
+        $participant['last_sync_source'] = 'manual';
+    }
+    unset($participant);
+
+    $saved = save_session($session);
+    $participant = find_participant_by_token($saved, $token);
+    if (!$participant) {
+        fail('Участник не найден', 404);
+    }
+    $payload = build_participant_payload($saved, $participant);
+    $payload['sync_result'] = 'restored';
     return $payload;
 }
 
@@ -1212,13 +1342,69 @@ function save_treasurer_notebook(array $payload): array {
     require_session_owner($session);
 
     $treasurerId = (string) ($session['treasurer_participant_id'] ?? '');
+    $submit = bool_value($payload['submit'] ?? false, false);
     foreach ($session['participants'] as &$participant) {
         if (($participant['id'] ?? '') !== $treasurerId) {
             continue;
         }
-        $participant['notebook_text'] = str_replace("\r", '', (string) ($payload['notebook_text'] ?? ''));
+        $text = str_replace("\r", '', (string) ($payload['notebook_text'] ?? ''));
+        if ($submit) {
+            $batch = create_notebook_batch($text, 'manual');
+            if (!$batch) {
+                fail('Сначала внесите строки расходов', 422);
+            }
+            $participant['notebook_batches'] = array_values(array_filter($participant['notebook_batches'] ?? [], 'is_array'));
+            $participant['notebook_batches'][] = $batch;
+            $participant['notebook_text'] = '';
+        } else {
+            $participant['notebook_text'] = $text;
+        }
         $participant['notebook_hash'] = notebook_hash($participant['notebook_text']);
         $participant['entries'] = parse_notebook($participant['notebook_text']);
+        $participant['last_synced_at'] = now_iso();
+        $participant['last_sync_source'] = 'manual';
+    }
+    unset($participant);
+
+    return save_session($session);
+}
+
+function restore_treasurer_notebook_batch(array $payload): array {
+    $session = find_session((string) ($payload['id'] ?? ''));
+    if (!$session || ($session['status'] ?? '') !== 'active') {
+        fail('Активная касса не найдена', 404);
+    }
+    require_session_owner($session);
+    $batchId = trim((string) ($payload['batch_id'] ?? ''));
+    if ($batchId === '') {
+        fail('Нужен id записи', 422);
+    }
+
+    $treasurerId = (string) ($session['treasurer_participant_id'] ?? '');
+    foreach ($session['participants'] as &$participant) {
+        if (($participant['id'] ?? '') !== $treasurerId) {
+            continue;
+        }
+        $restoredText = '';
+        $remaining = [];
+        foreach (($participant['notebook_batches'] ?? []) as $batch) {
+            $normalized = is_array($batch) ? normalize_notebook_batch($batch) : null;
+            if ($normalized && $normalized['id'] === $batchId && $restoredText === '') {
+                $restoredText = $normalized['raw_text'];
+                continue;
+            }
+            if ($normalized) {
+                $remaining[] = $normalized;
+            }
+        }
+        if ($restoredText === '') {
+            fail('Запись не найдена', 404);
+        }
+        $currentText = str_replace("\r", '', (string) ($participant['notebook_text'] ?? ''));
+        $participant['notebook_text'] = trim($currentText) === '' ? $restoredText : trim($currentText) . "\n" . $restoredText;
+        $participant['notebook_hash'] = notebook_hash($participant['notebook_text']);
+        $participant['entries'] = parse_notebook($participant['notebook_text']);
+        $participant['notebook_batches'] = $remaining;
         $participant['last_synced_at'] = now_iso();
         $participant['last_sync_source'] = 'manual';
     }
@@ -1738,6 +1924,19 @@ function reopen_session(string $id): array {
     return $saved;
 }
 
+function delete_archived_session(string $id): array {
+    $session = find_session($id);
+    if (!$session || ($session['status'] ?? '') !== 'closed') {
+        fail('Закрытая касса не найдена', 404);
+    }
+    require_session_owner($session);
+
+    $session['status'] = 'deleted';
+    $session['deleted_at'] = now_iso();
+    $session['purge_after'] = gmdate('c', time() + 10 * 24 * 60 * 60);
+    return save_session($session);
+}
+
 $action = (string) ($_GET['action'] ?? 'me');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -1815,7 +2014,22 @@ if ($action === 'participant-save') {
     if ($token === '') {
         fail('Нужен invite token', 422);
     }
-    respond(save_notebook_text($token, (string) ($payload['notebook_text'] ?? ''), (string) ($payload['sync_source'] ?? 'manual')));
+    respond(save_notebook_text(
+        $token,
+        (string) ($payload['notebook_text'] ?? ''),
+        (string) ($payload['sync_source'] ?? 'manual'),
+        bool_value($payload['submit'] ?? false, false)
+    ));
+}
+
+if ($action === 'participant-restore-batch') {
+    $payload = input_json();
+    $token = trim((string) ($payload['token'] ?? ''));
+    $batchId = trim((string) ($payload['batch_id'] ?? ''));
+    if ($token === '' || $batchId === '') {
+        fail('Нужен invite token и id записи', 422);
+    }
+    respond(restore_notebook_batch_by_token($token, $batchId));
 }
 
 require_auth();
@@ -1841,6 +2055,10 @@ if ($action === 'save-treasurer-notebook') {
     respond(build_treasurer_payload(save_treasurer_notebook(input_json())) + ['version' => APP_VERSION]);
 }
 
+if ($action === 'restore-treasurer-batch') {
+    respond(build_treasurer_payload(restore_treasurer_notebook_batch(input_json())) + ['version' => APP_VERSION]);
+}
+
 if ($action === 'confirm-settlement') {
     respond(confirm_settlement(input_json()) + ['version' => APP_VERSION]);
 }
@@ -1861,6 +2079,13 @@ if ($action === 'archive-session') {
 if ($action === 'reopen-session') {
     $payload = input_json();
     respond(build_treasurer_payload(reopen_session((string) ($payload['id'] ?? ''))) + ['version' => APP_VERSION]);
+}
+
+if ($action === 'delete-archive-session') {
+    $payload = input_json();
+    delete_archived_session((string) ($payload['id'] ?? ''));
+    $session = find_active_session_for_owner(current_auth_email());
+    respond(build_treasurer_payload($session) + ['version' => APP_VERSION]);
 }
 
 fail('Не найдено', 404);

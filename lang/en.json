@@ -1241,5 +1241,19 @@
   "groupNameLabel": "Group name",
   "groupNamePlaceholder": "Boat, passage or charter name",
   "cashboxFlowTitle": "Native flow",
-  "participantRemoved": "Participant removed."
+  "participantRemoved": "Participant removed.",
+  "saveNotebookHelp": "Save the current draft now. Autosave still works in the background.",
+  "submitNotebook": "Send records",
+  "submitNotebookHelp": "Send the current lines as a dated record card and clear the input window.",
+  "emptyNotebookSubmit": "Add expense lines first.",
+  "notebookSubmitted": "Records sent. The input window is clear.",
+  "submittedRecordsTitle": "Sent records",
+  "submittedRecordsCount": "{count} records",
+  "submittedRecord": "Record",
+  "submittedRecordRestored": "Record returned to the notebook.",
+  "restoreNotebookBatchHelp": "Return this record to the notebook for editing.",
+  "deleteArchive": "Delete",
+  "deleteArchiveHelp": "Hide this archived report now. It remains recoverable on the server for 10 days.",
+  "deleteArchiveConfirm": "Delete this archive card? It will be retained on the server for 10 days.",
+  "archiveDeleted": "Archive card deleted."
 }

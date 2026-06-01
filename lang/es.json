@@ -1241,5 +1241,19 @@
   "groupNameLabel": "Nombre del grupo",
   "groupNamePlaceholder": "Yate, travesía o chárter",
   "cashboxFlowTitle": "Flujo nativo",
-  "participantRemoved": "Participante eliminado."
+  "participantRemoved": "Participante eliminado.",
+  "saveNotebookHelp": "Guarda ahora el borrador actual. El autoguardado sigue funcionando en segundo plano.",
+  "submitNotebook": "Enviar registros",
+  "submitNotebookHelp": "Envía las líneas actuales como tarjeta fechada y limpia el campo de entrada.",
+  "emptyNotebookSubmit": "Añade primero líneas de gasto.",
+  "notebookSubmitted": "Registros enviados. El campo de entrada está limpio.",
+  "submittedRecordsTitle": "Registros enviados",
+  "submittedRecordsCount": "{count} registros",
+  "submittedRecord": "Registro",
+  "submittedRecordRestored": "Registro devuelto al cuaderno.",
+  "restoreNotebookBatchHelp": "Devuelve este registro al cuaderno para editarlo.",
+  "deleteArchive": "Eliminar",
+  "deleteArchiveHelp": "Oculta ahora este informe archivado. En el servidor se conserva 10 días.",
+  "deleteArchiveConfirm": "¿Eliminar esta tarjeta de archivo? Se conservará en el servidor 10 días.",
+  "archiveDeleted": "Tarjeta de archivo eliminada."
 }

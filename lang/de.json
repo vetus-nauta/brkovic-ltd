@@ -1241,5 +1241,19 @@
   "groupNameLabel": "Gruppenname",
   "groupNamePlaceholder": "Yacht, Passage oder Charter",
   "cashboxFlowTitle": "Nativer Ablauf",
-  "participantRemoved": "Teilnehmer entfernt."
+  "participantRemoved": "Teilnehmer entfernt.",
+  "saveNotebookHelp": "Den aktuellen Entwurf jetzt speichern. Die automatische Speicherung läuft weiter.",
+  "submitNotebook": "Einträge senden",
+  "submitNotebookHelp": "Aktuelle Zeilen als datierte Karte senden und das Eingabefeld leeren.",
+  "emptyNotebookSubmit": "Fügen Sie zuerst Ausgabenzeilen hinzu.",
+  "notebookSubmitted": "Einträge gesendet. Das Eingabefeld ist leer.",
+  "submittedRecordsTitle": "Gesendete Einträge",
+  "submittedRecordsCount": "{count} Einträge",
+  "submittedRecord": "Eintrag",
+  "submittedRecordRestored": "Eintrag zurück ins Notizbuch gelegt.",
+  "restoreNotebookBatchHelp": "Diesen Eintrag zur Bearbeitung ins Notizbuch zurücklegen.",
+  "deleteArchive": "Löschen",
+  "deleteArchiveHelp": "Diesen Archivbericht jetzt ausblenden. Auf dem Server bleibt er 10 Tage wiederherstellbar.",
+  "deleteArchiveConfirm": "Diese Archivkarte löschen? Sie bleibt 10 Tage auf dem Server erhalten.",
+  "archiveDeleted": "Archivkarte gelöscht."
 }

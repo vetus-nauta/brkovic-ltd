@@ -8,7 +8,7 @@ const THEME_KEY = "navdesk_watch_theme_v1";
 const ENGAGED_KEY = "ship_cashbox_engaged_v1";
 const DISMISSED_INSTALL_KEY = "ship_cashbox_install_dismissed_v1";
 const BOOT_CACHE_KEY = "ship_cashbox_boot_cache_v1";
-const SHELL_VERSION = "20260601-cashbox-flow-03";
+const SHELL_VERSION = "20260601-cashbox-batches-01";
 const SHELL_REFRESH_KEY = "ship_cashbox_shell_refresh_v1";
 const PARTICIPANT_CACHE_PREFIX = "ship_cashbox_participant_cache_v1_";
 const PARTICIPANT_DRAFT_PREFIX = "ship_cashbox_participant_draft_v1_";
@@ -92,7 +92,7 @@ function scheduleFocusedNotebookIntoView(target) {
   window.clearTimeout(notebookFocusTimer);
   notebookFocusTimer = window.setTimeout(() => {
     if (!(target instanceof HTMLElement) || document.activeElement !== target) return;
-    target.scrollIntoView({ block: "center", behavior: "smooth" });
+    target.scrollIntoView({ block: "nearest", behavior: "auto" });
   }, 260);
 }
 
@@ -790,6 +790,35 @@ function renderNotebookFooter({ label, value, actionHtml = "" }) {
   `;
 }
 
+function notebookBatchTotal(batch) {
+  return Number(batch?.total_expenses || 0);
+}
+
+function renderNotebookBatches(batches = [], currency = "EUR", owner = "participant") {
+  if (!Array.isArray(batches) || !batches.length) return "";
+  return `
+    <div class="shipcashbox-submitted-records" aria-label="${escapeHtml(t("submittedRecordsTitle"))}">
+      <div class="shipcashbox-submitted-records__head">
+        <strong>${escapeHtml(t("submittedRecordsTitle"))}</strong>
+        <span>${escapeHtml(tt("submittedRecordsCount", { count: batches.length }))}</span>
+      </div>
+      <div class="shipcashbox-submitted-records__grid">
+        ${batches.slice().reverse().map((batch) => `
+          <article class="shipcashbox-submitted-record">
+            <button class="shipcashbox-submitted-record__button restore-notebook-batch-btn" type="button" data-owner="${escapeHtml(owner)}" data-batch-id="${escapeHtml(batch.id)}" title="${escapeHtml(t("restoreNotebookBatchHelp"))}" aria-label="${escapeHtml(t("restoreNotebookBatchHelp"))}">
+              <span>
+                <strong>${escapeHtml(t("submittedRecord"))}</strong>
+                <small>${escapeHtml(formatDateTime(batch.submitted_at))}</small>
+              </span>
+              <span class="shipcashbox-submitted-record__sum">${escapeHtml(money(notebookBatchTotal(batch), currency))}</span>
+            </button>
+          </article>
+        `).join("")}
+      </div>
+    </div>
+  `;
+}
+
 function renderNotebookLockOverlay() {
   if (!state.editorLocked || !notebookCanLock()) return "";
   return `
@@ -1018,11 +1047,15 @@ function treasurerNotebookSummary() {
   return session.updated_at ? `${t("autosaveSaved")}: ${formatDateTime(session.updated_at)}` : t("autosaveReady");
 }
 
-async function saveTreasurerNotebook({ preserveFocus = false, silent = false } = {}) {
+async function saveTreasurerNotebook({ preserveFocus = false, silent = false, submit = false } = {}) {
   if (!state.boot?.session) return null;
   window.clearTimeout(state.treasurerAutosaveTimer);
   state.treasurerAutosaveTimer = null;
   const draft = normalizedText(state.treasurerDraft || "");
+  if (submit && !draft.trim()) {
+    setFlash(t("emptyNotebookSubmit"), true);
+    return null;
+  }
   setNotebookMeta("treasurerSaveMeta", t("autosaveSaving"));
   try {
     const payload = await api("save-treasurer-notebook", {
@@ -1030,18 +1063,23 @@ async function saveTreasurerNotebook({ preserveFocus = false, silent = false } =
       body: JSON.stringify({
         id: state.boot.session.id,
         notebook_text: draft,
+        submit,
       }),
     });
     state.boot = payload;
     saveCache(BOOT_CACHE_KEY, payload);
     localStorage.setItem(ENGAGED_KEY, "1");
     const treasurer = (payload.session?.participants || []).find((participant) => participant.id === payload.session?.treasurer_participant_id);
-    state.treasurerDraft = normalizedText(treasurer?.notebook_text || draft);
+    state.treasurerDraft = normalizedText(treasurer?.notebook_text || "");
     try {
       localStorage.setItem(treasurerDraftKey(payload.session?.id), state.treasurerDraft);
     } catch (error) {}
-    preserveSelection("treasurerNotebook", () => render({ preserveWorkspace: true }));
-    if (!silent) setFlash(t("saved"));
+    if (preserveFocus && !submit) {
+      preserveSelection("treasurerNotebook", () => render({ preserveWorkspace: true }));
+    } else {
+      render({ preserveWorkspace: true });
+    }
+    if (!silent) setFlash(t(submit ? "notebookSubmitted" : "saved"));
     return payload;
   } catch (error) {
     setNotebookMeta("treasurerSaveMeta", error.message || t("loadFailed"));
@@ -1090,7 +1128,10 @@ function renderParticipant() {
   const syncMeta = participantSyncSummary();
   const headerMetric = renderMetricPill(t("contributionShort"), money(viewing.contributions, session.currency));
   const footerAction = viewing.is_self && !viewing.read_only
-    ? `<button class="btn btn--secondary" type="button" id="participantSyncButton" title="${escapeHtml(t("syncNowHelp"))}" aria-label="${escapeHtml(t("syncNowHelp"))}">${escapeHtml(t("syncNow"))}</button>`
+    ? `
+        <button class="btn btn--secondary notebook-keep-focus" type="button" id="participantSaveButton" title="${escapeHtml(t("saveNotebookHelp"))}" aria-label="${escapeHtml(t("saveNotebookHelp"))}">${escapeHtml(t("saveNotebook"))}</button>
+        <button class="btn btn--primary notebook-keep-focus" type="button" id="participantSyncButton" title="${escapeHtml(t("syncNowHelp"))}" aria-label="${escapeHtml(t("syncNowHelp"))}">${escapeHtml(t("syncNow"))}</button>
+      `
     : (viewing.is_self ? "" : `<a class="btn btn--secondary" href="?invite=${encodeURIComponent(participant.invite_token)}">${escapeHtml(t("backToMyNotebook"))}</a>`);
   $("participantView").innerHTML = `
     <section class="shipcashbox-card shipcashbox-card--sticky shipcashbox-card--notebook">
@@ -1110,6 +1151,7 @@ function renderParticipant() {
         <textarea id="participantNotebook" class="shipcashbox-notebook-textarea" placeholder="${escapeHtml(t("notebookPlaceholder"))}" aria-label="${escapeHtml(t("participantNotebookTitle"))}" ${readOnly ? "readonly" : ""}>${escapeHtml(viewing.is_self ? state.participantDraft : (viewing.notebook_text || ""))}</textarea>
         ${renderNotebookLockOverlay()}
       </div>
+      ${renderNotebookBatches(viewing.notebook_batches || [], session.currency, viewing.is_self ? "participant" : "readonly")}
       ${readOnly && viewing.is_self && !state.editorLocked ? `<p class="shipcashbox-note">${escapeHtml(t("participantReadonly"))}</p>` : ""}
       ${readOnly && !viewing.is_self ? `<p class="shipcashbox-note">${escapeHtml(t("readonlyParticipantView"))}</p>` : ""}
       ${renderNotebookFooter({
@@ -1125,7 +1167,9 @@ function renderParticipant() {
     saveParticipantDraft($("participantNotebook").value);
     $("participantSyncMeta").textContent = participantSyncSummary();
   });
-  $("participantSyncButton")?.addEventListener("click", () => syncParticipant("manual").catch((error) => setFlash(error.message || t("loadFailed"))));
+  $("participantSaveButton")?.addEventListener("click", () => syncParticipant("manual", { submit: false }).catch((error) => setFlash(error.message || t("loadFailed"))));
+  $("participantSyncButton")?.addEventListener("click", () => syncParticipant("manual", { submit: true }).catch((error) => setFlash(error.message || t("loadFailed"))));
+  bindRestoreNotebookButtons();
   $("openWorkspaceMenuButton")?.addEventListener("click", () => openWorkspaceModal("menu"));
   bindNotebookKeyboardTarget($("participantNotebook"));
   $("unlockNotebookButton")?.addEventListener("click", unlockNotebookEditor);
@@ -1349,18 +1393,14 @@ function renderArchiveRows(archive = [], canReopen = false) {
     return `<div class="shipcashbox-empty">${escapeHtml(t("archiveEmpty"))}</div>`;
   }
   return archive.map((item) => `
-    <article class="shipcashbox-archive__row">
+    <article class="shipcashbox-archive__row shipcashbox-archive__row--selectable">
       <div class="shipcashbox-card__row">
         <strong>${escapeHtml(item.title)}</strong>
         <span class="shipcashbox-archive__status">${escapeHtml(t("archiveStatus"))}</span>
       </div>
       <div class="shipcashbox-archive__meta">${escapeHtml(t("archivedOn"))}: ${escapeHtml(item.closed_at || "")}</div>
       <div class="shipcashbox-archive__meta">${escapeHtml(`${item.participants} · ${money(item.cashbox_balance, item.currency, true)}`)}</div>
-      ${renderExports(item.exports)}
-      <div class="shipcashbox-actions">
-        <button class="btn btn--primary open-archive-session-btn" type="button" data-id="${escapeHtml(item.id)}" title="${escapeHtml(t("openArchiveSnapshot"))}" aria-label="${escapeHtml(t("openArchiveSnapshot"))}">${escapeHtml(t("openArchiveSnapshot"))}</button>
-        ${canReopen ? `<button class="btn btn--secondary reopen-session-btn" type="button" data-id="${escapeHtml(item.id)}" title="${escapeHtml(t("reopenCashboxHelp"))}" aria-label="${escapeHtml(t("reopenCashboxHelp"))}">${escapeHtml(t("reopenCashbox"))}</button>` : ""}
-      </div>
+      <button class="shipcashbox-archive__cover open-archive-session-btn" type="button" data-id="${escapeHtml(item.id)}" data-can-reopen="${canReopen ? "1" : "0"}" title="${escapeHtml(t("openArchiveSnapshot"))}" aria-label="${escapeHtml(t("openArchiveSnapshot"))}"></button>
     </article>
   `).join("");
 }
@@ -1562,7 +1602,11 @@ function renderArchiveDetailWindow(session) {
           <div class="shipcashbox-metric"><span>${escapeHtml(t("summaryContributions"))}</span><strong>${escapeHtml(money(totals.total_contributions, session.currency))}</strong></div>
           <div class="shipcashbox-metric"><span>${escapeHtml(t("summaryShare"))}</span><strong>${escapeHtml(money(totals.share, session.currency))}</strong></div>
         </div>
-        ${renderExports(session.exports || [])}
+        <div class="shipcashbox-actions">
+          ${renderExports(session.exports || [])}
+          <button class="btn btn--primary reopen-session-btn" type="button" data-id="${escapeHtml(session.id)}" title="${escapeHtml(t("reopenCashboxHelp"))}" aria-label="${escapeHtml(t("reopenCashboxHelp"))}">${escapeHtml(t("reopenCashbox"))}</button>
+          <button class="btn btn--secondary delete-archive-session-btn" type="button" data-id="${escapeHtml(session.id)}" title="${escapeHtml(t("deleteArchiveHelp"))}" aria-label="${escapeHtml(t("deleteArchiveHelp"))}">${escapeHtml(t("deleteArchive"))}</button>
+        </div>
       </section>
       <section class="shipcashbox-card shipcashbox-card--window">
         <div class="shipcashbox-card__head">
@@ -1813,6 +1857,13 @@ function renderTreasurer() {
   const attachmentAction = session.status === "active"
     ? `<button class="btn btn--secondary" type="button" id="attachReceiptButton" title="${escapeHtml(t("attachPhotoHelp"))}" aria-label="${escapeHtml(t("attachPhotoHelp"))}">${escapeHtml(t("attachPhoto"))}</button>`
     : "";
+  const notebookAction = session.status === "active"
+    ? `
+        <button class="btn btn--secondary notebook-keep-focus" type="button" id="treasurerSaveButton" title="${escapeHtml(t("saveNotebookHelp"))}" aria-label="${escapeHtml(t("saveNotebookHelp"))}">${escapeHtml(t("saveNotebook"))}</button>
+        <button class="btn btn--primary notebook-keep-focus" type="button" id="treasurerSubmitNotebookButton" title="${escapeHtml(t("submitNotebookHelp"))}" aria-label="${escapeHtml(t("submitNotebookHelp"))}">${escapeHtml(t("submitNotebook"))}</button>
+        ${attachmentAction}
+      `
+    : "";
   $("treasurerView").innerHTML = `
     <div class="shipcashbox-stack">
       <section class="shipcashbox-card shipcashbox-card--sticky shipcashbox-card--notebook">
@@ -1836,6 +1887,7 @@ function renderTreasurer() {
           <textarea id="treasurerNotebook" class="shipcashbox-notebook-textarea" placeholder="${escapeHtml(t("notebookPlaceholder"))}" aria-label="${escapeHtml(t("treasurerNotebookTitle"))}" ${readOnly ? "readonly" : ""}>${escapeHtml(notebookText)}</textarea>
           ${renderNotebookLockOverlay()}
         </div>
+        ${renderNotebookBatches(treasurer?.notebook_batches || [], session.currency, "treasurer")}
         <div class="shipcashbox-stack">
           <div class="shipcashbox-card__row">
             <strong>${escapeHtml(t("photosTitle"))}</strong>
@@ -1846,7 +1898,7 @@ function renderTreasurer() {
         ${renderNotebookFooter({
           label: t("spentFooterLabel"),
           value: money(treasurer?.expenses || 0, session.currency),
-          actionHtml: attachmentAction,
+          actionHtml: notebookAction,
         })}
       </section>
     </div>
@@ -2185,6 +2237,57 @@ async function openArchiveSession(id) {
   }
 }
 
+async function restoreNotebookBatch(owner, batchId) {
+  if (!batchId || owner === "readonly") return null;
+  if (owner === "treasurer") {
+    const payload = await api("restore-treasurer-batch", {
+      method: "POST",
+      body: JSON.stringify({
+        id: state.boot?.session?.id,
+        batch_id: batchId,
+      }),
+    });
+    state.boot = payload;
+    const treasurer = (payload.session?.participants || []).find((participant) => participant.id === payload.session?.treasurer_participant_id);
+    state.treasurerDraft = normalizedText(treasurer?.notebook_text || "");
+    try {
+      localStorage.setItem(treasurerDraftKey(payload.session?.id), state.treasurerDraft);
+    } catch (error) {}
+    saveCache(BOOT_CACHE_KEY, payload);
+    render({ preserveWorkspace: true });
+    setFlash(t("submittedRecordRestored"));
+    return payload;
+  }
+
+  const participant = state.participant?.participant;
+  if (!participant?.invite_token) return null;
+  const payload = await api("participant-restore-batch", {
+    method: "POST",
+    body: JSON.stringify({
+      token: participant.invite_token,
+      batch_id: batchId,
+    }),
+  });
+  state.participant = payload;
+  state.participantDraft = normalizedText(payload.participant?.notebook_text || "");
+  try {
+    localStorage.setItem(participantDraftKey(participant.invite_token), state.participantDraft);
+  } catch (error) {}
+  saveCache(`${PARTICIPANT_CACHE_PREFIX}${participant.invite_token}`, payload);
+  render();
+  setFlash(t("submittedRecordRestored"));
+  return payload;
+}
+
+function bindRestoreNotebookButtons() {
+  document.querySelectorAll(".restore-notebook-batch-btn").forEach((button) => {
+    button.addEventListener("click", () => {
+      restoreNotebookBatch(button.dataset.owner || "", button.dataset.batchId || "")
+        .catch((error) => setFlash(error.message || t("loadFailed"), true));
+    });
+  });
+}
+
 function bindTreasurerUi() {
   $("createSessionButton")?.addEventListener("click", async () => {
     try {
@@ -2207,6 +2310,8 @@ function bindTreasurerUi() {
   $("openWorkspaceMenuButton")?.addEventListener("click", () => openWorkspaceModal("menu"));
   $("quickInviteParticipantButton")?.addEventListener("click", openTeamInviteDraft);
   $("attachReceiptButton")?.addEventListener("click", openAttachmentSheet);
+  $("treasurerSaveButton")?.addEventListener("click", () => saveTreasurerNotebook({ preserveFocus: false, silent: false }).catch((error) => setFlash(error.message || t("loadFailed"), true)));
+  $("treasurerSubmitNotebookButton")?.addEventListener("click", () => saveTreasurerNotebook({ preserveFocus: false, silent: false, submit: true }).catch((error) => setFlash(error.message || t("loadFailed"), true)));
   $("addParticipantButton")?.addEventListener("click", () => addParticipantDraftRow());
   $("treasurerNotebook")?.addEventListener("input", () => {
     saveTreasurerDraft($("treasurerNotebook").value);
@@ -2223,6 +2328,7 @@ function bindTreasurerUi() {
   });
   bindNotebookKeyboardTarget($("treasurerNotebook"));
   $("unlockNotebookButton")?.addEventListener("click", unlockNotebookEditor);
+  bindRestoreNotebookButtons();
   document.querySelectorAll(".delete-attachment-btn").forEach((button) => {
     button.addEventListener("click", async () => {
       if (!window.confirm(t("removePhotoConfirm"))) return;
@@ -2265,6 +2371,23 @@ function bindTreasurerUi() {
         render();
       } catch (error) {
         setFlash(error.message || t("activeCashboxExists"));
+      }
+    });
+  });
+  document.querySelectorAll(".delete-archive-session-btn").forEach((button) => {
+    button.addEventListener("click", async () => {
+      if (!window.confirm(t("deleteArchiveConfirm"))) return;
+      try {
+        const payload = await api("delete-archive-session", {
+          method: "POST",
+          body: JSON.stringify({ id: button.dataset.id }),
+        });
+        state.boot = payload;
+        saveCache(BOOT_CACHE_KEY, payload);
+        openWorkspaceModal("archive");
+        setFlash(t("archiveDeleted"));
+      } catch (error) {
+        setFlash(error.message || t("loadFailed"), true);
       }
     });
   });
@@ -2563,6 +2686,23 @@ function bindWorkspaceModalUi() {
       }
     };
   });
+  document.querySelectorAll(".delete-archive-session-btn").forEach((button) => {
+    button.onclick = async () => {
+      if (!window.confirm(t("deleteArchiveConfirm"))) return;
+      try {
+        const payload = await api("delete-archive-session", {
+          method: "POST",
+          body: JSON.stringify({ id: button.dataset.id }),
+        });
+        state.boot = payload;
+        saveCache(BOOT_CACHE_KEY, payload);
+        openWorkspaceModal("archive");
+        setFlash(t("archiveDeleted"));
+      } catch (error) {
+        setFlash(error.message || t("loadFailed"), true);
+      }
+    };
+  });
   document.querySelectorAll(".open-archive-session-btn").forEach((button) => {
     button.onclick = () => openArchiveSession(button.dataset.id || "");
   });
@@ -2699,16 +2839,21 @@ function currentScheduleSlotId(date = new Date()) {
   return `${dateKey}_${slot.label}`;
 }
 
-async function syncParticipant(syncSource = "manual", { silent = false } = {}) {
+async function syncParticipant(syncSource = "manual", { silent = false, submit = false } = {}) {
   const participant = state.participant?.participant;
   if (!participant || participant.read_only) return null;
   const notebookText = normalizedText(state.participantDraft || participant.notebook_text || "");
+  if (submit && !notebookText.trim()) {
+    setFlash(t("emptyNotebookSubmit"), true);
+    return null;
+  }
   const response = await api("participant-save", {
     method: "POST",
     body: JSON.stringify({
       token: participant.invite_token,
       notebook_text: notebookText,
       sync_source: syncSource,
+      submit,
     }),
   });
 
@@ -2729,7 +2874,7 @@ async function syncParticipant(syncSource = "manual", { silent = false } = {}) {
   saveCache(`${PARTICIPANT_CACHE_PREFIX}${participant.invite_token}`, response);
   localStorage.setItem(ENGAGED_KEY, "1");
   render();
-  if (!silent) setFlash(t("saved"));
+  if (!silent) setFlash(t(response.sync_result === "submitted" ? "notebookSubmitted" : "saved"));
   return response;
 }
 

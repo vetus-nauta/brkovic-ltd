@@ -1241,5 +1241,19 @@
   "groupNameLabel": "小组名称",
   "groupNamePlaceholder": "船名、航段或包船",
   "cashboxFlowTitle": "自然流程",
-  "participantRemoved": "成员已删除。"
+  "participantRemoved": "成员已删除。",
+  "saveNotebookHelp": "立即保存当前草稿。自动保存仍会在后台运行。",
+  "submitNotebook": "发送记录",
+  "submitNotebookHelp": "将当前行发送为带日期的记录卡，并清空输入框。",
+  "emptyNotebookSubmit": "请先添加费用行。",
+  "notebookSubmitted": "记录已发送，输入框已清空。",
+  "submittedRecordsTitle": "已发送记录",
+  "submittedRecordsCount": "{count} 条记录",
+  "submittedRecord": "记录",
+  "submittedRecordRestored": "记录已返回到记事本。",
+  "restoreNotebookBatchHelp": "将此记录返回记事本进行编辑。",
+  "deleteArchive": "删除",
+  "deleteArchiveHelp": "立即隐藏此归档报告。服务器仍保留 10 天以便恢复。",
+  "deleteArchiveConfirm": "删除此归档卡片？服务器将继续保留 10 天。",
+  "archiveDeleted": "归档卡片已删除。"
 }

@@ -1241,5 +1241,19 @@
   "groupNameLabel": "Название группы",
   "groupNamePlaceholder": "Яхта, переход или чартер",
   "cashboxFlowTitle": "Нативный сценарий",
-  "participantRemoved": "Участник удален."
+  "participantRemoved": "Участник удален.",
+  "saveNotebookHelp": "Сохранить текущий черновик сейчас. Автосохранение продолжает работать фоном.",
+  "submitNotebook": "Отправить записи",
+  "submitNotebookHelp": "Сдать текущие строки карточкой с датой и очистить окно ввода.",
+  "emptyNotebookSubmit": "Сначала внесите строки расходов.",
+  "notebookSubmitted": "Записи отправлены. Окно ввода очищено.",
+  "submittedRecordsTitle": "Сданные записи",
+  "submittedRecordsCount": "{count} записей",
+  "submittedRecord": "Запись",
+  "submittedRecordRestored": "Запись возвращена в блокнот.",
+  "restoreNotebookBatchHelp": "Вернуть эту запись в блокнот для правки.",
+  "deleteArchive": "Удалить",
+  "deleteArchiveHelp": "Скрыть архивный отчет сейчас. На сервере он хранится еще 10 дней.",
+  "deleteArchiveConfirm": "Удалить эту карточку архива? На сервере она будет храниться еще 10 дней.",
+  "archiveDeleted": "Карточка архива удалена."
 }

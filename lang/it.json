@@ -1241,5 +1241,19 @@
   "groupNameLabel": "Nome gruppo",
   "groupNamePlaceholder": "Barca, tratta o charter",
   "cashboxFlowTitle": "Flusso nativo",
-  "participantRemoved": "Partecipante rimosso."
+  "participantRemoved": "Partecipante rimosso.",
+  "saveNotebookHelp": "Salva ora la bozza corrente. Il salvataggio automatico continua in background.",
+  "submitNotebook": "Invia registrazioni",
+  "submitNotebookHelp": "Invia le righe correnti come scheda datata e svuota il campo di inserimento.",
+  "emptyNotebookSubmit": "Inserisci prima le righe di spesa.",
+  "notebookSubmitted": "Registrazioni inviate. Il campo di inserimento è vuoto.",
+  "submittedRecordsTitle": "Registrazioni inviate",
+  "submittedRecordsCount": "{count} registrazioni",
+  "submittedRecord": "Registrazione",
+  "submittedRecordRestored": "Registrazione riportata nel taccuino.",
+  "restoreNotebookBatchHelp": "Riporta questa registrazione nel taccuino per modificarla.",
+  "deleteArchive": "Elimina",
+  "deleteArchiveHelp": "Nasconde ora questo report archiviato. Sul server resta recuperabile per 10 giorni.",
+  "deleteArchiveConfirm": "Eliminare questa scheda archivio? Rimarrà sul server per 10 giorni.",
+  "archiveDeleted": "Scheda archivio eliminata."
 }
