@@ -1090,8 +1090,6 @@ function renderParticipantRows(participants) {
       <div class="shipcashbox-participant-row__stats">
         <span class="shipcashbox-pill participant-auth-pill">${escapeHtml(participant.authorized_at ? `${t("authConfirmed")}: ${formatDateTime(participant.authorized_at)}` : t("authPending"))}</span>
         ${participant.role !== "treasurer" ? `<span class="shipcashbox-pill">${escapeHtml(participant.invite_sent_at ? `${t("inviteEmailSentAt")}: ${formatDateTime(participant.invite_sent_at)}` : t("inviteEmailNotSent"))}</span>` : ""}
-        <span class="shipcashbox-pill">${escapeHtml(`${t("summaryExpenses")}: ${money(participant.expenses, state.boot.session.currency)}`)}</span>
-        <span class="shipcashbox-pill">${escapeHtml(participant.last_synced_at ? `${t("syncLast")}: ${formatDateTime(participant.last_synced_at)}` : t("syncNever"))}</span>
       </div>
       <div class="shipcashbox-inline-actions shipcashbox-inline-actions--participant">
         <label class="shipcashbox-choice shipcashbox-choice--split ${participant.role === "treasurer" ? "" : "is-hidden"}">
@@ -1104,8 +1102,6 @@ function renderParticipantRows(participants) {
       <div class="shipcashbox-share-actions">
         ${participant.role !== "treasurer" ? `<button class="btn btn--primary send-invite-email-btn" type="button" data-participant-id="${escapeHtml(participant.id)}" title="${escapeHtml(t("sendInviteEmailHelp"))}" aria-label="${escapeHtml(t("sendInviteEmailHelp"))}">${escapeHtml(t("sendInviteEmail"))}</button>` : ""}
         ${participant.role !== "treasurer" ? `<button class="btn btn--secondary copy-invite-btn" type="button" data-link="${escapeHtml(participant.invite_link)}" title="${escapeHtml(t("copyInviteHelp"))}" aria-label="${escapeHtml(t("copyInviteHelp"))}">${escapeHtml(t("copyInvite"))}</button>` : ""}
-        ${participant.role !== "treasurer" ? `<button class="btn btn--secondary share-invite-btn" type="button" data-link="${escapeHtml(participant.invite_link)}" data-name="${escapeHtml(participant.display_name)}" title="${escapeHtml(t("shareInviteHelp"))}" aria-label="${escapeHtml(t("shareInviteHelp"))}">${escapeHtml(t("shareInvite"))}</button>` : ""}
-        ${participant.role !== "treasurer" ? `<button class="btn btn--secondary qr-invite-btn" type="button" data-link="${escapeHtml(participant.invite_link)}" data-name="${escapeHtml(participant.display_name)}" title="${escapeHtml(t("qrInviteHelp"))}" aria-label="${escapeHtml(t("qrInviteHelp"))}">${escapeHtml(t("qrInvite"))}</button>` : ""}
       </div>
     </div>
   `).join("");
@@ -1130,9 +1126,7 @@ function renderParticipantDraftRow(tempId) {
       </div>
       <div class="shipcashbox-participant-row__stats">
         <span class="shipcashbox-pill participant-auth-pill">${escapeHtml(t("authPending"))}</span>
-        <span class="shipcashbox-pill">${escapeHtml(`${t("summaryExpenses")}: ${money(0, state.boot?.session?.currency || "EUR")}`)}</span>
         <span class="shipcashbox-pill">${escapeHtml(t("inviteLinkPending"))}</span>
-        <span class="shipcashbox-pill">${escapeHtml(t("syncNever"))}</span>
       </div>
       <div class="shipcashbox-inline-actions shipcashbox-inline-actions--participant">
         <button class="btn btn--secondary remove-participant-btn" type="button">${escapeHtml(t("removeParticipant"))}</button>
@@ -1433,13 +1427,16 @@ function renderTreasurerSnapshotWindow(session) {
 
 function renderTreasurerTeamWindow(session) {
   const activeCount = (session.participants || []).filter((participant) => participant.authorized_at).length;
+  const invitedCount = (session.participants || []).filter((participant) => participant.role !== "treasurer" && participant.invite_sent_at).length;
   return `
     <section class="shipcashbox-card shipcashbox-card--window">
       <div class="shipcashbox-teambar">
         <div class="shipcashbox-teambar__copy">
+          <p class="section-heading__eyebrow">${escapeHtml(t("cashboxFlowTitle"))}</p>
           <p class="shipcashbox-note">${escapeHtml(t("teamContributionsText"))}</p>
           <div class="shipcashbox-metrics shipcashbox-metrics--compact shipcashbox-metrics--team">
             <div class="shipcashbox-metric"><span>${escapeHtml(t("participantsTitle"))}</span><strong>${escapeHtml(String((session.participants || []).length))}</strong></div>
+            <div class="shipcashbox-metric"><span>${escapeHtml(t("inviteEmailSentAt"))}</span><strong>${escapeHtml(String(invitedCount))}</strong></div>
             <div class="shipcashbox-metric"><span>${escapeHtml(t("authConfirmed"))}</span><strong>${escapeHtml(String(activeCount))}</strong></div>
           </div>
         </div>
@@ -1710,7 +1707,7 @@ function renderTreasurer() {
   if (!session) {
     $("treasurerView").innerHTML = `
       <div class="shipcashbox-grid">
-        <section class="shipcashbox-card">
+        <section class="shipcashbox-card shipcashbox-card--start">
           <div class="shipcashbox-card__head">
             <div>
               <p class="section-heading__eyebrow">${escapeHtml(t("sessionCardEyebrow"))}</p>
@@ -1718,6 +1715,10 @@ function renderTreasurer() {
             </div>
           </div>
           <p class="shipcashbox-note">${escapeHtml(t("noActiveCashboxText"))}</p>
+          <label class="shipcashbox-field">
+            <span>${escapeHtml(t("groupNameLabel"))}</span>
+            <input type="text" id="newSessionTitleInput" value="" placeholder="${escapeHtml(t("groupNamePlaceholder"))}">
+          </label>
           <div class="shipcashbox-actions">
             <button class="btn btn--primary" type="button" id="createSessionButton">${escapeHtml(t("createCashbox"))}</button>
             <button class="btn btn--secondary" type="button" id="shareToolButton">${escapeHtml(t("shareTool"))}</button>
@@ -2127,7 +2128,9 @@ function bindTreasurerUi() {
     try {
       const payload = await api("create-session", {
         method: "POST",
-        body: JSON.stringify({}),
+        body: JSON.stringify({
+          title: $("newSessionTitleInput")?.value.trim() || "",
+        }),
       });
       state.boot = payload;
       clearTreasurerDraft(payload.session?.id);
@@ -2219,9 +2222,28 @@ function bindParticipantRowActions() {
     };
   });
   document.querySelectorAll(".remove-participant-btn").forEach((button) => {
-    button.onclick = () => {
-      button.closest(".shipcashbox-participant-row")?.remove();
+    button.onclick = async () => {
+      const row = button.closest(".shipcashbox-participant-row");
+      if (!row || row.dataset.isTreasurer === "1") return;
+      const wasDraft = row.classList.contains("shipcashbox-participant-row--draft");
+      const hadData = Boolean(
+        row.querySelector(".participant-name-input")?.value.trim()
+        || row.querySelector(".participant-email-input")?.value.trim()
+        || Number.parseFloat((row.querySelector(".participant-contribution-input")?.value || "0").replace(",", "."))
+      );
+      row.remove();
       refreshParticipantEditorUi();
+      if ((wasDraft && !hadData) || !$("participantsEditor")) {
+        setFlash(t("participantRemoved"));
+        return;
+      }
+      try {
+        await saveSessionMeta({}, { silent: true });
+        setFlash(t("participantRemoved"));
+      } catch (error) {
+        render({ preserveWorkspace: true });
+        setFlash(error.message || t("loadFailed"), true);
+      }
     };
   });
   document.querySelectorAll(".copy-invite-btn").forEach((button) => {

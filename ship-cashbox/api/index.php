@@ -12,7 +12,7 @@ session_set_cookie_params([
 ]);
 session_start();
 
-const APP_VERSION = '2026.06.01-ship-cashbox-mail-01';
+const APP_VERSION = '2026.06.01-ship-cashbox-flow-01';
 const AUTH_BASE = 'https://brkovic.ltd/api';
 const STORAGE_DIR = __DIR__ . '/../storage';
 const SESSIONS_DIR = STORAGE_DIR . '/sessions';
@@ -1281,6 +1281,91 @@ function send_invite_email_message(string $to, string $name, string $link, array
     return mail($to, $encodedSubject, $body, implode("\r\n", $headers), $params);
 }
 
+function send_settlement_email_message(string $to, array $participant, array $session, array $totals, array $lines): bool {
+    if (is_local_request()) {
+        return true;
+    }
+
+    $subject = 'Vetus Nauta / Ship Cashbox settlement';
+    $encodedSubject = function_exists('mb_encode_mimeheader')
+        ? mb_encode_mimeheader($subject, 'UTF-8', 'B', "\r\n")
+        : $subject;
+    $currency = (string) ($session['currency'] ?? 'EUR');
+    $participantId = (string) ($participant['id'] ?? '');
+    $relevantLines = array_values(array_filter($lines, static function (array $line) use ($participantId, $participant): bool {
+        if (($participant['role'] ?? '') === 'treasurer') {
+            return true;
+        }
+        return ($line['from_participant_id'] ?? '') === $participantId || ($line['to_participant_id'] ?? '') === $participantId;
+    }));
+
+    $lineText = "No transfers required.";
+    if ($relevantLines) {
+        $lineText = implode("\n", array_map(static function (array $line) use ($currency): string {
+            return sprintf(
+                '%s -> %s : %s %.2f',
+                (string) ($line['from_display_name'] ?? ''),
+                (string) ($line['to_display_name'] ?? ''),
+                $currency,
+                (float) ($line['amount'] ?? 0)
+            );
+        }, $relevantLines));
+    }
+
+    $summary = $totals['participants'][$participantId] ?? ['contributions' => 0, 'expenses' => 0, 'balance' => 0];
+    $body = "Hello " . ($participant['display_name'] ?? 'crew member') . ",\n\n"
+        . "The Ship Cashbox has been closed for:\n"
+        . ($session['title'] ?? 'Ship Cashbox') . "\n\n"
+        . "Your summary:\n"
+        . "Given to treasurer: {$currency} " . number_format((float) ($summary['contributions'] ?? 0), 2, '.', ' ') . "\n"
+        . "Expenses: {$currency} " . number_format((float) ($summary['expenses'] ?? 0), 2, '.', ' ') . "\n"
+        . "Balance: {$currency} " . number_format((float) ($summary['balance'] ?? 0), 2, '.', ' ') . "\n\n"
+        . "Settlement:\n"
+        . $lineText . "\n\n"
+        . "VETUS NAUTA - Brkovic\n";
+
+    $headers = [
+        'From: VETUS NAUTA - Brkovic <' . MAIL_FROM_ADDRESS . '>',
+        'Sender: ' . MAIL_FROM_ADDRESS,
+        'Reply-To: ' . MAIL_REPLY_TO,
+        'Return-Path: ' . MAIL_FROM_ADDRESS,
+        'Content-Type: text/plain; charset=UTF-8',
+        'Content-Transfer-Encoding: 8bit',
+        'MIME-Version: 1.0',
+        'Date: ' . date(DATE_RFC2822),
+        'Message-ID: <cashbox-settlement-' . bin2hex(random_bytes(8)) . '@brkovic.ltd>',
+        'X-Mailer: PHP/' . PHP_VERSION,
+    ];
+
+    return mail($to, $encodedSubject, $body, implode("\r\n", $headers), '-f ' . escapeshellarg(MAIL_FROM_ADDRESS));
+}
+
+function send_settlement_emails(array $session, array $totals, array $lines): array {
+    $delivery = [];
+    foreach (($session['participants'] ?? []) as $participant) {
+        if (!($participant['active'] ?? true)) {
+            continue;
+        }
+        $email = clean_email($participant['email'] ?? '');
+        if ($email === '') {
+            $delivery[] = [
+                'participant_id' => $participant['id'] ?? '',
+                'email' => '',
+                'sent' => false,
+                'error' => 'missing_email',
+            ];
+            continue;
+        }
+        $delivery[] = [
+            'participant_id' => $participant['id'] ?? '',
+            'email' => $email,
+            'sent' => send_settlement_email_message($email, $participant, $session, $totals, $lines),
+            'error' => null,
+        ];
+    }
+    return $delivery;
+}
+
 function send_participant_invite(array $payload): array {
     $session = find_session((string) ($payload['id'] ?? ''));
     if (!$session || ($session['status'] ?? '') !== 'active') {
@@ -1607,11 +1692,13 @@ function confirm_settlement(array $payload): array {
     if (!$session || ($session['status'] ?? '') !== 'active') {
         fail('Активная касса не найдена', 404);
     }
+    require_session_owner($session);
 
     $totals = compute_totals($session);
     $lines = $totals['settlement_mode'] === 'cashbox'
         ? build_cashbox_settlement_lines($totals['participants'], (string) $session['treasurer_participant_id'])
         : build_direct_settlement_lines($totals['participants'], 'direct_balance');
+    $emailDelivery = send_settlement_emails($session, $totals, $lines);
 
     $session['status'] = 'closed';
     $session['closed_at'] = now_iso();
@@ -1619,6 +1706,7 @@ function confirm_settlement(array $payload): array {
         'confirmed_at' => $session['closed_at'],
         'totals' => $totals,
         'lines' => $lines,
+        'email_delivery' => $emailDelivery,
     ];
     $session['exports'] = create_export_files($session, $totals, $lines);
     $savedClosed = save_session($session);

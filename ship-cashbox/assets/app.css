@@ -469,6 +469,10 @@ body.shipcashbox-modal-open {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.shipcashbox-card--start {
+  align-content: start;
+}
+
 .shipcashbox-field {
   display: grid;
   gap: 6px;
@@ -830,6 +834,11 @@ body.shipcashbox-modal-open {
   border-radius: 16px;
   border: 1px solid rgba(16, 36, 58, 0.08);
   background: rgba(16, 36, 58, 0.03);
+}
+
+.shipcashbox-participant-row--draft {
+  border-style: dashed;
+  background: rgba(47, 110, 168, 0.05);
 }
 
 .shipcashbox-participant-row__top {
