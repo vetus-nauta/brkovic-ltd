@@ -8,12 +8,16 @@ const THEME_KEY = "navdesk_watch_theme_v1";
 const ENGAGED_KEY = "ship_cashbox_engaged_v1";
 const DISMISSED_INSTALL_KEY = "ship_cashbox_install_dismissed_v1";
 const BOOT_CACHE_KEY = "ship_cashbox_boot_cache_v1";
-const SHELL_VERSION = "20260601-cashbox-batches-01";
+const SHELL_VERSION = "20260602-cashbox-debt-pdf-01";
 const SHELL_REFRESH_KEY = "ship_cashbox_shell_refresh_v1";
+const SHELL_PURGE_KEY = "ship_cashbox_shell_purge_v1";
 const PARTICIPANT_CACHE_PREFIX = "ship_cashbox_participant_cache_v1_";
 const PARTICIPANT_DRAFT_PREFIX = "ship_cashbox_participant_draft_v1_";
 const PARTICIPANT_SLOT_PREFIX = "ship_cashbox_participant_slot_v1_";
 const TREASURER_DRAFT_PREFIX = "ship_cashbox_treasurer_draft_v1_";
+const API_TIMEOUT_MS = 18000;
+const AUTH_TIMEOUT_MS = 12000;
+const UPLOAD_TIMEOUT_MS = 90000;
 const EDITOR_PAUSE_LOCK_MS = 5 * 60 * 1000;
 const SYNC_SLOTS = [
   { hour: 0, minute: 0, label: "00:00" },
@@ -49,6 +53,8 @@ const state = {
 const $ = (id) => document.getElementById(id);
 let modalScrollY = 0;
 let notebookFocusTimer = 0;
+let viewerRefreshTimer = 0;
+let viewerCheckPromise = null;
 
 function isModalOpen(id) {
   const modal = $(id);
@@ -162,6 +168,18 @@ function tt(key, replacements = {}) {
   return text;
 }
 
+function tx(key, fallback = "") {
+  return currentTranslations()[key] || fallback || key;
+}
+
+function txf(key, fallback = "", replacements = {}) {
+  let text = tx(key, fallback);
+  Object.entries(replacements).forEach(([name, value]) => {
+    text = text.replaceAll(`{${name}}`, String(value ?? ""));
+  });
+  return text;
+}
+
 function normalizeToolLang(value) {
   const code = String(value || "").trim().toLowerCase().split("-")[0];
   return SUPPORTED_TOOL_LANGS.includes(code) ? code : "";
@@ -190,6 +208,10 @@ function money(value, currency = "EUR", signed = false) {
   }).format(Math.abs(number));
   const prefix = signed ? (number > 0 ? "+" : number < 0 ? "-" : "") : "";
   return `${prefix}${currency} ${formatted}`;
+}
+
+function moneyRound(value) {
+  return Math.round((Number(value || 0) + Number.EPSILON) * 100) / 100;
 }
 
 function slugify(value) {
@@ -254,6 +276,34 @@ function currentParticipantPayload() {
     return (session.participants || []).find((participant) => participant.id === session.treasurer_participant_id) || null;
   }
   return null;
+}
+
+function participantDisplayName(participant, fallback = "") {
+  const name = String(participant?.display_name || "").trim();
+  if (name) return name;
+  const email = String(participant?.email || "").trim();
+  if (email) return email;
+  return fallback;
+}
+
+function currentViewerDisplayLabel() {
+  if (state.viewer === "treasurer") {
+    const session = state.boot?.session;
+    const treasurer = (session?.participants || []).find((participant) => participant.id === session?.treasurer_participant_id);
+    return participantDisplayName(treasurer, t("viewerTreasurer"));
+  }
+  if (state.viewer === "participant") {
+    return participantDisplayName(state.participant?.participant, t("viewerParticipant"));
+  }
+  return t("viewerGuest");
+}
+
+function syncAppModeClasses() {
+  const active = hasActiveGroup();
+  document.body.classList.toggle("shipcashbox-has-active-group", active);
+  document.body.classList.toggle("shipcashbox-viewer-treasurer", state.viewer === "treasurer");
+  document.body.classList.toggle("shipcashbox-viewer-participant", state.viewer === "participant");
+  document.body.classList.toggle("shipcashbox-viewer-guest", state.viewer === "guest");
 }
 
 function notebookCanLock() {
@@ -369,19 +419,19 @@ function buildCashboxPrintDocument({ title = "", subtitle = "", bodyHtml = "" } 
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>${escapeHtml(title)}</title>
 <style>
-  @page { size: A4 landscape; margin: 10mm; }
+  @page { size: A4 landscape; margin: 7mm; }
   html, body { margin: 0; padding: 0; background: #fff; color: #10243a; font-family: Inter, Arial, sans-serif; }
   body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .sheet { width: 100%; box-sizing: border-box; }
-  .header { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; padding-bottom:10px; border-bottom:1px solid rgba(16,36,58,.16); }
-  .brand { display:flex; align-items:flex-start; gap:14px; min-width:0; flex:1; }
-  .logo { width: 220px; height: auto; display:block; }
-  .titles { min-width:0; flex:1; padding-top:2px; }
-  .eyebrow { margin:0 0 3px; font-size:8.6px; letter-spacing:.16em; text-transform:uppercase; color:rgba(16,36,58,.6); }
-  .title { margin:0; font-size:25px; line-height:1.04; font-family: 'Cormorant Garamond', Georgia, serif; font-weight:700; }
-  .subtitle { margin:4px 0 0; font-size:10.8px; line-height:1.35; color:rgba(16,36,58,.82); max-width:145mm; }
-  .motto { margin:0; padding-top:8px; font-size:11.6px; line-height:1.3; font-style:italic; color:rgba(16,36,58,.85); white-space:nowrap; }
-  .summary-grid { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:8px; margin-top:10px; }
+  .sheet { width: 100%; min-height: 196mm; box-sizing: border-box; display:flex; flex-direction:column; }
+  .print-body { flex: 1 1 auto; }
+  .header { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; padding-bottom:5px; border-bottom:1px solid rgba(16,36,58,.13); }
+  .brand { min-width:0; flex:1; }
+  .titles { min-width:0; flex:1; }
+  .eyebrow { margin:0 0 2px; font-size:7px; letter-spacing:.16em; text-transform:uppercase; color:rgba(16,36,58,.56); }
+  .title { margin:0; font-size:16px; line-height:1.04; font-weight:900; letter-spacing:-.018em; }
+  .subtitle { margin:2px 0 0; font-size:8px; line-height:1.25; color:rgba(16,36,58,.7); max-width:170mm; }
+  .motto { margin:0; padding-top:3px; font-size:8.5px; line-height:1.25; font-style:italic; color:rgba(16,36,58,.7); white-space:nowrap; }
+  .summary-grid { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:7px; margin-top:7px; }
   .summary-card, .block, .tree-group { border:1px solid rgba(16,36,58,.14); border-radius:10px; background:#fbfbf8; break-inside:avoid; page-break-inside:avoid; }
   .summary-card { padding:9px 10px; display:grid; gap:4px; }
   .summary-card span { font-size:9.2px; text-transform:uppercase; letter-spacing:.08em; color:rgba(16,36,58,.6); }
@@ -401,6 +451,8 @@ function buildCashboxPrintDocument({ title = "", subtitle = "", bodyHtml = "" } 
   .fill { display:block; height:100%; border-radius:999px; }
   .fill--contribution { background:#2f6ea8; }
   .fill--expense { background:#d38a2c; }
+  .fill--personal { background:#d38a2c; }
+  .fill--cashbox { background:#7856a5; }
   .fill--positive { background:#2e7d5a; }
   .fill--negative { background:#b85b3f; }
   .fill--neutral { background:#7c8b99; }
@@ -414,14 +466,67 @@ function buildCashboxPrintDocument({ title = "", subtitle = "", bodyHtml = "" } 
   .tree-entry strong { font-size:10px; line-height:1.28; }
   .tree-entry span { font-size:8.8px; text-transform:uppercase; letter-spacing:.06em; color:rgba(16,36,58,.62); }
   .empty { font-size:10px; color:rgba(16,36,58,.62); }
-  .footer { margin-top:10px; padding-top:6px; border-top:1px solid rgba(16,36,58,.16); display:flex; justify-content:space-between; gap:12px; font-size:8.6px; color:rgba(16,36,58,.68); }
+  .debt-board { margin-top:7px; padding:7px; border:1px solid rgba(16,36,58,.14); border-radius:12px; background:linear-gradient(135deg, rgba(255,255,255,.96), rgba(246,248,251,.92)); box-shadow:0 6px 18px rgba(14,33,62,.045); break-inside:avoid; page-break-inside:avoid; }
+  .debt-hero { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+  .debt-hero h2 { margin:0; font-size:17px; line-height:1.02; font-weight:900; letter-spacing:-.022em; color:#071b36; }
+  .debt-hero p { margin:2px 0 0; color:#5e6b80; font-size:8.5px; line-height:1.2; }
+  .debt-top-button { flex:0 0 auto; border:1px solid rgba(16,36,58,.14); background:#fff; border-radius:9px; padding:5px 10px; font-size:8.5px; line-height:1.1; font-weight:900; color:#08213f; box-shadow:0 3px 10px rgba(14,33,62,.045); }
+  .debt-summary { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:6px; margin-top:7px; }
+  .debt-summary-card { border:1px solid rgba(16,36,58,.13); border-radius:9px; background:#fff; padding:6px 7px; display:grid; grid-template-columns:19px 1fr auto; gap:5px; align-items:center; break-inside:avoid; page-break-inside:avoid; }
+  .debt-summary-card b { font-size:8.8px; line-height:1.12; }
+  .debt-summary-card small { display:block; margin-top:1px; font-size:7.2px; line-height:1.16; color:rgba(16,36,58,.62); }
+  .debt-summary-card strong { font-size:10.4px; line-height:1.1; }
+  .debt-summary-card--info { grid-template-columns:19px 1fr; }
+  .debt-round { width:18px; height:18px; border-radius:50%; display:inline-grid; place-items:center; font-size:8.3px; font-weight:950; background:#eef1f5; color:#10243a; }
+  .debt-summary-card--bad .debt-round { background:#fff0f0; color:#e21b1b; }
+  .debt-summary-card--good .debt-round { background:#e9f8ef; color:#149557; }
+  .debt-summary-card--info .debt-round { background:#eef5ff; color:#1764e8; }
+  .debt-summary-card--bad strong { color:#b93a31; }
+  .debt-summary-card--good strong { color:#2f7557; }
+  .debt-matrix-block { margin-top:7px; border:1px solid rgba(16,36,58,.13); border-radius:9px; overflow:hidden; background:#fff; break-inside:avoid; page-break-inside:avoid; }
+  .debt-matrix { width:100%; border-collapse:collapse; table-layout:fixed; font-size:7.2px; }
+  .debt-matrix th, .debt-matrix td { border-right:1px solid rgba(16,36,58,.1); border-bottom:1px solid rgba(16,36,58,.1); padding:3px 2.5px; vertical-align:middle; text-align:center; height:20px; }
+  .debt-matrix th { background:#f7f8f4; font-weight:800; color:rgba(16,36,58,.76); }
+  .debt-matrix th:first-child, .debt-matrix td:first-child { text-align:left; width:24mm; }
+  .debt-person { display:flex; align-items:center; gap:3px; min-width:0; }
+  .debt-person span:last-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .debt-avatar { flex:0 0 auto; width:13px; height:13px; border-radius:50%; display:inline-grid; place-items:center; font-size:5.4px; font-weight:900; color:#10243a; background:#dfe8f5; }
+  .debt-avatar--0 { background:#dfe5ff; }
+  .debt-avatar--1 { background:#e0f0ef; }
+  .debt-avatar--2 { background:#ffe6ba; }
+  .debt-avatar--3 { background:#e8e2ff; }
+  .debt-avatar--4 { background:#d9f1f4; }
+  .debt-avatar--5 { background:#f5dddf; }
+  .debt-avatar--6 { background:#e8edda; }
+  .debt-avatar--7 { background:#e6e0d7; }
+  .debt-chip { display:inline-block; padding:2px 4px; border-radius:6px; background:#fff0ee; color:#b93a31; font-weight:900; white-space:nowrap; }
+  .debt-empty { color:rgba(16,36,58,.35); }
+  .debt-total { font-weight:900; }
+  .debt-total--bad { color:#b93a31; }
+  .debt-total--good { color:#2f7557; }
+  .debt-total small { display:block; margin-top:1px; font-size:5.8px; line-height:1.02; color:rgba(16,36,58,.58); }
+  .debt-total-row th, .debt-total-row td { background:#fbfbf8; font-weight:900; }
+  .debt-transfers { margin-top:7px; border:1px solid rgba(16,36,58,.13); border-radius:9px; background:#fbfbf8; padding:7px; break-inside:avoid; page-break-inside:avoid; }
+  .debt-transfers h2 { margin:0 0 5px; font-size:10.4px; }
+  .debt-transfer-grid { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:5px; }
+  .debt-transfer { display:grid; grid-template-columns:1fr auto 1fr; gap:4px; align-items:center; border:1px solid rgba(16,36,58,.1); border-radius:7px; background:#fff; padding:5px; min-height:28px; }
+  .debt-transfer b { font-size:7.4px; line-height:1.1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .debt-transfer em { font-style:normal; font-weight:900; color:rgba(16,36,58,.55); }
+  .debt-transfer strong { grid-column:1/-1; color:#b93a31; font-size:8.8px; line-height:1.05; }
+  .debt-transfer-note { border:1px solid rgba(47,117,87,.18); border-radius:7px; background:#edf8f2; color:#255d47; padding:5px 6px; font-size:7.5px; line-height:1.2; font-weight:800; }
+  .footer { margin-top:auto; padding-top:5px; border-top:1px solid rgba(16,36,58,.14); display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:7.2px; line-height:1.25; color:rgba(16,36,58,.68); }
+  .footer-brand { display:flex; align-items:center; gap:8px; min-width:0; }
+  .footer-logo { width:92px; height:auto; display:block; }
+  .footer-copy { display:grid; gap:1px; min-width:0; }
+  .footer-copy strong { font-size:7.8px; color:rgba(16,36,58,.82); }
+  .footer-copy span { max-width:165mm; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .footer-date { white-space:nowrap; }
 </style>
 </head>
 <body>
   <main class="sheet">
     <header class="header">
       <div class="brand">
-        <img class="logo" src="${PRINT_LOGO_SRC}" alt="Vetus Nauta — Brkovic">
         <div class="titles">
           <p class="eyebrow">Vetus Nauta</p>
           <h1 class="title">${escapeHtml(title)}</h1>
@@ -430,8 +535,17 @@ function buildCashboxPrintDocument({ title = "", subtitle = "", bodyHtml = "" } 
       </div>
       <p class="motto">Have a good watch Captain!</p>
     </header>
-    ${bodyHtml}
-    <footer class="footer"><span>Vetus Nauta — Brkovic</span><span>${escapeHtml(formatDateTime(new Date().toISOString()))}</span></footer>
+    <div class="print-body">${bodyHtml}</div>
+    <footer class="footer">
+      <div class="footer-brand">
+        <img class="footer-logo" src="${PRINT_LOGO_SRC}" alt="Vetus Nauta — Brkovic">
+        <div class="footer-copy">
+          <strong>Vetus Nauta — Brkovic</strong>
+          <span>${escapeHtml(subtitle || title)}</span>
+        </div>
+      </div>
+      <span class="footer-date">${escapeHtml(formatDateTime(new Date().toISOString()))}</span>
+    </footer>
   </main>
   <script>
   window.addEventListener("load", () => { setTimeout(() => window.print(), 120); });
@@ -510,11 +624,13 @@ function clearTreasurerDraft(sessionId) {
 
 async function api(action, options = {}) {
   const [name, query = ""] = String(action).split(/(?=&)/, 2);
-  const response = await fetch(`${API_BASE}${encodeURIComponent(name)}${query}`, {
+  const { timeoutMs = API_TIMEOUT_MS, ...fetchOptions } = options;
+  const response = await fetchWithTimeout(`${API_BASE}${encodeURIComponent(name)}${query}`, {
     credentials: "same-origin",
+    cache: "no-store",
     headers: { "Content-Type": "application/json" },
-    ...options,
-  });
+    ...fetchOptions,
+  }, timeoutMs);
   const data = await response.json().catch(() => ({}));
   if (!response.ok || data.error) {
     throw new Error(data.error || `HTTP ${response.status}`);
@@ -522,12 +638,31 @@ async function api(action, options = {}) {
   return data;
 }
 
+async function fetchWithTimeout(url, options = {}, timeoutMs = API_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      throw new Error(t("requestTimeout"));
+    }
+    throw error;
+  } finally {
+    window.clearTimeout(timer);
+  }
+}
+
 async function adminProxyApi(path, options = {}) {
-  const response = await fetch(`${ADMIN_API_BASE}${path}`, {
+  const { timeoutMs = UPLOAD_TIMEOUT_MS, ...fetchOptions } = options;
+  const response = await fetchWithTimeout(`${ADMIN_API_BASE}${path}`, {
     credentials: "same-origin",
-    ...options,
-    headers: { ...(options.headers || {}) },
-  });
+    ...fetchOptions,
+    headers: { ...(fetchOptions.headers || {}) },
+  }, timeoutMs);
   const contentType = response.headers.get("content-type") || "";
   const data = contentType.includes("application/json") ? await response.json().catch(() => ({})) : {};
   if (!response.ok) {
@@ -579,6 +714,14 @@ async function clearShipCashboxCaches() {
   } catch (error) {}
 }
 
+async function purgeLegacyShellCaches() {
+  if (localStorage.getItem(SHELL_PURGE_KEY) === SHELL_VERSION) return;
+  await clearShipCashboxCaches();
+  try {
+    localStorage.setItem(SHELL_PURGE_KEY, SHELL_VERSION);
+  } catch (error) {}
+}
+
 function setFlash(message = "", persist = false) {
   const box = $("flashMessage");
   if (!message) {
@@ -599,6 +742,25 @@ function setFlash(message = "", persist = false) {
 function setNotebookMeta(id, message) {
   const box = $(id);
   if (box) box.textContent = message;
+}
+
+function setButtonBusy(button, busy, busyText = "") {
+  if (!(button instanceof HTMLButtonElement)) return;
+  if (!button.dataset.idleText) button.dataset.idleText = button.textContent || "";
+  button.disabled = Boolean(busy);
+  button.setAttribute("aria-busy", busy ? "true" : "false");
+  button.classList.toggle("is-busy", Boolean(busy));
+  button.textContent = busy ? (busyText || t("autosaveSaving")) : button.dataset.idleText;
+}
+
+async function runButtonAction(button, busyText, action) {
+  if (!(button instanceof HTMLButtonElement) || button.disabled) return;
+  setButtonBusy(button, true, busyText);
+  try {
+    await action();
+  } finally {
+    setButtonBusy(button, false);
+  }
 }
 
 function preserveSelection(id, callback) {
@@ -709,8 +871,7 @@ function updateTopbarText() {
   if ($("cashboxExitStayButton")) $("cashboxExitStayButton").textContent = t("cashboxExitStay");
   if ($("cashboxExitConfirmButton")) $("cashboxExitConfirmButton").textContent = t("cashboxExitConfirm");
   if ($("onlineStatus")) $("onlineStatus").textContent = navigator.onLine ? t("online") : t("offline");
-  const viewerKey = state.viewer === "treasurer" ? "viewerTreasurer" : state.viewer === "participant" ? "viewerParticipant" : "viewerGuest";
-  if ($("viewerBadge")) $("viewerBadge").textContent = t(viewerKey);
+  if ($("viewerBadge")) $("viewerBadge").textContent = currentViewerDisplayLabel();
   if ($("footerText")) $("footerText").textContent = t("footerText");
   if ($("currentYear")) $("currentYear").textContent = new Date().getFullYear();
   document.title = t("pageTitle");
@@ -778,10 +939,11 @@ function renderMetricPill(label, value) {
   `;
 }
 
-function renderNotebookFooter({ label, value, actionHtml = "" }) {
+function renderNotebookFooter({ label, value, actionHtml = "", statusId = "", statusText = "" }) {
   return `
     <div class="shipcashbox-notebook-footer">
       <div class="shipcashbox-notebook-footer__actions">${actionHtml}</div>
+      ${statusId || statusText ? `<p class="shipcashbox-notebook-footer__status" ${statusId ? `id="${escapeHtml(statusId)}"` : ""}>${escapeHtml(statusText)}</p>` : ""}
       <div class="shipcashbox-notebook-footer__metric">
         <span>${escapeHtml(label)}</span>
         <strong>${escapeHtml(value)}</strong>
@@ -1126,7 +1288,6 @@ function renderParticipant() {
   const viewing = participant.viewing || participant;
   const readOnly = !!viewing.read_only || (viewing.is_self && state.editorLocked);
   const syncMeta = participantSyncSummary();
-  const headerMetric = renderMetricPill(t("contributionShort"), money(viewing.contributions, session.currency));
   const footerAction = viewing.is_self && !viewing.read_only
     ? `
         <button class="btn btn--secondary notebook-keep-focus" type="button" id="participantSaveButton" title="${escapeHtml(t("saveNotebookHelp"))}" aria-label="${escapeHtml(t("saveNotebookHelp"))}">${escapeHtml(t("saveNotebook"))}</button>
@@ -1138,11 +1299,9 @@ function renderParticipant() {
       <div class="shipcashbox-card__head shipcashbox-workhead">
         <div>
           <p class="section-heading__eyebrow">${escapeHtml(session.title)}</p>
-          <h2 class="shipcashbox-work-title">${renderTitleWithHint("participantNotebookTitle", "notebookHelp")}</h2>
-          <p class="shipcashbox-work-meta" id="participantSyncMeta">${escapeHtml(viewing.is_self ? syncMeta : t("viewingReadonly"))}</p>
+          <h2 class="shipcashbox-work-title">${escapeHtml(t("participantNotebookTitle"))}</h2>
         </div>
         <div class="shipcashbox-inline-actions">
-          ${headerMetric}
           <button class="btn btn--secondary" type="button" id="openWorkspaceMenuButton" title="${escapeHtml(t("workspaceMenuHelp"))}" aria-label="${escapeHtml(t("workspaceMenuHelp"))}">${escapeHtml(t("workspaceMenuAction"))}</button>
         </div>
       </div>
@@ -1158,6 +1317,8 @@ function renderParticipant() {
         label: t("spentFooterLabel"),
         value: money(viewing.expenses, session.currency),
         actionHtml: footerAction,
+        statusId: "participantSyncMeta",
+        statusText: viewing.is_self ? syncMeta : t("viewingReadonly"),
       })}
     </section>
   `;
@@ -1167,8 +1328,14 @@ function renderParticipant() {
     saveParticipantDraft($("participantNotebook").value);
     $("participantSyncMeta").textContent = participantSyncSummary();
   });
-  $("participantSaveButton")?.addEventListener("click", () => syncParticipant("manual", { submit: false }).catch((error) => setFlash(error.message || t("loadFailed"))));
-  $("participantSyncButton")?.addEventListener("click", () => syncParticipant("manual", { submit: true }).catch((error) => setFlash(error.message || t("loadFailed"))));
+  $("participantSaveButton")?.addEventListener("click", (event) => {
+    runButtonAction(event.currentTarget, t("autosaveSaving"), () => syncParticipant("manual", { submit: false }))
+      .catch((error) => setFlash(error.message || t("loadFailed")));
+  });
+  $("participantSyncButton")?.addEventListener("click", (event) => {
+    runButtonAction(event.currentTarget, t("submitNotebookBusy"), () => syncParticipant("manual", { submit: true }))
+      .catch((error) => setFlash(error.message || t("loadFailed")));
+  });
   bindRestoreNotebookButtons();
   $("openWorkspaceMenuButton")?.addEventListener("click", () => openWorkspaceModal("menu"));
   bindNotebookKeyboardTarget($("participantNotebook"));
@@ -1243,27 +1410,59 @@ function renderParticipantDraftRow(tempId) {
 }
 
 function renderSummaryCards(participants, currency) {
-  return participants.map((participant) => `
-    <article class="shipcashbox-summary-card">
-      <div class="shipcashbox-card__row">
-        <strong>${escapeHtml(participant.display_name)}</strong>
-        <span class="shipcashbox-pill">${escapeHtml(participant.role === "treasurer" ? t("treasurerTag") : t("participantTag"))}</span>
-      </div>
-      <div class="shipcashbox-summary-grid">
-        <div><span class="shipcashbox-note">${escapeHtml(t("contributionShort"))}</span><strong>${escapeHtml(money(participant.contributions, currency))}</strong></div>
-        <div><span class="shipcashbox-note">${escapeHtml(t("expenseShort"))}</span><strong>${escapeHtml(money(participant.expenses, currency))}</strong></div>
-        <div><span class="shipcashbox-note">${escapeHtml(t("balanceShort"))}</span><strong>${escapeHtml(money(participant.balance, currency, true))}</strong></div>
-      </div>
-    </article>
-  `).join("");
+  return participants.map((participant) => {
+    const cashboxExpenses = participantCashboxExpenses(participant);
+    const expenseRows = [
+      { label: t("contributionShort"), value: money(participant.contributions, currency) },
+      { label: t("personalExpenseShort"), value: money(participantPersonalExpenses(participant), currency) },
+      ...(cashboxExpenses > 0 ? [{ label: t("cashboxExpenseShort"), value: money(cashboxExpenses, currency) }] : []),
+      { label: t("balanceShort"), value: money(participant.balance, currency, true), tone: "balance" },
+    ];
+    return `
+      <article class="shipcashbox-summary-card">
+        <div class="shipcashbox-card__row">
+          <strong>${escapeHtml(participant.display_name)}</strong>
+          <span class="shipcashbox-pill">${escapeHtml(participant.role === "treasurer" ? t("treasurerTag") : t("participantTag"))}</span>
+        </div>
+        <div class="shipcashbox-balance-rows">
+          ${expenseRows.map((row) => `
+            <div class="shipcashbox-balance-row${row.tone ? ` shipcashbox-balance-row--${escapeHtml(row.tone)}` : ""}">
+              <span>${escapeHtml(row.label)}</span>
+              <strong>${escapeHtml(row.value)}</strong>
+            </div>
+          `).join("")}
+        </div>
+      </article>
+    `;
+  }).join("");
 }
 
-function chartMetricDefinitions() {
-  return [
-    { key: "contributions", label: t("summaryContributions"), tone: "contribution", signed: false },
-    { key: "expenses", label: t("summaryExpenses"), tone: "expense", signed: false },
-    { key: "balance", label: t("balanceShort"), tone: "balance", signed: true },
+function participantPersonalExpenses(participant) {
+  if (Object.prototype.hasOwnProperty.call(participant || {}, "personal_expenses")) {
+    return Number(participant.personal_expenses || 0);
+  }
+  return Number(participant?.cashbox_expenses || 0) > 0 ? 0 : Number(participant?.expenses || 0);
+}
+
+function participantCashboxExpenses(participant) {
+  return Number(participant?.cashbox_expenses || 0);
+}
+
+function chartMetricDefinitions(participants = []) {
+  const hasCashboxExpenses = participants.some((participant) => participantCashboxExpenses(participant) > 0);
+  const metrics = [
+    { key: "contributions", label: t("summaryContributions"), tone: "contribution", signed: false, value: (participant) => Number(participant.contributions || 0) },
   ];
+  if (hasCashboxExpenses) {
+    metrics.push(
+      { key: "personal_expenses", label: t("personalExpenseShort"), tone: "personal", signed: false, value: participantPersonalExpenses },
+      { key: "cashbox_expenses", label: t("cashboxExpenseShort"), tone: "cashbox", signed: false, value: participantCashboxExpenses }
+    );
+  } else {
+    metrics.push({ key: "expenses", label: t("summaryExpenses"), tone: "expense", signed: false, value: (participant) => Number(participant.expenses || 0) });
+  }
+  metrics.push({ key: "balance", label: t("balanceShort"), tone: "balance", signed: true, value: (participant) => Number(participant.balance || 0) });
+  return metrics;
 }
 
 function chartMetricTone(metric, value) {
@@ -1280,8 +1479,8 @@ function chartMetricWidth(value, maxValue) {
 }
 
 function buildExpenseChartModel(participants = []) {
-  const metrics = chartMetricDefinitions();
-  const maxValue = Math.max(1, ...participants.flatMap((participant) => metrics.map((metric) => Math.abs(Number(participant[metric.key] || 0)))));
+  const metrics = chartMetricDefinitions(participants);
+  const maxValue = Math.max(1, ...participants.flatMap((participant) => metrics.map((metric) => Math.abs(Number(metric.value(participant) || 0)))));
   return { metrics, maxValue };
 }
 
@@ -1307,7 +1506,7 @@ function renderExpenseDiagram(participants, currency, { print = false } = {}) {
           <div class="${nameClass}">${escapeHtml(participant.display_name)}</div>
           <div class="${metricsClass}">
             ${metrics.map((metric) => {
-              const value = Number(participant[metric.key] || 0);
+              const value = Number(metric.value(participant) || 0);
               const tone = chartMetricTone(metric, value);
               return `
                 <div class="${metricClass}">
@@ -1386,6 +1585,230 @@ function renderSettlementLines(lines, currency) {
       </div>
     `;
   }).join("");
+}
+
+function participantInitials(name, index = 0) {
+  const normalized = String(name || "").replace(/[^\p{L}\p{N}\s@._-]/gu, " ").trim();
+  if (!normalized) return String(index + 1).padStart(2, "0");
+  const emailPrefix = normalized.includes("@") ? normalized.split("@")[0] : normalized;
+  const parts = emailPrefix.split(/[\s._-]+/).filter(Boolean);
+  const letters = parts.length > 1 ? `${parts[0][0] || ""}${parts[1][0] || ""}` : String(parts[0] || "").slice(0, 2);
+  return letters.toUpperCase();
+}
+
+function buildDebtMatrix(session) {
+  const participants = (session.participants || []).filter((participant) => participant.active !== false);
+  const lines = session.settlement_preview?.lines || [];
+  const currency = session.currency || "EUR";
+  const participantById = new Map(participants.map((participant) => [participant.id, participant]));
+  const fallbackParticipant = (id, name) => ({
+    id: id || name,
+    display_name: name || id || "-",
+    active: true,
+  });
+  const ordered = [...participants];
+  const knownIds = new Set(ordered.map((participant) => participant.id));
+
+  lines.forEach((line) => {
+    if (line.from_participant_id && !knownIds.has(line.from_participant_id)) {
+      const participant = fallbackParticipant(line.from_participant_id, line.from_display_name);
+      ordered.push(participant);
+      participantById.set(participant.id, participant);
+      knownIds.add(participant.id);
+    }
+    if (line.to_participant_id && !knownIds.has(line.to_participant_id)) {
+      const participant = fallbackParticipant(line.to_participant_id, line.to_display_name);
+      ordered.push(participant);
+      participantById.set(participant.id, participant);
+      knownIds.add(participant.id);
+    }
+  });
+
+  const matrix = new Map();
+  const outgoing = new Map();
+  const incoming = new Map();
+  const transferLines = [];
+
+  const addAmount = (map, id, amount) => {
+    map.set(id, moneyRound((Number(map.get(id)) || 0) + amount));
+  };
+
+  lines.forEach((line) => {
+    const amount = moneyRound(Number(line.amount || 0));
+    const fromId = line.from_participant_id || line.from_display_name || "";
+    const toId = line.to_participant_id || line.to_display_name || "";
+    if (!fromId || !toId || amount <= 0) return;
+    const key = `${fromId}__${toId}`;
+    matrix.set(key, moneyRound((Number(matrix.get(key)) || 0) + amount));
+    addAmount(outgoing, fromId, amount);
+    addAmount(incoming, toId, amount);
+    transferLines.push({
+      fromId,
+      toId,
+      fromName: line.from_display_name || participantById.get(fromId)?.display_name || fromId,
+      toName: line.to_display_name || participantById.get(toId)?.display_name || toId,
+      amount,
+      kind: line.kind || "participant_transfer",
+    });
+  });
+
+  const totalOutgoing = moneyRound(Array.from(outgoing.values()).reduce((sum, value) => sum + Number(value || 0), 0));
+  const totalIncoming = moneyRound(Array.from(incoming.values()).reduce((sum, value) => sum + Number(value || 0), 0));
+  const neutralCount = ordered.filter((participant) => !(outgoing.get(participant.id) > 0.009) && !(incoming.get(participant.id) > 0.009)).length;
+
+  return {
+    participants: ordered,
+    matrix,
+    outgoing,
+    incoming,
+    transferLines,
+    currency,
+    totalOutgoing,
+    totalIncoming,
+    debtorCount: Array.from(outgoing.values()).filter((value) => Number(value || 0) > 0.009).length,
+    creditorCount: Array.from(incoming.values()).filter((value) => Number(value || 0) > 0.009).length,
+    neutralCount,
+  };
+}
+
+function renderDebtPerson(participant, index) {
+  return `
+    <span class="debt-person">
+      <span class="debt-avatar debt-avatar--${index % 8}">${escapeHtml(participantInitials(participant.display_name, index))}</span>
+      <span>${escapeHtml(participant.display_name || "-")}</span>
+    </span>
+  `;
+}
+
+function renderDebtMatrixTable(session) {
+  const data = buildDebtMatrix(session);
+  if (!data.participants.length) {
+    return `<div class="empty">${escapeHtml(t("emptyLines"))}</div>`;
+  }
+
+  const participantIndex = new Map(data.participants.map((participant, index) => [participant.id, index]));
+  const participantHeadCells = data.participants.map((participant, index) => `
+    <th>${renderDebtPerson(participant, index)}</th>
+  `).join("");
+  const bodyRows = data.participants.map((debtor, rowIndex) => {
+    const cells = data.participants.map((creditor) => {
+      if (debtor.id === creditor.id) return `<td class="debt-empty">-</td>`;
+      const amount = Number(data.matrix.get(`${debtor.id}__${creditor.id}`) || 0);
+      return amount > 0.009
+        ? `<td><span class="debt-chip">${escapeHtml(money(amount, data.currency))}</span></td>`
+        : `<td class="debt-empty">-</td>`;
+    }).join("");
+    const outgoing = Number(data.outgoing.get(debtor.id) || 0);
+    const incoming = Number(data.incoming.get(debtor.id) || 0);
+    const balance = moneyRound(incoming - outgoing);
+    const totalClass = balance < -0.009 ? "debt-total--bad" : balance > 0.009 ? "debt-total--good" : "";
+    const totalLabel = balance < -0.009
+      ? tx("debtMatrixOwes", "должен")
+      : balance > 0.009
+        ? tx("debtMatrixReceives", "получит")
+        : tx("debtMatrixSettled", "закрыто");
+    return `
+      <tr>
+        <th>${renderDebtPerson(debtor, rowIndex)}</th>
+        ${cells}
+        <td class="debt-total ${totalClass}">${escapeHtml(money(Math.abs(balance), data.currency))}<small>${escapeHtml(totalLabel)}</small></td>
+      </tr>
+    `;
+  }).join("");
+  const totalsRow = data.participants.map((participant) => {
+    const amount = Number(data.incoming.get(participant.id) || 0);
+    return `<td class="${amount > 0.009 ? "debt-total--good" : "debt-empty"}">${escapeHtml(amount > 0.009 ? money(amount, data.currency) : "-")}</td>`;
+  }).join("");
+
+  return `
+    <section class="debt-matrix-block">
+      <table class="debt-matrix" aria-label="${escapeHtml(tx("debtMatrixTitle", "Кто кому должен"))}">
+        <thead>
+          <tr>
+            <th>${escapeHtml(tx("debtMatrixDebtor", "Должник"))}</th>
+            ${participantHeadCells}
+            <th>${escapeHtml(tx("debtMatrixResult", "Итог"))}</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${bodyRows}
+          <tr class="debt-total-row">
+            <th>${escapeHtml(tx("debtMatrixTotalReceives", "Итого получит"))}</th>
+            ${totalsRow}
+            <td class="debt-total debt-total--good">${escapeHtml(money(data.totalIncoming, data.currency))}<small>${escapeHtml(tx("debtMatrixTransfers", "переводы"))}</small></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  `;
+}
+
+function renderDebtTransferGrid(session) {
+  const data = buildDebtMatrix(session);
+  if (!data.transferLines.length) {
+    return `<div class="debt-transfer-note">${escapeHtml(tx("noTransfers", "Переводы не требуются."))}</div>`;
+  }
+
+  return `
+    <section class="debt-transfers">
+      <h2>${escapeHtml(tx("debtMatrixFinalTransfers", "Итоговые расчеты"))} <span>(${escapeHtml(String(data.transferLines.length))})</span></h2>
+      <div class="debt-transfer-grid">
+        ${data.transferLines.map((line) => `
+          <article class="debt-transfer">
+            <b>${escapeHtml(line.fromName)}</b>
+            <em>→</em>
+            <b>${escapeHtml(line.toName)}</b>
+            <strong>${escapeHtml(money(line.amount, data.currency))}</strong>
+          </article>
+        `).join("")}
+        <aside class="debt-transfer-note">${escapeHtml(tx("debtMatrixCloseNote", "После этих переводов расчеты группы будут закрыты."))}</aside>
+      </div>
+    </section>
+  `;
+}
+
+function buildDebtMatrixPrintHtml(session) {
+  const data = buildDebtMatrix(session);
+  const bodyHtml = `
+    <section class="debt-board">
+      <header class="debt-hero">
+        <div>
+          <h2>${escapeHtml(tx("debtMatrixTitle", "Кто кому должен"))}</h2>
+          <p>${escapeHtml(txf("debtMatrixParticipantsCount", "{count} участников", { count: data.participants.length }))}</p>
+        </div>
+        <div class="debt-top-button">${escapeHtml(t("settlementTitle"))}</div>
+      </header>
+      <section class="debt-summary" aria-label="${escapeHtml(tx("debtMatrixSummary", "Сводка расчета"))}">
+        <article class="debt-summary-card debt-summary-card--bad">
+          <span class="debt-round">↘</span>
+          <div><b>${escapeHtml(tx("debtMatrixNeedPay", "Нужно доплатить"))}</b><small>${escapeHtml(txf("debtMatrixParticipantsCount", "{count} участников", { count: data.debtorCount }))}</small></div>
+          <strong>${escapeHtml(money(data.totalOutgoing, data.currency))}</strong>
+        </article>
+        <article class="debt-summary-card debt-summary-card--good">
+          <span class="debt-round">↗</span>
+          <div><b>${escapeHtml(tx("debtMatrixNeedReceive", "Нужно вернуть"))}</b><small>${escapeHtml(txf("debtMatrixParticipantsCount", "{count} участников", { count: data.creditorCount }))}</small></div>
+          <strong>${escapeHtml(money(data.totalIncoming, data.currency))}</strong>
+        </article>
+        <article class="debt-summary-card">
+          <span class="debt-round">=</span>
+          <div><b>${escapeHtml(tx("debtMatrixAllOk", "Все в порядке"))}</b><small>${escapeHtml(txf("debtMatrixParticipantsCount", "{count} участников", { count: data.neutralCount }))}</small></div>
+          <strong>${escapeHtml(money(0, data.currency))}</strong>
+        </article>
+        <article class="debt-summary-card debt-summary-card--info">
+          <span class="debt-round">i</span>
+          <div><b>${escapeHtml(tx("debtMatrixHowWorks", "Как это работает"))}</b><small>${escapeHtml(tx("debtMatrixHowWorksText", "Минимизируем количество переводов. Каждый платит только тем, кому должен."))}</small></div>
+        </article>
+      </section>
+      ${renderDebtMatrixTable(session)}
+      ${renderDebtTransferGrid(session)}
+    </section>
+  `;
+
+  return buildCashboxPrintDocument({
+    title: `${session.title || tx("navdesk_tool_cashbox_title", "Ship Cashbox")} / ${tx("debtMatrixTitle", "Кто кому должен")}`,
+    subtitle: tx("debtMatrixSubtitle", "Альбомная таблица финального расчета для печати или сохранения в PDF."),
+    bodyHtml,
+  });
 }
 
 function renderArchiveRows(archive = [], canReopen = false) {
@@ -1478,32 +1901,52 @@ function renderTreasurerReportsWindow(session) {
           </div>
         </div>
         <div class="shipcashbox-summary">${renderSummaryCards(participants, session.currency)}</div>
-      </section>
-      <section class="shipcashbox-card shipcashbox-card--window">
-        <div class="shipcashbox-card__head">
-          <div>
-            <p class="section-heading__eyebrow">${escapeHtml(t("logTitle"))}</p>
-            <h2>${escapeHtml(t("logTitle"))}</h2>
-          </div>
-          <div class="shipcashbox-share-actions">
-            <button class="btn btn--secondary" type="button" id="shareLogButton" title="${escapeHtml(t("shareLogHelp"))}" aria-label="${escapeHtml(t("shareLogHelp"))}">${escapeHtml(t("shareLog"))}</button>
-            <button class="btn btn--secondary" type="button" id="printLogButton" title="${escapeHtml(t("printLogHelp"))}" aria-label="${escapeHtml(t("printLogHelp"))}">${escapeHtml(t("printLog"))}</button>
-          </div>
-        </div>
-        <p class="shipcashbox-note">${escapeHtml(t("logText"))}</p>
-        <div class="shipcashbox-stack">
-          <div>
-            <strong>${escapeHtml(t("logDiagram"))}</strong>
-            <p class="shipcashbox-note">${escapeHtml(t("logDiagramText"))}</p>
-          </div>
-          ${renderExpenseDiagram(participants, session.currency)}
-          <div>
-            <strong>${escapeHtml(t("logTreeTitle"))}</strong>
-          </div>
-          <div class="shipcashbox-log">${renderLogGroups(participants)}</div>
+        <div class="shipcashbox-window-actions">
+          <button class="shipcashbox-window-button print-settlement-pdf-btn" type="button">
+            <strong>${escapeHtml(tx("debtMatrixPdfButton", "Сохранить PDF"))}</strong>
+            <span>${escapeHtml(tx("debtMatrixPdfText", "Альбомная таблица финального расчета"))}</span>
+          </button>
+          ${renderWindowMenuButton("log-diagram", t("logDiagram"), t("logDiagramText"))}
+          ${renderWindowMenuButton("log-tree", t("logTreeTitle"), t("logText"))}
         </div>
       </section>
     </div>
+  `;
+}
+
+function renderTreasurerDiagramWindow(session) {
+  const participants = session.participants || [];
+  return `
+    <section class="shipcashbox-card shipcashbox-card--window">
+      <div class="shipcashbox-card__head">
+        <div>
+          <p class="section-heading__eyebrow">${escapeHtml(t("logTitle"))}</p>
+          <h2>${escapeHtml(t("logDiagram"))}</h2>
+        </div>
+      </div>
+      <p class="shipcashbox-note">${escapeHtml(t("logDiagramText"))}</p>
+      ${renderExpenseDiagram(participants, session.currency)}
+    </section>
+  `;
+}
+
+function renderTreasurerLogTreeWindow(session) {
+  const participants = session.participants || [];
+  return `
+    <section class="shipcashbox-card shipcashbox-card--window">
+      <div class="shipcashbox-card__head">
+        <div>
+          <p class="section-heading__eyebrow">${escapeHtml(t("logTitle"))}</p>
+          <h2>${escapeHtml(t("logTreeTitle"))}</h2>
+        </div>
+        <div class="shipcashbox-share-actions">
+          <button class="btn btn--secondary" type="button" id="shareLogButton" title="${escapeHtml(t("shareLogHelp"))}" aria-label="${escapeHtml(t("shareLogHelp"))}">${escapeHtml(t("shareLog"))}</button>
+          <button class="btn btn--secondary" type="button" id="printLogButton" title="${escapeHtml(t("printLogHelp"))}" aria-label="${escapeHtml(t("printLogHelp"))}">${escapeHtml(t("printLog"))}</button>
+        </div>
+      </div>
+      <p class="shipcashbox-note">${escapeHtml(t("logText"))}</p>
+      <div class="shipcashbox-log">${renderLogGroups(participants)}</div>
+    </section>
   `;
 }
 
@@ -1577,6 +2020,7 @@ function renderTreasurerSettlementWindow(session) {
       <p class="shipcashbox-note">${escapeHtml(settlementText)}</p>
       <div class="shipcashbox-lines">${renderSettlementLines(session.settlement_preview?.lines || [], session.currency)}</div>
       <div class="shipcashbox-actions">
+        <button class="btn btn--secondary print-settlement-pdf-btn" type="button" title="${escapeHtml(tx("debtMatrixPdfHelp", "Открыть альбомный отчет для печати или сохранения в PDF."))}" aria-label="${escapeHtml(tx("debtMatrixPdfHelp", "Открыть альбомный отчет для печати или сохранения в PDF."))}">${escapeHtml(tx("debtMatrixPdfButton", "Сохранить PDF"))}</button>
         <button class="btn btn--primary" type="button" id="confirmSettlementButton" title="${escapeHtml(t("settleNowHelp"))}" aria-label="${escapeHtml(t("settleNowHelp"))}">${escapeHtml(t("settleNow"))}</button>
       </div>
     </section>
@@ -1604,6 +2048,7 @@ function renderArchiveDetailWindow(session) {
         </div>
         <div class="shipcashbox-actions">
           ${renderExports(session.exports || [])}
+          <button class="btn btn--secondary print-archive-settlement-pdf-btn" type="button" data-id="${escapeHtml(session.id)}" title="${escapeHtml(tx("debtMatrixPdfHelp", "Открыть альбомный отчет для печати или сохранения в PDF."))}" aria-label="${escapeHtml(tx("debtMatrixPdfHelp", "Открыть альбомный отчет для печати или сохранения в PDF."))}">${escapeHtml(tx("debtMatrixPdfButton", "Сохранить PDF"))}</button>
           <button class="btn btn--primary reopen-session-btn" type="button" data-id="${escapeHtml(session.id)}" title="${escapeHtml(t("reopenCashboxHelp"))}" aria-label="${escapeHtml(t("reopenCashboxHelp"))}">${escapeHtml(t("reopenCashbox"))}</button>
           <button class="btn btn--secondary delete-archive-session-btn" type="button" data-id="${escapeHtml(session.id)}" title="${escapeHtml(t("deleteArchiveHelp"))}" aria-label="${escapeHtml(t("deleteArchiveHelp"))}">${escapeHtml(t("deleteArchive"))}</button>
         </div>
@@ -1616,6 +2061,9 @@ function renderArchiveDetailWindow(session) {
           </div>
         </div>
         <div class="shipcashbox-lines">${renderSettlementLines(session.settlement_preview?.lines || [], session.currency)}</div>
+        <div class="shipcashbox-actions">
+          <button class="btn btn--secondary print-archive-settlement-pdf-btn" type="button" data-id="${escapeHtml(session.id)}" title="${escapeHtml(tx("debtMatrixPdfHelp", "Открыть альбомный отчет для печати или сохранения в PDF."))}" aria-label="${escapeHtml(tx("debtMatrixPdfHelp", "Открыть альбомный отчет для печати или сохранения в PDF."))}">${escapeHtml(tx("debtMatrixPdfButton", "Сохранить PDF"))}</button>
+        </div>
       </section>
       <section class="shipcashbox-card shipcashbox-card--window">
         <div class="shipcashbox-card__head">
@@ -1785,6 +2233,20 @@ function workspaceWindowPayload(windowName) {
         body: renderTreasurerReportsWindow(session),
       };
     }
+    if (windowName === "log-diagram") {
+      return {
+        eyebrow: t("logTitle"),
+        title: t("logDiagram"),
+        body: renderTreasurerDiagramWindow(session),
+      };
+    }
+    if (windowName === "log-tree") {
+      return {
+        eyebrow: t("logTitle"),
+        title: t("logTreeTitle"),
+        body: renderTreasurerLogTreeWindow(session),
+      };
+    }
   }
 
   if (state.viewer === "participant" && state.participant) {
@@ -1870,18 +2332,11 @@ function renderTreasurer() {
         <div class="shipcashbox-card__head shipcashbox-workhead">
           <div>
             <p class="section-heading__eyebrow">${escapeHtml(session.title)}</p>
-            <h2 class="shipcashbox-work-title">${renderTitleWithHint("treasurerNotebookTitle", "notebookHelp")}</h2>
-            <p class="shipcashbox-work-meta" id="treasurerSaveMeta">${escapeHtml(treasurerNotebookSummary())}</p>
+            <h2 class="shipcashbox-work-title">${escapeHtml(t("treasurerNotebookTitle"))}</h2>
           </div>
           <div class="shipcashbox-inline-actions">
-            ${renderMetricPill(t("contributionShort"), money(treasurer?.contributions || 0, session.currency))}
-            <button class="btn btn--primary" type="button" id="quickInviteParticipantButton" title="${escapeHtml(t("addParticipantHelp"))}" aria-label="${escapeHtml(t("addParticipantHelp"))}">${escapeHtml(t("inviteParticipantShort"))}</button>
             <button class="btn btn--secondary" type="button" id="openWorkspaceMenuButton" title="${escapeHtml(t("workspaceMenuHelp"))}" aria-label="${escapeHtml(t("workspaceMenuHelp"))}">${escapeHtml(t("workspaceMenuAction"))}</button>
           </div>
-        </div>
-        <div class="shipcashbox-metrics shipcashbox-metrics--compact">
-          <div class="shipcashbox-metric"><span>${escapeHtml(t("summaryContributions"))}</span><strong>${escapeHtml(money(totals.total_contributions, session.currency))}</strong></div>
-          <div class="shipcashbox-metric"><span>${escapeHtml(t("syncBalanceLabel"))}</span><strong>${escapeHtml(money(totals.cashbox_balance, session.currency, true))}</strong></div>
         </div>
         <div class="shipcashbox-notebook-shell">
           <textarea id="treasurerNotebook" class="shipcashbox-notebook-textarea" placeholder="${escapeHtml(t("notebookPlaceholder"))}" aria-label="${escapeHtml(t("treasurerNotebookTitle"))}" ${readOnly ? "readonly" : ""}>${escapeHtml(notebookText)}</textarea>
@@ -1899,6 +2354,8 @@ function renderTreasurer() {
           label: t("spentFooterLabel"),
           value: money(treasurer?.expenses || 0, session.currency),
           actionHtml: notebookAction,
+          statusId: "treasurerSaveMeta",
+          statusText: treasurerNotebookSummary(),
         })}
       </section>
     </div>
@@ -2310,8 +2767,14 @@ function bindTreasurerUi() {
   $("openWorkspaceMenuButton")?.addEventListener("click", () => openWorkspaceModal("menu"));
   $("quickInviteParticipantButton")?.addEventListener("click", openTeamInviteDraft);
   $("attachReceiptButton")?.addEventListener("click", openAttachmentSheet);
-  $("treasurerSaveButton")?.addEventListener("click", () => saveTreasurerNotebook({ preserveFocus: false, silent: false }).catch((error) => setFlash(error.message || t("loadFailed"), true)));
-  $("treasurerSubmitNotebookButton")?.addEventListener("click", () => saveTreasurerNotebook({ preserveFocus: false, silent: false, submit: true }).catch((error) => setFlash(error.message || t("loadFailed"), true)));
+  $("treasurerSaveButton")?.addEventListener("click", (event) => {
+    runButtonAction(event.currentTarget, t("autosaveSaving"), () => saveTreasurerNotebook({ preserveFocus: false, silent: false }))
+      .catch((error) => setFlash(error.message || t("loadFailed"), true));
+  });
+  $("treasurerSubmitNotebookButton")?.addEventListener("click", (event) => {
+    runButtonAction(event.currentTarget, t("submitNotebookBusy"), () => saveTreasurerNotebook({ preserveFocus: false, silent: false, submit: true }))
+      .catch((error) => setFlash(error.message || t("loadFailed"), true));
+  });
   $("addParticipantButton")?.addEventListener("click", () => addParticipantDraftRow());
   $("treasurerNotebook")?.addEventListener("input", () => {
     saveTreasurerDraft($("treasurerNotebook").value);
@@ -2653,6 +3116,12 @@ function bindWorkspaceModalUi() {
   $("workspaceShareToolButton")?.addEventListener("click", () => shareToolLink().catch((error) => setFlash(error.message || t("loadFailed"))));
   $("shareLogButton")?.addEventListener("click", () => shareExpenseLog().catch((error) => setFlash(error.message || t("loadFailed"))));
   $("printLogButton")?.addEventListener("click", printExpenseLog);
+  document.querySelectorAll(".print-settlement-pdf-btn").forEach((button) => {
+    button.addEventListener("click", () => printSettlementPdf());
+  });
+  document.querySelectorAll(".print-archive-settlement-pdf-btn").forEach((button) => {
+    button.addEventListener("click", () => printArchiveSettlementPdf(button.dataset.id || ""));
+  });
   $("saveSessionButton") && ($("saveSessionButton").onclick = () => saveSessionMeta().catch((error) => setFlash(error.message || t("loadFailed"))));
   $("addParticipantButton") && ($("addParticipantButton").onclick = () => addParticipantDraftRow());
   $("confirmSettlementButton") && ($("confirmSettlementButton").onclick = async () => {
@@ -2818,6 +3287,31 @@ function printExpenseLog() {
   setFlash(t("printOpenFailed"), true);
 }
 
+function printSettlementPdf(session = state.boot?.session) {
+  if (!session) {
+    setFlash(t("loadFailed"), true);
+    return;
+  }
+  const docHtml = buildDebtMatrixPrintHtml(session);
+  if (!docHtml || openCashboxPrintWindow(docHtml)) return;
+  setFlash(t("printOpenFailed"), true);
+}
+
+async function printArchiveSettlementPdf(id) {
+  const archiveId = String(id || "").trim();
+  if (!archiveId) {
+    printSettlementPdf();
+    return;
+  }
+  try {
+    const payload = await api(`archive-session&id=${encodeURIComponent(archiveId)}`);
+    if (!payload.session) throw new Error(t("archiveEmpty"));
+    printSettlementPdf(payload.session);
+  } catch (error) {
+    setFlash(error.message || t("loadFailed"), true);
+  }
+}
+
 function stopTreasurerAutosave() {
   if (state.treasurerAutosaveTimer) {
     window.clearTimeout(state.treasurerAutosaveTimer);
@@ -2976,6 +3470,16 @@ async function loadParticipant(token) {
 }
 
 async function checkViewer() {
+  if (viewerCheckPromise) return viewerCheckPromise;
+  viewerCheckPromise = checkViewerNow();
+  try {
+    return await viewerCheckPromise;
+  } finally {
+    viewerCheckPromise = null;
+  }
+}
+
+async function checkViewerNow() {
   state.inviteToken = new URLSearchParams(window.location.search).get("invite") || "";
   if (state.inviteToken) {
     await loadParticipant(state.inviteToken);
@@ -2983,7 +3487,7 @@ async function checkViewer() {
   }
 
   try {
-    const me = await api("me");
+    const me = await api("me", { timeoutMs: AUTH_TIMEOUT_MS });
     if (me.authenticated) {
       await loadTreasurerBoot();
       return;
@@ -2993,9 +3497,13 @@ async function checkViewer() {
   const cachedProfile = readToolAuthProfile();
   if (cachedProfile?.authenticated && typeof window.fetchToolAuthStatus === "function") {
     try {
-      const liveProfile = await window.fetchToolAuthStatus({ allowCachedFallback: false });
+      const liveProfile = await withTimeout(
+        window.fetchToolAuthStatus({ allowCachedFallback: false }),
+        AUTH_TIMEOUT_MS,
+        t("requestTimeout")
+      );
       if (liveProfile?.authenticated) {
-        const me = await api("me");
+        const me = await api("me", { timeoutMs: AUTH_TIMEOUT_MS });
         if (me.authenticated) {
           await loadTreasurerBoot();
           return;
@@ -3015,11 +3523,27 @@ async function checkViewer() {
   render();
 }
 
+function withTimeout(promise, timeoutMs, message) {
+  let timer = 0;
+  const timeout = new Promise((_, reject) => {
+    timer = window.setTimeout(() => reject(new Error(message || t("requestTimeout"))), timeoutMs);
+  });
+  return Promise.race([promise, timeout]).finally(() => window.clearTimeout(timer));
+}
+
+function scheduleViewerCheck() {
+  window.clearTimeout(viewerRefreshTimer);
+  viewerRefreshTimer = window.setTimeout(() => {
+    checkViewer().catch((error) => setFlash(error.message || t("loadFailed"), true));
+  }, 120);
+}
+
 function render(options = {}) {
   const shouldPreserveWorkspace = options.preserveWorkspace && isModalOpen("workspaceModal");
   const preservedWorkspaceWindow = shouldPreserveWorkspace ? ($("workspaceModal")?.dataset.window || "menu") : "";
   const preservedWorkspaceScroll = shouldPreserveWorkspace ? ($("workspaceModalBody")?.scrollTop || 0) : 0;
   applyTheme();
+  syncAppModeClasses();
   updateTopbarText();
   if (!shouldPreserveWorkspace) {
     closeWorkspaceModal();
@@ -3042,6 +3566,8 @@ function render(options = {}) {
     stopTreasurerAutosave();
     renderGuest();
   }
+  syncAppModeClasses();
+  updateTopbarText();
   if (shouldPreserveWorkspace) {
     window.requestAnimationFrame(() => {
       openWorkspaceModal(preservedWorkspaceWindow, { scrollTop: preservedWorkspaceScroll });
@@ -3160,6 +3686,10 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
+document.addEventListener("brkovicToolAuthChanged", () => {
+  scheduleViewerCheck();
+});
+
 document.addEventListener("DOMContentLoaded", async () => {
   document.querySelectorAll("#cashboxAppMenuButton, #cashboxMobileMenuButton").forEach((button) => {
     button.addEventListener("click", openAppMenu);
@@ -3226,6 +3756,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   bindMobileKeyboardViewport();
   initLanguage();
   await waitForSiteTranslations();
+  await purgeLegacyShellCaches();
   registerServiceWorker();
   await checkViewer();
 });

@@ -855,6 +855,7 @@
   const TOOL_AUTH_PROMPT_ID = 'toolAuthPromptModal';
   const TOOL_AUTH_CACHE_TTL_MS = 30 * 60 * 1000;
   const TOOL_AUTH_PROXY_PATH = '/admin-api-proxy.php';
+  const TOOL_AUTH_TIMEOUT_MS = 15000;
   let toolAuthStatusPromise = null;
   let toolAuthPromptPromise = null;
 
@@ -865,23 +866,52 @@
   async function toolAuthFetch(route, options = {}) {
     const method = String(options.method || 'GET').toUpperCase();
     const body = options.body === undefined && method === 'POST' ? '{}' : options.body;
+    const timeoutMs = Number(options.timeoutMs || TOOL_AUTH_TIMEOUT_MS);
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
     const sanitizeRaw = (value) => String(value || '')
       .replace(/<[^>]*>/g, ' ')
       .replace(/\\s+/g, ' ')
       .trim();
 
-    const response = await fetch(buildToolAuthApiUrl(route), {
-      credentials: 'include',
-      method,
-      headers: {
-        'Accept': 'application/json',
-        ...(body ? { 'Content-Type': 'application/json' } : {}),
-        ...(options.headers || {}),
-      },
-      body,
-    });
+    let response = null;
+    try {
+      response = await fetch(buildToolAuthApiUrl(route), {
+        credentials: 'include',
+        cache: 'no-store',
+        method,
+        headers: {
+          'Accept': 'application/json',
+          ...(body ? { 'Content-Type': 'application/json' } : {}),
+          ...(options.headers || {}),
+        },
+        body,
+        signal: controller.signal,
+      });
+    } catch (error) {
+      if (error?.name === 'AbortError') {
+        const timeoutError = new Error('Сервер авторизации отвечает слишком долго. Повторите вход через несколько секунд.');
+        timeoutError.status = 408;
+        timeoutError.name = 'ToolAuthError';
+        throw timeoutError;
+      }
+      throw error;
+    }
 
-    const raw = await response.text();
+    let raw = '';
+    try {
+      raw = await response.text();
+    } catch (error) {
+      if (error?.name === 'AbortError') {
+        const timeoutError = new Error('Сервер авторизации отвечает слишком долго. Повторите вход через несколько секунд.');
+        timeoutError.status = 408;
+        timeoutError.name = 'ToolAuthError';
+        throw timeoutError;
+      }
+      throw error;
+    } finally {
+      window.clearTimeout(timeout);
+    }
     const contentType = String(response.headers.get('content-type') || '').toLowerCase();
     const isHtmlResponse = contentType.includes('text/html') || /^\s*</.test(raw);
     if (isHtmlResponse) {

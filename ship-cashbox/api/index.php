@@ -12,7 +12,7 @@ session_set_cookie_params([
 ]);
 session_start();
 
-const APP_VERSION = '2026.06.01-ship-cashbox-mail-01';
+const APP_VERSION = '2026.06.01-ship-cashbox-auth-01';
 const AUTH_BASE = 'https://brkovic.ltd/api';
 const STORAGE_DIR = __DIR__ . '/../storage';
 const SESSIONS_DIR = STORAGE_DIR . '/sessions';
@@ -21,6 +21,8 @@ const INDEX_FILE = STORAGE_DIR . '/index.json';
 const AUTH_COOKIE = 'ship_cashbox_auth';
 const MAIL_FROM_ADDRESS = 'brkovic@brkovic.ltd';
 const MAIL_REPLY_TO = 'vetus.nauta@gmail.com';
+const AUTH_REQUEST_TIMEOUT = 7;
+const AUTH_CONNECT_TIMEOUT = 4;
 
 function respond(array $payload, int $status = 200): void {
     http_response_code($status);
@@ -122,7 +124,8 @@ function auth_request(string $route, string $method = 'GET', array $payload = []
         CURLOPT_FOLLOWLOCATION => false,
         CURLOPT_CUSTOMREQUEST => $method,
         CURLOPT_HTTPHEADER => $headers,
-        CURLOPT_TIMEOUT => 25,
+        CURLOPT_TIMEOUT => AUTH_REQUEST_TIMEOUT,
+        CURLOPT_CONNECTTIMEOUT => AUTH_CONNECT_TIMEOUT,
     ]);
 
     if ($method !== 'GET') {
@@ -133,7 +136,14 @@ function auth_request(string $route, string $method = 'GET', array $payload = []
     if ($response === false) {
         $message = curl_error($ch) ?: 'Auth request failed';
         curl_close($ch);
-        fail($message, 502);
+        return [
+            'status' => 502,
+            'data' => [
+                'error' => [
+                    'message' => $message,
+                ],
+            ],
+        ];
     }
 
     $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
@@ -259,31 +269,40 @@ function auth_payload_from_response(array $auth): array {
 }
 
 function current_auth_profile(): array {
+    static $cachedProfile = null;
+    if (is_array($cachedProfile)) {
+        return $cachedProfile;
+    }
+
     if (is_local_request()) {
-        return [
+        $cachedProfile = [
             'authenticated' => true,
             'email' => 'local@brkovic.ltd',
             'displayName' => 'Local treasurer',
         ];
+        return $cachedProfile;
     }
 
     if (auth_cookie_header() === '' && !has_local_auth_cookie()) {
-        return ['authenticated' => false];
+        $cachedProfile = ['authenticated' => false];
+        return $cachedProfile;
     }
 
     foreach (['/auth/me', '/auth/user/me'] as $route) {
         $auth = auth_request($route);
         $payload = auth_payload_from_response($auth);
         if (($auth['status'] ?? 500) < 400 && (bool) ($payload['authenticated'] ?? false)) {
-            return [
+            $cachedProfile = [
                 'authenticated' => true,
                 'email' => clean_email($payload['email'] ?? $payload['user']['email'] ?? ''),
                 'displayName' => trim((string) ($payload['displayName'] ?? $payload['user']['displayName'] ?? $payload['name'] ?? '')),
             ];
+            return $cachedProfile;
         }
     }
 
-    return ['authenticated' => has_local_auth_cookie()];
+    $cachedProfile = ['authenticated' => has_local_auth_cookie()];
+    return $cachedProfile;
 }
 
 function current_auth_email(): string {
@@ -302,20 +321,11 @@ function authenticated(): bool {
     if (has_local_auth_cookie()) {
         return true;
     }
-    if (has_shared_site_auth()) {
-        return true;
-    }
     if (auth_cookie_header() === '') {
         return false;
     }
-    foreach (['/auth/me', '/auth/user/me'] as $route) {
-        $me = auth_request($route);
-        $payload = $me['data']['data']['data'] ?? $me['data']['data'] ?? $me['data'];
-        if ((bool) ($payload['authenticated'] ?? false)) {
-            return true;
-        }
-    }
-    return false;
+    $profile = current_auth_profile();
+    return (bool) ($profile['authenticated'] ?? false);
 }
 
 function require_auth(): void {

@@ -1,13 +1,13 @@
-const CACHE_NAME = "ship-cashbox-shell-v20260601-18";
+const CACHE_NAME = "ship-cashbox-shell-v20260602-01";
 const SHELL = [
   "./index.html",
-  "./assets/app.css?v=20260601-cashbox-batches-01",
-  "./assets/app.js?v=20260601-cashbox-batches-01",
+  "./assets/app.css?v=20260602-cashbox-debt-pdf-01",
+  "./assets/app.js?v=20260602-cashbox-debt-pdf-01",
   "./manifest.webmanifest",
   "../js/config.js",
   "../js/language.js?v=20260531-language-menu-01",
   "../js/seo.js?v=20260531-clarity-01",
-  "../js/main.js?v=20260601-auth-flow-02",
+  "../js/main.js?v=20260601-auth-flow-04",
   "../js/navdesk.js?v=20260601-runtime-i18n-01",
   "../lang/ru.json",
   "../lang/en.json",
@@ -65,6 +65,18 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET") return;
   const url = new URL(request.url);
   const isSameOrigin = url.origin === self.location.origin;
+  const isDynamicRequest = isSameOrigin && (
+    url.pathname.startsWith("/ship-cashbox/api/")
+    || url.pathname.startsWith("/admin-api-proxy.php")
+    || url.pathname.startsWith("/api/")
+    || url.pathname.startsWith("/forms/")
+  );
+
+  if (isDynamicRequest) {
+    event.respondWith(fetch(request, { cache: "no-store" }));
+    return;
+  }
+
   const isRuntimeShell = isSameOrigin && (
     request.mode === "navigate"
     || request.destination === "document"
