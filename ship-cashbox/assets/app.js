@@ -8,6 +8,8 @@ const THEME_KEY = "navdesk_watch_theme_v1";
 const ENGAGED_KEY = "ship_cashbox_engaged_v1";
 const DISMISSED_INSTALL_KEY = "ship_cashbox_install_dismissed_v1";
 const BOOT_CACHE_KEY = "ship_cashbox_boot_cache_v1";
+const SHELL_VERSION = "20260601-cashbox-flow-02";
+const SHELL_REFRESH_KEY = "ship_cashbox_shell_refresh_v1";
 const PARTICIPANT_CACHE_PREFIX = "ship_cashbox_participant_cache_v1_";
 const PARTICIPANT_DRAFT_PREFIX = "ship_cashbox_participant_draft_v1_";
 const PARTICIPANT_SLOT_PREFIX = "ship_cashbox_participant_slot_v1_";
@@ -2843,8 +2845,17 @@ function render(options = {}) {
 
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
+  navigator.serviceWorker.addEventListener("message", (event) => {
+    if (event.data?.type !== "SHIP_CASHBOX_SW_ACTIVATED") return;
+    if (localStorage.getItem(SHELL_REFRESH_KEY) === event.data.cache) return;
+    localStorage.setItem(SHELL_REFRESH_KEY, event.data.cache || SHELL_VERSION);
+    window.location.reload();
+  });
   navigator.serviceWorker.register("./sw.js").then((registration) => {
     registration.update().catch(() => {});
+    if (registration.waiting) {
+      registration.waiting.postMessage({ type: "SKIP_WAITING" });
+    }
   }).catch(() => {});
 }
 

@@ -1,8 +1,8 @@
-const CACHE_NAME = "ship-cashbox-shell-v20260601-14";
+const CACHE_NAME = "ship-cashbox-shell-v20260601-15";
 const SHELL = [
   "./index.html",
-  "./assets/app.css?v=20260601-cashbox-flow-01",
-  "./assets/app.js?v=20260601-cashbox-flow-01",
+  "./assets/app.css?v=20260601-cashbox-flow-02",
+  "./assets/app.js?v=20260601-cashbox-flow-02",
   "./manifest.webmanifest",
   "../js/config.js",
   "../js/language.js?v=20260531-language-menu-01",
@@ -34,9 +34,29 @@ self.addEventListener("install", (event) => {
   );
 });
 
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});
+
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))).then(() => self.clients.claim())
+    caches.keys()
+      .then((keys) => Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))))
+      .then(() => self.clients.claim())
+      .then(() => self.clients.matchAll({ type: "window", includeUncontrolled: true }))
+      .then((clients) => Promise.all(clients.map((client) => {
+        const url = new URL(client.url);
+        if (url.origin === self.location.origin && url.pathname.includes("/ship-cashbox/")) {
+          client.postMessage({ type: "SHIP_CASHBOX_SW_ACTIVATED", cache: CACHE_NAME });
+          if (!url.searchParams.has("sw-refresh")) {
+            url.searchParams.set("sw-refresh", CACHE_NAME);
+            return client.navigate(url.toString()).catch(() => {});
+          }
+        }
+        return Promise.resolve();
+      })))
   );
 });
 
