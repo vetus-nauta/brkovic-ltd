@@ -1,6 +1,7 @@
 {
   "meta_lang": "en",
   "meta_title": "BRKOVIC — Personal Yacht Expertise, Deliveries & Deck Log",
+  "meta_description": "VETUS NAUTA - Brkovic: yacht management, skipper service, IYT training, sea tours, yacht delivery, registration support, Deck Log and Nav Desk tools.",
   "navdesk_meta_title": "VETUS NAUTA — Brkovic | Nav Desk",
   "navdesk_watch_meta_title": "VETUS NAUTA — Brkovic | Watch Log",
   "navdesk_tides_meta_title": "VETUS NAUTA — Brkovic | Tides and Passage Window",
@@ -377,9 +378,14 @@
   "navdesk_tool_watch_kicker": "Log",
   "navdesk_tool_watch_title": "Watch log",
   "navdesk_tool_watch_text": "Watch schedule, current shift and working passage notes.",
+  "navdesk_watch_heading": "Current watch and passage entries",
   "navdesk_tool_learning_kicker": "Training",
   "navdesk_tool_learning_title": "Training games",
   "navdesk_tool_learning_text": "Maritime game trainers for Sea Speak, VHF, short watches and mistake practice.",
+  "navdesk_watch_intro": "A working log for situation notes, dead reckoning, watch changes and passage events from a few hours to a month.",
+  "navdesk_english_title": "Maritime English",
+  "navdesk_english_intro": "A future Nav Desk learning tool.",
+  "navdesk_english_description": "Cards and exercises for VHF communication, navigation wording, rules and practical maritime phrases will appear here.",
   "navdesk_abbrev_eyebrow": "Nav Abbrev",
   "navdesk_abbrev_title": "Navigation abbreviations",
   "navdesk_abbrev_intro": "Enter a plotter or radar abbreviation to get a decoding and short explanation.",
@@ -1164,5 +1170,10 @@
   "cashboxMenuLanguage": "Language",
   "cashboxMenuTheme": "Theme",
   "cashboxMenuAccount": "Account",
-  "cashboxMenuAccountText": "Sign in to open working tools and your cashbox."
+  "cashboxMenuAccountText": "Sign in to open working tools and your cashbox.",
+  "navdesk_route_meta_description": "Great circle, rhumb line, true course and intermediate coordinate calculator for yacht passage planning.",
+  "navdesk_tides_meta_description": "Tide, depth, draft and under-keel clearance planning tool for preliminary yacht passage-window calculations.",
+  "navdesk_ukv_meta_description": "VHF radio spelling, vessel profile and working message templates for practical maritime communication.",
+  "navdesk_watch_meta_description": "Yacht watch schedule, current watch and working passage notes for small crew passage planning.",
+  "navdesk_english_meta_description": "Maritime English learning section for practical yacht communication, VHF phrases and Sea Speak practice."
 }

@@ -20,22 +20,48 @@
 </IfModule>
 
 <IfModule mod_headers.c>
-  <FilesMatch "^(admin-posts|admin-comments)\.html$">
+  <FilesMatch "^(admin|admin-posts|admin-comments|admin-management|admin-mnr|admin-seo|ops-login|404)\.html$">
+    Header set X-Robots-Tag "noindex, nofollow, noarchive"
+  </FilesMatch>
+  <FilesMatch "^(admin-api-proxy|admin-seo-api|management-admin-api)\.php$">
+    Header set X-Robots-Tag "noindex, nofollow, noarchive"
+  </FilesMatch>
+  <FilesMatch "^(send|delivery-distance|forecast|search|weekly|window)\.php$">
     Header set X-Robots-Tag "noindex, nofollow, noarchive"
   </FilesMatch>
 </IfModule>
 
-# === OPS MIGRATION REDIRECTS ===
 RewriteEngine On
 
-RewriteRule ^ops/?$ https://brkovic.app/ [R=301,L]
-RewriteRule ^admin/ops/?$ https://brkovic.app/ [R=301,L]
-RewriteRule ^ops-login\.html$ https://brkovic.app/ [R=301,L]
+# === SEO LANGUAGE URLS ===
+RewriteCond %{QUERY_STRING} ^slug=([^&]+)&lang=(ru|de|it|es|sr|zh)$
+RewriteRule ^journal\.html$ /%2/journal.html?slug=%1 [R=301,L]
 
+RewriteCond %{QUERY_STRING} ^lang=(ru|de|it|es|sr|zh)&slug=([^&]+)$
+RewriteRule ^journal\.html$ /%1/journal.html?slug=%2 [R=301,L]
+
+RewriteCond %{QUERY_STRING} ^collection=([^&]+)&lang=(ru|de|it|es|sr|zh)$
+RewriteRule ^journal\.html$ /%2/journal.html?collection=%1 [R=301,L]
+
+RewriteCond %{QUERY_STRING} ^lang=(ru|de|it|es|sr|zh)&collection=([^&]+)$
+RewriteRule ^journal\.html$ /%1/journal.html?collection=%2 [R=301,L]
+
+RewriteCond %{QUERY_STRING} ^lang=en$
+RewriteRule ^index\.html$ /? [R=301,L]
+
+RewriteCond %{QUERY_STRING} ^lang=en$
+RewriteRule ^(.+)$ /$1? [R=301,L]
+
+RewriteCond %{QUERY_STRING} ^lang=(ru|de|it|es|sr|zh)$
+RewriteRule ^$ /%1/? [R=301,L]
+
+RewriteCond %{QUERY_STRING} ^lang=(ru|de|it|es|sr|zh)$
+RewriteRule ^index\.html$ /%1/? [R=301,L]
+
+RewriteCond %{QUERY_STRING} ^lang=(ru|de|it|es|sr|zh)$
+RewriteRule ^(.+)$ /%1/$1? [R=301,L]
 
 # === OPS MIGRATION REDIRECTS ===
-RewriteEngine On
-
 RewriteRule ^ops/?$ https://brkovic.app/ [R=301,L]
 RewriteRule ^admin/ops/?$ https://brkovic.app/ [R=301,L]
 RewriteRule ^ops-login\.html$ https://brkovic.app/ [R=301,L]

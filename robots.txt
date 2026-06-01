@@ -12,6 +12,8 @@ Disallow: /admin-management.html
 Disallow: /admin-mnr.html
 Disallow: /management-admin-api.php
 Disallow: /admin-api-proxy.php
+Disallow: /api/
+Disallow: /forms/
 Disallow: /ship-cashbox/api/
 Disallow: /ship-cashbox/storage/
 Disallow: /ops/

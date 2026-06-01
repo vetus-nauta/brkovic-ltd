@@ -194,7 +194,19 @@ function brk_seo_write_settings(array $data): array {
     return $settings;
 }
 
-function brk_seo_pages(): array {
+function brk_seo_languages(): array {
+    return [
+        'en' => 'English',
+        'ru' => 'Русский',
+        'de' => 'Deutsch',
+        'it' => 'Italiano',
+        'es' => 'Español',
+        'sr' => 'Srpski',
+        'zh' => '中文',
+    ];
+}
+
+function brk_seo_base_pages(): array {
     return [
         ['path' => '/', 'label' => 'Главная', 'type' => 'home'],
         ['path' => '/journal.html', 'label' => 'Судовой журнал', 'type' => 'journal'],
@@ -215,9 +227,38 @@ function brk_seo_pages(): array {
     ];
 }
 
+function brk_seo_localized_path(string $path, string $lang): string {
+    if ($lang === 'en') {
+        return $path;
+    }
+    if ($path === '/') {
+        return '/' . $lang . '/';
+    }
+    return '/' . $lang . $path;
+}
+
+function brk_seo_pages(): array {
+    $pages = [];
+    foreach (brk_seo_languages() as $lang => $langLabel) {
+        foreach (brk_seo_base_pages() as $page) {
+            $pages[] = array_merge($page, [
+                'path' => brk_seo_localized_path((string) $page['path'], (string) $lang),
+                'label' => strtoupper((string) $lang) . ' · ' . $page['label'],
+                'lang' => (string) $lang,
+                'langLabel' => $langLabel,
+                'basePath' => $page['path'],
+            ]);
+        }
+    }
+    return $pages;
+}
+
 function brk_seo_page_file(string $path): string {
     if ($path === '/') {
         return __DIR__ . '/index.html';
+    }
+    if (preg_match('#^/([a-z]{2})/$#', $path, $m) && array_key_exists($m[1], brk_seo_languages())) {
+        return __DIR__ . '/' . $m[1] . '/index.html';
     }
     if (!preg_match('#^/[A-Za-z0-9/_-]+\.html$#', $path)) {
         brk_seo_fail(400, 'Недопустимый путь страницы.');
@@ -271,6 +312,10 @@ function brk_seo_hreflangs(string $html): array {
         }
     }
     return array_values(array_unique($langs));
+}
+
+function brk_seo_is_copyright_path(string $path): bool {
+    return $path === '/copyright.html' || substr($path, -15) === '/copyright.html';
 }
 
 function brk_seo_text_title(string $html): string {
@@ -359,7 +404,7 @@ function brk_seo_audit_page(array $page): array {
             break;
         }
     }
-    if (($page['path'] ?? '') !== '/copyright.html' && strpos($html, 'copyright.html') === false) {
+    if (!brk_seo_is_copyright_path((string) ($page['path'] ?? '')) && strpos($html, 'copyright.html') === false) {
         $issues[] = ['level' => 'warning', 'text' => 'В футере не найдена ссылка на авторские права.'];
     }
 
@@ -381,18 +426,37 @@ function brk_seo_audit_page(array $page): array {
 function brk_seo_audit_sitemap(): array {
     $file = __DIR__ . '/sitemap.xml';
     if (!is_file($file)) {
-        return ['ok' => false, 'urls' => 0, 'copyrightFound' => false, 'hreflangLinks' => 0, 'issues' => ['sitemap.xml не найден.']];
+        return ['ok' => false, 'urls' => 0, 'locCount' => 0, 'copyrightFound' => false, 'hreflangLinks' => 0, 'issues' => ['sitemap.xml не найден.']];
     }
     $text = (string) file_get_contents($file);
     preg_match_all('/<loc>\s*([^<]+)\s*<\/loc>/i', $text, $locMatches);
     $locs = array_map('trim', $locMatches[1] ?? []);
+    preg_match_all('/<xhtml:link\b[^>]*\bhref\s*=\s*([\'"])(.*?)\1/is', $text, $hrefMatches);
+    $alternateUrls = array_map('trim', $hrefMatches[2] ?? []);
+    $sitemapUrls = array_values(array_unique(array_filter(array_merge($locs, $alternateUrls), static fn($url) => $url !== '')));
     $hreflangLinks = preg_match_all('/\bhreflang\s*=/i', $text);
+    $languageUrlCounts = array_fill_keys(array_keys(brk_seo_languages()), 0);
+    foreach ($sitemapUrls as $url) {
+        $path = (string) (parse_url($url, PHP_URL_PATH) ?: '/');
+        $matched = false;
+        foreach (array_keys(brk_seo_languages()) as $lang) {
+            $langPrefix = '/' . $lang . '/';
+            if ($lang !== 'en' && ($path === $langPrefix || strpos($path, $langPrefix) === 0)) {
+                $languageUrlCounts[$lang]++;
+                $matched = true;
+                break;
+            }
+        }
+        if (!$matched) {
+            $languageUrlCounts['en']++;
+        }
+    }
     $issues = [];
-    if (!in_array(BRK_SEO_BASE_URL . '/copyright.html', $locs, true)) {
+    if (!in_array(BRK_SEO_BASE_URL . '/copyright.html', $sitemapUrls, true)) {
         $issues[] = 'copyright.html отсутствует в sitemap.';
     }
     foreach (brk_seo_pages() as $page) {
-        if (!in_array(BRK_SEO_BASE_URL . $page['path'], $locs, true)) {
+        if (!in_array(BRK_SEO_BASE_URL . $page['path'], $sitemapUrls, true)) {
             $issues[] = $page['path'] . ' отсутствует в sitemap.';
         }
     }
@@ -401,9 +465,13 @@ function brk_seo_audit_sitemap(): array {
     }
     return [
         'ok' => count($issues) === 0,
-        'urls' => count($locs),
+        'urls' => count($sitemapUrls),
+        'locCount' => count($locs),
+        'alternateUrlCount' => count(array_values(array_unique($alternateUrls))),
+        'languageUrlCounts' => $languageUrlCounts,
         'locs' => $locs,
-        'copyrightFound' => in_array(BRK_SEO_BASE_URL . '/copyright.html', $locs, true),
+        'sitemapUrls' => $sitemapUrls,
+        'copyrightFound' => in_array(BRK_SEO_BASE_URL . '/copyright.html', $sitemapUrls, true),
         'hreflangLinks' => $hreflangLinks,
         'issues' => $issues,
     ];

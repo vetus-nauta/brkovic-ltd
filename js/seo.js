@@ -165,8 +165,14 @@
 
   function normalizePath() {
     const path = window.location.pathname || '/';
-    if (path === '/index.html') return '/index.html';
-    return path.endsWith('/') && path !== '/' ? path.slice(0, -1) : path;
+    const routeLang = pathLanguage();
+    let normalized = path;
+    if (routeLang && routeLang !== 'en') {
+      normalized = normalized.replace(new RegExp(`^/${routeLang}(?=/|$)`), '') || '/';
+    }
+    if (normalized === '/index.html') return '/index.html';
+    if (normalized.endsWith('/index.html')) normalized = normalized.slice(0, -'/index.html'.length) || '/';
+    return normalized.endsWith('/') && normalized !== '/' ? normalized.slice(0, -1) : normalized;
   }
 
   function pageConfig() {
@@ -175,14 +181,31 @@
   }
 
   function currentLanguage() {
+    const routeLang = pathLanguage();
+    if (routeLang) return routeLang;
+    const staticLang = document.documentElement.dataset.staticLang;
+    if (staticLang && LANGS.includes(staticLang)) return staticLang;
     const api = window.BRKOVIC_LANGUAGE;
     if (api && typeof api.getCurrentLang === 'function') return api.getCurrentLang();
     return (document.documentElement.lang || 'en').split('-')[0].toLowerCase();
   }
 
+  function pathLanguage() {
+    const firstSegment = String(window.location.pathname || '')
+      .split('/')
+      .filter(Boolean)[0] || '';
+    return LANGS.includes(firstSegment) ? firstSegment : '';
+  }
+
+  function routePath(page, lang = 'en') {
+    const pagePath = page.path || '/';
+    if (lang === 'en') return pagePath;
+    if (pagePath === '/' || pagePath === '/index.html') return `/${lang}/`;
+    return `/${lang}${pagePath}`;
+  }
+
   function canonicalUrl(page, lang = currentLanguage()) {
-    const url = new URL(page.path || '/', SITE_ORIGIN);
-    if (lang && lang !== 'en') url.searchParams.set('lang', lang);
+    const url = new URL(routePath(page, lang), SITE_ORIGIN);
     return url.href;
   }
 
@@ -432,8 +455,15 @@
 
   function contentAlternateUrl(input, lang) {
     const url = new URL(input.url || window.location.href, SITE_ORIGIN);
-    if (lang === 'en') url.searchParams.delete('lang');
-    else url.searchParams.set('lang', lang);
+    const currentPath = url.pathname || '/';
+    const currentLang = LANGS.includes(currentPath.split('/').filter(Boolean)[0]) ? currentPath.split('/').filter(Boolean)[0] : '';
+    let basePath = currentLang ? currentPath.replace(new RegExp(`^/${currentLang}(?=/|$)`), '') || '/' : currentPath;
+    if (lang === 'en') {
+      url.pathname = basePath;
+    } else {
+      url.pathname = `/${lang}${basePath === '/index.html' ? '/' : basePath}`;
+    }
+    url.searchParams.delete('lang');
     return url.href;
   }
 

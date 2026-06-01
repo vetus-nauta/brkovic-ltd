@@ -62,6 +62,12 @@
     return getLanguageOptions().find((option) => option.code === code)?.name || code.toUpperCase();
   }
 
+  function languageUrl(lang) {
+    const api = window.BRKOVIC_LANGUAGE;
+    if (api && typeof api.getLanguageUrl === "function") return api.getLanguageUrl(lang);
+    return window.location.href;
+  }
+
   function syncSiteMenuLanguageState(root = document, lang = currentLanguage()) {
     const activeLang = normalizeLanguage(lang) || defaultLanguageCode();
     root.querySelectorAll(".site-menu-language__option[data-lang]").forEach((button) => {
@@ -81,7 +87,8 @@
     modal.addEventListener("click", async (event) => {
       const button = event.target.closest?.(".site-menu-language__option[data-lang]");
       if (!button || !modal.contains(button)) return;
-      if (button.disabled || button.classList.contains("is-unavailable")) return;
+      event.preventDefault();
+      if (button.getAttribute("aria-disabled") === "true" || button.classList.contains("is-unavailable")) return;
       const api = window.BRKOVIC_LANGUAGE;
       if (!api || typeof api.setLanguage !== "function") return;
       button.disabled = true;
@@ -147,11 +154,11 @@
 
   function buildLanguageOptionButtons() {
     return getLanguageOptions().map((option) => `
-      <button type="button" class="site-menu-language__option${option.isAvailable ? "" : " is-unavailable"}" data-lang="${escapeHtml(option.code)}" aria-pressed="false"${option.isAvailable ? "" : " aria-disabled=\"true\" disabled"}>
+      <a href="${escapeHtml(languageUrl(option.code))}" class="site-menu-language__option${option.isAvailable ? "" : " is-unavailable"}" data-lang="${escapeHtml(option.code)}" aria-pressed="false"${option.isAvailable ? "" : " aria-disabled=\"true\""}>
         <span class="site-menu-language__name">${escapeHtml(option.name)}</span>
         <span class="site-menu-language__current" data-i18n="site_menu_language_current">${escapeHtml(t("site_menu_language_current", "Current"))}</span>
         <span class="site-menu-language__pending" data-i18n="site_menu_language_pending">${escapeHtml(t("site_menu_language_pending", "Coming"))}</span>
-      </button>
+      </a>
     `).join("");
   }
 

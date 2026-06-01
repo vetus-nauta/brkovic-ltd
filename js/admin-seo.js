@@ -3,7 +3,16 @@
   const SETTINGS_KEY = 'brkovic_admin_seo_settings_v1';
   const SEO_API = '/admin-seo-api.php?action=';
   const LANGS = ['en', 'ru', 'de', 'it', 'es', 'sr', 'zh'];
-  const PAGES = [
+  const LANG_LABELS = {
+    en: 'English',
+    ru: 'Русский',
+    de: 'Deutsch',
+    it: 'Italiano',
+    es: 'Español',
+    sr: 'Srpski',
+    zh: '中文',
+  };
+  const BASE_PAGES = [
     { path: '/', label: 'Главная', type: 'home' },
     { path: '/journal.html', label: 'Судовой журнал', type: 'journal' },
     { path: '/navdesk.html', label: 'Штурманский стол', type: 'tool' },
@@ -21,6 +30,19 @@
     { path: '/services/yacht-registration.html', label: 'Yacht Registration', type: 'service' },
     { path: '/copyright.html', label: 'Авторские права', type: 'legal' },
   ];
+  const localizedPath = (path, lang) => {
+    if (lang === 'en') return path;
+    if (path === '/') return `/${lang}/`;
+    return `/${lang}${path}`;
+  };
+  const PAGES = LANGS.flatMap((lang) => BASE_PAGES.map((page) => ({
+    ...page,
+    path: localizedPath(page.path, lang),
+    label: `${lang.toUpperCase()} · ${page.label}`,
+    lang,
+    langLabel: LANG_LABELS[lang] || lang,
+    basePath: page.path,
+  })));
   const SETTING_IDS = [
     'gscVerificationHost',
     'gscVerificationValue',
@@ -70,6 +92,10 @@
 
   function pageFetchPath(path) {
     return path === '/' ? '/index.html' : path;
+  }
+
+  function isCopyrightPath(path) {
+    return path === '/copyright.html' || path.endsWith('/copyright.html');
   }
 
   async function seoApi(action, options = {}) {
@@ -155,7 +181,7 @@
     if (!LANGS.every((lang) => hreflangs.includes(lang)) || !hreflangs.includes('x-default')) {
       issues.push({ level: 'warning', text: 'Hreflang покрытие неполное.' });
     }
-    if (page.path !== '/copyright.html' && !html.includes('copyright.html')) {
+    if (!isCopyrightPath(page.path) && !html.includes('copyright.html')) {
       issues.push({ level: 'warning', text: 'В футере не найдена ссылка на авторские права.' });
     }
 
@@ -340,7 +366,7 @@
     renderSummary({ sitemap: data.sitemap?.urls || 0 });
     renderPages();
     line(`audit:server страниц ${data.summary?.total ?? pageResults.length}, готово ${data.summary?.ok ?? 0}, проверить ${data.summary?.warning ?? 0}, ошибок ${data.summary?.error ?? 0}`, 'info');
-    line(`audit:sitemap URL ${data.sitemap?.urls ?? 0}, hreflang ${data.sitemap?.hreflangLinks ?? 0}`, data.sitemap?.ok ? 'ok' : 'warn');
+    line(`audit:sitemap URL ${data.sitemap?.urls ?? 0}, loc ${data.sitemap?.locCount ?? 0}, hreflang ${data.sitemap?.hreflangLinks ?? 0}`, data.sitemap?.ok ? 'ok' : 'warn');
     line(`audit:robots sitemap ${data.robots?.hasSitemap ? 'есть' : 'нет'}, admin/API закрыты ${data.robots?.blocksAdmin ? 'да' : 'проверить'}`, data.robots?.ok ? 'ok' : 'warn');
     if (data.searchConsole?.configured) {
       line(`search-console: TXT ${data.searchConsole.host || '@'} ${data.searchConsole.dnsFound ? 'найден в DNS' : 'сохранен, но DNS не подтвердил'}`, data.searchConsole.dnsFound ? 'ok' : 'warn');
@@ -409,7 +435,8 @@
   }
 
   function prepareSitemapBuild() {
-    const urls = PAGES.map((item) => abs(item.path));
+    const source = pageResults.length ? pageResults : PAGES;
+    const urls = source.map((item) => abs(item.path));
     line('sitemap-map: публичная карта URL для контроля', 'info');
     urls.forEach((url) => line(url, 'info'));
     line('Серверный аудит уже читает реальный sitemap.xml. Автоперезапись карты будет отдельной whitelist-командой после следующего этапа.', 'warn');

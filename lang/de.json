@@ -1,6 +1,7 @@
 {
   "meta_lang": "de",
   "meta_title": "BRKOVIC — Persönliche Yacht Expertise, Lieferungen & Deck Log",
+  "meta_description": "VETUS NAUTA - Brkovic: Yachtmanagement, Skipperservice, IYT-Training, Seetouren, Yachtüberführungen, Registrierung, Deck Log und Nav Desk Tools.",
   "navdesk_meta_title": "VETUS NAUTA — Brkovic | Nav Desk",
   "navdesk_watch_meta_title": "VETUS NAUTA — Brkovic | Watch Log",
   "navdesk_tides_meta_title": "VETUS NAUTA — Brkovic | Gezeiten und Passagenfenster",
@@ -377,9 +378,14 @@
   "navdesk_tool_watch_kicker": "Logbuch",
   "navdesk_tool_watch_title": "Wachlogbuch",
   "navdesk_tool_watch_text": "Wachplan, aktuelle Wache und Arbeitsnotizen zur Passage.",
+  "navdesk_watch_heading": "Aktuelle Wache und Passageneinträge",
   "navdesk_tool_learning_kicker": "Training",
   "navdesk_tool_learning_title": "Trainingsspiele",
   "navdesk_tool_learning_text": "Maritime Spieltrainer für Sea Speak, UKW, kurze Wachen und Fehlerarbeit.",
+  "navdesk_watch_intro": "Ein Arbeitslogbuch für Lage, Koppelnavigation, Wachwechsel und Ereignisse auf Passagen von wenigen Stunden bis zu einem Monat.",
+  "navdesk_english_title": "Maritimes Englisch",
+  "navdesk_english_intro": "Ein künftiges Lernwerkzeug im Nav Desk.",
+  "navdesk_english_description": "Hier erscheinen Karten und Übungen zu VHF-Funk, Navigationsformulierungen, Regeln und praktischen maritimen Redewendungen.",
   "navdesk_abbrev_eyebrow": "Nav Abbrev",
   "navdesk_abbrev_title": "Navigationsabkürzungen",
   "navdesk_abbrev_intro": "Geben Sie eine Plotter- oder Radarabkürzung ein und erhalten Sie Bedeutung und kurze Erklärung.",
@@ -1164,5 +1170,10 @@
   "cashboxMenuLanguage": "Sprache",
   "cashboxMenuTheme": "Design",
   "cashboxMenuAccount": "Konto",
-  "cashboxMenuAccountText": "Melden Sie sich an, um Werkzeuge und Ihre Kasse zu öffnen."
+  "cashboxMenuAccountText": "Melden Sie sich an, um Werkzeuge und Ihre Kasse zu öffnen.",
+  "navdesk_route_meta_description": "Rechner für Großkreis, Rhumb-Linie, rechtweisenden Kurs und Zwischenkoordinaten für die Törnplanung.",
+  "navdesk_tides_meta_description": "Planungstool für Tide, Tiefe, Tiefgang und Unter-Kiel-Freiheit zur vorläufigen Passagefenster-Berechnung.",
+  "navdesk_ukv_meta_description": "UKW-Funkbuchstabierung, Schiffsdaten und Arbeitsvorlagen für praktische maritime Funkkommunikation.",
+  "navdesk_watch_meta_description": "Wachplan, aktuelle Wache und Arbeitsnotizen für kleine Yachtcrews auf Passage.",
+  "navdesk_english_meta_description": "Maritime-English-Bereich für praktische Yachtkommunikation, UKW-Phrasen und Sea-Speak-Training."
 }

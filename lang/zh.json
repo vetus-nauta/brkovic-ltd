@@ -1,6 +1,7 @@
 {
   "meta_lang": "zh",
   "meta_title": "BRKOVIC — 个人游艇专业知识、交付与甲板日志",
+  "meta_description": "VETUS NAUTA - Brkovic：游艇管理、船长服务、IYT培训、海上旅行、游艇交付、注册支持、Deck Log 和 Nav Desk 工具。",
   "navdesk_meta_title": "VETUS NAUTA — Brkovic | 导航桌",
   "navdesk_watch_meta_title": "VETUS NAUTA — Brkovic | 观察日志",
   "navdesk_tides_meta_title": "VETUS NAUTA — Brkovic | 潮汐与通航窗口",
@@ -377,9 +378,14 @@
   "navdesk_tool_watch_kicker": "日志",
   "navdesk_tool_watch_title": "值班日志",
   "navdesk_tool_watch_text": "值班安排、当前班次和航程工作记录。",
+  "navdesk_watch_heading": "当前值班与航程记录",
   "navdesk_tool_learning_kicker": "训练",
   "navdesk_tool_learning_title": "训练游戏",
   "navdesk_tool_learning_text": "用于 Sea Speak、VHF、短时值班和错误练习的航海训练工具。",
+  "navdesk_watch_intro": "用于记录态势、推算航行、值班交接和航程事件的工作日志，适用于数小时到一个月的航程。",
+  "navdesk_english_title": "海事英语",
+  "navdesk_english_intro": "Nav Desk 未来的学习工具。",
+  "navdesk_english_description": "这里将提供 VHF 通信、航海表达、规则和实用海事短语的卡片与练习。",
   "navdesk_abbrev_eyebrow": "Nav Abbrev",
   "navdesk_abbrev_title": "导航缩写",
   "navdesk_abbrev_intro": "输入海图仪或雷达缩写，获取释义和简短说明。",
@@ -1164,5 +1170,10 @@
   "cashboxMenuLanguage": "语言",
   "cashboxMenuTheme": "主题",
   "cashboxMenuAccount": "账户",
-  "cashboxMenuAccountText": "登录后可使用工作工具和您的现金簿。"
+  "cashboxMenuAccountText": "登录后可使用工作工具和您的现金簿。",
+  "navdesk_route_meta_description": "用于游艇航程计划的大圆航线、恒向线、真航向和中间坐标计算器。",
+  "navdesk_tides_meta_description": "用于初步通航窗口计算的潮汐、水深、吃水和龙骨下余量规划工具。",
+  "navdesk_ukv_meta_description": "用于实际海上通信的 VHF 拼读、船舶资料和工作消息模板。",
+  "navdesk_watch_meta_description": "面向小型游艇船员的值班计划、当前值班和航行工作记录。",
+  "navdesk_english_meta_description": "用于游艇实际通信、VHF 短语和 Sea Speak 练习的海事英语部分。"
 }

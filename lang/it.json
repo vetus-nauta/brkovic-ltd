@@ -1,6 +1,7 @@
 {
   "meta_lang": "it",
   "meta_title": "BRKOVIC — Esperienza personale in yacht, consegne e registro di coperta",
+  "meta_description": "VETUS NAUTA - Brkovic: gestione yacht, servizio skipper, formazione IYT, tour in mare, consegne yacht, registrazione, Deck Log e strumenti Nav Desk.",
   "navdesk_meta_title": "VETUS NAUTA — Brkovic | Nav Desk",
   "navdesk_watch_meta_title": "VETUS NAUTA — Brkovic | Registro di navigazione",
   "navdesk_tides_meta_title": "VETUS NAUTA — Brkovic | Maree e Finestra di Passaggio",
@@ -377,9 +378,14 @@
   "navdesk_tool_watch_kicker": "Registro",
   "navdesk_tool_watch_title": "Registro di guardia",
   "navdesk_tool_watch_text": "Turni di guardia, turno corrente e note operative del passaggio.",
+  "navdesk_watch_heading": "Guardia corrente e registrazioni del passaggio",
   "navdesk_tool_learning_kicker": "Formazione",
   "navdesk_tool_learning_title": "Giochi formativi",
   "navdesk_tool_learning_text": "Simulatori marittimi per Sea Speak, VHF, guardie brevi e pratica sugli errori.",
+  "navdesk_watch_intro": "Un registro operativo per situazione, navigazione stimata, cambi di guardia ed eventi di passaggio da poche ore a un mese.",
+  "navdesk_english_title": "Inglese marittimo",
+  "navdesk_english_intro": "Un futuro strumento di apprendimento del Nav Desk.",
+  "navdesk_english_description": "Qui appariranno schede ed esercizi per comunicazioni VHF, formule di navigazione, regole e frasi marittime pratiche.",
   "navdesk_abbrev_eyebrow": "Nav Abbrev",
   "navdesk_abbrev_title": "Abbreviazioni di navigazione",
   "navdesk_abbrev_intro": "Inserisci un’abbreviazione del plotter o del radar per ottenere decodifica e breve spiegazione.",
@@ -1164,5 +1170,10 @@
   "cashboxMenuLanguage": "Lingua",
   "cashboxMenuTheme": "Tema",
   "cashboxMenuAccount": "Account",
-  "cashboxMenuAccountText": "Accedi per aprire gli strumenti e la tua cassa."
+  "cashboxMenuAccountText": "Accedi per aprire gli strumenti e la tua cassa.",
+  "navdesk_route_meta_description": "Calcolatore di ortodromia, lossodromia, rotta vera e coordinate intermedie per la pianificazione del passaggio in yacht.",
+  "navdesk_tides_meta_description": "Strumento per maree, profondità, pescaggio e margine sotto chiglia per calcoli preliminari della finestra di passaggio.",
+  "navdesk_ukv_meta_description": "Spelling radio VHF, profilo dell’imbarcazione e modelli di messaggi per comunicazioni marittime pratiche.",
+  "navdesk_watch_meta_description": "Piano dei turni di guardia, guardia corrente e note operative di passaggio per piccoli equipaggi.",
+  "navdesk_english_meta_description": "Sezione di inglese marittimo per comunicazione pratica in yacht, frasi VHF e pratica Sea Speak."
 }

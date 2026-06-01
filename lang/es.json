@@ -1,6 +1,7 @@
 {
   "meta_lang": "es",
   "meta_title": "BRKOVIC — Experiencia Personal en Yates, Entregas y Registro de Cubierta",
+  "meta_description": "VETUS NAUTA - Brkovic: gestión de yates, servicio de patrón, formación IYT, tours marítimos, entregas de yates, registro, Deck Log y herramientas Nav Desk.",
   "navdesk_meta_title": "VETUS NAUTA — Brkovic | Escritorio de Navegación",
   "navdesk_watch_meta_title": "VETUS NAUTA — Brkovic | Registro de Vigilancia",
   "navdesk_tides_meta_title": "VETUS NAUTA — Brkovic | Mareas y Ventana de Pasaje",
@@ -377,9 +378,14 @@
   "navdesk_tool_watch_kicker": "Registro",
   "navdesk_tool_watch_title": "Registro de guardia",
   "navdesk_tool_watch_text": "Plan de guardias, turno actual y notas de trabajo del pasaje.",
+  "navdesk_watch_heading": "Guardia actual y entradas del pasaje",
   "navdesk_tool_learning_kicker": "Formación",
   "navdesk_tool_learning_title": "Juegos de entrenamiento",
   "navdesk_tool_learning_text": "Entrenadores marítimos para Sea Speak, VHF, guardias cortas y práctica de errores.",
+  "navdesk_watch_intro": "Un registro de trabajo para situación, navegación estimada, cambios de guardia y eventos de pasaje desde unas horas hasta un mes.",
+  "navdesk_english_title": "Inglés marítimo",
+  "navdesk_english_intro": "Una futura herramienta de aprendizaje del Nav Desk.",
+  "navdesk_english_description": "Aquí aparecerán tarjetas y ejercicios sobre comunicación VHF, formulaciones de navegación, reglas y frases marítimas prácticas.",
   "navdesk_abbrev_eyebrow": "Nav Abbrev",
   "navdesk_abbrev_title": "Abreviaturas de navegación",
   "navdesk_abbrev_intro": "Introduzca una abreviatura del plotter o radar para obtener su significado y una breve explicación.",
@@ -1164,5 +1170,10 @@
   "cashboxMenuLanguage": "Idioma",
   "cashboxMenuTheme": "Tema",
   "cashboxMenuAccount": "Cuenta",
-  "cashboxMenuAccountText": "Inicia sesión para abrir las herramientas y tu caja."
+  "cashboxMenuAccountText": "Inicia sesión para abrir las herramientas y tu caja.",
+  "navdesk_route_meta_description": "Calculadora de ortodromia, loxodromia, rumbo verdadero y coordenadas intermedias para planificación de travesías en yate.",
+  "navdesk_tides_meta_description": "Herramienta de mareas, profundidad, calado y margen bajo quilla para cálculos preliminares de ventana de paso.",
+  "navdesk_ukv_meta_description": "Deletreo por radio VHF, perfil del barco y plantillas de mensajes para comunicación marítima práctica.",
+  "navdesk_watch_meta_description": "Plan de guardias, guardia actual y notas de travesía para tripulaciones pequeñas de yate.",
+  "navdesk_english_meta_description": "Sección de inglés marítimo para comunicación práctica en yate, frases VHF y práctica Sea Speak."
 }

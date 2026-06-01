@@ -54,6 +54,34 @@
     return normalizeLang(new URLSearchParams(window.location.search).get("lang"));
   }
 
+  function routeLang() {
+    const firstSegment = String(window.location.pathname || "")
+      .split("/")
+      .filter(Boolean)[0] || "";
+    return normalizeLang(firstSegment);
+  }
+
+  function stripRouteLang(pathname) {
+    const parts = String(pathname || "/").split("/");
+    const first = normalizeLang(parts[1] || "");
+    if (!first || first === defaultLang()) return pathname || "/";
+    const stripped = "/" + parts.slice(2).join("/");
+    return stripped === "/" ? "/" : stripped.replace(/\/$/, "") || "/";
+  }
+
+  function languageUrl(lang) {
+    const nextLang = normalizeLang(lang) || defaultLang();
+    const currentPath = window.location.pathname || "/";
+    const basePath = stripRouteLang(currentPath);
+    const nextPath = nextLang === defaultLang()
+      ? (basePath === "/index.html" ? "/" : basePath)
+      : `/${nextLang}${basePath === "/" || basePath === "/index.html" ? "/" : basePath}`;
+    const url = new URL(window.location.href);
+    url.pathname = nextPath;
+    url.searchParams.delete("lang");
+    return url.href;
+  }
+
   function getSavedLang() {
     try {
       return normalizeLang(localStorage.getItem(STORAGE_KEY));
@@ -191,6 +219,18 @@
   async function setLanguage(lang, options = {}) {
     const nextLang = normalizeLang(lang) || defaultLang();
     const source = options.source || "manual";
+    if (source === "manual" && options.navigate !== false) {
+      const targetUrl = languageUrl(nextLang);
+      const currentUrl = new URL(window.location.href);
+      currentUrl.searchParams.delete("lang");
+      if (targetUrl !== currentUrl.href) {
+        try {
+          localStorage.setItem(STORAGE_KEY, nextLang);
+        } catch (error) {}
+        window.location.href = targetUrl;
+        return;
+      }
+    }
     const translations = await loadTranslations(nextLang);
     if (options.persist !== false) {
       try {
@@ -207,6 +247,8 @@
   }
 
   function initialLanguage() {
+    const pathLang = routeLang();
+    if (pathLang) return { lang: pathLang, source: "route", persist: false };
     const queryLang = getQueryLang();
     if (queryLang) return { lang: queryLang, source: "query", persist: true };
     const savedLang = getSavedLang();
@@ -226,6 +268,8 @@
     roadmap: languageOptions(),
     getLanguageOptions: languageOptions,
     getSystemLang: systemLang,
+    getLanguageUrl: languageUrl,
+    getRouteLang: routeLang,
     getCurrentLang: () => currentLang || normalizeLang(document.documentElement.lang) || defaultLang(),
     t: translatedText,
     setLanguage: (lang) => setLanguage(lang, { source: "manual", persist: true }),

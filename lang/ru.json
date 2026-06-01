@@ -1,6 +1,7 @@
 {
   "meta_lang": "ru",
   "meta_title": "BRKOVIC — Личная экспертиза, перегон яхт и судовой журнал",
+  "meta_description": "VETUS NAUTA - Brkovic: яхт-менеджмент, услуги шкипера, IYT-обучение, морские туры, перегон яхт, регистрация, судовой журнал и инструменты Nav Desk.",
   "navdesk_meta_title": "VETUS NAUTA — Brkovic | Штурманский стол",
   "navdesk_watch_meta_title": "VETUS NAUTA — Brkovic | Вахтенный журнал",
   "navdesk_tides_meta_title": "VETUS NAUTA — Brkovic | Приливы и окно прохода",
@@ -377,9 +378,14 @@
   "navdesk_tool_watch_kicker": "Журнал",
   "navdesk_tool_watch_title": "Вахтенный журнал",
   "navdesk_tool_watch_text": "Расписание вахт, текущая смена и рабочие записи перехода.",
+  "navdesk_watch_heading": "Текущая вахта и записи перехода",
   "navdesk_tool_learning_kicker": "Обучение",
   "navdesk_tool_learning_title": "Обучающие игры",
   "navdesk_tool_learning_text": "Морские игровые тренажеры для Sea Speak, УКВ, коротких вахт и работы над ошибками.",
+  "navdesk_watch_intro": "Рабочий журнал обстановки, счисления, смены вахт и событий на переходе. От нескольких часов до месяца.",
+  "navdesk_english_title": "Морской английский",
+  "navdesk_english_intro": "Будущий учебный инструмент штурманского стола.",
+  "navdesk_english_description": "Здесь появятся карточки и упражнения по УКВ-связи, навигационным формулировкам, правилам и рабочим морским фразам.",
   "navdesk_abbrev_eyebrow": "Nav Abbrev",
   "navdesk_abbrev_title": "Навигационные сокращения",
   "navdesk_abbrev_intro": "Введите сокращение с плоттера или радара — получите расшифровку и короткое объяснение.",
@@ -1164,5 +1170,10 @@
   "cashboxMenuLanguage": "Язык",
   "cashboxMenuTheme": "Тема",
   "cashboxMenuAccount": "Аккаунт",
-  "cashboxMenuAccountText": "Вход открывает рабочие инструменты и вашу кассу."
+  "cashboxMenuAccountText": "Вход открывает рабочие инструменты и вашу кассу.",
+  "navdesk_route_meta_description": "Калькулятор ортодромии, локсодромии, истинного курса и промежуточных координат для планирования яхтенного перехода.",
+  "navdesk_tides_meta_description": "Инструмент предварительного расчета прилива, глубины, осадки и запаса под килем для окна безопасного прохода.",
+  "navdesk_ukv_meta_description": "Радио-спеллинг, профиль судна и рабочие шаблоны УКВ-сообщений для практической морской связи.",
+  "navdesk_watch_meta_description": "Расписание яхтенных вахт, текущая смена и рабочие записи перехода для небольшого экипажа.",
+  "navdesk_english_meta_description": "Раздел морского английского для практической связи на яхте, УКВ-фраз и тренировки Sea Speak."
 }

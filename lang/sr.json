@@ -1,6 +1,7 @@
 {
   "meta_lang": "sr",
   "meta_title": "BRKOVIC — Lična ekspertiza za jahte, isporuke i dnevnik palube",
+  "meta_description": "VETUS NAUTA - Brkovic: upravljanje jahtama, usluga skipera, IYT obuka, morske ture, isporuka jahti, registracija, Deck Log i Nav Desk alati.",
   "navdesk_meta_title": "VETUS NAUTA — Brkovic | Nav Desk",
   "navdesk_watch_meta_title": "VETUS NAUTA — Brkovic | Dnevnik posmatranja",
   "navdesk_tides_meta_title": "VETUS NAUTA — Brkovic | Plime i prozori za plovidbu",
@@ -377,9 +378,14 @@
   "navdesk_tool_watch_kicker": "Dnevnik",
   "navdesk_tool_watch_title": "Dnevnik straže",
   "navdesk_tool_watch_text": "Raspored straža, trenutna smjena i radne bilješke plovidbe.",
+  "navdesk_watch_heading": "Trenutna straža i zapisi plovidbe",
   "navdesk_tool_learning_kicker": "Obuka",
   "navdesk_tool_learning_title": "Igre za obuku",
   "navdesk_tool_learning_text": "Pomorski trenažeri za Sea Speak, VHF, kratke straže i rad na greškama.",
+  "navdesk_watch_intro": "Radni dnevnik za situaciju, zbrojnu navigaciju, smjene straže i događaje na plovidbi od nekoliko sati do mjesec dana.",
+  "navdesk_english_title": "Pomorski engleski",
+  "navdesk_english_intro": "Budući alat za učenje u Nav Desk-u.",
+  "navdesk_english_description": "Ovdje će biti kartice i vježbe za VHF komunikaciju, navigacione formulacije, pravila i praktične pomorske fraze.",
   "navdesk_abbrev_eyebrow": "Nav Abbrev",
   "navdesk_abbrev_title": "Navigacione skraćenice",
   "navdesk_abbrev_intro": "Unesite skraćenicu sa plotera ili radara i dobićete značenje i kratko objašnjenje.",
@@ -1164,5 +1170,10 @@
   "cashboxMenuLanguage": "Jezik",
   "cashboxMenuTheme": "Tema",
   "cashboxMenuAccount": "Nalog",
-  "cashboxMenuAccountText": "Prijavite se za radne alate i svoju blagajnu."
+  "cashboxMenuAccountText": "Prijavite se za radne alate i svoju blagajnu.",
+  "navdesk_route_meta_description": "Kalkulator ortodrome, loksodrome, pravog kursa i međukoordinata za planiranje plovidbe jahtom.",
+  "navdesk_tides_meta_description": "Alat za plimu, dubinu, gaz i sigurni razmak ispod kobilice za preliminarni proračun prozora prolaza.",
+  "navdesk_ukv_meta_description": "VHF radio spelling, profil plovila i radni šabloni poruka za praktičnu pomorsku komunikaciju.",
+  "navdesk_watch_meta_description": "Raspored jahtenskih straža, trenutna straža i radne bilješke prelaza za malu posadu.",
+  "navdesk_english_meta_description": "Sekcija pomorskog engleskog za praktičnu komunikaciju na jahti, VHF fraze i Sea Speak vježbu."
 }
