@@ -856,6 +856,7 @@
   const TOOL_AUTH_CACHE_TTL_MS = 30 * 60 * 1000;
   const TOOL_AUTH_PROXY_PATH = '/admin-api-proxy.php';
   let toolAuthStatusPromise = null;
+  let toolAuthPromptPromise = null;
 
   function buildToolAuthApiUrl(route) {
     return `${TOOL_AUTH_PROXY_PATH}?path=${encodeURIComponent(route)}`;
@@ -947,26 +948,29 @@
     try {
       const existing = readToolAuthCache();
       const expiresAt = Date.now() + TOOL_AUTH_CACHE_TTL_MS;
+      const next = {
+        ...(existing || {}),
+        ...data,
+        authenticated: Boolean(data?.authenticated),
+        email: data?.email || null,
+        displayName: data?.displayName || existing?.displayName || null,
+        avatarUrl: data?.avatarUrl || existing?.avatarUrl || null,
+        authProvider: data?.authProvider || existing?.authProvider || 'email',
+        sessionExpiresAt: data?.sessionExpiresAt || existing?.sessionExpiresAt || null,
+        expiresAt,
+      };
       localStorage.setItem(
         TOOL_AUTH_CACHE_KEY,
-        JSON.stringify({
-          ...(existing || {}),
-          ...data,
-          authenticated: Boolean(data?.authenticated),
-          email: data?.email || null,
-          displayName: data?.displayName || existing?.displayName || null,
-          avatarUrl: data?.avatarUrl || existing?.avatarUrl || null,
-          authProvider: data?.authProvider || existing?.authProvider || 'email',
-          sessionExpiresAt: data?.sessionExpiresAt || existing?.sessionExpiresAt || null,
-          expiresAt,
-        }),
+        JSON.stringify(next),
       );
+      document.dispatchEvent(new CustomEvent('brkovicToolAuthChanged', { detail: { profile: next } }));
     } catch (error) {}
   }
 
   function clearToolAuthCache() {
     try {
       localStorage.removeItem(TOOL_AUTH_CACHE_KEY);
+      document.dispatchEvent(new CustomEvent('brkovicToolAuthChanged', { detail: { profile: null } }));
     } catch (error) {}
   }
 
@@ -1292,7 +1296,9 @@
   }
 
   async function openToolAuthPrompt() {
-    return new Promise((resolve) => {
+    if (toolAuthPromptPromise) return toolAuthPromptPromise;
+
+    toolAuthPromptPromise = new Promise((resolve) => {
       const messages = toolAuthStatusText();
       const opener = document.activeElement;
       const openerToRestore = opener instanceof HTMLElement ? opener : null;
@@ -1372,12 +1378,18 @@
       const emailSummary = modal.querySelector('[data-tool-auth-email-summary]');
       const changeEmailBtn = modal.querySelector('#toolAuthChangeEmail');
       const closeButtons = modal.querySelectorAll('[data-tool-auth-close]');
+      let settled = false;
       const close = (result = null) => {
+        if (settled) return;
+        settled = true;
         modal.setAttribute('aria-hidden', 'true');
         modal.classList.remove('is-open');
         modal.dispatchEvent(new Event('closeToolAuthPrompt'));
         unlockManagementModalScroll();
         restoreFocus();
+        window.setTimeout(() => {
+          if (modal.parentNode) modal.remove();
+        }, 20);
         resolve(result === null ? { authenticated: false } : result);
       };
 
@@ -1693,7 +1705,11 @@
 
       modal.addEventListener('remove', cleanup, { once: true });
       modal.addEventListener('closeToolAuthPrompt', cleanup, { once: true });
+    }).finally(() => {
+      toolAuthPromptPromise = null;
     });
+
+    return toolAuthPromptPromise;
   }
 
   function isToolAuthRequiredError(error) {

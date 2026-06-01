@@ -25,6 +25,7 @@
   let gpsMetaByPath = {};
   let bootSequence = 0;
   let bootedAfterLanguage = false;
+  let journalAuthPromise = null;
   let lightboxState = {
     images: [],
     index: 0,
@@ -161,8 +162,16 @@ let lightboxJustClosedAt = 0;
       return null;
     }
 
-    const allowed = await window.ensureToolAccess();
-    return allowed ? (readJournalAuthProfile() || { authenticated: true }) : null;
+    if (!journalAuthPromise) {
+      journalAuthPromise = window.ensureToolAccess()
+        .then((allowed) => (allowed ? (readJournalAuthProfile() || { authenticated: true }) : null))
+        .catch(() => null)
+        .finally(() => {
+          journalAuthPromise = null;
+        });
+    }
+
+    return journalAuthPromise;
   }
 
   function journalAuthName(profile) {
@@ -1882,13 +1891,19 @@ let lightboxJustClosedAt = 0;
     document.querySelectorAll('.journal-comment-form').forEach((form) => {
       form.addEventListener('focusin', async (event) => {
         if (readJournalAuthProfile()) return;
+        if (form.dataset.authPending === '1') return;
         const target = event.target;
         if (!(target instanceof HTMLElement)) return;
         target.blur();
-        const profile = await requireJournalAuth();
-        if (!profile || !target.isConnected) return;
-        prepareJournalCommentForm(form, profile);
-        setTimeout(() => target.focus(), 10);
+        form.dataset.authPending = '1';
+        try {
+          const profile = await requireJournalAuth();
+          if (!profile || !target.isConnected) return;
+          prepareJournalCommentForm(form, profile);
+          setTimeout(() => target.focus(), 30);
+        } finally {
+          delete form.dataset.authPending;
+        }
       }, { capture: true });
 
       form.onsubmit = async (event) => {
@@ -1991,6 +2006,13 @@ let lightboxJustClosedAt = 0;
     window.setTimeout(() => {
       if (!bootedAfterLanguage) boot();
     }, 1200);
+  });
+  document.addEventListener('brkovicToolAuthChanged', (event) => {
+    const profile = event.detail?.profile || readJournalAuthProfile();
+    if (!profile?.authenticated) return;
+    document.querySelectorAll('.journal-comment-form').forEach((form) => {
+      prepareJournalCommentForm(form, profile);
+    });
   });
   document.addEventListener('languageChanged', () => {
     if (!document.getElementById('journalFeed')) return;
