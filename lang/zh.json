@@ -1234,7 +1234,7 @@
   "participantEmailLabel": "参与者邮箱",
   "sendInviteEmail": "发送邮件",
   "sendInviteEmailHelp": "通过邮件向参与者发送个人链接。",
-  "inviteEmailSent": "邮件邀请已发送。",
+  "inviteEmailSent": "服务器已接受邮件。如果没有收到，请使用“复制链接”。",
   "inviteEmailSentAt": "邀请已发送",
   "inviteEmailNotSent": "邮件尚未发送",
   "inviteEmailMissing": "请先输入参与者邮箱。"

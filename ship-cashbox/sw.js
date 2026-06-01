@@ -1,4 +1,4 @@
-const CACHE_NAME = "ship-cashbox-shell-v20260601-12";
+const CACHE_NAME = "ship-cashbox-shell-v20260601-13";
 const SHELL = [
   "./index.html",
   "./assets/app.css?v=20260601-cashbox-groups-01",

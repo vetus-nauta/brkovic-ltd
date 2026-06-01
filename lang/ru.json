@@ -1234,7 +1234,7 @@
   "participantEmailLabel": "Email участника",
   "sendInviteEmail": "Отправить email",
   "sendInviteEmailHelp": "Отправить участнику личную ссылку на email.",
-  "inviteEmailSent": "Email-приглашение отправлено.",
+  "inviteEmailSent": "Сервер принял email. Если письмо не пришло, используйте «Скопировать ссылку».",
   "inviteEmailSentAt": "Приглашение отправлено",
   "inviteEmailNotSent": "Email еще не отправлен",
   "inviteEmailMissing": "Сначала укажите email участника."

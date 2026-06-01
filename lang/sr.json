@@ -1234,7 +1234,7 @@
   "participantEmailLabel": "Email učesnika",
   "sendInviteEmail": "Pošalji email",
   "sendInviteEmailHelp": "Pošaljite učesniku lični link emailom.",
-  "inviteEmailSent": "Email poziv je poslat.",
+  "inviteEmailSent": "Server je prihvatio email. Ako ne stigne, koristite „Kopiraj link”.",
   "inviteEmailSentAt": "Poziv poslat",
   "inviteEmailNotSent": "Email još nije poslat",
   "inviteEmailMissing": "Prvo unesite email učesnika."

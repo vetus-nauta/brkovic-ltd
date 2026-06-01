@@ -12,13 +12,15 @@ session_set_cookie_params([
 ]);
 session_start();
 
-const APP_VERSION = '2026.06.01-ship-cashbox-groups-01';
+const APP_VERSION = '2026.06.01-ship-cashbox-mail-01';
 const AUTH_BASE = 'https://brkovic.ltd/api';
 const STORAGE_DIR = __DIR__ . '/../storage';
 const SESSIONS_DIR = STORAGE_DIR . '/sessions';
 const EXPORTS_DIR = STORAGE_DIR . '/exports';
 const INDEX_FILE = STORAGE_DIR . '/index.json';
 const AUTH_COOKIE = 'ship_cashbox_auth';
+const MAIL_FROM_ADDRESS = 'brkovic@brkovic.ltd';
+const MAIL_REPLY_TO = 'vetus.nauta@gmail.com';
 
 function respond(array $payload, int $status = 200): void {
     http_response_code($status);
@@ -1250,6 +1252,9 @@ function send_invite_email_message(string $to, string $name, string $link, array
 
     $subject = 'Vetus Nauta / Ship Cashbox invitation';
     $safeName = $name !== '' ? $name : 'crew member';
+    $encodedSubject = function_exists('mb_encode_mimeheader')
+        ? mb_encode_mimeheader($subject, 'UTF-8', 'B', "\r\n")
+        : $subject;
     $body = "Hello {$safeName},\n\n"
         . "You have been invited to the Ship Cashbox for:\n"
         . ($session['title'] ?? 'Ship Cashbox') . "\n\n"
@@ -1260,12 +1265,20 @@ function send_invite_email_message(string $to, string $name, string $link, array
         . "VETUS NAUTA - Brkovic\n";
 
     $headers = [
-        'From: VETUS NAUTA - Brkovic <no-reply@brkovic.ltd>',
-        'Reply-To: vetus.nauta@gmail.com',
+        'From: VETUS NAUTA - Brkovic <' . MAIL_FROM_ADDRESS . '>',
+        'Sender: ' . MAIL_FROM_ADDRESS,
+        'Reply-To: ' . MAIL_REPLY_TO,
+        'Return-Path: ' . MAIL_FROM_ADDRESS,
         'Content-Type: text/plain; charset=UTF-8',
+        'Content-Transfer-Encoding: 8bit',
+        'MIME-Version: 1.0',
+        'Date: ' . date(DATE_RFC2822),
+        'Message-ID: <cashbox-' . bin2hex(random_bytes(8)) . '@brkovic.ltd>',
+        'X-Mailer: PHP/' . PHP_VERSION,
     ];
 
-    return mail($to, $subject, $body, implode("\r\n", $headers));
+    $params = '-f ' . escapeshellarg(MAIL_FROM_ADDRESS);
+    return mail($to, $encodedSubject, $body, implode("\r\n", $headers), $params);
 }
 
 function send_participant_invite(array $payload): array {

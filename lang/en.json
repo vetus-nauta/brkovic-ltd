@@ -1234,7 +1234,7 @@
   "participantEmailLabel": "Participant email",
   "sendInviteEmail": "Send email invite",
   "sendInviteEmailHelp": "Send the participant a personal link by email.",
-  "inviteEmailSent": "Email invitation sent.",
+  "inviteEmailSent": "Email sent by the server. If it does not arrive, use Copy link.",
   "inviteEmailSentAt": "Invite sent",
   "inviteEmailNotSent": "Email not sent yet",
   "inviteEmailMissing": "Enter participant email first."
