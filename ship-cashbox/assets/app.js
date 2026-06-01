@@ -8,7 +8,7 @@ const THEME_KEY = "navdesk_watch_theme_v1";
 const ENGAGED_KEY = "ship_cashbox_engaged_v1";
 const DISMISSED_INSTALL_KEY = "ship_cashbox_install_dismissed_v1";
 const BOOT_CACHE_KEY = "ship_cashbox_boot_cache_v1";
-const SHELL_VERSION = "20260601-cashbox-flow-02";
+const SHELL_VERSION = "20260601-cashbox-flow-03";
 const SHELL_REFRESH_KEY = "ship_cashbox_shell_refresh_v1";
 const PARTICIPANT_CACHE_PREFIX = "ship_cashbox_participant_cache_v1_";
 const PARTICIPANT_DRAFT_PREFIX = "ship_cashbox_participant_draft_v1_";
@@ -48,6 +48,7 @@ const state = {
 
 const $ = (id) => document.getElementById(id);
 let modalScrollY = 0;
+let notebookFocusTimer = 0;
 
 function isModalOpen(id) {
   const modal = $(id);
@@ -75,6 +76,64 @@ function unlockModalScroll() {
   document.body.style.top = "";
   window.scrollTo(0, modalScrollY);
   modalScrollY = 0;
+}
+
+function updateViewportVars() {
+  const viewport = window.visualViewport;
+  const height = Math.max(320, Math.round(viewport?.height || window.innerHeight || document.documentElement.clientHeight || 0));
+  const offsetTop = Math.round(viewport?.offsetTop || 0);
+  const keyboardOffset = Math.max(0, Math.round((window.innerHeight || height) - height - offsetTop));
+  document.documentElement.style.setProperty("--cashbox-vvh", `${height}px`);
+  document.documentElement.style.setProperty("--cashbox-keyboard-offset", `${keyboardOffset}px`);
+  document.body.classList.toggle("shipcashbox-keyboard-active", keyboardOffset > 80);
+}
+
+function scheduleFocusedNotebookIntoView(target) {
+  window.clearTimeout(notebookFocusTimer);
+  notebookFocusTimer = window.setTimeout(() => {
+    if (!(target instanceof HTMLElement) || document.activeElement !== target) return;
+    target.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, 260);
+}
+
+function bindMobileKeyboardViewport() {
+  updateViewportVars();
+  window.visualViewport?.addEventListener("resize", updateViewportVars);
+  window.visualViewport?.addEventListener("scroll", updateViewportVars);
+  window.addEventListener("resize", updateViewportVars);
+  document.addEventListener("pointerdown", (event) => {
+    if (event.target instanceof HTMLElement && event.target.classList.contains("shipcashbox-notebook-textarea")) return;
+    document.body.classList.remove("shipcashbox-notebook-focused");
+    updateViewportVars();
+  }, { passive: true });
+  document.addEventListener("focusin", (event) => {
+    if (!(event.target instanceof HTMLElement) || !event.target.classList.contains("shipcashbox-notebook-textarea")) return;
+    document.body.classList.add("shipcashbox-notebook-focused");
+    updateViewportVars();
+    scheduleFocusedNotebookIntoView(event.target);
+  });
+  document.addEventListener("focusout", (event) => {
+    if (!(event.target instanceof HTMLElement) || !event.target.classList.contains("shipcashbox-notebook-textarea")) return;
+    document.body.classList.remove("shipcashbox-notebook-focused");
+    updateViewportVars();
+  });
+}
+
+function bindNotebookKeyboardTarget(textarea) {
+  if (!(textarea instanceof HTMLElement)) return;
+  const activateNotebookKeyboardMode = () => {
+    document.body.classList.add("shipcashbox-notebook-focused");
+    updateViewportVars();
+    scheduleFocusedNotebookIntoView(textarea);
+  };
+  textarea.addEventListener("pointerdown", activateNotebookKeyboardMode, { passive: true });
+  textarea.addEventListener("touchstart", activateNotebookKeyboardMode, { passive: true });
+  textarea.addEventListener("mousedown", activateNotebookKeyboardMode);
+  textarea.addEventListener("focus", activateNotebookKeyboardMode);
+  textarea.addEventListener("blur", () => {
+    document.body.classList.remove("shipcashbox-notebook-focused");
+    updateViewportVars();
+  });
 }
 
 function escapeHtml(value) {
@@ -1068,6 +1127,7 @@ function renderParticipant() {
   });
   $("participantSyncButton")?.addEventListener("click", () => syncParticipant("manual").catch((error) => setFlash(error.message || t("loadFailed"))));
   $("openWorkspaceMenuButton")?.addEventListener("click", () => openWorkspaceModal("menu"));
+  bindNotebookKeyboardTarget($("participantNotebook"));
   $("unlockNotebookButton")?.addEventListener("click", unlockNotebookEditor);
 }
 
@@ -2161,6 +2221,7 @@ function bindTreasurerUi() {
     }
     saveTreasurerNotebook({ preserveFocus: false, silent: true }).catch(() => {});
   });
+  bindNotebookKeyboardTarget($("treasurerNotebook"));
   $("unlockNotebookButton")?.addEventListener("click", unlockNotebookEditor);
   document.querySelectorAll(".delete-attachment-btn").forEach((button) => {
     button.addEventListener("click", async () => {
@@ -2901,6 +2962,7 @@ window.addEventListener("online", () => {
 window.addEventListener("offline", () => render());
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "hidden") {
+    document.body.classList.remove("shipcashbox-notebook-focused");
     state.hiddenAt = Date.now();
     return;
   }
@@ -3016,6 +3078,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     confirmCashboxExit().catch((error) => setFlash(error.message || t("loadFailed"), true));
   });
   bindAttachmentSheetUi();
+  bindMobileKeyboardViewport();
   initLanguage();
   await waitForSiteTranslations();
   registerServiceWorker();

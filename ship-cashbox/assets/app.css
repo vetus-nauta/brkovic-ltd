@@ -1,5 +1,6 @@
 .shipcashbox-body {
   min-height: 100dvh;
+  min-height: var(--cashbox-vvh, 100dvh);
   background:
     radial-gradient(circle at 14% 10%, rgba(58, 125, 170, 0.16), transparent 34%),
     radial-gradient(circle at 86% 2%, rgba(211, 138, 44, 0.14), transparent 30%),
@@ -1405,11 +1406,42 @@ body.navdesk-theme-night .shipcashbox-qr {
   }
 
   .shipcashbox-notebook-textarea {
-    min-height: 50svh;
+    min-height: min(50svh, calc(var(--cashbox-vvh, 100svh) - 220px));
     padding: 13px 14px;
     border-radius: 15px;
     font-size: 1rem;
     line-height: 1.5;
+    scroll-margin: 96px 0 max(160px, calc(var(--cashbox-keyboard-offset, 0px) + 24px));
+  }
+
+  body.shipcashbox-notebook-focused .shipcashbox-mobile-masthead {
+    position: static;
+  }
+
+  body.shipcashbox-notebook-focused .shipcashbox-card--notebook {
+    gap: 8px;
+  }
+
+  body.shipcashbox-notebook-focused .shipcashbox-card--notebook .shipcashbox-workhead {
+    align-items: flex-start;
+  }
+
+  body.shipcashbox-notebook-focused .shipcashbox-card--notebook .shipcashbox-work-meta,
+  body.shipcashbox-notebook-focused .shipcashbox-card--notebook .shipcashbox-metrics,
+  body.shipcashbox-notebook-focused .shipcashbox-card--notebook .shipcashbox-stack,
+  body.shipcashbox-notebook-focused .shipcashbox-notebook-footer {
+    display: none;
+  }
+
+  body.shipcashbox-notebook-focused .shipcashbox-card--notebook .shipcashbox-inline-actions .shipcashbox-pill--metric,
+  body.shipcashbox-notebook-focused .shipcashbox-card--notebook .shipcashbox-inline-actions .btn:not(#openWorkspaceMenuButton) {
+    display: none;
+  }
+
+  body.shipcashbox-notebook-focused .shipcashbox-notebook-textarea {
+    min-height: max(260px, calc(var(--cashbox-vvh, 100svh) - 142px - env(safe-area-inset-bottom)));
+    max-height: max(260px, calc(var(--cashbox-vvh, 100svh) - 142px - env(safe-area-inset-bottom)));
+    resize: none;
   }
 
   .shipcashbox-card__head,
