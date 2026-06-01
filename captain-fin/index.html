@@ -10,7 +10,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="assets/icon.svg">
   <link rel="apple-touch-icon" href="assets/icon.svg">
-  <link rel="stylesheet" href="assets/app.css?v=2026.06.01-captain-fin-017">
+  <link rel="stylesheet" href="assets/app.css?v=2026.06.01-captain-fin-018">
   <title>Captain Fin</title>
 </head>
 <body>
@@ -47,7 +47,7 @@
       <section class="fd-group-surface">
         <div class="fd-group-title">
           <strong id="finDeskTitle">Активная группа</strong>
-          <span id="fdGroupMeta">v2_state</span>
+          <span id="fdGroupMeta">Загрузка</span>
         </div>
         <div class="fd-group-row">
           <div class="fd-admin-slot" id="fdAdminSlot"></div>
@@ -167,6 +167,27 @@
       </div>
     </section>
   </div>
-  <script src="assets/app.js?v=2026.06.01-captain-fin-017"></script>
+  <div class="fd-issue-sheet hidden" id="fdIssueSheet" aria-hidden="true">
+    <div class="fd-issue-backdrop" id="fdIssueBackdrop"></div>
+    <section class="fd-issue-panel" role="dialog" aria-modal="true" aria-labelledby="fdIssueTitle">
+      <form id="fdIssueForm" class="fd-issue-form">
+        <div class="fd-issue-head">
+          <div>
+            <h2 id="fdIssueTitle">Выдать деньги</h2>
+            <p id="fdIssueParticipantName">Участник</p>
+          </div>
+          <button class="soft" id="fdIssueCancel" type="button">Закрыть</button>
+        </div>
+        <label>Сумма
+          <input id="fdIssueAmount" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00">
+        </label>
+        <label>Комментарий
+          <input id="fdIssueDescription" type="text" autocomplete="off" placeholder="От кого или за что">
+        </label>
+        <button id="fdIssueSubmit" type="submit">Выдать</button>
+      </form>
+    </section>
+  </div>
+  <script src="assets/app.js?v=2026.06.01-captain-fin-018"></script>
 </body>
 </html>

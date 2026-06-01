@@ -12,7 +12,7 @@ session_set_cookie_params([
 ]);
 session_start();
 
-const APP_VERSION = '2026.06.01-captain-fin-017';
+const APP_VERSION = '2026.06.01-captain-fin-018';
 const AUTH_BASE = 'https://brkovic.ltd/api';
 const STORAGE_DIR = __DIR__ . '/../storage';
 const REPORTS_DIR = STORAGE_DIR . '/reports';
@@ -757,6 +757,7 @@ function v2_normalize_issue(array $issue): array {
         'currency' => strtoupper(substr(trim((string) ($issue['currency'] ?? V2_DEFAULT_CURRENCY)) ?: V2_DEFAULT_CURRENCY, 0, 8)),
         'status' => $status,
         'description' => trim((string) ($issue['description'] ?? '')),
+        'client_operation_id' => trim((string) ($issue['client_operation_id'] ?? '')),
         'issued_by' => (string) ($issue['issued_by'] ?? V2_ADMIN_ID),
         'confirmed_by' => (string) ($issue['confirmed_by'] ?? ''),
         'issued_at' => (string) ($issue['issued_at'] ?? $now),
@@ -893,6 +894,29 @@ function v2_selected_participant_id(array $state): string {
 function v2_selected_mode(array $state): string {
     $mode = (string) ($_SESSION['captain_fin_v2_mode'] ?? $state['selected_mode'] ?? $state['preferences']['mode'] ?? 'owner');
     return in_array($mode, ['owner', 'participant'], true) ? $mode : 'owner';
+}
+
+function v2_require_mode(array $state, string $required): void {
+    $mode = v2_selected_mode($state);
+    if ($mode !== $required) {
+        fail($required === 'owner' ? 'Нужен режим владельца' : 'Нужен режим участника', 403);
+    }
+}
+
+function v2_require_active_session(array $state, string $sessionId): array {
+    $session = v2_find_item($state['sessions'], $sessionId);
+    if (!$session || ($session['status'] ?? '') !== 'active') {
+        fail('Активная сессия не найдена или уже закрыта', 404);
+    }
+    return $session;
+}
+
+function v2_find_issue_by_client_operation(array $state, string $clientOperationId): ?array {
+    if ($clientOperationId === '') return null;
+    foreach ($state['issues'] as $issue) {
+        if ((string) ($issue['client_operation_id'] ?? '') === $clientOperationId) return $issue;
+    }
+    return null;
 }
 
 function v2_ensure_bootstrap(array $state, array $payload, bool &$changed): array {
@@ -1199,6 +1223,13 @@ function v2_card_payload(array $profile, array $report, array $issues): array {
     ];
 }
 
+function v2_participant_public_admin_card(array $adminCard, array $participantIssues): array {
+    $adminCard['issue_statuses'] = $participantIssues;
+    $adminCard['report'] = [];
+    $adminCard['balance'] = [];
+    return $adminCard;
+}
+
 function v2_issues_for_participant(array $issues, string $participantId): array {
     return array_values(array_filter($issues, fn($issue) => ($issue['participant_id'] ?? '') === $participantId));
 }
@@ -1212,18 +1243,26 @@ function v2_state_response(array $state): array {
     $selectedSession = $selectedSessionId !== '' ? v2_find_item($state['sessions'], $selectedSessionId) : null;
     $selectedGroupId = (string) ($selectedSession['group_id'] ?? ($state['groups'][0]['id'] ?? ''));
     $sessionIssues = $selectedSessionId !== '' ? v2_issues_for_session($state, $selectedSessionId) : [];
+    $visibleIssues = $selectedMode === 'participant'
+        ? v2_issues_for_participant($sessionIssues, $selectedParticipantId)
+        : $sessionIssues;
 
     $adminReport = $selectedSessionId !== '' ? v2_load_report($selectedSessionId, V2_ADMIN_ID) : v2_default_report('', V2_ADMIN_ID);
-    $adminCard = v2_card_payload($state['admin'], $adminReport, $sessionIssues);
+    $adminCard = v2_card_payload($state['admin'], $adminReport, $visibleIssues);
     $participantCards = [];
     $liveReports = [V2_ADMIN_ID => $adminReport];
     foreach ($state['participants'] as $participant) {
         if (empty($participant['active'])) continue;
         if ($selectedGroupId !== '' && ($participant['group_id'] ?? '') !== $selectedGroupId) continue;
+        if ($selectedMode === 'participant' && (string) $participant['id'] !== $selectedParticipantId) continue;
         $participantId = (string) $participant['id'];
         $report = $selectedSessionId !== '' ? v2_load_report($selectedSessionId, $participantId) : v2_default_report('', $participantId);
         $liveReports[$participantId] = $report;
-        $participantCards[] = v2_card_payload($participant, $report, $sessionIssues);
+        $participantCards[] = v2_card_payload($participant, $report, $visibleIssues);
+    }
+    if ($selectedMode === 'participant') {
+        $adminCard = v2_participant_public_admin_card($adminCard, $visibleIssues);
+        $liveReports = array_filter($liveReports, fn($key) => $key === V2_ADMIN_ID || $key === $selectedParticipantId, ARRAY_FILTER_USE_KEY);
     }
 
     $commonSummary = v2_common_summary(array_values($liveReports));
@@ -1272,7 +1311,7 @@ function v2_state_response(array $state): array {
             'admin' => $adminCard['balance'],
             'participants' => $participantBalances,
         ],
-        'issue_statuses' => $sessionIssues,
+        'issue_statuses' => $visibleIssues,
         'live_reports' => $liveReports,
         'updated_at' => $state['updated_at'],
     ];
@@ -1306,6 +1345,13 @@ function v2_handle_state(): array {
 
 function v2_handle_save_report(array $payload): array {
     $state = v2_load_state();
+    $reportPayload = isset($payload['report']) && is_array($payload['report']) ? $payload['report'] : $payload;
+    $sessionId = v2_require_id($reportPayload['session_id'] ?? $payload['session_id'] ?? v2_selected_session_id($state), 'session_id');
+    v2_require_active_session($state, $sessionId);
+    $participantId = v2_require_id($reportPayload['participant_id'] ?? $payload['participant_id'] ?? v2_selected_participant_id($state), 'participant_id');
+    if (v2_selected_mode($state) === 'participant' && $participantId !== v2_selected_participant_id($state)) {
+        fail('Участник может менять только свой отчет', 403);
+    }
     $report = v2_save_live_report($state, $payload);
     v2_audit('v2_save_report', [
         'session_id' => $report['session_id'],
@@ -1317,14 +1363,19 @@ function v2_handle_save_report(array $payload): array {
 
 function v2_handle_issue_money(array $payload): array {
     $state = v2_load_state();
+    v2_require_mode($state, 'owner');
     $sessionId = v2_require_id($payload['session_id'] ?? v2_selected_session_id($state), 'session_id');
     $participantId = v2_require_id($payload['participant_id'] ?? v2_selected_participant_id($state), 'participant_id');
-    $session = v2_find_item($state['sessions'], $sessionId);
-    if (!$session || ($session['status'] ?? '') !== 'active') fail('Активная сессия не найдена', 404);
+    v2_require_active_session($state, $sessionId);
     $participant = v2_find_item($state['participants'], $participantId);
     if (!$participant || empty($participant['active'])) fail('Участник не найден', 404);
     $amountMinor = abs(v2_amount_minor_from_payload($payload));
     if ($amountMinor <= 0) fail('Сумма должна быть больше нуля', 400);
+    $clientOperationId = trim((string) ($payload['client_operation_id'] ?? $payload['operation_id'] ?? ''));
+    $existingIssue = v2_find_issue_by_client_operation($state, $clientOperationId);
+    if ($existingIssue) {
+        return ['issued' => true, 'idempotent' => true, 'issue' => $existingIssue, 'state' => v2_state_response($state)];
+    }
 
     $issue = [
         'id' => v2_new_id('issue'),
@@ -1335,6 +1386,7 @@ function v2_handle_issue_money(array $payload): array {
         'currency' => strtoupper(substr(trim((string) ($payload['currency'] ?? $state['currency'])) ?: V2_DEFAULT_CURRENCY, 0, 8)),
         'status' => 'pending',
         'description' => trim((string) ($payload['description'] ?? $payload['note'] ?? '')),
+        'client_operation_id' => $clientOperationId,
         'issued_by' => V2_ADMIN_ID,
         'confirmed_by' => '',
         'issued_at' => v2_now(),
@@ -1353,6 +1405,7 @@ function v2_handle_issue_money(array $payload): array {
 
 function v2_handle_confirm_issue(array $payload): array {
     $state = v2_load_state();
+    v2_require_mode($state, 'participant');
     $issueIndex = null;
     if (!empty($payload['issue_id'])) {
         $issueIndex = v2_find_index($state['issues'], v2_require_id($payload['issue_id'], 'issue_id'));
@@ -1369,11 +1422,14 @@ function v2_handle_confirm_issue(array $payload): array {
     if ($issueIndex === null) fail('Выдача не найдена', 404);
 
     $issue = $state['issues'][$issueIndex];
+    $selectedParticipantId = v2_selected_participant_id($state);
+    if ((string) $issue['participant_id'] !== $selectedParticipantId) {
+        fail('Можно подписать только свою выдачу', 403);
+    }
     if (!empty($payload['participant_id']) && (string) $issue['participant_id'] !== v2_require_id($payload['participant_id'], 'participant_id')) {
         fail('Выдача относится к другому участнику', 403);
     }
-    $session = v2_find_item($state['sessions'], (string) $issue['session_id']);
-    if (!$session) fail('Сессия не найдена', 404);
+    v2_require_active_session($state, (string) $issue['session_id']);
     $participant = v2_find_item($state['participants'], (string) $issue['participant_id']);
     if (!$participant) fail('Участник не найден', 404);
 
@@ -1456,10 +1512,21 @@ function v2_reports_for_session(array $state, string $sessionId): array {
 
 function v2_handle_finalize_session(array $payload): array {
     $state = v2_load_state();
+    v2_require_mode($state, 'owner');
     $sessionId = v2_require_id($payload['session_id'] ?? v2_selected_session_id($state), 'session_id');
     $sessionIndex = v2_find_index($state['sessions'], $sessionId);
     if ($sessionIndex === null) fail('Сессия не найдена', 404);
     $session = $state['sessions'][$sessionIndex];
+    if (($session['status'] ?? '') !== 'active' && empty($session['archive_path'])) {
+        fail('Сессия уже закрыта', 409);
+    }
+    $pendingIssues = array_values(array_filter(
+        v2_issues_for_session($state, $sessionId),
+        fn($issue) => ($issue['status'] ?? '') === 'pending'
+    ));
+    if ($pendingIssues) {
+        fail('Нельзя закрыть сессию: есть неподписанные выдачи', 409);
+    }
     $archivePath = V2_ARCHIVES_DIR . '/' . $sessionId . '.json';
     $archive = v2_read_json($archivePath);
     $createdArchive = false;

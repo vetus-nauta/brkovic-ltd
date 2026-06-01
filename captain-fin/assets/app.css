@@ -345,6 +345,17 @@ input, textarea, select {
   cursor: default;
   opacity: 1;
 }
+.fd-payout-wait {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 9px;
+  border-radius: 8px;
+  background: rgba(255,59,48,.08);
+  color: var(--red);
+  font-size: 12px;
+  line-height: 1.2;
+}
 .fd-payout-toggle {
   width: 32px;
   padding: 0;
@@ -677,6 +688,57 @@ input, textarea, select {
   grid-template-columns: auto auto;
   justify-content: center;
 }
+.fd-issue-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: end center;
+  padding: 18px;
+}
+.fd-issue-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(17,24,39,.24);
+  backdrop-filter: blur(8px);
+}
+.fd-issue-panel {
+  position: relative;
+  width: min(460px, 100%);
+  max-height: min(520px, calc(var(--app-height) - 28px));
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: rgba(255,255,255,.96);
+  box-shadow: var(--shadow);
+}
+.fd-issue-form {
+  display: grid;
+  gap: 12px;
+}
+.fd-issue-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.fd-issue-head h2 {
+  margin: 0;
+  font-size: 18px;
+}
+.fd-issue-head p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+.fd-issue-form label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
 @media (max-width: 920px) {
   body {
     min-height: var(--app-height);
@@ -818,4 +880,20 @@ input, textarea, select {
   .side-actions, .balance-row { grid-template-columns: 1fr; display: grid; }
   .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .share-grid { grid-template-columns: repeat(2, 1fr); }
+  .fd-issue-sheet {
+    place-items: end stretch;
+    padding: 10px 10px max(10px, env(safe-area-inset-bottom));
+  }
+  .fd-issue-panel {
+    width: 100%;
+    max-height: calc(var(--app-height) - 16px);
+    border-radius: 20px 20px 0 0;
+  }
+  .fd-issue-head {
+    display: grid;
+    grid-template-columns: 1fr auto;
+  }
+  .fd-issue-form button[type="submit"] {
+    min-height: 44px;
+  }
 }

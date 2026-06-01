@@ -4,16 +4,16 @@ Date: 2026-06-01
 Scope: FinDesk v2 active sessions, live reports, money issues, balances, archive/finalize, mobile input.  
 Decision rule: one failed item below blocks release. UI-only evidence is not enough; API must enforce the rule.
 
-Note: current `captain-fin` build exposes legacy `api/?action=...` routes. If the tested build has no `/api/v2` contract for the scenarios below, FinDesk v2 is **BLOCKED at API discovery**.
+Note: current `captain-fin` build exposes action routes such as `api/?action=v2_state`, `api/?action=v2_issue_money`, and `api/?action=v2_confirm_issue`. `/api/v2/...` examples below are logical scenarios; route mapping is acceptable when the assertions are enforced by the API.
 
 ## Hard gate
 
 | ID | Gate | Required result |
 | --- | --- | --- |
 | FD2-01 | Active sessions | `GET active` returns only non-finalized, non-archived sessions. Starting or joining a session must never revive old reports/issues. |
-| FD2-02 | Owner / participant mode | Owner can see all participants, balances, pending issues, finalize/archive, and confirm money issues. Participant can see and edit only own live report and own pending issue requests; participant cannot confirm, finalize, archive, or read another participant's data. |
+| FD2-02 | Owner / participant mode | Owner can see all participants, balances, pending issues, finalize/archive, and issue money. Participant can see and edit only own live report and own pending issue requests; participant can sign only own received money; participant cannot finalize, archive, issue money, or read another participant's data. |
 | FD2-03 | One live report per participant per session | Duplicate create, refresh, retry, or concurrent submit must leave exactly one live report for `(session_id, participant_id)`. Second create returns same idempotent report or explicit duplicate error; it must not create a second report. |
-| FD2-04 | Money issue lifecycle | Participant can create `pending`; pending is visible to owner and participant but not applied to confirmed balance/final report. Only owner can move it to `confirmed`. Confirm is idempotent and applies the ledger effect exactly once. Confirmed issues are immutable except allowed audit metadata. |
+| FD2-04 | Money issue lifecycle | Owner can create `pending`; pending is visible to owner and the target participant but not applied to confirmed balance/final report. Only the target participant can sign it to `confirmed`. Confirm is idempotent and applies the ledger effect exactly once. Confirmed issues are immutable except allowed audit metadata. |
 | FD2-05 | Balances | Physical cash, card stream, pending exposure, and confirmed totals are separated. Card expense never changes physical cash. Pending money issue never changes confirmed balance. All balances are recomputed from server state, not trusted from client payload. |
 | FD2-06 | Archive/finalize idempotency | Repeating `finalize` or `archive` returns the same terminal state: same session id, same `finalized_at`/`archived_at`, same final report/export id, no duplicate archive/export rows. Finalized/archived session is read-only and absent from active sessions. |
 | FD2-07 | No old data in active session | A new active session for the same participant starts with empty live report/issues except explicit opening balances or server-approved carry-forward fields. Search/list endpoints must filter by `session_id`; old descriptions/receipts must not leak into active session UI or API. |
@@ -93,24 +93,24 @@ Expected: participant A physical cash is `880`; card spent is `300`; confirmed s
 
 ```bash
 curl -s -X POST "$BASE/api/v2/sessions/$SID/money-issues" \
-  -H "$A_H" -H "Content-Type: application/json" \
+  -H "$OWNER_H" -H "Content-Type: application/json" \
   -d "{\"participant_id\":\"$A\",\"amount\":500,\"currency\":\"EUR\",\"reason\":\"QA cash advance\"}"
 
 curl -s "$BASE/api/v2/sessions/$SID/balances" -H "$OWNER_H"
 
 curl -i -X POST "$BASE/api/v2/money-issues/$ISSUE_ID/confirm" \
+  -H "$OWNER_H" -H "Content-Type: application/json" -d '{}'
+
+curl -s -X POST "$BASE/api/v2/money-issues/$ISSUE_ID/confirm" \
   -H "$A_H" -H "Content-Type: application/json" -d '{}'
 
 curl -s -X POST "$BASE/api/v2/money-issues/$ISSUE_ID/confirm" \
-  -H "$OWNER_H" -H "Content-Type: application/json" -d '{}'
-
-curl -s -X POST "$BASE/api/v2/money-issues/$ISSUE_ID/confirm" \
-  -H "$OWNER_H" -H "Content-Type: application/json" -d '{}'
+  -H "$A_H" -H "Content-Type: application/json" -d '{}'
 
 curl -s "$BASE/api/v2/sessions/$SID/balances" -H "$OWNER_H"
 ```
 
-Expected: before confirm, `pending_money_issues` includes `500` and confirmed balance is unchanged. Participant confirm is `403`. Owner confirm changes status to `confirmed` and applies `500` once. Repeated confirm returns same confirmed issue without a second ledger event.
+Expected: before confirm, `pending_money_issues` includes `500` and confirmed balance is unchanged. Owner confirm is `403`. Target participant confirm changes status to `confirmed` and applies `500` once. Repeated participant confirm returns same confirmed issue without a second ledger event. Another participant confirm is `403`.
 
 ### 6. Finalize and archive idempotency
 
@@ -158,8 +158,8 @@ Run on real iOS Safari and Android Chrome, plus one browser devtools run with th
 2. Focus amount input, description, issue reason, and notes with keyboard open. Focused field stays visible; submit/add buttons are reachable by scroll; no fixed footer covers input.
 3. Enter `10.50`, `10,50`, paste `1 234,56`, delete to empty, then type again. Server stores numeric value correctly; UI never shows `NaN` or silently converts to `0` on blur.
 4. Add cash received, cash expense, and card expense from mobile. Reopen report. Rows, order, amounts, and balance categories are unchanged.
-5. Create pending money issue as participant with keyboard open. It appears as pending, not confirmed. Refresh and reopen: still pending, no duplicate issue.
-6. Owner opens same session on mobile and confirms the pending issue. Confirm button cannot be double-tapped into duplicate ledger events; repeated tap keeps same confirmed issue.
+5. Owner creates pending money issue with keyboard open. It appears as pending, not confirmed. Refresh and reopen: still pending, no duplicate issue.
+6. Target participant opens same session on mobile and signs the pending issue. Sign button cannot be double-tapped into duplicate ledger events; repeated tap keeps same confirmed issue.
 7. Use browser Back from editor to list and back to editor while autosave is running. Latest input remains; no second live report appears.
 8. Rotate portrait/landscape with keyboard open. Header, mode controls, amount input, and primary action remain usable; no dead touch zone remains after keyboard closes.
 9. Finalize from owner mobile. Participant mobile refresh becomes read-only or exits active session; it cannot edit finalized data.
