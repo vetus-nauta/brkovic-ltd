@@ -1,4 +1,4 @@
-const APP_VERSION = '2026.06.01-captain-fin-016';
+const APP_VERSION = '2026.06.01-captain-fin-017';
 const PUBLIC_WEB_APP_URL = 'https://brkovic.ltd/captain-fin/';
 const DRIVE_FOLDER_URL = 'https://drive.google.com/drive/folders/1x9m41AUYPocx7H0UezF_lZnFvzWO54zQ?usp=sharing';
 const $ = (id) => document.getElementById(id);
@@ -15,6 +15,10 @@ let lastSavedSnapshot = '';
 let signedEntriesApplied = false;
 let selectRequestToken = 0;
 let saveRequestToken = 0;
+let finDeskState = null;
+let finDeskMode = 'owner';
+let finDeskGroupId = null;
+let finDeskOpenPayouts = new Set();
 
 function isMobileLayout() {
   return window.matchMedia('(max-width: 920px)').matches;
@@ -120,6 +124,219 @@ function blankReport({ fromHistory = false } = {}) {
 
 function escapeAttr(value) {
   return String(value ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+}
+
+function firstValue(...values) {
+  return values.find((value) => value !== undefined && value !== null && value !== '');
+}
+
+function pickPath(source, path) {
+  if (!source || typeof source !== 'object') return undefined;
+  return String(path).split('.').reduce((value, key) => {
+    if (!value || typeof value !== 'object') return undefined;
+    return value[key];
+  }, source);
+}
+
+function pick(source, paths, fallback = undefined) {
+  for (const path of paths) {
+    const value = pickPath(source, path);
+    if (value !== undefined && value !== null && value !== '') return value;
+  }
+  return fallback;
+}
+
+function asCollection(value) {
+  if (Array.isArray(value)) return value;
+  if (!value || typeof value !== 'object') return [];
+  const values = Object.values(value);
+  return values.every((item) => item && typeof item === 'object') ? values : [];
+}
+
+function toFlag(value) {
+  if (value === true) return true;
+  if (value === false || value === undefined || value === null) return false;
+  if (typeof value === 'number') return value > 0;
+  const text = String(value).toLowerCase().trim();
+  return ['1', 'true', 'yes', 'y', 'done', 'signed', 'confirmed', 'submitted', 'approved'].includes(text);
+}
+
+function parseAmount(value) {
+  if (typeof value === 'number') return value;
+  const normalized = String(value ?? '').replace(/[^\d,.-]/g, '').replace(',', '.');
+  const amount = Number(normalized);
+  return Number.isFinite(amount) ? amount : null;
+}
+
+function formatCurrency(value, currency = 'EUR') {
+  const amount = parseAmount(value);
+  if (amount === null) return escapeAttr(firstValue(value, 'Выдача'));
+  return `${money(amount)} ${escapeAttr(currency || 'EUR')}`;
+}
+
+function formatV2Date(value) {
+  if (!value) return '';
+  const parsed = new Date(value);
+  if (!Number.isNaN(parsed.getTime())) return parsed.toLocaleDateString('ru-RU');
+  return String(value).slice(0, 16);
+}
+
+function normalizePayout(raw = {}, index = 0) {
+  const statusText = String(pick(raw, ['status', 'state', 'signature_status', 'signatureStatus'], '')).toLowerCase();
+  const signedFlag = firstValue(
+    pick(raw, ['confirmed', 'is_confirmed', 'isConfirmed', 'signed', 'is_signed', 'isSigned', 'signature_confirmed', 'signatureConfirmed']),
+    statusText
+  );
+  const confirmed = toFlag(signedFlag) || /confirmed|signed|approved|done/.test(statusText);
+  const id = String(firstValue(
+    pick(raw, ['id', 'payout_id', 'payoutId', 'payment_id', 'paymentId']),
+    `payout-${index}`
+  ));
+  const date = firstValue(pick(raw, ['date', 'created_at', 'createdAt', 'issued_at', 'issuedAt', 'paid_at', 'paidAt', 'updated_at', 'updatedAt']), '');
+  return {
+    id,
+    index,
+    amount: firstValue(pick(raw, ['amount', 'value', 'sum', 'total']), ''),
+    currency: firstValue(pick(raw, ['currency', 'ccy']), 'EUR'),
+    date,
+    timestamp: Date.parse(date) || 0,
+    note: firstValue(pick(raw, ['note', 'description', 'title', 'reason', 'comment']), ''),
+    status: confirmed ? 'confirmed' : 'pending',
+    raw
+  };
+}
+
+function normalizePayouts(rawPerson = {}, groupPayouts = [], personId = '') {
+  const ownPayouts = asCollection(firstValue(
+    pick(rawPerson, ['payouts', 'payments', 'distributions', 'issuances', 'withdrawals', 'issue_statuses', 'issueStatuses']),
+    []
+  ));
+  const linkedPayouts = groupPayouts.filter((payout) => {
+    const linkedId = String(firstValue(pick(payout, ['participant_id', 'participantId', 'member_id', 'memberId', 'user_id', 'userId', 'person_id', 'personId']), ''));
+    return linkedId && linkedId === String(personId);
+  });
+  const lastPayout = pick(rawPerson, ['last_payout', 'lastPayout', 'latest_payout', 'latestPayout']);
+  const rawPayouts = [lastPayout, ...ownPayouts, ...linkedPayouts].filter(Boolean);
+  const normalized = rawPayouts.map((item, index) => normalizePayout(item, index));
+  const unique = [];
+  const seen = new Set();
+  normalized.forEach((payout) => {
+    const key = payout.id || `${payout.amount}-${payout.date}-${payout.note}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    unique.push(payout);
+  });
+  if (unique.some((payout) => payout.timestamp)) {
+    unique.sort((a, b) => b.timestamp - a.timestamp || a.index - b.index);
+  }
+  return unique;
+}
+
+function liveReportSubmitted(rawPerson = {}) {
+  const report = firstValue(
+    pick(rawPerson, ['live_report', 'liveReport', 'current_report', 'currentReport', 'report']),
+    {}
+  );
+  const reportStatus = String(pick(report, ['status', 'state'], '')).toLowerCase();
+  const personStatus = String(pick(rawPerson, ['live_report_status', 'liveReportStatus'], '')).toLowerCase();
+  return toFlag(firstValue(
+    pick(report, ['submitted', 'is_submitted', 'isSubmitted', 'signed', 'confirmed']),
+    pick(rawPerson, ['live_report_submitted', 'liveReportSubmitted', 'submitted_live_report', 'submittedLiveReport'])
+  )) || /submitted|signed|confirmed|done/.test(`${reportStatus} ${personStatus}`);
+}
+
+function normalizePerson(raw = {}, fallbackRole = 'participant', index = 0, groupPayouts = []) {
+  const id = String(firstValue(
+    pick(raw, ['id', 'user_id', 'userId', 'participant_id', 'participantId', 'member_id', 'memberId', 'email']),
+    `${fallbackRole}-${index}`
+  ));
+  const role = String(firstValue(pick(raw, ['role', 'type']), fallbackRole));
+  const name = String(firstValue(
+    pick(raw, ['name', 'display_name', 'displayName', 'full_name', 'fullName', 'title', 'label', 'email']),
+    fallbackRole === 'admin' ? 'Администратор' : `Участник ${index + 1}`
+  ));
+  const email = firstValue(pick(raw, ['email', 'mail']), '');
+  const roleMeta = role === 'owner' || role === 'admin' ? 'администратор' : 'участник';
+  const meta = firstValue(pick(raw, ['subtitle', 'caption', 'phone', 'note']), email, roleMeta);
+  return {
+    id,
+    role,
+    name,
+    meta,
+    balance: firstValue(pick(raw, ['balance', 'computed', 'summary']), {}),
+    liveSubmitted: liveReportSubmitted(raw),
+    payouts: normalizePayouts(raw, groupPayouts, id),
+    raw
+  };
+}
+
+function normalizeGroup(raw = {}, index = 0, root = {}) {
+  const id = String(firstValue(
+    pick(raw, ['id', 'group_id', 'groupId', 'slug', 'key']),
+    `group-${index}`
+  ));
+  const name = String(firstValue(
+    pick(raw, ['name', 'title', 'label']),
+    `Группа ${index + 1}`
+  ));
+  const groupPayouts = asCollection(firstValue(
+    pick(raw, ['payouts', 'payments', 'distributions', 'issuances']),
+    []
+  ));
+  const adminRaw = firstValue(
+    pick(raw, ['admin', 'administrator', 'owner', 'captain', 'manager']),
+    pick(root, ['admin', 'owner', 'captain']),
+    {}
+  );
+  const participantsRaw = asCollection(firstValue(
+    pick(raw, ['participants', 'members', 'users', 'participant_cards', 'participantCards', 'participants_cards', 'participantsCards']),
+    []
+  ));
+  const admin = normalizePerson(adminRaw, 'admin', 0, groupPayouts);
+  const participants = participantsRaw
+    .map((person, personIndex) => normalizePerson(person, 'participant', personIndex, groupPayouts))
+    .filter((person) => person.id !== admin.id || person.role !== 'admin');
+  const currency = firstValue(pick(raw, ['currency', 'ccy']), pick(root, ['currency', 'ccy']), 'EUR');
+  return { id, name, admin, participants, currency, raw };
+}
+
+function normalizeV2State(raw = {}) {
+  const root = firstValue(raw.state, raw.data, raw.payload, raw);
+  if (!root || typeof root !== 'object') return { groups: [], activeGroupId: '', viewer: {}, raw };
+  let groupsRaw = asCollection(firstValue(
+    pick(root, ['groups', 'active_groups', 'activeGroups', 'available_groups', 'availableGroups']),
+    []
+  ));
+  const activeGroup = firstValue(
+    pick(root, ['active_group', 'activeGroup', 'current_group', 'currentGroup', 'group']),
+    null
+  );
+  if (activeGroup && typeof activeGroup === 'object') groupsRaw = [activeGroup, ...groupsRaw];
+  if (!groupsRaw.length && (
+    pick(root, ['participants', 'members', 'users']) ||
+    pick(root, ['admin', 'owner', 'captain'])
+  )) {
+    groupsRaw = [root];
+  }
+  const groups = groupsRaw.map((group, index) => normalizeGroup(group, index, root));
+  const uniqueGroups = [];
+  const seen = new Set();
+  groups.forEach((group) => {
+    if (seen.has(group.id)) return;
+    seen.add(group.id);
+    uniqueGroups.push(group);
+  });
+  const activeGroupId = String(firstValue(
+    pick(root, ['active_group_id', 'activeGroupId', 'current_group_id', 'currentGroupId', 'group_id', 'groupId']),
+    pick(root, ['selected_group_id', 'selectedGroupId']),
+    uniqueGroups[0]?.id || ''
+  ));
+  return {
+    groups: uniqueGroups,
+    activeGroupId,
+    viewer: firstValue(pick(root, ['viewer', 'me', 'user']), {}),
+    raw
+  };
 }
 
 function addEntry(type = 'income', entry = {}, source = 'manual') {
@@ -303,6 +520,291 @@ function renderList() {
       }
     });
   });
+}
+
+function activeFinDeskGroup() {
+  if (!finDeskState || !finDeskState.groups.length) return null;
+  return finDeskState.groups.find((group) => group.id === finDeskGroupId)
+    || finDeskState.groups.find((group) => group.id === finDeskState.activeGroupId)
+    || finDeskState.groups[0];
+}
+
+function renderLiveMarker(person) {
+  return person.liveSubmitted ? '<span class="fd-live-marker">Отчет сдан</span>' : '';
+}
+
+function renderBalanceLine(person) {
+  const balance = person.balance || {};
+  const current = firstValue(pick(balance, ['current', 'current_amount']), null);
+  const pendingIn = firstValue(pick(balance, ['pending_in', 'pendingIn']), null);
+  const pendingOut = firstValue(pick(balance, ['pending_out', 'pendingOut']), null);
+  const parts = [];
+  if (current !== null) parts.push(`на руках ${formatCurrency(current, firstValue(balance.currency, 'EUR'))}`);
+  if (pendingIn !== null && Number(pendingIn || 0) > 0) parts.push(`ждет подписи +${formatCurrency(pendingIn, firstValue(balance.currency, 'EUR'))}`);
+  if (pendingOut !== null && Number(pendingOut || 0) > 0) parts.push(`выдано к подписи ${formatCurrency(pendingOut, firstValue(balance.currency, 'EUR'))}`);
+  return parts.length ? `<div class="fd-balance-line">${parts.map(escapeAttr).join(' · ')}</div>` : '';
+}
+
+function renderPayoutHistory(payouts = []) {
+  return payouts.slice(0, 5).map((payout) => `
+    <div class="fd-history-row">
+      <strong>${formatCurrency(payout.amount, payout.currency)}</strong>
+      <span>${escapeAttr(formatV2Date(payout.date) || payout.note || payout.status)}</span>
+    </div>
+  `).join('');
+}
+
+function renderPayoutBlock(person) {
+  const payouts = person.payouts || [];
+  if (!payouts.length) {
+    return '<div class="fd-payout fd-payout-empty">Выдач нет</div>';
+  }
+  const latest = payouts[0];
+  const statusClass = latest.status === 'confirmed' ? 'confirmed' : 'pending';
+  const statusLabel = statusClass === 'confirmed' ? 'подписано' : 'ждет подписи';
+  const isOpen = finDeskOpenPayouts.has(person.id);
+  const canExpand = payouts.length > 1;
+  const action = statusClass === 'confirmed'
+    ? '<button class="fd-payout-action confirmed" type="button" disabled>Подписано</button>'
+    : `<button class="fd-payout-action pending" type="button" data-fd-payout-action="${escapeAttr(latest.id)}">Подписать</button>`;
+  const toggle = canExpand
+    ? `<button class="fd-payout-toggle" type="button" data-fd-payout-toggle="${escapeAttr(person.id)}" aria-expanded="${isOpen ? 'true' : 'false'}" title="Последние 5">${isOpen ? '⌃' : '⌄'}</button>`
+    : '';
+  return `
+    <div class="fd-payout">
+      <div class="fd-payout-current">
+        <div class="fd-payout-line">
+          <span class="fd-payout-amount">${formatCurrency(latest.amount, latest.currency)}</span>
+          <span class="fd-payout-status ${statusClass}">${statusLabel}</span>
+        </div>
+        <div class="fd-payout-line">
+          <span class="fd-payout-note">${escapeAttr(latest.note || 'Последняя выдача')}</span>
+          <span class="fd-payout-date">${escapeAttr(formatV2Date(latest.date))}</span>
+        </div>
+        <div class="fd-payout-actions">
+          ${action}
+          ${toggle}
+        </div>
+      </div>
+      ${isOpen && canExpand ? `<div class="fd-payout-history">${renderPayoutHistory(payouts)}</div>` : ''}
+    </div>
+  `;
+}
+
+function renderAdminCard(group) {
+  const admin = group?.admin || normalizePerson({}, 'admin', 0);
+  return `
+    <article class="fd-card fd-admin-card" role="button" tabindex="0" id="fdAdminCard">
+      <div class="fd-card-head">
+        <div class="fd-person-main">
+          <strong>${escapeAttr(admin.name)}</strong>
+          <span>${escapeAttr(admin.meta || group?.name || 'Администратор группы')}</span>
+        </div>
+        <span class="fd-role-chip">Админ</span>
+      </div>
+      ${renderBalanceLine(admin)}
+      ${renderLiveMarker(admin)}
+      ${renderPayoutBlock(admin)}
+      <div class="fd-card-actions">
+        <button class="soft" type="button" id="fdFinalizeSession">Создать общий отчет</button>
+      </div>
+    </article>
+  `;
+}
+
+function renderParticipantCard(person) {
+  return `
+    <article class="fd-card fd-person-card" data-fd-person="${escapeAttr(person.id)}" tabindex="0">
+      <div class="fd-card-head">
+        <div class="fd-person-main">
+          <strong>${escapeAttr(person.name)}</strong>
+          <span>${escapeAttr(person.meta || person.role || 'participant')}</span>
+        </div>
+        <span class="fd-role-chip">Участник</span>
+      </div>
+      ${renderBalanceLine(person)}
+      ${renderLiveMarker(person)}
+      ${renderPayoutBlock(person)}
+      ${finDeskMode === 'owner' ? `<div class="fd-card-actions"><button class="soft" type="button" data-fd-issue="${escapeAttr(person.id)}">Выдать</button></div>` : ''}
+    </article>
+  `;
+}
+
+async function confirmFinDeskPayout(issueId) {
+  const result = await api('v2_confirm_issue', {
+    method: 'POST',
+    body: JSON.stringify({ issue_id: issueId })
+  });
+  finDeskState = normalizeV2State(result.state || result);
+  renderFinDesk();
+  setFinDeskStatus('Выдача подписана.');
+}
+
+async function issueFinDeskMoney(participantId) {
+  const group = activeFinDeskGroup();
+  const sessionId = firstValue(
+    pick(group?.raw || {}, ['session_id', 'sessionId', 'selected_session_id', 'selectedSessionId']),
+    pick(finDeskState?.raw || {}, ['selected_session_id', 'selectedSessionId'])
+  );
+  if (!sessionId) {
+    setFinDeskStatus('Активная сессия не найдена.');
+    return;
+  }
+  const amount = prompt('Сколько выдать участнику?');
+  if (!amount) return;
+  const description = prompt('Комментарий к выдаче', '') || '';
+  const result = await api('v2_issue_money', {
+    method: 'POST',
+    body: JSON.stringify({ session_id: sessionId, participant_id: participantId, amount, description })
+  });
+  finDeskState = normalizeV2State(result.state || result);
+  renderFinDesk();
+  setFinDeskStatus('Выдача создана. Участник должен подписать.');
+}
+
+async function finalizeFinDeskSession() {
+  const sessionId = pick(finDeskState?.raw || {}, ['selected_session_id', 'selectedSessionId']);
+  if (!sessionId) return setFinDeskStatus('Активная сессия не найдена.');
+  if (!confirm('Создать общий отчет и закрыть активную сессию?')) return;
+  const result = await api('v2_finalize_session', {
+    method: 'POST',
+    body: JSON.stringify({ session_id: sessionId })
+  });
+  finDeskState = normalizeV2State(result.state || result);
+  renderFinDesk();
+  setFinDeskStatus('Общий отчет создан, сессия закрыта.');
+}
+
+function bindFinDeskCards() {
+  document.querySelectorAll('[data-fd-payout-toggle]').forEach((button) => {
+    button.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const personId = button.dataset.fdPayoutToggle;
+      if (finDeskOpenPayouts.has(personId)) finDeskOpenPayouts.delete(personId);
+      else finDeskOpenPayouts.add(personId);
+      renderFinDesk();
+    });
+  });
+  document.querySelectorAll('[data-fd-payout-action]').forEach((button) => {
+    button.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (finDeskMode !== 'participant') {
+        setFinDeskStatus('Ждет подписи участника.');
+        return;
+      }
+      confirmFinDeskPayout(button.dataset.fdPayoutAction).catch((error) => setFinDeskStatus(error.message));
+    });
+  });
+  document.querySelectorAll('[data-fd-issue]').forEach((button) => {
+    button.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      issueFinDeskMoney(button.dataset.fdIssue).catch((error) => setFinDeskStatus(error.message));
+    });
+  });
+  const finalizeButton = $('fdFinalizeSession');
+  if (finalizeButton) finalizeButton.addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    finalizeFinDeskSession().catch((error) => setFinDeskStatus(error.message));
+  });
+  document.querySelectorAll('[data-fd-person]').forEach((card) => {
+    const selectCard = () => setFinDeskStatus(`Участник выбран: ${card.querySelector('strong')?.textContent || card.dataset.fdPerson}`);
+    card.addEventListener('click', (event) => {
+      if (event.target.closest('button')) return;
+      selectCard();
+    });
+    card.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      selectCard();
+    });
+  });
+  const adminCard = $('fdAdminCard');
+  if (adminCard) {
+    const selectAdmin = () => setFinDeskStatus('Администратор группы выбран.');
+    adminCard.addEventListener('click', (event) => {
+      if (event.target.closest('button')) return;
+      selectAdmin();
+    });
+    adminCard.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      selectAdmin();
+    });
+  }
+}
+
+function renderFinDesk() {
+  if (!$('finDeskScreen')) return;
+  const group = activeFinDeskGroup();
+  const groups = finDeskState?.groups || [];
+  $('fdGroupSelect').innerHTML = groups.length
+    ? groups.map((item) => `<option value="${escapeAttr(item.id)}">${escapeAttr(item.name)}</option>`).join('')
+    : '<option value="">Нет активной группы</option>';
+  $('fdGroupSelect').disabled = groups.length < 2;
+  if (group) {
+    finDeskGroupId = group.id;
+    $('fdGroupSelect').value = group.id;
+    $('finDeskTitle').textContent = group.name;
+    $('fdGroupMeta').textContent = `${finDeskMode === 'owner' ? 'владелец' : 'участник'} · ${group.participants.length} участников`;
+    $('fdAdminSlot').innerHTML = renderAdminCard(group);
+    $('fdParticipantStrip').innerHTML = group.participants.length
+      ? group.participants.map(renderParticipantCard).join('')
+      : '<div class="empty-list">Участники не пришли из v2_state.</div>';
+  } else {
+    $('finDeskTitle').textContent = 'Активная группа';
+    $('fdGroupMeta').textContent = 'v2_state без группы';
+    $('fdAdminSlot').innerHTML = '<div class="fd-card fd-payout-empty">Администратор не пришел из v2_state.</div>';
+    $('fdParticipantStrip').innerHTML = '<div class="empty-list">Активная группа не найдена.</div>';
+  }
+  document.querySelectorAll('[data-fd-mode]').forEach((button) => {
+    button.classList.toggle('active', button.dataset.fdMode === finDeskMode);
+  });
+  bindFinDeskCards();
+}
+
+function showFinDesk() {
+  $('finDeskScreen').classList.remove('hidden');
+  $('appShell').classList.add('findesk-active');
+}
+
+function showLegacyScreen() {
+  $('appShell').classList.remove('findesk-active');
+  $('finDeskScreen').classList.add('hidden');
+}
+
+async function loadFinDeskState() {
+  const data = await api('v2_state');
+  finDeskState = normalizeV2State(data);
+  const viewerMode = String(firstValue(pick(finDeskState.viewer, ['mode', 'role']), '')).toLowerCase();
+  const savedMode = window.localStorage ? window.localStorage.getItem('captain-fin-v2-mode') : '';
+  if (['owner', 'participant'].includes(savedMode)) finDeskMode = savedMode;
+  if (['owner', 'participant'].includes(viewerMode)) finDeskMode = viewerMode;
+  const activeId = finDeskState.activeGroupId;
+  if (!finDeskGroupId || !finDeskState.groups.some((group) => group.id === finDeskGroupId)) {
+    finDeskGroupId = activeId || finDeskState.groups[0]?.id || '';
+  }
+  renderFinDesk();
+  showFinDesk();
+  setFinDeskStatus(finDeskState.groups.length ? '' : 'Активная группа не найдена.');
+  return finDeskState;
+}
+
+async function showLegacyFallback(message = '') {
+  showLegacyScreen();
+  await loadReports();
+  if (message) setStatus(message);
+}
+
+async function bootAuthenticatedApp() {
+  try {
+    await loadFinDeskState();
+  } catch (error) {
+    await showLegacyFallback(`v2_state недоступен, открыт старый экран. ${error.message}`);
+  }
 }
 
 async function loadReports() {
@@ -600,12 +1102,19 @@ function openShareTarget(target) {
   window.open(targets[target], '_blank', 'noopener,noreferrer');
 }
 
+function setFinDeskStatus(text) {
+  if (!$('fdStatus')) return;
+  $('fdStatus').textContent = text || '';
+}
+
 function setStatus(text) {
   $('status').textContent = text;
   $('loginStatus').textContent = text;
+  if ($('fdStatus')) $('fdStatus').textContent = text;
   setTimeout(() => {
     if ($('status').textContent === text) $('status').textContent = '';
     if ($('loginStatus').textContent === text) $('loginStatus').textContent = '';
+    if ($('fdStatus') && $('fdStatus').textContent === text) $('fdStatus').textContent = '';
   }, 6500);
 }
 
@@ -616,10 +1125,12 @@ async function checkAuth() {
     $('guestScreen').classList.add('hidden');
     $('appShell').classList.remove('hidden');
     if (isMobileLayout()) syncHistoryState({ view: 'list' }, true);
-    await loadReports();
+    await bootAuthenticatedApp();
   } else {
     $('guestScreen').classList.remove('hidden');
     $('appShell').classList.add('hidden');
+    $('appShell').classList.remove('findesk-active');
+    $('finDeskScreen').classList.add('hidden');
   }
 }
 
@@ -655,6 +1166,41 @@ $('deleteReport').addEventListener('click', () => deleteReport().catch((error) =
 $('exportExcel').addEventListener('click', () => exportExcel().catch((error) => setStatus(error.message)));
 $('attachmentInput').addEventListener('change', () => uploadAttachment().catch((error) => setStatus(error.message)));
 $('importSigned').addEventListener('click', importSignedInput);
+$('fdRefresh').addEventListener('click', () => loadFinDeskState().catch((error) => showLegacyFallback(`v2_state недоступен, открыт старый экран. ${error.message}`).catch((fallbackError) => setStatus(fallbackError.message))));
+$('fdGroupSelect').addEventListener('change', () => {
+  finDeskGroupId = $('fdGroupSelect').value;
+  finDeskOpenPayouts = new Set();
+  renderFinDesk();
+});
+document.querySelectorAll('[data-fd-mode]').forEach((button) => {
+  button.addEventListener('click', async () => {
+    finDeskMode = button.dataset.fdMode || 'owner';
+    if (window.localStorage) window.localStorage.setItem('captain-fin-v2-mode', finDeskMode);
+    renderFinDesk();
+    try {
+      const result = await api('v2_switch_mode', {
+        method: 'POST',
+        body: JSON.stringify({ mode: finDeskMode })
+      });
+      finDeskState = normalizeV2State(result.state || result);
+      renderFinDesk();
+      setFinDeskStatus(finDeskMode === 'owner' ? 'Режим владельца.' : 'Режим участника.');
+    } catch (error) {
+      setFinDeskStatus(`Режим сохранен локально. Сервер: ${error.message}`);
+    }
+  });
+});
+$('fdOpenLegacy').addEventListener('click', () => {
+  showLegacyScreen();
+  if (!reports.length && !selectedId) {
+    loadReports().catch((error) => setStatus(error.message));
+    return;
+  }
+  renderList();
+  setStatus('Открыт старый экран отчетов.');
+});
+$('fdOpenArchive').addEventListener('click', () => openArchive().catch((error) => setStatus(error.message)));
+$('fdOpenStorage').addEventListener('click', () => showStorageInfo().catch((error) => setStatus(error.message)));
 $('shareWebApp').addEventListener('click', openShareSheet);
 $('syncLocal').addEventListener('click', () => copyPublicLink().catch((error) => setStatus(error.message)));
 $('archiveOpen').addEventListener('click', () => openArchive().catch((error) => setStatus(error.message)));

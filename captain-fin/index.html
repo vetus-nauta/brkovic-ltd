@@ -10,7 +10,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="assets/icon.svg">
   <link rel="apple-touch-icon" href="assets/icon.svg">
-  <link rel="stylesheet" href="assets/app.css?v=2026.06.01-captain-fin-016">
+  <link rel="stylesheet" href="assets/app.css?v=2026.06.01-captain-fin-017">
   <title>Captain Fin</title>
 </head>
 <body>
@@ -29,6 +29,42 @@
   </div>
 
   <div class="app-shell hidden mobile-editor" id="appShell">
+    <section class="findesk-screen hidden" id="finDeskScreen" aria-labelledby="finDeskTitle">
+      <div class="fd-topbar">
+        <div class="fd-mode-switch" id="fdModeSwitch" role="group" aria-label="Режим">
+          <button type="button" data-fd-mode="owner">Владелец</button>
+          <button type="button" data-fd-mode="participant">Участник</button>
+        </div>
+        <label class="fd-group-picker">
+          <span>Группа</span>
+          <select id="fdGroupSelect"></select>
+        </label>
+        <button class="soft fd-refresh" id="fdRefresh" type="button">Обновить</button>
+      </div>
+
+      <div class="fd-status-line" id="fdStatus"></div>
+
+      <section class="fd-group-surface">
+        <div class="fd-group-title">
+          <strong id="finDeskTitle">Активная группа</strong>
+          <span id="fdGroupMeta">v2_state</span>
+        </div>
+        <div class="fd-group-row">
+          <div class="fd-admin-slot" id="fdAdminSlot"></div>
+          <div class="fd-participant-strip" id="fdParticipantStrip"></div>
+        </div>
+      </section>
+
+      <details class="fd-details" id="fdDetails">
+        <summary>Детали</summary>
+        <div class="fd-detail-actions">
+          <button class="soft" id="fdOpenLegacy" type="button">Старый экран</button>
+          <button class="soft" id="fdOpenArchive" type="button">Архив удаленных</button>
+          <button class="soft" id="fdOpenStorage" type="button">Пути хранения</button>
+        </div>
+      </details>
+    </section>
+
     <aside class="sidebar">
       <header class="side-head">
         <div>
@@ -131,6 +167,6 @@
       </div>
     </section>
   </div>
-  <script src="assets/app.js?v=2026.06.01-captain-fin-016"></script>
+  <script src="assets/app.js?v=2026.06.01-captain-fin-017"></script>
 </body>
 </html>
