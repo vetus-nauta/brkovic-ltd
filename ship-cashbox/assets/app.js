@@ -1425,16 +1425,18 @@ function renderTreasurerTeamWindow(session) {
   const activeCount = (session.participants || []).filter((participant) => participant.authorized_at).length;
   return `
     <section class="shipcashbox-card shipcashbox-card--window">
-      <div class="shipcashbox-card__head">
-        <div>
-          <p class="section-heading__eyebrow">${escapeHtml(t("participantsTitle"))}</p>
-          <h2>${renderTitleWithHint("participantsTitle", "participantsHelp")}</h2>
+      <div class="shipcashbox-teambar">
+        <div class="shipcashbox-teambar__copy">
+          <p class="shipcashbox-note">${escapeHtml(t("teamContributionsText"))}</p>
+          <div class="shipcashbox-metrics shipcashbox-metrics--compact shipcashbox-metrics--team">
+            <div class="shipcashbox-metric"><span>${escapeHtml(t("participantsTitle"))}</span><strong>${escapeHtml(String((session.participants || []).length))}</strong></div>
+            <div class="shipcashbox-metric"><span>${escapeHtml(t("authConfirmed"))}</span><strong>${escapeHtml(String(activeCount))}</strong></div>
+          </div>
         </div>
-      </div>
-      <p class="shipcashbox-note">${escapeHtml(t("teamContributionsText"))}</p>
-      <div class="shipcashbox-metrics shipcashbox-metrics--compact">
-        <div class="shipcashbox-metric"><span>${escapeHtml(t("participantsTitle"))}</span><strong>${escapeHtml(String((session.participants || []).length))}</strong></div>
-        <div class="shipcashbox-metric"><span>${escapeHtml(t("authConfirmed"))}</span><strong>${escapeHtml(String(activeCount))}</strong></div>
+        <div class="shipcashbox-actions shipcashbox-actions--team">
+          <button class="btn btn--secondary" type="button" id="addParticipantButton" title="${escapeHtml(t("addParticipantHelp"))}" aria-label="${escapeHtml(t("addParticipantHelp"))}">${escapeHtml(t("inviteParticipant"))}</button>
+          <button class="btn btn--primary" type="button" id="saveSessionButton" title="${escapeHtml(t("saveSessionHelp"))}" aria-label="${escapeHtml(t("saveSessionHelp"))}">${escapeHtml(t("saveSession"))}</button>
+        </div>
       </div>
       <div class="shipcashbox-form__grid">
         <label class="shipcashbox-field">
@@ -1446,14 +1448,7 @@ function renderTreasurerTeamWindow(session) {
           <input type="text" id="sessionCurrencyInput" value="${escapeHtml(session.currency)}" maxlength="6">
         </label>
       </div>
-      <div class="shipcashbox-actions shipcashbox-actions--lead">
-        <button class="btn btn--primary" type="button" id="addParticipantButtonTop" title="${escapeHtml(t("addParticipantHelp"))}" aria-label="${escapeHtml(t("addParticipantHelp"))}">${escapeHtml(t("inviteParticipant"))}</button>
-      </div>
       <div class="shipcashbox-participants" id="participantsEditor">${renderParticipantRows(session.participants || [])}</div>
-      <div class="shipcashbox-actions">
-        <button class="btn btn--primary" type="button" id="saveSessionButton" title="${escapeHtml(t("saveSessionHelp"))}" aria-label="${escapeHtml(t("saveSessionHelp"))}">${escapeHtml(t("saveSession"))}</button>
-        <button class="btn btn--secondary" type="button" id="addParticipantButton" title="${escapeHtml(t("addParticipantHelp"))}" aria-label="${escapeHtml(t("addParticipantHelp"))}">${escapeHtml(t("inviteParticipant"))}</button>
-      </div>
     </section>
   `;
 }
@@ -2120,7 +2115,6 @@ function bindTreasurerUi() {
   $("quickInviteParticipantButton")?.addEventListener("click", openTeamInviteDraft);
   $("attachReceiptButton")?.addEventListener("click", openAttachmentSheet);
   $("addParticipantButton")?.addEventListener("click", () => addParticipantDraftRow());
-  $("addParticipantButtonTop")?.addEventListener("click", () => addParticipantDraftRow());
   $("treasurerNotebook")?.addEventListener("input", () => {
     saveTreasurerDraft($("treasurerNotebook").value);
     setNotebookMeta("treasurerSaveMeta", t("autosavePending"));
@@ -2277,7 +2271,10 @@ function addParticipantDraftRow({ focus = true } = {}) {
   })();
   bindParticipantRowActions();
   if (focus) {
-    window.requestAnimationFrame(() => row?.querySelector(".participant-name-input")?.focus({ preventScroll: true }));
+    window.requestAnimationFrame(() => {
+      row?.scrollIntoView({ block: "center", behavior: "smooth" });
+      row?.querySelector(".participant-name-input")?.focus({ preventScroll: true });
+    });
   }
   return row;
 }
@@ -2312,6 +2309,7 @@ function openWorkspaceModal(windowName = "menu", options = {}) {
   lockModalScroll();
   $("workspaceModal").hidden = false;
   $("workspaceModal").dataset.window = windowName;
+  $("workspaceModal").classList.toggle("shipcashbox-modal--workscreen", windowName !== "menu");
   $("workspaceModalMenuButton").textContent = t("workspaceMenuAction");
   $("workspaceCloseButton").textContent = t("close");
   $("workspaceModalEyebrow").textContent = payload.eyebrow;
@@ -2326,6 +2324,7 @@ function openWorkspaceModal(windowName = "menu", options = {}) {
 function closeWorkspaceModal() {
   $("workspaceModal").hidden = true;
   $("workspaceModal").dataset.window = "";
+  $("workspaceModal").classList.remove("shipcashbox-modal--workscreen");
   $("workspaceModalBody").innerHTML = "";
   unlockModalScroll();
 }
@@ -2414,7 +2413,6 @@ function bindWorkspaceModalUi() {
   $("printLogButton")?.addEventListener("click", printExpenseLog);
   $("saveSessionButton") && ($("saveSessionButton").onclick = () => saveSessionMeta().catch((error) => setFlash(error.message || t("loadFailed"))));
   $("addParticipantButton") && ($("addParticipantButton").onclick = () => addParticipantDraftRow());
-  $("addParticipantButtonTop") && ($("addParticipantButtonTop").onclick = () => addParticipantDraftRow());
   $("confirmSettlementButton") && ($("confirmSettlementButton").onclick = async () => {
     if (!window.confirm(t("confirmSettlement"))) return;
     try {

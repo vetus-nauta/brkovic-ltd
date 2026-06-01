@@ -320,7 +320,26 @@ body.shipcashbox-modal-open {
 }
 
 .shipcashbox-card--window {
+  display: grid;
+  gap: 14px;
   background: rgba(16, 36, 58, 0.03);
+}
+
+.shipcashbox-card--window .shipcashbox-card__head {
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(16, 36, 58, 0.08);
+}
+
+.shipcashbox-card--window .shipcashbox-card__head .section-heading__eyebrow {
+  margin-bottom: 2px;
+  font-size: 0.64rem;
+}
+
+.shipcashbox-card--window .shipcashbox-card__head h2 {
+  margin: 0;
+  font-size: clamp(1.05rem, 2vw, 1.28rem);
+  line-height: 1.12;
 }
 
 .shipcashbox-card--sticky {
@@ -570,6 +589,10 @@ body.shipcashbox-modal-open {
   margin-top: 6px;
 }
 
+.shipcashbox-actions--team {
+  justify-content: flex-end;
+}
+
 .shipcashbox-inline-actions,
 .shipcashbox-share-actions {
   align-items: flex-start;
@@ -592,6 +615,10 @@ body.shipcashbox-modal-open {
 
 .shipcashbox-metrics--compact {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.shipcashbox-metrics--team {
+  max-width: 420px;
 }
 
 .shipcashbox-metric {
@@ -827,6 +854,23 @@ body.shipcashbox-modal-open {
   margin: 0;
 }
 
+.shipcashbox-teambar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+}
+
+.shipcashbox-teambar__copy {
+  display: grid;
+  gap: 10px;
+}
+
+.shipcashbox-teambar .shipcashbox-note {
+  margin: 0;
+  max-width: 72ch;
+}
+
 .shipcashbox-window-menu,
 .shipcashbox-modal__body {
   display: grid;
@@ -941,6 +985,44 @@ body.shipcashbox-modal-open {
 .shipcashbox-modal__card--workspace {
   width: min(100%, 1040px);
   height: min(860px, calc(100dvh - 32px));
+}
+
+.shipcashbox-modal--workscreen .shipcashbox-modal__card--workspace {
+  width: min(100%, 1120px);
+}
+
+.shipcashbox-modal--workscreen .shipcashbox-modal__head {
+  align-items: center;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(16, 36, 58, 0.08);
+}
+
+.shipcashbox-modal--workscreen .shipcashbox-modal__head .section-heading__eyebrow {
+  display: none;
+}
+
+.shipcashbox-modal--workscreen .shipcashbox-modal__head h2 {
+  margin: 0;
+  font-size: clamp(1.05rem, 1.9vw, 1.28rem);
+  line-height: 1.15;
+}
+
+.shipcashbox-modal--workscreen .shipcashbox-modal__head > div:first-child {
+  min-width: 0;
+}
+
+.shipcashbox-modal--workscreen .shipcashbox-modal__head .shipcashbox-inline-actions {
+  align-items: center;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  gap: 8px;
+}
+
+.shipcashbox-modal--workscreen .shipcashbox-modal__head .btn {
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 0.84rem;
 }
 
 .shipcashbox-exit {
@@ -1231,9 +1313,46 @@ body.navdesk-theme-night .shipcashbox-qr {
     background: rgba(250, 248, 242, 0.98);
   }
 
+  .shipcashbox-modal--workscreen .shipcashbox-modal__head {
+    align-items: center;
+    flex-direction: row;
+    gap: 8px;
+    min-height: 44px;
+    padding-bottom: 8px;
+  }
+
+  .shipcashbox-modal--workscreen .shipcashbox-modal__head h2 {
+    overflow: hidden;
+    font-size: 1rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .shipcashbox-modal--workscreen .shipcashbox-modal__head .shipcashbox-inline-actions {
+    gap: 6px;
+  }
+
+  .shipcashbox-modal--workscreen .shipcashbox-modal__head .btn {
+    min-height: 34px;
+    padding: 0 9px;
+    font-size: 0.78rem;
+  }
+
   .shipcashbox-modal__body {
     padding-right: 2px;
     padding-bottom: max(2px, env(safe-area-inset-bottom));
+  }
+
+  .shipcashbox-teambar {
+    grid-template-columns: 1fr;
+  }
+
+  .shipcashbox-actions--team {
+    justify-content: stretch;
+  }
+
+  .shipcashbox-actions--team .btn {
+    flex: 1 1 150px;
   }
 
   .shipcashbox-participant-row__top--editor,
@@ -1287,8 +1406,7 @@ body.navdesk-theme-night .shipcashbox-qr {
   .shipcashbox-card__head,
   .shipcashbox-card__row,
   .shipcashbox-list__row,
-  .shipcashbox-archive__row,
-  .shipcashbox-modal__head {
+  .shipcashbox-archive__row {
     align-items: flex-start;
     flex-direction: column;
   }
