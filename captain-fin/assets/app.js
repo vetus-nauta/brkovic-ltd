@@ -1,4 +1,4 @@
-const APP_VERSION = '2026.05.28-captain-fin-015';
+const APP_VERSION = '2026.06.01-captain-fin-016';
 const PUBLIC_WEB_APP_URL = 'https://brkovic.ltd/captain-fin/';
 const DRIVE_FOLDER_URL = 'https://drive.google.com/drive/folders/1x9m41AUYPocx7H0UezF_lZnFvzWO54zQ?usp=sharing';
 const $ = (id) => document.getElementById(id);
@@ -18,6 +18,30 @@ let saveRequestToken = 0;
 
 function isMobileLayout() {
   return window.matchMedia('(max-width: 920px)').matches;
+}
+
+function updateViewportGeometry() {
+  const viewport = window.visualViewport;
+  const height = viewport ? viewport.height : window.innerHeight;
+  const roundedHeight = Math.max(320, Math.round(height || window.innerHeight || 640));
+  document.documentElement.style.setProperty('--app-height', `${roundedHeight}px`);
+  document.body.classList.toggle('keyboard-open', isMobileLayout() && window.innerHeight - roundedHeight > 120);
+}
+
+function keepFocusedFieldVisible(event) {
+  const target = event.target;
+  if (!isMobileLayout() || !target.matches('input, textarea, select')) return;
+  const scrollTarget = target.closest('.entry') || target;
+  const align = target.id === 'notes' ? 'start' : 'center';
+  const scroll = (smooth = false) => {
+    try {
+      scrollTarget.scrollIntoView({ block: align, inline: 'nearest', behavior: smooth ? 'smooth' : 'auto' });
+    } catch (_error) {
+      scrollTarget.scrollIntoView(align === 'start');
+    }
+  };
+  setTimeout(() => scroll(true), 90);
+  setTimeout(() => scroll(false), 330);
 }
 
 function historyStateEquals(next) {
@@ -645,6 +669,14 @@ $('shareWhatsApp').addEventListener('click', () => openShareTarget('whatsapp'));
 $('shareTelegram').addEventListener('click', () => openShareTarget('telegram'));
 $('shareDrive').addEventListener('click', () => openShareTarget('drive'));
 $('search').addEventListener('input', renderList);
+window.addEventListener('resize', updateViewportGeometry);
+window.addEventListener('orientationchange', () => setTimeout(updateViewportGeometry, 240));
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', updateViewportGeometry);
+  window.visualViewport.addEventListener('scroll', updateViewportGeometry);
+}
+document.addEventListener('focusin', keepFocusedFieldVisible);
+document.addEventListener('focusout', () => setTimeout(updateViewportGeometry, 120));
 window.addEventListener('popstate', (event) => {
   const state = event.state || {};
   if (!state.view) return;
@@ -661,4 +693,5 @@ window.addEventListener('popstate', (event) => {
   }
 });
 
+updateViewportGeometry();
 checkAuth().catch((error) => setStatus(error.message));
