@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 520" role="img" aria-label="Crew cashbox planning table">
+  <defs>
+    <linearGradient id="sea" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#132735"/>
+      <stop offset="0.55" stop-color="#49616a"/>
+      <stop offset="1" stop-color="#c1a56f"/>
+    </linearGradient>
+    <linearGradient id="table" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#d2b079"/>
+      <stop offset="1" stop-color="#a77a42"/>
+    </linearGradient>
+    <filter id="shadow" x="-25%" y="-25%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="24" stdDeviation="18" flood-color="#000" flood-opacity="0.34"/>
+    </filter>
+  </defs>
+  <rect width="720" height="520" fill="url(#sea)"/>
+  <g opacity="0.19" stroke="#f2ddad" fill="none">
+    <path d="M60 92c80 30 128 13 174-38M512 76c-38 92-10 152 82 180M50 410c102-38 178-28 228 30" stroke-width="3"/>
+    <path d="M0 255h720M0 295h720M0 335h720" stroke-width="2"/>
+  </g>
+  <g filter="url(#shadow)">
+    <path d="M113 313c9-43 37-67 82-71l318-27c49-4 84 18 97 64l34 119c8 29-13 58-43 58H116c-31 0-52-29-43-58l40-85z" fill="url(#table)"/>
+    <path d="M155 294l403-34" stroke="#f2deb3" stroke-width="7" opacity="0.55"/>
+    <path d="M219 244l-18 211M386 228l-7 228M553 222l24 234" stroke="#f2deb3" stroke-width="8" opacity="0.72"/>
+  </g>
+  <g filter="url(#shadow)">
+    <path d="M141 167c0-44 35-80 79-80h280c44 0 79 36 79 80v94H141v-94z" fill="#142638"/>
+    <path d="M300 88h142v173H300z" fill="#1f384d"/>
+    <path d="M142 228h437v33H142z" fill="#c4a36b"/>
+    <g fill="#f3cf9f">
+      <circle cx="220" cy="166" r="30"/>
+      <circle cx="360" cy="154" r="31"/>
+      <circle cx="500" cy="166" r="30"/>
+    </g>
+    <g fill="#f6f1e4" opacity="0.88">
+      <path d="M188 128h64l-17-32h-30z"/>
+      <path d="M328 115h64l-17-32h-30z"/>
+      <path d="M468 128h64l-17-32h-30z"/>
+    </g>
+    <g stroke="#0f1b26" stroke-width="4" opacity="0.42">
+      <path d="M195 181c15 13 34 13 50 0M335 169c15 13 34 13 50 0M475 181c15 13 34 13 50 0"/>
+    </g>
+  </g>
+  <g opacity="0.92">
+    <rect x="72" y="68" width="122" height="84" rx="14" fill="#f5ead1"/>
+    <path d="M92 91h78M92 113h58M92 135h68" stroke="#5b6b70" stroke-width="7" stroke-linecap="round"/>
+    <circle cx="586" cy="72" r="38" fill="#edd39d" opacity="0.72"/>
+    <path d="M572 72h28M586 58v28" stroke="#172633" stroke-width="5" stroke-linecap="round"/>
+  </g>
+</svg>

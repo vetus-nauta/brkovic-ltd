@@ -34,6 +34,48 @@ If UI changes appear stale, hard refresh once and unregister the old service wor
 
 The local repository is the reference. Production may be behind or may have stale service-worker/cache behavior. Do not treat production visuals as source of truth until the next polished local package is validated and uploaded.
 
+## Local Etalon / No New Localhost Rule
+
+The local browser etalon already exists and must not be replaced with a new ad-hoc server, mock server, Python stub, or third project copy.
+
+Use the paired workflow:
+
+```text
+GitHub/source copy:  /home/alexey/GitHub/Revoyacht/brkovic-ltd
+WebStorm/test copy: /home/alexey/WebstormProjects/brkovic-ltd
+```
+
+If changes are made in the GitHub/source copy, mirror the touched files into the WebStorm/test copy before asking the user to inspect the browser.
+
+The current local Ship Cashbox browser target is:
+
+```text
+http://127.0.0.1:18091/ship-cashbox/index.html
+```
+
+Also observed working:
+
+```text
+http://127.0.0.1:18090/
+http://127.0.0.1:18091/
+```
+
+Do not treat this as the Ship Cashbox etalon:
+
+```text
+http://brkovic-local.local/
+```
+
+It may show an old Apache/PHP stub.
+
+After Ship Cashbox JS/CSS/service-worker changes, stale browser behavior usually means service-worker cache:
+
+```text
+Hard refresh.
+If needed, DevTools -> Application -> Service Workers -> unregister /ship-cashbox/.
+Then clear site data for the local origin and reopen http://127.0.0.1:18091/ship-cashbox/index.html.
+```
+
 The cashbox is an application, not a long web page. The next design pass must move it toward short, fast, app-like screens:
 
 1. Home / current cashbox state.
@@ -95,6 +137,33 @@ It contained a lightweight static front reference:
 - `DEVELOPER_NOTE.md`
 
 Important rule from the reference: do not break the quick expense notebook. Do not rewrite notebook API, handlers, payload, photos, scans, autosave, or backend endpoints. The next pass should adapt visual structure and screen routing around the existing working mechanics.
+
+## Scan Proof Contract
+
+The scan feature is not a second accounting form. It is a proof intake layer around the notebook:
+
+- `Scan to PDF` captures an image and saves a lightweight PDF attachment as proof.
+- After the PDF is saved, the scan review modal asks for priority amount, document date, and description.
+- `Insert into notebook` appends one committed notebook line with the `✓` marker.
+- The inserted line is saved locally first and then goes through the existing notebook autosave.
+- Nothing is submitted to the expense log automatically; final submit remains the existing notebook action.
+- Duplicate insert is blocked per scan id in local storage.
+- Attachment upload must not overwrite an unsaved local notebook draft.
+- Later OCR/Tesseract work may feed candidates into the same review modal, but must not bypass user confirmation.
+
+Current OCR/scan foundation:
+
+- `ship-cashbox/assets/scan-engine.js` is a standalone deterministic rule engine.
+- It exports `window.ShipCashboxScanEngine` and CommonJS `module.exports`.
+- It extracts/scored amount/date candidates from OCR text or filename-like text.
+- `scanReviewModal` has candidate chips for amount/date/description.
+- Candidate chips only fill fields; accounting still requires `Insert into notebook`.
+- API actions `scan-ocr-status` and `scan-ocr` exist.
+- `scan-ocr` has a prepared Tesseract extractor path: allowed attachment download, PDF first page via `pdftoppm`, Tesseract text/TSV, line grouping with bbox/confidence.
+- Current local OCR provider is `none`: `tesseract` is not installed, `pdftoppm` and `timeout` are available.
+- Current asset version: `20260602-cashbox-ocr-provider-01`.
+- Current service-worker cache: `ship-cashbox-shell-v20260602-11`.
+- Current API version: `2026.06.02-ship-cashbox-ocr-extractor-01`.
 
 ## Work Completed Today
 

@@ -34,6 +34,17 @@ The source of truth for development is this Git repository:
 git@github.com:vetus-nauta/brkovic-ltd.git
 ```
 
+The local workflow is a paired workflow:
+
+```text
+GitHub/source copy:  /home/alexey/GitHub/Revoyacht/brkovic-ltd
+WebStorm/test copy: /home/alexey/WebstormProjects/brkovic-ltd
+```
+
+When a user says the local site, localhost, WebStorm, or the browser view, assume they mean the WebStorm/test copy and the already-running local site. If you edit the GitHub/source copy for canonical work, mirror the same touched files into the WebStorm/test copy before asking the user to inspect the browser.
+
+Do not silently create a third server, third project copy, mock site, or replacement localhost setup.
+
 Local Apache folders such as:
 
 ```text
@@ -59,7 +70,23 @@ If an older handoff mentions `game-brkovic-ltd`, translate it to `brkovic-ltd/ga
 
 ## Local Run
 
-Use this from the repo root:
+The local site is expected to already open in the browser. Check the existing local site first:
+
+```text
+http://127.0.0.1:18090/
+http://127.0.0.1:18091/
+http://127.0.0.1:18091/ship-cashbox/index.html
+```
+
+Do not create a new local server or Python/PHP stub unless the user explicitly asks. The hostname below is not the current Ship Cashbox test target:
+
+```text
+http://brkovic-local.local/
+```
+
+It may show an old Apache/PHP stub and must not be treated as the etalon site.
+
+If the existing local site is not running and PHP is available in the shell, use this from the repo root:
 
 ```bash
 php -S 127.0.0.1:18090 -t .
@@ -72,6 +99,26 @@ http://127.0.0.1:18090/
 http://127.0.0.1:18090/services/yacht-management.html
 http://127.0.0.1:18090/admin-mnr.html
 ```
+
+For Ship Cashbox, after JS/CSS/service-worker changes, always suspect browser service-worker cache before assuming the code failed:
+
+```text
+Hard refresh.
+If needed: DevTools -> Application -> Service Workers -> unregister /ship-cashbox/.
+Then clear site data for the local Ship Cashbox origin and reopen:
+http://127.0.0.1:18091/ship-cashbox/index.html
+```
+
+## Ship Cashbox Product Map
+
+Ship Cashbox must follow the locked product map:
+
+```text
+docs/ship-cashbox-product-map-sprint-01.md
+docs/ship-cashbox-solo-mode-sprint-02.md
+```
+
+Do not turn Ship Cashbox back into a set of unrelated cards or admin panels. Preserve the four entry scenarios: personal journal, crew ship cashbox, quick equalizer, and group invitation by code. In personal mode, do not leak group, treasurer, participant, invite, settlement, share, or who-owes-whom language.
 
 ## Yacht Management Rule
 

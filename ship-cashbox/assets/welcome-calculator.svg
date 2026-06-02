@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 520" role="img" aria-label="Calculator and receipt equalizer">
+  <defs>
+    <linearGradient id="desk" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#231913"/>
+      <stop offset="0.48" stop-color="#73502e"/>
+      <stop offset="1" stop-color="#b88951"/>
+    </linearGradient>
+    <filter id="drop" x="-25%" y="-25%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="22" stdDeviation="16" flood-color="#000" flood-opacity="0.38"/>
+    </filter>
+  </defs>
+  <rect width="720" height="520" fill="url(#desk)"/>
+  <radialGradient id="glow" cx="30%" cy="20%" r="42%">
+    <stop offset="0" stop-color="#fff2bd" stop-opacity="0.55"/>
+    <stop offset="1" stop-color="#fff2bd" stop-opacity="0"/>
+  </radialGradient>
+  <rect width="720" height="520" fill="url(#glow)"/>
+  <g opacity="0.28" fill="none" stroke="#f4dba8" stroke-width="5">
+    <path d="M510 119c78-27 143 32 144 105 1 75-71 114-136 76-38-22-52-60-41-98"/>
+    <path d="M70 87c55-23 107-10 136 35"/>
+  </g>
+  <g filter="url(#drop)">
+    <path d="M289 94l246-35c34-5 65 19 70 53l42 294c5 34-19 65-53 70l-246 35c-34 5-65-19-70-53l-42-294c-5-34 19-65 53-70z" fill="#152430"/>
+    <path d="M297 107l235-34c25-3 48 14 52 39l9 64-333 48-9-64c-4-25 13-49 46-53z" fill="#e4dece"/>
+    <g transform="rotate(-8 430 318)">
+      <rect x="306" y="216" width="42" height="230" rx="4" fill="#f0d99c"/>
+      <rect x="366" y="216" width="42" height="230" rx="4" fill="#f0d99c"/>
+      <rect x="426" y="216" width="42" height="230" rx="4" fill="#f0d99c"/>
+      <rect x="486" y="216" width="42" height="230" rx="4" fill="#f0d99c"/>
+      <rect x="546" y="216" width="42" height="230" rx="4" fill="#f0d99c"/>
+    </g>
+    <path d="M298 219l305-44" stroke="#20313e" stroke-width="20"/>
+  </g>
+  <g filter="url(#drop)">
+    <path d="M80 205l188-30c23-4 45 12 48 35l32 198c4 23-12 45-35 48l-188 31c-23 3-45-13-48-36L45 253c-4-23 12-45 35-48z" fill="#f1ead9"/>
+    <rect x="84" y="230" width="190" height="55" rx="10" fill="#26343d" transform="rotate(-9 179 258)"/>
+    <g fill="#b4935f" transform="rotate(-9 186 340)">
+      <rect x="94" y="314" width="36" height="28" rx="8"/>
+      <rect x="145" y="314" width="36" height="28" rx="8"/>
+      <rect x="196" y="314" width="36" height="28" rx="8"/>
+      <rect x="247" y="314" width="36" height="28" rx="8"/>
+      <rect x="94" y="359" width="36" height="28" rx="8"/>
+      <rect x="145" y="359" width="36" height="28" rx="8"/>
+      <rect x="196" y="359" width="36" height="28" rx="8"/>
+      <rect x="247" y="359" width="36" height="28" rx="8"/>
+    </g>
+    <text x="108" y="266" fill="#f2e7cc" font-family="ui-monospace,monospace" font-size="28" font-weight="700" transform="rotate(-9 108 266)">= 88.99</text>
+  </g>
+  <g opacity="0.92">
+    <circle cx="598" cy="91" r="38" fill="#edca82"/>
+    <circle cx="598" cy="91" r="25" fill="none" stroke="#fff2bf" stroke-width="5" opacity="0.7"/>
+    <path d="M551 333c34 44 89 42 122 5" fill="none" stroke="#f3dbad" stroke-width="9" stroke-linecap="round"/>
+    <path d="M659 323l18 14-19 13" fill="none" stroke="#f3dbad" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

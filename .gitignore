@@ -42,3 +42,7 @@
 # Local Godot prototype export artifacts. Keep generated builds out of public/ and production paths.
 /game.brkovic.ltd/prototypes/watch-officer-godot/exports/
 /game.brkovic.ltd/private/config.php
+
+# Ship Cashbox runtime proof uploads. Keep user receipts local; commit only the directory marker.
+/ship-cashbox/attachments/*
+!/ship-cashbox/attachments/.gitkeep

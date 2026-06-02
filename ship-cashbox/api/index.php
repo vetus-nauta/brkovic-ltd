@@ -12,17 +12,20 @@ session_set_cookie_params([
 ]);
 session_start();
 
-const APP_VERSION = '2026.06.01-ship-cashbox-auth-01';
+const APP_VERSION = '2026.06.03-ship-cashbox-solo-mode-02';
 const AUTH_BASE = 'https://brkovic.ltd/api';
 const STORAGE_DIR = __DIR__ . '/../storage';
 const SESSIONS_DIR = STORAGE_DIR . '/sessions';
 const EXPORTS_DIR = STORAGE_DIR . '/exports';
+const ATTACHMENTS_DIR = __DIR__ . '/../attachments';
 const INDEX_FILE = STORAGE_DIR . '/index.json';
 const AUTH_COOKIE = 'ship_cashbox_auth';
 const MAIL_FROM_ADDRESS = 'brkovic@brkovic.ltd';
 const MAIL_REPLY_TO = 'vetus.nauta@gmail.com';
 const AUTH_REQUEST_TIMEOUT = 7;
 const AUTH_CONNECT_TIMEOUT = 4;
+const OCR_REQUEST_TIMEOUT = 16;
+const OCR_MAX_DOWNLOAD_BYTES = 12582912;
 
 function respond(array $payload, int $status = 200): void {
     http_response_code($status);
@@ -56,11 +59,515 @@ function cors_headers(): void {
 }
 
 function ensure_dirs(): void {
-    foreach ([STORAGE_DIR, SESSIONS_DIR, EXPORTS_DIR] as $dir) {
+    foreach ([STORAGE_DIR, SESSIONS_DIR, EXPORTS_DIR, ATTACHMENTS_DIR] as $dir) {
         if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) {
             fail('Не удалось подготовить хранилище', 500);
         }
     }
+}
+
+function command_path(string $command): string {
+    if (!preg_match('/^[a-zA-Z0-9_.-]+$/', $command)) {
+        return '';
+    }
+    $output = [];
+    $status = 1;
+    @exec('command -v ' . escapeshellarg($command) . ' 2>/dev/null', $output, $status);
+    $path = trim((string) ($output[0] ?? ''));
+    return $status === 0 && $path !== '' ? $path : '';
+}
+
+function command_first_line(string $command): string {
+    $output = [];
+    $status = 1;
+    @exec($command . ' 2>/dev/null', $output, $status);
+    return $status === 0 ? trim((string) ($output[0] ?? '')) : '';
+}
+
+function scan_ocr_status(): array {
+    $tesseract = command_path('tesseract');
+    $pdftoppm = command_path('pdftoppm');
+    $magick = command_path('magick');
+    $convert = command_path('convert');
+    $timeout = command_path('timeout');
+    $available = $tesseract !== '';
+
+    return [
+        'available' => $available,
+        'provider' => $available ? 'tesseract-server' : 'none',
+        'mode' => $available ? 'server' : 'manual',
+        'timeout_seconds' => OCR_REQUEST_TIMEOUT,
+        'tools' => [
+            'tesseract' => $tesseract !== '',
+            'pdftoppm' => $pdftoppm !== '',
+            'magick' => $magick !== '',
+            'convert' => $convert !== '',
+            'timeout' => $timeout !== '',
+        ],
+        'version' => $available ? command_first_line(escapeshellarg($tesseract) . ' --version') : '',
+        'languages' => $available ? scan_ocr_languages($tesseract) : [],
+    ];
+}
+
+function scan_ocr_extract(array $payload): array {
+    $status = scan_ocr_status();
+    if (!($status['available'] ?? false)) {
+        return [
+            'available' => false,
+            'provider' => 'none',
+            'text' => '',
+            'lines' => [],
+            'message' => 'OCR provider is not installed on this server.',
+            'status' => $status,
+        ];
+    }
+
+    $attachmentPath = trim((string) ($payload['attachment_path'] ?? ''));
+    $amountOnly = !empty($payload['amount_only']);
+    if ($attachmentPath === '') {
+        return scan_ocr_unavailable($status, 'Attachment path is required for OCR.');
+    }
+
+    $workDir = scan_ocr_temp_dir();
+    $sourcePath = $workDir . '/source';
+    $ocrPath = $sourcePath;
+
+    try {
+        $localPath = attachment_storage_path($attachmentPath);
+        if ($localPath !== '' && is_file($localPath)) {
+            if (!copy($localPath, $sourcePath)) {
+                throw new RuntimeException('Could not prepare local OCR source file.');
+            }
+        } else {
+            if (is_local_request() && preg_match('#^/ship-cashbox/attachments/#', (string) (parse_url($attachmentPath, PHP_URL_PATH) ?: $attachmentPath))) {
+                return scan_ocr_unavailable($status, 'Attachment file is not available locally for OCR.');
+            }
+            $url = scan_ocr_attachment_url($attachmentPath);
+            if ($url === '') {
+                return scan_ocr_unavailable($status, 'Attachment path is not allowed for OCR.');
+            }
+            scan_ocr_download($url, $sourcePath);
+        }
+        $mime = scan_ocr_mime($sourcePath, $attachmentPath);
+        $isPdf = str_contains($mime, 'pdf') || preg_match('/\.pdf(?:$|\?)/i', $attachmentPath);
+        if ($isPdf) {
+            $ocrPath = scan_ocr_pdf_first_page($sourcePath, $workDir, $status, 220, 'page');
+        }
+
+        $tsv = scan_ocr_run_tesseract($ocrPath, true, $status, 6);
+        $lines = scan_ocr_parse_tsv($tsv);
+        $text = trim(implode("\n", array_map(static function (array $line): string {
+            return (string) ($line['text'] ?? '');
+        }, $lines)));
+
+        if (!$amountOnly) {
+            $fullText = scan_ocr_run_tesseract($ocrPath, false, $status, 6);
+            if (!scan_ocr_text_has_date($fullText)) {
+                $sparsePath = $isPdf ? scan_ocr_pdf_first_page($sourcePath, $workDir, $status, 360, 'page-hi') : $ocrPath;
+                $sparseText = scan_ocr_run_tesseract($sparsePath, false, $status, 11);
+                if (trim($sparseText) !== '') {
+                    $fullText = trim($fullText . "\n" . $sparseText);
+                }
+                if (!scan_ocr_text_has_date($fullText)) {
+                    $blockText = scan_ocr_run_tesseract($sparsePath, false, $status, 4);
+                    if (trim($blockText) !== '') {
+                        $fullText = trim($fullText . "\n" . $blockText);
+                    }
+                }
+            }
+            if ($isPdf && !scan_ocr_text_has_date($fullText)) {
+                $dateRegionText = scan_ocr_pdf_date_region_text($sourcePath, $workDir, $status, $lines);
+                if (scan_ocr_text_has_date($dateRegionText)) {
+                    $fullText = trim($fullText . "\n" . $dateRegionText);
+                }
+            }
+            $text = trim($text . "\n" . $fullText);
+        }
+
+        return [
+            'available' => true,
+            'provider' => $status['provider'],
+            'text' => trim($text),
+            'lines' => $lines,
+            'message' => trim($text) !== '' || count($lines) > 0 ? 'OCR extraction completed.' : 'OCR returned no text.',
+            'status' => $status,
+        ];
+    } catch (Throwable $error) {
+        return scan_ocr_unavailable($status, $error->getMessage());
+    } finally {
+        scan_ocr_remove_dir($workDir);
+    }
+}
+
+function scan_ocr_unavailable(array $status, string $message): array {
+    return [
+        'available' => false,
+        'provider' => (string) ($status['provider'] ?? 'none'),
+        'text' => '',
+        'lines' => [],
+        'message' => $message,
+        'status' => $status,
+    ];
+}
+
+function scan_ocr_languages(string $tesseract): array {
+    $output = [];
+    $status = 1;
+    @exec(escapeshellarg($tesseract) . ' --list-langs 2>/dev/null', $output, $status);
+    if ($status !== 0) {
+        return [];
+    }
+    $langs = [];
+    foreach ($output as $line) {
+        $line = trim((string) $line);
+        if ($line === '' || str_contains(strtolower($line), 'list of available languages')) {
+            continue;
+        }
+        if (preg_match('/^[a-zA-Z_]+$/', $line)) {
+            $langs[] = $line;
+        }
+    }
+    return array_values(array_unique($langs));
+}
+
+function scan_ocr_language_arg(array $status): string {
+    $available = $status['languages'] ?? [];
+    if (!is_array($available) || count($available) === 0) {
+        return 'eng';
+    }
+    $preferred = ['srp', 'eng', 'deu', 'ita', 'spa'];
+    $picked = [];
+    foreach ($preferred as $lang) {
+        if (in_array($lang, $available, true)) {
+            $picked[] = $lang;
+        }
+    }
+    return count($picked) > 0 ? implode('+', array_slice($picked, 0, 2)) : (string) $available[0];
+}
+
+function scan_ocr_latin_language_arg(array $status): string {
+    $available = $status['languages'] ?? [];
+    if (is_array($available) && in_array('eng', $available, true)) {
+        return 'eng';
+    }
+    return scan_ocr_language_arg($status);
+}
+
+function scan_ocr_attachment_url(string $path): string {
+    if (preg_match('#^https?://#i', $path)) {
+        $host = strtolower((string) (parse_url($path, PHP_URL_HOST) ?: ''));
+        $allowed = ['brkovic.ltd', 'www.brkovic.ltd', '127.0.0.1', 'localhost'];
+        return in_array($host, $allowed, true) ? $path : '';
+    }
+    if (str_starts_with($path, '/') && !str_starts_with($path, '//')) {
+        if (is_local_request()) {
+            $host = $_SERVER['HTTP_HOST'] ?? '127.0.0.1';
+            return 'http://' . $host . $path;
+        }
+        return 'https://brkovic.ltd' . $path;
+    }
+    return '';
+}
+
+function scan_ocr_temp_dir(): string {
+    $base = rtrim(sys_get_temp_dir(), '/') . '/ship-cashbox-ocr-' . bin2hex(random_bytes(8));
+    if (!mkdir($base, 0700, true) && !is_dir($base)) {
+        throw new RuntimeException('Could not create OCR temp directory.');
+    }
+    return $base;
+}
+
+function scan_ocr_remove_dir(string $dir): void {
+    if ($dir === '' || !is_dir($dir)) {
+        return;
+    }
+    foreach (glob($dir . '/*') ?: [] as $file) {
+        if (is_file($file)) {
+            @unlink($file);
+        }
+    }
+    @rmdir($dir);
+}
+
+function scan_ocr_download(string $url, string $target): void {
+    $ch = curl_init($url);
+    if (!$ch) {
+        throw new RuntimeException('Could not start OCR download.');
+    }
+    $handle = fopen($target, 'wb');
+    if (!$handle) {
+        curl_close($ch);
+        throw new RuntimeException('Could not prepare OCR source file.');
+    }
+    $written = 0;
+    curl_setopt_array($ch, [
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_MAXREDIRS => 3,
+        CURLOPT_CONNECTTIMEOUT => 4,
+        CURLOPT_TIMEOUT => OCR_REQUEST_TIMEOUT,
+        CURLOPT_FAILONERROR => true,
+        CURLOPT_WRITEFUNCTION => static function ($curl, string $chunk) use ($handle, &$written): int {
+            $length = strlen($chunk);
+            $written += $length;
+            if ($written > OCR_MAX_DOWNLOAD_BYTES) {
+                return 0;
+            }
+            fwrite($handle, $chunk);
+            return $length;
+        },
+    ]);
+    $ok = curl_exec($ch);
+    $error = curl_error($ch);
+    $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+    curl_close($ch);
+    fclose($handle);
+
+    if ($ok === false || $status >= 400 || !is_file($target) || filesize($target) <= 0) {
+        @unlink($target);
+        throw new RuntimeException($written > OCR_MAX_DOWNLOAD_BYTES ? 'OCR source file is too large.' : ($error ?: 'Could not download OCR source file.'));
+    }
+}
+
+function scan_ocr_mime(string $path, string $fallbackName = ''): string {
+    if (function_exists('finfo_open')) {
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        if ($finfo) {
+            $mime = (string) finfo_file($finfo, $path);
+            finfo_close($finfo);
+            if ($mime !== '') {
+                return strtolower($mime);
+            }
+        }
+    }
+    $file = command_path('file');
+    if ($file !== '') {
+        $output = [];
+        $status = 1;
+        @exec(escapeshellarg($file) . ' --mime-type -b ' . escapeshellarg($path), $output, $status);
+        $mime = trim((string) ($output[0] ?? ''));
+        if ($status === 0 && $mime !== '') {
+            return strtolower($mime);
+        }
+    }
+    return preg_match('/\.pdf(?:$|\?)/i', $fallbackName) ? 'application/pdf' : 'application/octet-stream';
+}
+
+function scan_ocr_pdf_first_page(string $pdfPath, string $workDir, array $status, int $resolution = 220, string $name = 'page'): string {
+    if (empty($status['tools']['pdftoppm'])) {
+        throw new RuntimeException('PDF OCR requires pdftoppm on the server.');
+    }
+    $resolution = max(160, min(420, $resolution));
+    $pdftoppm = command_path('pdftoppm');
+    $prefix = $workDir . '/' . preg_replace('/[^a-zA-Z0-9_-]/', '', $name);
+    $command = scan_ocr_timeout_prefix() . escapeshellarg($pdftoppm)
+        . ' -f 1 -l 1 -singlefile -r ' . $resolution . ' -png '
+        . escapeshellarg($pdfPath) . ' ' . escapeshellarg($prefix);
+    $output = [];
+    $exit = 1;
+    @exec($command . ' 2>&1', $output, $exit);
+    $page = $prefix . '.png';
+    if ($exit !== 0 || !is_file($page) || filesize($page) <= 0) {
+        throw new RuntimeException('Could not prepare PDF page for OCR.');
+    }
+    return $page;
+}
+
+function scan_ocr_pdf_region(string $pdfPath, string $workDir, array $status, int $resolution, string $name, array $rect): string {
+    if (empty($status['tools']['pdftoppm'])) {
+        throw new RuntimeException('PDF OCR requires pdftoppm on the server.');
+    }
+    $resolution = max(160, min(420, $resolution));
+    $pdftoppm = command_path('pdftoppm');
+    $prefix = $workDir . '/' . preg_replace('/[^a-zA-Z0-9_-]/', '', $name);
+    $command = scan_ocr_timeout_prefix() . escapeshellarg($pdftoppm)
+        . ' -f 1 -l 1 -singlefile -r ' . $resolution . ' -png'
+        . ' -x ' . max(0, (int) ($rect['x'] ?? 0))
+        . ' -y ' . max(0, (int) ($rect['y'] ?? 0))
+        . ' -W ' . max(40, (int) ($rect['width'] ?? 0))
+        . ' -H ' . max(24, (int) ($rect['height'] ?? 0))
+        . ' ' . escapeshellarg($pdfPath) . ' ' . escapeshellarg($prefix);
+    $output = [];
+    $exit = 1;
+    @exec($command . ' 2>&1', $output, $exit);
+    $page = $prefix . '.png';
+    if ($exit !== 0 || !is_file($page) || filesize($page) <= 0) {
+        return '';
+    }
+    return $page;
+}
+
+function scan_ocr_timeout_prefix(): string {
+    $timeout = command_path('timeout');
+    return $timeout !== '' ? escapeshellarg($timeout) . ' ' . OCR_REQUEST_TIMEOUT . 's ' : '';
+}
+
+function scan_ocr_text_has_date(string $text): bool {
+    return (bool) preg_match('/\b\d{1,2}[.\-\/]\d{1,2}[.\-\/]\d{2,4}(?:\s+\d{1,2}:\d{2}(?::\d{2})?)?\b/', $text);
+}
+
+function scan_ocr_run_tesseract(string $imagePath, bool $tsv, array $status, int $psm = 6, array $configs = [], string $language = ''): string {
+    $tesseract = command_path('tesseract');
+    if ($tesseract === '') {
+        throw new RuntimeException('Tesseract is not installed.');
+    }
+    $psm = in_array($psm, [4, 6, 7, 11, 12, 13], true) ? $psm : 6;
+    $lang = $language !== '' ? $language : scan_ocr_language_arg($status);
+    $command = scan_ocr_timeout_prefix() . escapeshellarg($tesseract)
+        . ' ' . escapeshellarg($imagePath)
+        . ' stdout -l ' . escapeshellarg($lang)
+        . ' --psm ' . $psm;
+    foreach ($configs as $name => $value) {
+        $name = (string) $name;
+        if (!preg_match('/^[a-zA-Z0-9_.-]+$/', $name)) {
+            continue;
+        }
+        $command .= ' -c ' . escapeshellarg($name . '=' . (string) $value);
+    }
+    if ($tsv) {
+        $command .= ' tsv';
+    }
+    $output = [];
+    $exit = 1;
+    @exec($command . ' 2>/dev/null', $output, $exit);
+    if ($exit !== 0) {
+        return '';
+    }
+    return implode("\n", $output);
+}
+
+function scan_ocr_pdf_date_region_text(string $pdfPath, string $workDir, array $status, array $lines): string {
+    $rects = [];
+    foreach ($lines as $line) {
+        $text = strtolower((string) ($line['text'] ?? ''));
+        $bbox = is_array($line['bbox'] ?? null) ? $line['bbox'] : [];
+        if (!$bbox) {
+            continue;
+        }
+        $x = (int) ($bbox['x'] ?? 0);
+        $y = (int) ($bbox['y'] ?? 0);
+        $height = (int) ($bbox['height'] ?? 0);
+        if (preg_match('/rac|ra[cč]un|racl|2026|\d{4}/i', $text)) {
+            $rects[] = ['x' => max(0, $x - 260), 'y' => max(0, $y + $height - 6), 'width' => 980, 'height' => 125];
+            $rects[] = ['x' => max(0, $x - 160), 'y' => max(0, $y + $height + 16), 'width' => 820, 'height' => 90];
+        }
+        if (preg_match('/oper|iter|nikol/i', $text)) {
+            $rects[] = ['x' => max(0, $x - 80), 'y' => max(0, $y - 92), 'width' => 760, 'height' => 88];
+        }
+    }
+    $rects = array_merge($rects, [
+        ['x' => 270, 'y' => 670, 'width' => 1050, 'height' => 245],
+        ['x' => 340, 'y' => 720, 'width' => 900, 'height' => 140],
+        ['x' => 390, 'y' => 742, 'width' => 760, 'height' => 96],
+    ]);
+
+    $seen = [];
+    $texts = [];
+    $whitelist = '0123456789.:/- ';
+    foreach ($rects as $index => $rect) {
+        $key = implode(':', array_map('intval', [$rect['x'], $rect['y'], $rect['width'], $rect['height']]));
+        if (isset($seen[$key])) {
+            continue;
+        }
+        $seen[$key] = true;
+        foreach ([220, 360] as $resolution) {
+            $factor = $resolution / 220;
+            $scaled = [
+                'x' => (int) round($rect['x'] * $factor),
+                'y' => (int) round($rect['y'] * $factor),
+                'width' => (int) round($rect['width'] * $factor),
+                'height' => (int) round($rect['height'] * $factor),
+            ];
+            $crop = scan_ocr_pdf_region($pdfPath, $workDir, $status, $resolution, 'date-' . $index . '-' . $resolution, $scaled);
+            if ($crop === '') {
+                continue;
+            }
+            foreach ([7, 6, 11] as $psm) {
+                $text = trim(scan_ocr_run_tesseract($crop, false, $status, $psm, [
+                    'tessedit_char_whitelist' => $whitelist,
+                ], scan_ocr_latin_language_arg($status)));
+                if ($text !== '') {
+                    $texts[] = $text;
+                }
+                if (scan_ocr_text_has_date($text)) {
+                    return $text;
+                }
+            }
+        }
+    }
+    return trim(implode("\n", array_unique($texts)));
+}
+
+function scan_ocr_parse_tsv(string $tsv): array {
+    $rows = preg_split('/\r\n|\n|\r/', trim($tsv));
+    if (!$rows || count($rows) < 2) {
+        return [];
+    }
+    $headers = str_getcsv((string) array_shift($rows), "\t");
+    $groups = [];
+    foreach ($rows as $row) {
+        if (trim((string) $row) === '') {
+            continue;
+        }
+        $cols = str_getcsv((string) $row, "\t");
+        $item = [];
+        foreach ($headers as $index => $name) {
+            $item[$name] = $cols[$index] ?? '';
+        }
+        $text = trim((string) ($item['text'] ?? ''));
+        if ($text === '') {
+            continue;
+        }
+        $conf = (float) ($item['conf'] ?? -1);
+        if ($conf < 0) {
+            continue;
+        }
+        $key = implode(':', [
+            $item['page_num'] ?? '1',
+            $item['block_num'] ?? '0',
+            $item['par_num'] ?? '0',
+            $item['line_num'] ?? '0',
+        ]);
+        $left = (int) ($item['left'] ?? 0);
+        $top = (int) ($item['top'] ?? 0);
+        $width = (int) ($item['width'] ?? 0);
+        $height = (int) ($item['height'] ?? 0);
+        if (!isset($groups[$key])) {
+            $groups[$key] = [
+                'parts' => [],
+                'conf' => [],
+                'left' => $left,
+                'top' => $top,
+                'right' => $left + $width,
+                'bottom' => $top + $height,
+            ];
+        }
+        $groups[$key]['parts'][] = $text;
+        $groups[$key]['conf'][] = $conf;
+        $groups[$key]['left'] = min($groups[$key]['left'], $left);
+        $groups[$key]['top'] = min($groups[$key]['top'], $top);
+        $groups[$key]['right'] = max($groups[$key]['right'], $left + $width);
+        $groups[$key]['bottom'] = max($groups[$key]['bottom'], $top + $height);
+    }
+
+    $lines = [];
+    foreach ($groups as $group) {
+        $left = (int) $group['left'];
+        $top = (int) $group['top'];
+        $right = (int) $group['right'];
+        $bottom = (int) $group['bottom'];
+        $conf = count($group['conf']) > 0 ? array_sum($group['conf']) / count($group['conf']) : null;
+        $lines[] = [
+            'text' => implode(' ', $group['parts']),
+            'bbox' => [
+                'x' => $left,
+                'y' => $top,
+                'width' => max(0, $right - $left),
+                'height' => max(0, $bottom - $top),
+            ],
+            'confidence' => $conf === null ? null : round($conf, 2),
+        ];
+    }
+    return array_values(array_filter($lines, static fn (array $line): bool => trim((string) ($line['text'] ?? '')) !== ''));
 }
 
 function is_local_request(): bool {
@@ -479,6 +986,10 @@ function normalize_participant(array $participant, bool $treasurerFallback = fal
         'invite_sent_at' => $participant['invite_sent_at'] ?? null,
         'invite_last_error' => trim((string) ($participant['invite_last_error'] ?? '')) ?: null,
         'invite_token' => (string) ($participant['invite_token'] ?? bin2hex(random_bytes(16))),
+        'invite_code_hash' => (string) ($participant['invite_code_hash'] ?? ''),
+        'invite_code_expires_at' => $participant['invite_code_expires_at'] ?? null,
+        'invite_code_sent_at' => $participant['invite_code_sent_at'] ?? null,
+        'invite_code_used_at' => $participant['invite_code_used_at'] ?? null,
         'joined_at' => (string) ($participant['joined_at'] ?? now_iso()),
         'notebook_text' => str_replace("\r", '', (string) ($participant['notebook_text'] ?? '')),
         'notebook_hash' => (string) ($participant['notebook_hash'] ?? notebook_hash((string) ($participant['notebook_text'] ?? ''))),
@@ -506,6 +1017,159 @@ function normalize_attachment(array $item): ?array {
     ];
 }
 
+function attachment_public_path(string $fileName, ?string $createdAt = null): string {
+    $year = $createdAt ? substr($createdAt, 0, 4) : gmdate('Y');
+    return '/ship-cashbox/attachments/' . $year . '/' . basename($fileName);
+}
+
+function attachment_storage_path(string $publicPath): string {
+    $path = parse_url($publicPath, PHP_URL_PATH) ?: '';
+    if (!preg_match('#^/ship-cashbox/attachments/([0-9]{4})/([a-zA-Z0-9_.-]+)$#', $path, $matches)) {
+        return '';
+    }
+    $target = ATTACHMENTS_DIR . '/' . $matches[1] . '/' . $matches[2];
+    $base = realpath(ATTACHMENTS_DIR);
+    $dir = realpath(dirname($target));
+    if (!$base || !$dir || !str_starts_with($dir, $base)) {
+        return '';
+    }
+    return $target;
+}
+
+function attachment_extension(string $name, string $mime): string {
+    $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+    $allowed = ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'gif', 'heic', 'heif'];
+    if (in_array($ext, $allowed, true)) {
+        return $ext === 'jpeg' ? 'jpg' : $ext;
+    }
+    return match ($mime) {
+        'application/pdf' => 'pdf',
+        'image/png' => 'png',
+        'image/webp' => 'webp',
+        'image/gif' => 'gif',
+        'image/heic' => 'heic',
+        'image/heif' => 'heif',
+        default => 'jpg',
+    };
+}
+
+function attachment_mime(string $path, string $fallback = ''): string {
+    if (function_exists('finfo_open')) {
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        if ($finfo) {
+            $mime = (string) finfo_file($finfo, $path);
+            finfo_close($finfo);
+            if ($mime !== '') {
+                return $mime;
+            }
+        }
+    }
+    return $fallback !== '' ? $fallback : 'application/octet-stream';
+}
+
+function upload_cashbox_attachment(): array {
+    $session = find_active_session_for_owner(current_auth_email());
+    if (!$session) {
+        fail('Активная касса не найдена', 404);
+    }
+    require_session_owner($session);
+
+    $file = $_FILES['file'] ?? null;
+    if (!is_array($file)) {
+        $contentLength = (int) ($_SERVER['CONTENT_LENGTH'] ?? 0);
+        $limit = ini_get('post_max_size') ?: '';
+        $message = $contentLength > 0
+            ? 'Файл не получен сервером. Вероятно, исходное фото больше лимита загрузки' . ($limit !== '' ? ' (' . $limit . ')' : '') . '.'
+            : 'Файл не получен';
+        fail($message, 422);
+    }
+    $uploadError = (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
+    if ($uploadError !== UPLOAD_ERR_OK) {
+        $message = match ($uploadError) {
+            UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => 'Файл слишком большой для загрузки',
+            UPLOAD_ERR_PARTIAL => 'Файл был загружен не полностью',
+            UPLOAD_ERR_NO_FILE => 'Файл не выбран',
+            default => 'Файл не получен',
+        };
+        fail($message, 422);
+    }
+
+    $tmp = (string) ($file['tmp_name'] ?? '');
+    if ($tmp === '' || !is_file($tmp)) {
+        fail('Файл не подготовлен', 422);
+    }
+    $size = (int) ($file['size'] ?? filesize($tmp));
+    if ($size <= 0 || $size > OCR_MAX_DOWNLOAD_BYTES) {
+        fail('Файл слишком большой', 413);
+    }
+
+    $originalName = basename((string) ($file['name'] ?? 'receipt'));
+    $mime = attachment_mime($tmp, (string) ($file['type'] ?? ''));
+    $isAllowed = str_starts_with($mime, 'image/') || $mime === 'application/pdf';
+    if (!$isAllowed) {
+        fail('Этот тип файла не поддерживается', 415);
+    }
+
+    $createdAt = now_iso();
+    $year = substr($createdAt, 0, 4);
+    $dir = ATTACHMENTS_DIR . '/' . $year;
+    if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) {
+        fail('Не удалось создать папку вложений', 500);
+    }
+
+    $id = rand_id('att');
+    $ext = attachment_extension($originalName, $mime);
+    $targetName = $id . '.' . $ext;
+    $target = $dir . '/' . $targetName;
+    $moved = is_uploaded_file($tmp) ? move_uploaded_file($tmp, $target) : rename($tmp, $target);
+    if (!$moved || !is_file($target)) {
+        fail('Не удалось сохранить файл', 500);
+    }
+    @chmod($target, 0664);
+
+    $attachment = [
+        'id' => $id,
+        'file_path' => attachment_public_path($targetName, $createdAt),
+        'type' => $mime === 'application/pdf' ? 'PDF' : 'IMAGE',
+        'alt' => $originalName,
+        'mime_type' => $mime,
+        'created_at' => $createdAt,
+    ];
+    $session['attachments'] = array_values(array_merge($session['attachments'] ?? [], [$attachment]));
+    $session = save_session($session);
+    return build_treasurer_payload($session) + ['attachment' => $attachment];
+}
+
+function delete_cashbox_attachment(array $payload): array {
+    $session = find_active_session_for_owner(current_auth_email());
+    if (!$session) {
+        fail('Активная касса не найдена', 404);
+    }
+    require_session_owner($session);
+
+    $id = trim((string) ($payload['attachment_id'] ?? $payload['id'] ?? ''));
+    if ($id === '') {
+        fail('Не указано вложение', 422);
+    }
+
+    $removed = null;
+    $session['attachments'] = array_values(array_filter($session['attachments'] ?? [], static function ($item) use ($id, &$removed): bool {
+        if (!is_array($item) || (string) ($item['id'] ?? '') !== $id) {
+            return true;
+        }
+        $removed = $item;
+        return false;
+    }));
+    if (is_array($removed)) {
+        $target = attachment_storage_path((string) ($removed['file_path'] ?? ''));
+        if ($target !== '' && is_file($target)) {
+            @unlink($target);
+        }
+    }
+
+    return build_treasurer_payload(save_session($session));
+}
+
 function parse_notebook(string $text): array {
     $lines = preg_split('/\r\n|\n|\r/', str_replace("\r", '', $text)) ?: [];
     $entries = [];
@@ -515,10 +1179,11 @@ function parse_notebook(string $text): array {
         if ($raw === '') {
             continue;
         }
+        $parsedRaw = trim((string) preg_replace('/^\s*[✓✔]\s*/u', '', $raw));
 
         $match = [];
         $pattern = '/^\s*(?<sign>[+-])?\s*(?<currency>€)?\s*(?<amount>\d+(?:[.,]\d+)?)\s*(?<note>.*)$/u';
-        if (!preg_match($pattern, $raw, $match)) {
+        if (!preg_match($pattern, $parsedRaw, $match)) {
             $entries[] = normalize_entry([
                 'raw_text' => $raw,
                 'note' => $raw,
@@ -536,8 +1201,8 @@ function parse_notebook(string $text): array {
         }
 
         $entries[] = normalize_entry([
-            'raw_text' => $raw,
-            'note' => $note !== '' ? $note : $raw,
+            'raw_text' => $parsedRaw,
+            'note' => $note !== '' ? $note : $parsedRaw,
             'amount' => $kind === 'contribution' ? $amount : -$amount,
             'entry_kind' => $kind,
         ], $index);
@@ -605,6 +1270,11 @@ function participant_all_entries(array $participant): array {
 function normalized_treasurer_expense_mode(array $session): string {
     $mode = (string) ($session['treasurer_expense_mode'] ?? 'auto');
     return in_array($mode, ['auto', 'cashbox', 'personal'], true) ? $mode : 'auto';
+}
+
+function normalized_session_mode(array $session): string {
+    $mode = (string) ($session['session_mode'] ?? $session['mode'] ?? 'group');
+    return in_array($mode, ['group', 'personal'], true) ? $mode : 'group';
 }
 
 function build_direct_settlement_lines(array $participantTotals, string $balanceKey = 'balance'): array {
@@ -705,6 +1375,11 @@ function compute_totals(array $session): array {
             $splitCount += 1;
         }
         $contributions = max(0, money_input($participant['cashbox_contribution'] ?? 0));
+        foreach (participant_all_entries($participant) as $entry) {
+            if (($entry['entry_kind'] ?? '') === 'contribution') {
+                $contributions += abs((float) ($entry['amount'] ?? 0));
+            }
+        }
         $totalContributions += $contributions;
     }
 
@@ -729,7 +1404,9 @@ function compute_totals(array $session): array {
         $usesCashbox = (($participant['id'] ?? '') === $treasurerId) && $resolvedTreasurerMode === 'cashbox';
         foreach (participant_all_entries($participant) as $entry) {
             $kind = $entry['entry_kind'] ?? 'note';
-            if ($kind === 'expense') {
+            if ($kind === 'contribution') {
+                $contributions += abs((float) ($entry['amount'] ?? 0));
+            } elseif ($kind === 'expense') {
                 $amount = abs((float) ($entry['amount'] ?? 0));
                 if ($usesCashbox) {
                     $cashboxExpenses += $amount;
@@ -791,10 +1468,11 @@ function build_settlement_lines(array $participantTotals): array {
     return build_direct_settlement_lines($participantTotals, 'balance');
 }
 
-function default_session(string $ownerEmail = ''): array {
+function default_session(string $ownerEmail = '', string $mode = 'group'): array {
     $createdAt = now_iso();
+    $mode = in_array($mode, ['group', 'personal'], true) ? $mode : 'group';
     $treasurer = normalize_participant([
-        'display_name' => 'Treasurer',
+        'display_name' => $mode === 'personal' ? 'Personal journal' : 'Treasurer',
         'role' => 'treasurer',
         'email' => $ownerEmail,
         'active' => true,
@@ -808,10 +1486,11 @@ function default_session(string $ownerEmail = ''): array {
 
     return [
         'id' => rand_id('cashbox'),
-        'title' => 'Ship Cashbox',
+        'title' => $mode === 'personal' ? 'Личный журнал расходов' : 'Ship Cashbox',
+        'session_mode' => $mode,
         'currency' => 'EUR',
         'owner_email' => $ownerEmail,
-        'treasurer_expense_mode' => 'auto',
+        'treasurer_expense_mode' => $mode === 'personal' ? 'cashbox' : 'auto',
         'status' => 'active',
         'created_at' => $createdAt,
         'updated_at' => $createdAt,
@@ -868,6 +1547,7 @@ function normalize_session(array $session): array {
     return [
         'id' => (string) ($session['id'] ?? rand_id('cashbox')),
         'title' => trim((string) ($session['title'] ?? 'Ship Cashbox')) ?: 'Ship Cashbox',
+        'session_mode' => normalized_session_mode($session),
         'currency' => trim((string) ($session['currency'] ?? 'EUR')) ?: 'EUR',
         'treasurer_expense_mode' => normalized_treasurer_expense_mode($session),
         'status' => in_array($session['status'] ?? '', ['active', 'closed', 'deleted'], true) ? $session['status'] : 'active',
@@ -956,6 +1636,43 @@ function find_participant_by_token(array $session, string $token): ?array {
     return null;
 }
 
+function find_session_by_invite_code(string $code): ?array {
+    $code = preg_replace('/\D+/', '', $code) ?? '';
+    if (!preg_match('/^\d{6}$/', $code)) {
+        return null;
+    }
+    $hash = hash('sha256', $code);
+    $now = time();
+    foreach (list_sessions() as $session) {
+        if (($session['status'] ?? '') !== 'active') {
+            continue;
+        }
+        foreach (($session['participants'] ?? []) as $participant) {
+            $storedHash = (string) ($participant['invite_code_hash'] ?? '');
+            if ($storedHash === '' || !hash_equals($storedHash, $hash)) {
+                continue;
+            }
+            $expiresAt = strtotime((string) ($participant['invite_code_expires_at'] ?? '')) ?: 0;
+            if ($expiresAt > 0 && $expiresAt < $now) {
+                return null;
+            }
+            return $session;
+        }
+    }
+    return null;
+}
+
+function find_participant_by_invite_code(array $session, string $code): ?array {
+    $hash = hash('sha256', preg_replace('/\D+/', '', $code) ?? '');
+    foreach (($session['participants'] ?? []) as $participant) {
+        $storedHash = (string) ($participant['invite_code_hash'] ?? '');
+        if ($storedHash !== '' && hash_equals($storedHash, $hash)) {
+            return $participant;
+        }
+    }
+    return null;
+}
+
 function participant_for_session(array $session, string $participantId): ?array {
     foreach (($session['participants'] ?? []) as $participant) {
         if (($participant['id'] ?? '') === $participantId) {
@@ -980,6 +1697,7 @@ function build_treasurer_payload(?array $session): array {
         $archive[] = [
             'id' => $item['id'],
             'title' => $item['title'],
+            'session_mode' => normalized_session_mode($item),
             'currency' => $item['currency'],
             'closed_at' => $item['closed_at'],
             'participants' => $itemTotals['participant_count'],
@@ -1005,6 +1723,7 @@ function build_treasurer_payload(?array $session): array {
         'session' => [
             'id' => $session['id'],
             'title' => $session['title'],
+            'session_mode' => normalized_session_mode($session),
             'currency' => $session['currency'],
             'treasurer_expense_mode' => normalized_treasurer_expense_mode($session),
             'treasurer_expense_mode_resolved' => $totals['treasurer_expense_mode_resolved'],
@@ -1140,6 +1859,17 @@ function build_invite_link(string $token): string {
     return $scheme . '://' . $host . $base . '/index.html?invite=' . rawurlencode($token);
 }
 
+function build_invite_code_link(string $code): string {
+    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'] ?? '127.0.0.1:18090';
+    $base = rtrim(dirname(dirname($_SERVER['SCRIPT_NAME'] ?? '/ship-cashbox/api/index.php')), '/');
+    return $scheme . '://' . $host . $base . '/index.html?inviteCode=' . rawurlencode($code);
+}
+
+function generate_invite_code(): string {
+    return str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+}
+
 function save_session_meta(array $payload): array {
     $session = find_session((string) ($payload['id'] ?? ''));
     if (!$session || ($session['status'] ?? '') !== 'active') {
@@ -1180,6 +1910,10 @@ function save_session_meta(array $payload): array {
             'invite_sent_at' => $base['invite_sent_at'] ?? null,
             'invite_last_error' => $base['invite_last_error'] ?? null,
             'invite_token' => $base['invite_token'] ?? null,
+            'invite_code_hash' => $base['invite_code_hash'] ?? '',
+            'invite_code_expires_at' => $base['invite_code_expires_at'] ?? null,
+            'invite_code_sent_at' => $base['invite_code_sent_at'] ?? null,
+            'invite_code_used_at' => $base['invite_code_used_at'] ?? null,
             'joined_at' => $base['joined_at'] ?? null,
             'notebook_text' => $base['notebook_text'] ?? '',
             'notebook_hash' => $base['notebook_hash'] ?? null,
@@ -1348,6 +2082,38 @@ function authorize_participant_view(array $session, string $token): array {
     return $changed ? save_session($session) : normalize_session($session);
 }
 
+function authorize_participant_by_code(string $code): array {
+    $code = preg_replace('/\D+/', '', $code) ?? '';
+    if (!preg_match('/^\d{6}$/', $code)) {
+        fail('Введите 6 цифр кода приглашения', 422);
+    }
+    $session = find_session_by_invite_code($code);
+    if (!$session) {
+        fail('Код приглашения не найден или устарел', 404);
+    }
+    $participant = find_participant_by_invite_code($session, $code);
+    if (!$participant) {
+        fail('Участник не найден', 404);
+    }
+    $token = (string) ($participant['invite_token'] ?? '');
+    foreach ($session['participants'] as &$item) {
+        if (($item['invite_token'] ?? '') !== $token) {
+            continue;
+        }
+        $item['authorized_at'] = $item['authorized_at'] ?? now_iso();
+        $item['joined_at'] = $item['joined_at'] ?: now_iso();
+        $item['invite_code_used_at'] = now_iso();
+    }
+    unset($item);
+
+    $saved = save_session($session);
+    $participant = find_participant_by_token($saved, $token);
+    if (!$participant) {
+        fail('Участник не найден', 404);
+    }
+    return build_participant_payload($saved, $participant);
+}
+
 function save_treasurer_notebook(array $payload): array {
     $session = find_session((string) ($payload['id'] ?? ''));
     if (!$session || ($session['status'] ?? '') !== 'active') {
@@ -1433,12 +2199,20 @@ function create_new_session(array $payload = []): array {
     if ($current && ($current['status'] ?? '') === 'active') {
         fail('У вас уже есть активная касса', 409);
     }
-    $session = default_session($ownerEmail);
+    $mode = in_array(($payload['mode'] ?? $payload['session_mode'] ?? ''), ['group', 'personal'], true)
+        ? (string) ($payload['mode'] ?? $payload['session_mode'])
+        : 'group';
+    $session = default_session($ownerEmail, $mode);
     if (trim((string) ($payload['title'] ?? '')) !== '') {
         $session['title'] = trim((string) $payload['title']);
     }
     if (trim((string) ($payload['currency'] ?? '')) !== '') {
         $session['currency'] = trim((string) $payload['currency']);
+    }
+    if ($mode === 'personal') {
+        $session['treasurer_expense_mode'] = 'cashbox';
+        $session['participants'][0]['cashbox_contribution'] = max(0, money_input($payload['opening_balance'] ?? 0));
+        $session['participants'][0]['display_name'] = trim((string) ($payload['display_name'] ?? '')) ?: 'Personal journal';
     }
     $saved = save_session($session);
     write_index(['active_session_id' => $saved['id']]);
@@ -1499,12 +2273,13 @@ function send_multipart_mail(string $to, string $subject, string $textBody, stri
     return mail($to, encoded_mail_subject($subject), $body, implode("\r\n", $headers), '-f ' . escapeshellarg(MAIL_FROM_ADDRESS));
 }
 
-function send_invite_email_message(string $to, string $name, string $link, array $session): bool {
+function send_invite_email_message(string $to, string $name, string $link, array $session, string $code = ''): bool {
     $groupTitle = trim((string) ($session['title'] ?? 'Ship Cashbox')) ?: 'Ship Cashbox';
     $safeName = trim($name) !== '' ? trim($name) : 'участник';
     $subject = 'Вас пригласили в группу «' . $groupTitle . '»';
     $textBody = "Здравствуйте, {$safeName}.\n\n"
         . "Вас пригласили в судовую кассу группы «{$groupTitle}».\n\n"
+        . ($code !== '' ? "Код приглашения в группу: {$code}\n\n" : '')
         . "Принять приглашение:\n{$link}\n\n"
         . "Что откроется:\n"
         . "- ваш личный блокнот расходов внутри этой группы;\n"
@@ -1519,10 +2294,11 @@ function send_invite_email_message(string $to, string $name, string $link, array
         'Откройте личный блокнот расходов и примите участие в судовой кассе.',
         '<p>Здравствуйте, <strong>' . html_escape($safeName) . '</strong>.</p>'
         . '<p>Казначей пригласил вас в судовую кассу группы <strong>«' . html_escape($groupTitle) . '»</strong>.</p>'
+        . ($code !== '' ? '<div style="margin:18px 0;padding:18px;border-radius:18px;background:#10243a;color:#f7ead0;text-align:center;"><div style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;">Код приглашения в группу</div><div style="margin-top:8px;font-size:34px;font-weight:900;letter-spacing:.18em;">' . html_escape($code) . '</div></div>' : '')
         . '<div style="padding:16px;border-radius:16px;background:#f6f3ea;border:1px solid #e3ddd0;"><strong>Что откроет программа</strong><ul style="margin:10px 0 0;padding-left:20px;"><li>личный блокнот расходов только для этой группы;</li><li>карточки отправленных записей с датой и суммой;</li><li>финальный расчет после закрытия кассы.</li></ul></div>'
         . '<p>В этой группе вы участник, не казначей. Вы видите и редактируете свои расходы, а казначей видит общую сводку.</p>'
         . '<p><strong>Как не потерять группу:</strong> сохраните это письмо, добавьте Судовую кассу на главный экран или возвращайтесь через меню приложения: <em>Группа</em>.</p>',
-        'Принять приглашение',
+        'Войти в группу',
         $link
     );
 
@@ -1642,8 +2418,13 @@ function send_participant_invite(array $payload): array {
         }
 
         $participant['email'] = $email;
-        $link = build_invite_link((string) $participant['invite_token']);
-        $sent = send_invite_email_message($email, (string) ($participant['display_name'] ?? ''), $link, $session);
+        $code = generate_invite_code();
+        $participant['invite_code_hash'] = hash('sha256', $code);
+        $participant['invite_code_expires_at'] = gmdate('c', time() + 15 * 60);
+        $participant['invite_code_sent_at'] = now_iso();
+        $participant['invite_code_used_at'] = null;
+        $link = build_invite_code_link($code);
+        $sent = send_invite_email_message($email, (string) ($participant['display_name'] ?? ''), $link, $session, $code);
         if (!$sent) {
             $participant['invite_last_error'] = 'mail_failed';
             save_session($session);
@@ -2093,11 +2874,32 @@ if ($action === 'participant-restore-batch') {
     respond(restore_notebook_batch_by_token($token, $batchId));
 }
 
+if ($action === 'verify-invite-code') {
+    $payload = input_json();
+    respond(authorize_participant_by_code((string) ($payload['code'] ?? '')) + ['version' => APP_VERSION]);
+}
+
 require_auth();
 
 if ($action === 'boot') {
     $session = find_active_session_for_owner(current_auth_email());
     respond(build_treasurer_payload($session) + ['version' => APP_VERSION]);
+}
+
+if ($action === 'scan-ocr-status') {
+    respond(['ocr' => scan_ocr_status(), 'version' => APP_VERSION]);
+}
+
+if ($action === 'scan-ocr') {
+    respond(['ocr' => scan_ocr_extract(input_json()), 'version' => APP_VERSION]);
+}
+
+if ($action === 'upload-attachment') {
+    respond(upload_cashbox_attachment() + ['version' => APP_VERSION]);
+}
+
+if ($action === 'delete-attachment') {
+    respond(delete_cashbox_attachment(input_json()) + ['version' => APP_VERSION]);
 }
 
 if ($action === 'create-session') {

@@ -8,16 +8,21 @@ const THEME_KEY = "navdesk_watch_theme_v1";
 const ENGAGED_KEY = "ship_cashbox_engaged_v1";
 const DISMISSED_INSTALL_KEY = "ship_cashbox_install_dismissed_v1";
 const BOOT_CACHE_KEY = "ship_cashbox_boot_cache_v1";
-const SHELL_VERSION = "20260602-cashbox-debt-pdf-01";
-const SHELL_REFRESH_KEY = "ship_cashbox_shell_refresh_v1";
+const SHELL_VERSION = "20260603-cashbox-solo-mode-22";
 const SHELL_PURGE_KEY = "ship_cashbox_shell_purge_v1";
 const PARTICIPANT_CACHE_PREFIX = "ship_cashbox_participant_cache_v1_";
 const PARTICIPANT_DRAFT_PREFIX = "ship_cashbox_participant_draft_v1_";
 const PARTICIPANT_SLOT_PREFIX = "ship_cashbox_participant_slot_v1_";
 const TREASURER_DRAFT_PREFIX = "ship_cashbox_treasurer_draft_v1_";
+const NOTEBOOK_COMMIT_PREFIX = "ship_cashbox_notebook_commits_v1_";
+const SCAN_INSERT_PREFIX = "ship_cashbox_scan_insert_v1_";
+const RECEIPT_DONE_PREFIX = "ship_cashbox_receipt_done_v1_";
 const API_TIMEOUT_MS = 18000;
 const AUTH_TIMEOUT_MS = 12000;
 const UPLOAD_TIMEOUT_MS = 90000;
+const OCR_TIMEOUT_MS = 12000;
+const OCR_STATUS_CACHE_MS = 5 * 60 * 1000;
+const SCAN_AUTOFILL_DETAILS = false;
 const EDITOR_PAUSE_LOCK_MS = 5 * 60 * 1000;
 const SYNC_SLOTS = [
   { hour: 0, minute: 0, label: "00:00" },
@@ -44,15 +49,34 @@ const state = {
   installPrompt: null,
   participantDraft: "",
   participantSyncTimer: null,
+  participantSaveInFlight: false,
+  participantSavePromise: null,
+  participantSaveQueued: null,
   treasurerDraft: "",
   treasurerAutosaveTimer: null,
+  treasurerSaveInFlight: false,
+  treasurerSavePromise: null,
+  treasurerSaveQueued: null,
+  scanReview: null,
+  scanReviewObjectUrl: "",
+  scanReviewZoom: { scale: 1, x: 0, y: 0, pointers: new Map(), lastDistance: 0, dragX: 0, dragY: 0 },
+  scanReviewQueue: [],
+  scanReviewQueueTotal: 0,
+  scanReviewQueueActive: false,
+  scanReviewQueueDone: [],
+  scanOcrStatus: null,
+  scanOcrStatusCheckedAt: 0,
+  notebookAssistantSuppressedUntil: {},
   editorLocked: false,
   hiddenAt: 0,
 };
 
 const $ = (id) => document.getElementById(id);
 let modalScrollY = 0;
+let modalBodyPaddingRight = "";
 let notebookFocusTimer = 0;
+let notebookBlurTimer = 0;
+let viewportFrame = 0;
 let viewerRefreshTimer = 0;
 let viewerCheckPromise = null;
 
@@ -64,12 +88,18 @@ function isModalOpen(id) {
 function anyModalOpen() {
   const appMenu = $("cashboxAppMenuModal");
   const isAppMenuOpen = Boolean(appMenu?.classList.contains("is-open"));
-  return isModalOpen("qrModal") || isModalOpen("attachmentSheet") || isModalOpen("workspaceModal") || isModalOpen("cashboxExitModal") || isAppMenuOpen;
+  return isModalOpen("qrModal") || isModalOpen("attachmentSheet") || isModalOpen("scanReviewModal") || isModalOpen("workspaceModal") || isModalOpen("cashboxExitModal") || isAppMenuOpen;
 }
 
 function lockModalScroll() {
   if (document.body.classList.contains("shipcashbox-modal-open")) return;
   modalScrollY = window.scrollY || document.documentElement.scrollTop || 0;
+  modalBodyPaddingRight = document.body.style.paddingRight || "";
+  const scrollbarWidth = Math.max(0, window.innerWidth - document.documentElement.clientWidth);
+  if (scrollbarWidth > 0) {
+    const currentPadding = Number.parseFloat(window.getComputedStyle(document.body).paddingRight) || 0;
+    document.body.style.paddingRight = `${currentPadding + scrollbarWidth}px`;
+  }
   document.documentElement.classList.add("shipcashbox-modal-open");
   document.body.classList.add("shipcashbox-modal-open");
   document.body.style.top = `-${modalScrollY}px`;
@@ -80,11 +110,35 @@ function unlockModalScroll() {
   document.documentElement.classList.remove("shipcashbox-modal-open");
   document.body.classList.remove("shipcashbox-modal-open");
   document.body.style.top = "";
+  document.body.style.paddingRight = modalBodyPaddingRight;
   window.scrollTo(0, modalScrollY);
   modalScrollY = 0;
+  modalBodyPaddingRight = "";
 }
 
-function updateViewportVars() {
+function isNotebookTextarea(target) {
+  return target instanceof HTMLElement && target.classList.contains("shipcashbox-notebook-textarea");
+}
+
+function setNotebookFocusMode(active) {
+  window.clearTimeout(notebookBlurTimer);
+  if (document.body) {
+    document.body.classList.toggle("shipcashbox-notebook-focused", Boolean(active));
+  }
+  updateViewportVars();
+}
+
+function scheduleNotebookFocusRelease() {
+  window.clearTimeout(notebookBlurTimer);
+  notebookBlurTimer = window.setTimeout(() => {
+    if (isNotebookTextarea(document.activeElement)) return;
+    document.body.classList.remove("shipcashbox-notebook-focused");
+    updateViewportVars();
+  }, 180);
+}
+
+function syncViewportVars() {
+  viewportFrame = 0;
   const viewport = window.visualViewport;
   const height = Math.max(320, Math.round(viewport?.height || window.innerHeight || document.documentElement.clientHeight || 0));
   const offsetTop = Math.round(viewport?.offsetTop || 0);
@@ -94,12 +148,15 @@ function updateViewportVars() {
   document.body.classList.toggle("shipcashbox-keyboard-active", keyboardOffset > 80);
 }
 
+function updateViewportVars() {
+  if (viewportFrame) return;
+  viewportFrame = window.requestAnimationFrame(syncViewportVars);
+}
+
 function scheduleFocusedNotebookIntoView(target) {
   window.clearTimeout(notebookFocusTimer);
-  notebookFocusTimer = window.setTimeout(() => {
-    if (!(target instanceof HTMLElement) || document.activeElement !== target) return;
-    target.scrollIntoView({ block: "nearest", behavior: "auto" });
-  }, 260);
+  // Keep focus stable. Browser scrollIntoView was causing a visible first-click jump on desktop.
+  updateViewportVars();
 }
 
 function bindMobileKeyboardViewport() {
@@ -107,29 +164,21 @@ function bindMobileKeyboardViewport() {
   window.visualViewport?.addEventListener("resize", updateViewportVars);
   window.visualViewport?.addEventListener("scroll", updateViewportVars);
   window.addEventListener("resize", updateViewportVars);
-  document.addEventListener("pointerdown", (event) => {
-    if (event.target instanceof HTMLElement && event.target.classList.contains("shipcashbox-notebook-textarea")) return;
-    document.body.classList.remove("shipcashbox-notebook-focused");
-    updateViewportVars();
-  }, { passive: true });
   document.addEventListener("focusin", (event) => {
-    if (!(event.target instanceof HTMLElement) || !event.target.classList.contains("shipcashbox-notebook-textarea")) return;
-    document.body.classList.add("shipcashbox-notebook-focused");
-    updateViewportVars();
+    if (!isNotebookTextarea(event.target)) return;
+    setNotebookFocusMode(true);
     scheduleFocusedNotebookIntoView(event.target);
   });
   document.addEventListener("focusout", (event) => {
-    if (!(event.target instanceof HTMLElement) || !event.target.classList.contains("shipcashbox-notebook-textarea")) return;
-    document.body.classList.remove("shipcashbox-notebook-focused");
-    updateViewportVars();
+    if (!isNotebookTextarea(event.target)) return;
+    scheduleNotebookFocusRelease();
   });
 }
 
 function bindNotebookKeyboardTarget(textarea) {
   if (!(textarea instanceof HTMLElement)) return;
   const activateNotebookKeyboardMode = () => {
-    document.body.classList.add("shipcashbox-notebook-focused");
-    updateViewportVars();
+    setNotebookFocusMode(true);
     scheduleFocusedNotebookIntoView(textarea);
   };
   textarea.addEventListener("pointerdown", activateNotebookKeyboardMode, { passive: true });
@@ -137,8 +186,7 @@ function bindNotebookKeyboardTarget(textarea) {
   textarea.addEventListener("mousedown", activateNotebookKeyboardMode);
   textarea.addEventListener("focus", activateNotebookKeyboardMode);
   textarea.addEventListener("blur", () => {
-    document.body.classList.remove("shipcashbox-notebook-focused");
-    updateViewportVars();
+    scheduleNotebookFocusRelease();
   });
 }
 
@@ -248,6 +296,131 @@ function treasurerDraftKey(sessionId) {
   return `${TREASURER_DRAFT_PREFIX}${sessionId}`;
 }
 
+function notebookCommitKey(ownerKey) {
+  return `${NOTEBOOK_COMMIT_PREFIX}${ownerKey}`;
+}
+
+function scanInsertKey(sessionId) {
+  return `${SCAN_INSERT_PREFIX}${sessionId || "local"}`;
+}
+
+function receiptDoneKey(sessionId = state.boot?.session?.id) {
+  return `${RECEIPT_DONE_PREFIX}${sessionId || "local"}`;
+}
+
+function loadReceiptDoneMap(sessionId = state.boot?.session?.id) {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(receiptDoneKey(sessionId)) || "{}");
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+  } catch (error) {
+    return {};
+  }
+}
+
+function saveReceiptDoneMap(map, sessionId = state.boot?.session?.id) {
+  try {
+    localStorage.setItem(receiptDoneKey(sessionId), JSON.stringify(map || {}));
+  } catch (error) {}
+}
+
+function purgeReceiptDoneForProof(attachmentId = "", attachmentPath = "") {
+  const map = loadReceiptDoneMap();
+  let changed = false;
+  Object.keys(map).forEach((key) => {
+    const item = map[key];
+    const sameId = attachmentId && String(item?.attachment_id || "") === attachmentId;
+    const samePath = attachmentPath && String(item?.attachment_path || "") === attachmentPath;
+    if (!sameId && !samePath) return;
+    delete map[key];
+    changed = true;
+  });
+  if (changed) saveReceiptDoneMap(map);
+}
+
+function receiptFileName(file) {
+  return String(file?.name || "receipt-photo").trim() || "receipt-photo";
+}
+
+function isReceiptImageFile(file) {
+  const type = String(file?.type || "").toLowerCase();
+  if (type.startsWith("image/")) return true;
+  return /\.(?:jpe?g|png|webp|gif|heic|heif)$/i.test(receiptFileName(file));
+}
+
+function receiptFileId(file) {
+  return hashText([
+    state.boot?.session?.id || "local",
+    receiptFileName(file),
+    file?.size || 0,
+    file?.lastModified || 0,
+  ].join("|"));
+}
+
+function currentNotebookOwnerKey() {
+  if (state.viewer === "treasurer") {
+    const session = state.boot?.session;
+    if (!session?.id) return "";
+    return `treasurer_${session.id}_${session.treasurer_participant_id || "owner"}`;
+  }
+  if (state.viewer === "participant") {
+    const token = state.participant?.participant?.invite_token;
+    return token ? `participant_${token}` : "";
+  }
+  return "";
+}
+
+function loadNotebookCommits(ownerKey = currentNotebookOwnerKey()) {
+  if (!ownerKey) return {};
+  try {
+    const parsed = JSON.parse(localStorage.getItem(notebookCommitKey(ownerKey)) || "{}");
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+  } catch (error) {
+    return {};
+  }
+}
+
+function saveNotebookCommits(commits, ownerKey = currentNotebookOwnerKey()) {
+  if (!ownerKey) return;
+  try {
+    localStorage.setItem(notebookCommitKey(ownerKey), JSON.stringify(commits || {}));
+  } catch (error) {}
+}
+
+function stripNotebookCommitMarker(rawLine) {
+  return String(rawLine || "").replace(/^\s*[✓✔]\s*/u, "").trim();
+}
+
+function markNotebookLineCommitted(rawLine) {
+  const clean = stripNotebookCommitMarker(rawLine);
+  return clean ? `✓ ${clean}` : String(rawLine || "");
+}
+
+function notebookLineHash(rawLine) {
+  return hashText(stripNotebookCommitMarker(rawLine).replace(/\s+/g, " "));
+}
+
+function parseNotebookExpenseLine(rawLine) {
+  const raw = stripNotebookCommitMarker(rawLine);
+  const match = raw.match(/^([+-])?\s*(€)?\s*(\d+(?:[.,]\d+)?)\s+(.+)$/u);
+  if (!match) return null;
+  const amount = moneyRound(Math.abs(Number(String(match[3] || "0").replace(",", "."))));
+  const note = String(match[4] || "").trim();
+  if (!amount || !note) return null;
+  return { amount, note, raw };
+}
+
+function textareaLineInfo(textarea) {
+  if (!(textarea instanceof HTMLTextAreaElement)) return null;
+  const value = textarea.value || "";
+  const cursor = textarea.selectionStart ?? value.length;
+  const start = value.lastIndexOf("\n", Math.max(0, cursor - 1)) + 1;
+  const nextBreak = value.indexOf("\n", cursor);
+  const end = nextBreak === -1 ? value.length : nextBreak;
+  const raw = value.slice(start, end);
+  const lineIndex = value.slice(0, start).split("\n").length - 1;
+  return { value, cursor, start, end, raw, lineIndex };
+}
+
 function activeSession() {
   return state.viewer === "treasurer" ? state.boot?.session : state.participant?.session;
 }
@@ -257,11 +430,24 @@ function hasActiveGroup() {
   return Boolean(session && session.status === "active");
 }
 
+function isPersonalSession(session = activeSession()) {
+  return String(session?.session_mode || "") === "personal";
+}
+
 function groupWindowForViewer() {
   if (!hasActiveGroup()) return "menu";
+  if (isPersonalSession()) return "reports";
   if (state.viewer === "treasurer") return "team";
   if (state.viewer === "participant") return "participant-settlement";
   return "menu";
+}
+
+function workspaceMenuTitleLabel() {
+  return isPersonalSession() ? tx("personalWorkspaceMenuTitle", "Меню журнала") : t("workspaceMenuTitle");
+}
+
+function workspaceMenuActionLabel() {
+  return isPersonalSession() ? tx("personalWorkspaceMenuAction", "Меню журнала") : t("workspaceMenuAction");
 }
 
 function currentParticipantPayload() {
@@ -290,6 +476,7 @@ function currentViewerDisplayLabel() {
   if (state.viewer === "treasurer") {
     const session = state.boot?.session;
     const treasurer = (session?.participants || []).find((participant) => participant.id === session?.treasurer_participant_id);
+    if (isPersonalSession(session)) return tx("personalModeBadge", "Личный режим");
     return participantDisplayName(treasurer, t("viewerTreasurer"));
   }
   if (state.viewer === "participant") {
@@ -301,9 +488,34 @@ function currentViewerDisplayLabel() {
 function syncAppModeClasses() {
   const active = hasActiveGroup();
   document.body.classList.toggle("shipcashbox-has-active-group", active);
+  document.body.classList.toggle("shipcashbox-session-personal", isPersonalSession());
   document.body.classList.toggle("shipcashbox-viewer-treasurer", state.viewer === "treasurer");
   document.body.classList.toggle("shipcashbox-viewer-participant", state.viewer === "participant");
   document.body.classList.toggle("shipcashbox-viewer-guest", state.viewer === "guest");
+}
+
+function isWelcomePreview() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("welcome") === "1" || params.get("entry") === "1";
+}
+
+function clearWelcomePreviewUrl() {
+  if (!isWelcomePreview()) return;
+  const url = new URL(window.location.href);
+  url.searchParams.delete("welcome");
+  url.searchParams.delete("entry");
+  url.searchParams.set("reload", SHELL_VERSION);
+  window.history.replaceState({}, "", url.toString());
+}
+
+function openStartScreen() {
+  const url = new URL(window.location.href);
+  url.searchParams.delete("invite");
+  url.searchParams.delete("inviteCode");
+  url.searchParams.delete("entry");
+  url.searchParams.set("welcome", "1");
+  url.searchParams.set("reload", SHELL_VERSION);
+  window.location.assign(url.toString());
 }
 
 function notebookCanLock() {
@@ -638,6 +850,23 @@ async function api(action, options = {}) {
   return data;
 }
 
+async function apiForm(action, formData, options = {}) {
+  const [name, query = ""] = String(action).split(/(?=&)/, 2);
+  const { timeoutMs = UPLOAD_TIMEOUT_MS, ...fetchOptions } = options;
+  const response = await fetchWithTimeout(`${API_BASE}${encodeURIComponent(name)}${query}`, {
+    credentials: "same-origin",
+    cache: "no-store",
+    method: "POST",
+    body: formData,
+    ...fetchOptions,
+  }, timeoutMs);
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || data.error) {
+    throw new Error(data.error || `HTTP ${response.status}`);
+  }
+  return data;
+}
+
 async function fetchWithTimeout(url, options = {}, timeoutMs = API_TIMEOUT_MS) {
   const controller = new AbortController();
   const timer = window.setTimeout(() => controller.abort(), timeoutMs);
@@ -674,6 +903,7 @@ async function adminProxyApi(path, options = {}) {
 function resolveAdminAssetUrl(path) {
   if (!path) return "";
   if (/^https?:\/\//i.test(path)) return path;
+  if (String(path).startsWith("/ship-cashbox/")) return `${window.location.origin}${path}`;
   return `${ADMIN_API_ORIGIN}${path}`;
 }
 
@@ -848,13 +1078,15 @@ function returnToNavDesk(href = "../navdesk.html") {
 function updateTopbarText() {
   document.documentElement.lang = state.lang;
   if ($("appbarTitle")) $("appbarTitle").textContent = t("heroTitle");
+  if ($("cashboxStartButtonText")) $("cashboxStartButtonText").textContent = tx("cashboxStartButton", "Старт");
+  if ($("cashboxMobileStartButtonText")) $("cashboxMobileStartButtonText").textContent = tx("cashboxStartButton", "Старт");
   if ($("cashboxAppMenuButtonText")) $("cashboxAppMenuButtonText").textContent = t("cashboxAppMenuButton");
   if ($("cashboxMobileMenuButtonText")) $("cashboxMobileMenuButtonText").textContent = t("cashboxAppMenuButton");
   if ($("cashboxAppMenuEyebrow")) $("cashboxAppMenuEyebrow").textContent = t("heroTitle");
-  if ($("cashboxAppMenuTitle")) $("cashboxAppMenuTitle").textContent = t("workspaceMenuTitle");
+  if ($("cashboxAppMenuTitle")) $("cashboxAppMenuTitle").textContent = workspaceMenuTitleLabel();
   if ($("cashboxMenuNavdesk")) $("cashboxMenuNavdesk").textContent = t("cashboxMenuNavdesk");
-  if ($("cashboxMenuWorkspace")) $("cashboxMenuWorkspace").textContent = t("workspaceMenuTitle");
-  if ($("cashboxMenuGroupText")) $("cashboxMenuGroupText").textContent = t("cashboxMenuGroup");
+  if ($("cashboxMenuWorkspace")) $("cashboxMenuWorkspace").textContent = workspaceMenuTitleLabel();
+  if ($("cashboxMenuGroupText")) $("cashboxMenuGroupText").textContent = isPersonalSession() ? tx("cashboxMenuPersonal", "Журнал") : t("cashboxMenuGroup");
   if ($("cashboxMenuInstall")) $("cashboxMenuInstall").textContent = t("pwa_install_menu");
   if ($("cashboxLanguageKicker")) $("cashboxLanguageKicker").textContent = t("cashboxMenuLanguage");
   if ($("cashboxLanguageTitle")) $("cashboxLanguageTitle").textContent = t("site_menu_language_title");
@@ -952,6 +1184,336 @@ function renderNotebookFooter({ label, value, actionHtml = "", statusId = "", st
   `;
 }
 
+function renderNotebookAssistant(id, currency = "EUR", readOnly = false) {
+  if (readOnly) return "";
+  return `
+    <div class="shipcashbox-line-assistant" id="${escapeHtml(id)}Assistant" hidden>
+      <div class="shipcashbox-line-assistant__copy">
+        <span class="shipcashbox-line-assistant__eyebrow" id="${escapeHtml(id)}AssistantState">${escapeHtml(t("lineAssistantReady"))}</span>
+        <strong id="${escapeHtml(id)}AssistantPreview"></strong>
+      </div>
+      <button class="shipcashbox-line-assistant__button" type="button" id="${escapeHtml(id)}CommitButton" data-currency="${escapeHtml(currency)}">${escapeHtml(t("lineCommitAction"))}</button>
+      <a class="shipcashbox-line-assistant__button shipcashbox-line-assistant__proof" id="${escapeHtml(id)}ProofLink" href="#" target="_blank" rel="noopener" hidden>${escapeHtml(t("lineProofAction"))}</a>
+    </div>
+  `;
+}
+
+function currentAttachmentByProof(commit) {
+  const attachmentId = String(commit?.attachment_id || "");
+  const proofPath = String(commit?.attachment_path || "");
+  return (state.boot?.session?.attachments || []).find((attachment) => (
+    (attachmentId && String(attachment?.id || "") === attachmentId)
+    || (proofPath && String(attachment?.file_path || "") === proofPath)
+  )) || null;
+}
+
+function renderNotebookProofRail(textarea) {
+  if (!(textarea instanceof HTMLTextAreaElement)) return;
+  const rail = $(`${textarea.id}ProofRail`);
+  if (!rail) return;
+  const commits = loadNotebookCommits(currentNotebookOwnerKey());
+  const style = window.getComputedStyle(textarea);
+  const fontSize = Number.parseFloat(style.fontSize) || 16;
+  const lineHeight = Number.parseFloat(style.lineHeight) || (fontSize * 1.55);
+  const paddingTop = Number.parseFloat(style.paddingTop) || 0;
+  const paddingBottom = Number.parseFloat(style.paddingBottom) || 0;
+  const currency = state.boot?.session?.currency || state.participant?.session?.currency || "EUR";
+  const visibleTop = -lineHeight;
+  const visibleBottom = textarea.clientHeight - paddingBottom + lineHeight;
+  const anchors = String(textarea.value || "").split("\n").map((rawLine, lineIndex) => {
+    const parsed = parseNotebookExpenseLine(rawLine);
+    if (!parsed) return "";
+    const lineHash = notebookLineHash(parsed.raw);
+    const commit = commits[lineHash];
+    const proofPath = String(commit?.attachment_path || "");
+    const attachment = currentAttachmentByProof(commit);
+    if (!proofPath || !attachment) return "";
+    const top = paddingTop + (lineIndex * lineHeight) - textarea.scrollTop + Math.max(0, (lineHeight - 24) / 2);
+    if (top < visibleTop || top > visibleBottom) return "";
+    const label = `${money(commit.amount || parsed.amount, currency)} · ${commit.note || parsed.note}`;
+    return `
+      <span class="shipcashbox-notebook-proof-clip" style="top:${Math.round(top)}px" tabindex="0" title="${escapeHtml(label)}" aria-label="${escapeHtml(`${t("lineProofAction")}: ${label}`)}">
+        <span class="shipcashbox-notebook-proof-clip__icon" aria-hidden="true">📎</span>
+        <span class="shipcashbox-notebook-proof-menu">
+          <a href="${escapeHtml(resolveAdminAssetUrl(proofPath))}" target="_blank" rel="noopener">${escapeHtml(t("lineProofAction"))}</a>
+          <button type="button" data-proof-delete="1" data-line-hash="${escapeHtml(lineHash)}" data-scan-id="${escapeHtml(commit?.scan_id || "")}" data-attachment-id="${escapeHtml(attachment.id || "")}" data-attachment-path="${escapeHtml(attachment.file_path || proofPath)}">${escapeHtml(t("removePhoto"))}</button>
+        </span>
+      </span>
+    `;
+  }).join("");
+  rail.innerHTML = anchors;
+  rail.hidden = !anchors;
+}
+
+function syncNotebookDraftFromTextarea(textarea) {
+  if (!(textarea instanceof HTMLTextAreaElement)) return;
+  if (textarea.id === "treasurerNotebook") {
+    saveTreasurerDraft(textarea.value);
+    setNotebookMeta("treasurerSaveMeta", t("autosavePending"));
+    scheduleTreasurerAutosave();
+  } else if (textarea.id === "participantNotebook") {
+    saveParticipantDraft(textarea.value);
+    setNotebookMeta("participantSyncMeta", participantSyncSummary());
+  }
+}
+
+function clearStaleNotebookCommitMarker(textarea) {
+  if (!(textarea instanceof HTMLTextAreaElement)) return false;
+  const info = textareaLineInfo(textarea);
+  if (!info || !/^\s*[✓✔]\s*/u.test(info.raw)) return false;
+  const cleanLine = info.raw.replace(/^\s*[✓✔]\s*/u, "");
+  const parsed = parseNotebookExpenseLine(cleanLine);
+  const commits = loadNotebookCommits(currentNotebookOwnerKey());
+  if (parsed && commits[notebookLineHash(cleanLine)]) return false;
+
+  const prefixMatch = info.raw.match(/^\s*[✓✔]\s*/u);
+  const removedLength = prefixMatch ? prefixMatch[0].length : 0;
+  const nextValue = `${info.value.slice(0, info.start)}${cleanLine}${info.value.slice(info.end)}`;
+  const cursor = textarea.selectionStart ?? info.cursor;
+  const nextCursor = cursor > info.start ? Math.max(info.start, cursor - removedLength) : cursor;
+  textarea.value = nextValue;
+  textarea.selectionStart = nextCursor;
+  textarea.selectionEnd = nextCursor;
+  syncNotebookDraftFromTextarea(textarea);
+  return true;
+}
+
+function hideNotebookAssistant(textarea) {
+  if (!(textarea instanceof HTMLTextAreaElement)) return;
+  const assistant = $(`${textarea.id}Assistant`);
+  if (!assistant) return;
+  assistant.hidden = true;
+  assistant.setAttribute("aria-hidden", "true");
+  assistant.classList.remove("is-committed", "is-flashing", "is-idle");
+}
+
+function suppressNotebookAssistant(idOrTextarea, durationMs = 1800) {
+  const id = idOrTextarea instanceof HTMLTextAreaElement ? idOrTextarea.id : String(idOrTextarea || "");
+  if (!id) return;
+  state.notebookAssistantSuppressedUntil[id] = Date.now() + durationMs;
+  hideNotebookAssistant($(id));
+}
+
+function isNotebookAssistantSuppressed(textarea) {
+  if (!(textarea instanceof HTMLTextAreaElement)) return false;
+  const until = Number(state.notebookAssistantSuppressedUntil?.[textarea.id] || 0);
+  if (!until) return false;
+  if (Date.now() <= until) return true;
+  delete state.notebookAssistantSuppressedUntil[textarea.id];
+  return false;
+}
+
+function updateNotebookAssistant(textarea) {
+  if (!(textarea instanceof HTMLTextAreaElement)) return;
+  const assistant = $(`${textarea.id}Assistant`);
+  const preview = $(`${textarea.id}AssistantPreview`);
+  const stateLabel = $(`${textarea.id}AssistantState`);
+  const button = $(`${textarea.id}CommitButton`);
+  const proofLink = $(`${textarea.id}ProofLink`);
+  if (!assistant || !preview || !stateLabel || !(button instanceof HTMLButtonElement)) return;
+
+  if (isNotebookAssistantSuppressed(textarea)) {
+    hideNotebookAssistant(textarea);
+    renderNotebookProofRail(textarea);
+    return;
+  }
+
+  clearStaleNotebookCommitMarker(textarea);
+  const info = textareaLineInfo(textarea);
+  const parsed = parseNotebookExpenseLine(info?.raw || "");
+  if (!parsed) {
+    const reserveSpace = document.activeElement === textarea;
+    assistant.hidden = !reserveSpace;
+    assistant.setAttribute("aria-hidden", reserveSpace ? "true" : "false");
+    assistant.classList.remove("is-committed", "is-flashing");
+    assistant.classList.toggle("is-idle", reserveSpace);
+    preview.textContent = "\u00a0";
+    stateLabel.textContent = t("lineAssistantReady");
+    button.disabled = true;
+    if (proofLink instanceof HTMLAnchorElement) {
+      proofLink.hidden = true;
+      proofLink.removeAttribute("href");
+    }
+    return;
+  }
+
+  const ownerKey = currentNotebookOwnerKey();
+  const commits = loadNotebookCommits(ownerKey);
+  const lineHash = notebookLineHash(parsed.raw);
+  const commit = commits[lineHash] || null;
+  const committed = Boolean(commit);
+  const proofPath = String(commit?.attachment_path || "");
+  const proofAttachment = currentAttachmentByProof(commit);
+  const currency = button.dataset.currency || "EUR";
+  assistant.hidden = false;
+  assistant.setAttribute("aria-hidden", "false");
+  assistant.dataset.lineHash = lineHash;
+  assistant.dataset.rawLine = parsed.raw;
+  assistant.dataset.lineStart = String(info.start);
+  assistant.dataset.lineEnd = String(info.end);
+  assistant.classList.remove("is-idle");
+  assistant.classList.toggle("is-committed", committed);
+  preview.textContent = `${money(parsed.amount, currency)} · ${parsed.note}`;
+  stateLabel.textContent = committed ? t("lineCommittedState") : t("lineAssistantReady");
+  button.textContent = committed ? t("lineCommittedAction") : t("lineCommitAction");
+  button.disabled = false;
+  if (proofLink instanceof HTMLAnchorElement) {
+    proofLink.hidden = !(committed && proofPath && proofAttachment);
+    if (committed && proofPath && proofAttachment) {
+      proofLink.href = resolveAdminAssetUrl(proofPath);
+    } else {
+      proofLink.removeAttribute("href");
+    }
+  }
+  renderNotebookProofRail(textarea);
+}
+
+function commitCurrentNotebookLine(textarea) {
+  if (!(textarea instanceof HTMLTextAreaElement)) return false;
+  const info = textareaLineInfo(textarea);
+  const parsed = parseNotebookExpenseLine(info?.raw || "");
+  if (!parsed) return false;
+  const ownerKey = currentNotebookOwnerKey();
+  if (!ownerKey) return false;
+  const lineHash = notebookLineHash(parsed.raw);
+  const commits = loadNotebookCommits(ownerKey);
+  const previousCommit = commits[lineHash] || {};
+  commits[lineHash] = {
+    ...previousCommit,
+    amount: parsed.amount,
+    note: parsed.note,
+    raw: parsed.raw,
+    committed_at: new Date().toISOString(),
+  };
+  saveNotebookCommits(commits, ownerKey);
+  if (info && !/^\s*[✓✔]\s*/u.test(info.raw)) {
+    const markedLine = markNotebookLineCommitted(info.raw);
+    const nextValue = `${info.value.slice(0, info.start)}${markedLine}${info.value.slice(info.end)}`;
+    const nextCursor = info.start + markedLine.length;
+    textarea.value = nextValue;
+    textarea.selectionStart = nextCursor;
+    textarea.selectionEnd = nextCursor;
+    syncNotebookDraftFromTextarea(textarea);
+  }
+  updateNotebookAssistant(textarea);
+  const assistant = $(`${textarea.id}Assistant`);
+  assistant?.classList.add("is-flashing");
+  window.setTimeout(() => assistant?.classList.remove("is-flashing"), 520);
+  setNotebookMeta(textarea.id === "treasurerNotebook" ? "treasurerSaveMeta" : "participantSyncMeta", t("lineCommittedToast"));
+  textarea.focus({ preventScroll: true });
+  return true;
+}
+
+function clearNotebookProofCommit(attachmentId = "", attachmentPath = "", lineHash = "") {
+  const ownerKey = currentNotebookOwnerKey();
+  if (!ownerKey) return;
+  const commits = loadNotebookCommits(ownerKey);
+  let changed = false;
+  if (lineHash && commits[lineHash]) {
+    commits[lineHash] = {
+      ...commits[lineHash],
+      attachment_id: "",
+      attachment_path: "",
+      attachment_name: "",
+    };
+    saveNotebookCommits(commits, ownerKey);
+    return;
+  }
+  Object.keys(commits).forEach((key) => {
+    const commit = commits[key];
+    const sameId = attachmentId && String(commit?.attachment_id || "") === attachmentId;
+    const samePath = attachmentPath && String(commit?.attachment_path || "") === attachmentPath;
+    if (!sameId && !samePath) return;
+    commits[key] = {
+      ...commit,
+      attachment_id: "",
+      attachment_path: "",
+      attachment_name: "",
+    };
+    changed = true;
+  });
+  if (changed) saveNotebookCommits(commits, ownerKey);
+}
+
+async function deleteNotebookProofAttachment(attachmentId = "", attachmentPath = "", lineHash = "", scanId = "", textarea = $("treasurerNotebook")) {
+  attachmentId = String(attachmentId || "");
+  attachmentPath = String(attachmentPath || "");
+  scanId = String(scanId || "");
+  if (!attachmentId && !attachmentPath) return;
+  if (!window.confirm(t("removePhotoConfirm"))) return;
+  try {
+    const statusId = textarea instanceof HTMLTextAreaElement && textarea.id === "participantNotebook" ? "participantSyncMeta" : "treasurerSaveMeta";
+    setNotebookMeta(statusId, t("removingPhoto"));
+    await deleteCashboxAttachment(attachmentId, { renderAfter: false });
+    clearNotebookProofCommit(attachmentId, attachmentPath, lineHash);
+    purgeReceiptDoneForProof(attachmentId, attachmentPath);
+    forgetScanInserted(scanId);
+    render({ preserveWorkspace: true });
+    setNotebookMeta(statusId, treasurerNotebookSummary());
+    setFlash(t("photoRemoved"));
+  } catch (error) {
+    const statusId = textarea instanceof HTMLTextAreaElement && textarea.id === "participantNotebook" ? "participantSyncMeta" : "treasurerSaveMeta";
+    setNotebookMeta(statusId, treasurerNotebookSummary());
+    setFlash(error.message || t("deletePhotoFailed"), true);
+  }
+}
+
+function bindNotebookAssistant(textarea) {
+  if (!(textarea instanceof HTMLTextAreaElement)) return;
+  const update = () => updateNotebookAssistant(textarea);
+  textarea.addEventListener("input", update);
+  textarea.addEventListener("keyup", update);
+  textarea.addEventListener("click", update);
+  textarea.addEventListener("select", update);
+  textarea.addEventListener("focus", update);
+  textarea.addEventListener("blur", () => {
+    window.setTimeout(update, 200);
+  });
+  textarea.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey) return;
+    const parsed = parseNotebookExpenseLine(textareaLineInfo(textarea)?.raw || "");
+    if (!parsed) return;
+    commitCurrentNotebookLine(textarea);
+  });
+  $(`${textarea.id}CommitButton`)?.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+  });
+  $(`${textarea.id}CommitButton`)?.addEventListener("click", () => {
+    commitCurrentNotebookLine(textarea);
+  });
+  update();
+}
+
+function bindNotebookProofRail(textarea) {
+  if (!(textarea instanceof HTMLTextAreaElement)) return;
+  const update = () => renderNotebookProofRail(textarea);
+  const rail = $(`${textarea.id}ProofRail`);
+  rail?.addEventListener("click", (event) => {
+    const button = event.target instanceof HTMLElement ? event.target.closest("[data-proof-delete]") : null;
+    if (!(button instanceof HTMLElement)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    deleteNotebookProofAttachment(button.dataset.attachmentId || "", button.dataset.attachmentPath || "", button.dataset.lineHash || "", button.dataset.scanId || "", textarea);
+  });
+  textarea.addEventListener("input", update);
+  textarea.addEventListener("scroll", update);
+  textarea.addEventListener("keyup", update);
+  textarea.addEventListener("click", update);
+  textarea.addEventListener("focus", update);
+  window.addEventListener("resize", update);
+  window.visualViewport?.addEventListener("resize", update);
+  update();
+}
+
+function bindNotebookKeepFocus(textarea) {
+  if (!(textarea instanceof HTMLTextAreaElement)) return;
+  document.querySelectorAll(".notebook-keep-focus").forEach((button) => {
+    button.addEventListener("pointerdown", (event) => {
+      if (document.activeElement === textarea) event.preventDefault();
+    });
+  });
+}
+
 function notebookBatchTotal(batch) {
   return Number(batch?.total_expenses || 0);
 }
@@ -1007,56 +1569,256 @@ function renderExports(exports = []) {
   `;
 }
 
+function parseEqualizerInput(text) {
+  const entries = new Map();
+  const errors = [];
+  String(text || "").split(/\n+/).forEach((line, index) => {
+    const raw = line.replace(/^[\s\-•*]+/u, "").trim();
+    if (!raw) return;
+    const match = raw.match(/^(.+?)\s+([+-]?(?:\d[\d\s]*(?:[.,]\d{1,2})?|\d*[.,]\d{1,2}))\s*(?:eur|€)?$/i);
+    if (!match) {
+      errors.push(`${index + 1}: ${raw}`);
+      return;
+    }
+    const name = match[1].replace(/\s+/g, " ").trim();
+    const amount = moneyRound(Number.parseFloat(match[2].replace(/\s+/g, "").replace(",", ".")));
+    if (!name || !Number.isFinite(amount) || amount < 0) {
+      errors.push(`${index + 1}: ${raw}`);
+      return;
+    }
+    const key = name.toLowerCase();
+    const previous = entries.get(key) || { name, amount: 0 };
+    previous.amount = moneyRound(previous.amount + amount);
+    entries.set(key, previous);
+  });
+  return { entries: Array.from(entries.values()), errors };
+}
+
+function buildEqualizerSettlement(entries) {
+  const people = entries.slice(0, 40);
+  const total = moneyRound(people.reduce((sum, person) => sum + Number(person.amount || 0), 0));
+  const share = people.length ? moneyRound(total / people.length) : 0;
+  const debtors = [];
+  const creditors = [];
+  people.forEach((person) => {
+    const balance = moneyRound(Number(person.amount || 0) - share);
+    const item = { ...person, balance };
+    if (balance < -0.009) debtors.push({ ...item, due: moneyRound(Math.abs(balance)) });
+    if (balance > 0.009) creditors.push({ ...item, due: moneyRound(balance) });
+  });
+  debtors.sort((a, b) => b.due - a.due);
+  creditors.sort((a, b) => b.due - a.due);
+
+  const transfers = [];
+  let debtorIndex = 0;
+  let creditorIndex = 0;
+  while (debtorIndex < debtors.length && creditorIndex < creditors.length) {
+    const debtor = debtors[debtorIndex];
+    const creditor = creditors[creditorIndex];
+    const amount = moneyRound(Math.min(debtor.due, creditor.due));
+    if (amount > 0.009) {
+      transfers.push({ fromName: debtor.name, toName: creditor.name, amount });
+    }
+    debtor.due = moneyRound(debtor.due - amount);
+    creditor.due = moneyRound(creditor.due - amount);
+    if (debtor.due <= 0.009) debtorIndex += 1;
+    if (creditor.due <= 0.009) creditorIndex += 1;
+  }
+
+  return { people, total, share, transfers };
+}
+
+function renderEqualizerResult(settlement, currency = "EUR") {
+  if (!settlement.people.length) return "";
+  const peopleHtml = settlement.people.map((person, index) => {
+    const balance = Number(person.balance || 0);
+    const tone = balance > 0.009 ? "positive" : balance < -0.009 ? "negative" : "neutral";
+    return `
+      <div class="shipcashbox-equalizer-person shipcashbox-equalizer-person--${tone}">
+        <span><i class="debt-avatar debt-avatar--${index % 8}">${escapeHtml(participantInitials(person.name, index))}</i>${escapeHtml(person.name)}</span>
+        <strong>${escapeHtml(money(person.amount, currency))}</strong>
+        <em>${escapeHtml(money(balance, currency, true))}</em>
+      </div>
+    `;
+  }).join("");
+  const transfersHtml = settlement.transfers.length
+    ? settlement.transfers.map((line) => `
+      <article class="shipcashbox-equalizer-transfer">
+        <b>${escapeHtml(line.fromName)}</b>
+        <span aria-hidden="true">→</span>
+        <b>${escapeHtml(line.toName)}</b>
+        <strong>${escapeHtml(money(line.amount, currency))}</strong>
+      </article>
+    `).join("")
+    : `<div class="shipcashbox-equalizer-empty">${escapeHtml(t("noTransfers"))}</div>`;
+  return `
+    <div class="shipcashbox-equalizer-result">
+      <div class="shipcashbox-equalizer-summary">
+        <span><b>${escapeHtml(String(settlement.people.length))}</b>${escapeHtml(tx("equalizerPeople", "людей"))}</span>
+        <span><b>${escapeHtml(money(settlement.total, currency))}</b>${escapeHtml(tx("equalizerTotal", "всего"))}</span>
+        <span><b>${escapeHtml(money(settlement.share, currency))}</b>${escapeHtml(tx("equalizerShare", "доля"))}</span>
+      </div>
+      <div class="shipcashbox-equalizer-grid">
+        <section>
+          <h3>${escapeHtml(tx("equalizerFinalTransfers", "Финальные переводы"))}</h3>
+          <div class="shipcashbox-equalizer-transfers">${transfersHtml}</div>
+        </section>
+        <section>
+          <h3>${escapeHtml(tx("equalizerBalances", "Баланс участников"))}</h3>
+          <div class="shipcashbox-equalizer-people">${peopleHtml}</div>
+        </section>
+      </div>
+    </div>
+  `;
+}
+
+function calculateGuestEqualizer() {
+  const input = $("equalizerInput");
+  const output = $("equalizerResult");
+  const currency = String($("equalizerCurrency")?.value || "EUR").trim().toUpperCase().slice(0, 6) || "EUR";
+  if (!(input instanceof HTMLTextAreaElement) || !output) return;
+  const parsed = parseEqualizerInput(input.value);
+  if (parsed.errors.length) {
+    output.innerHTML = `<div class="shipcashbox-equalizer-error">${escapeHtml(tx("equalizerParseError", "Не понял строки"))}: ${escapeHtml(parsed.errors.slice(0, 3).join("; "))}</div>`;
+    return;
+  }
+  if (parsed.entries.length < 2) {
+    output.innerHTML = `<div class="shipcashbox-equalizer-error">${escapeHtml(tx("equalizerNeedTwo", "Нужно минимум два человека."))}</div>`;
+    return;
+  }
+  if (parsed.entries.length > 40) {
+    output.innerHTML = `<div class="shipcashbox-equalizer-error">${escapeHtml(tx("equalizerMaxPeople", "Максимум 40 человек."))}</div>`;
+    return;
+  }
+  output.innerHTML = renderEqualizerResult(buildEqualizerSettlement(parsed.entries), currency);
+}
+
+async function startEntryMode(mode = "group") {
+  clearWelcomePreviewUrl();
+  const sessionMode = mode === "personal" ? "personal" : "group";
+  if (typeof window.ensureToolAccess === "function") {
+    await window.ensureToolAccess({ requireLive: true });
+  } else if (typeof window.openToolAuthPrompt === "function") {
+    await window.openToolAuthPrompt();
+  }
+
+  const boot = await api("boot");
+  if (boot.session) {
+    state.viewer = "treasurer";
+    state.boot = boot;
+    state.treasurerDraft = loadTreasurerDraft(
+      boot.session?.id,
+      (boot.session?.participants || []).find((participant) => participant.id === boot.session?.treasurer_participant_id)?.notebook_text || ""
+    );
+    saveCache(BOOT_CACHE_KEY, boot);
+    render();
+    const activeMode = isPersonalSession(boot.session) ? "personal" : "group";
+    if (activeMode !== sessionMode) {
+      setFlash(tx("activeSessionDifferentMode", "У вас уже открыт другой активный журнал. Сначала завершите его или продолжайте в нем."), true);
+    }
+    return;
+  }
+
+  const payload = await api("create-session", {
+    method: "POST",
+    body: JSON.stringify({
+      mode: sessionMode,
+      title: sessionMode === "personal" ? tx("personalDefaultTitle", "Личный журнал расходов") : tx("groupDefaultTitle", "Судовая касса"),
+      opening_balance: sessionMode === "personal" ? ($("entryPersonalOpeningBalance")?.value.trim() || "0") : 0,
+    }),
+  });
+  state.viewer = "treasurer";
+  state.boot = payload;
+  clearTreasurerDraft(payload.session?.id);
+  saveCache(BOOT_CACHE_KEY, payload);
+  localStorage.setItem(ENGAGED_KEY, "1");
+  render();
+}
+
 function renderGuest() {
   $("guestView").innerHTML = `
-    <div class="shipcashbox-grid">
-      <section class="shipcashbox-card">
-        <div class="shipcashbox-card__head">
-          <div>
-            <p class="section-heading__eyebrow">${escapeHtml(t("viewerTreasurer"))}</p>
-            <h2>${escapeHtml(t("guestTreasurerTitle"))}</h2>
-          </div>
-        </div>
-        <p class="shipcashbox-note">${escapeHtml(t("guestTreasurerText"))}</p>
-        <div class="shipcashbox-actions">
-          <button class="btn btn--primary" type="button" id="guestSiteLoginButton">${escapeHtml(t("site_menu_login"))}</button>
+    <div class="shipcashbox-entry-screen">
+      <section class="shipcashbox-entry-hero">
+        <div class="shipcashbox-entry-hero__copy">
+          <p>NavDesk</p>
+          <h2>${escapeHtml(tx("entryTitle", "Судовой журнал расходов"))}</h2>
+          <span>${escapeHtml(tx("entryText", "Деньги на борту должны быть понятны всем: кто сдал, кто потратил, кому вернуть."))}</span>
         </div>
       </section>
 
-      <section class="shipcashbox-card">
-        <div class="shipcashbox-card__head">
-          <div>
-            <p class="section-heading__eyebrow">${escapeHtml(t("viewerParticipant"))}</p>
-            <h2>${escapeHtml(t("guestParticipantTitle"))}</h2>
+      <div class="shipcashbox-entry-grid">
+        <section class="shipcashbox-entry-card shipcashbox-entry-card--journal">
+          <div class="shipcashbox-entry-card__media" aria-hidden="true">
+            <img src="/ship-cashbox/assets/welcome-journal.webp" alt="" loading="eager" decoding="async">
           </div>
+          <div class="shipcashbox-entry-card__copy">
+            <h2>${escapeHtml(tx("entryPersonalTitle", "Веду свои расходы"))}</h2>
+            <p>${escapeHtml(tx("entryPersonalText", "Режим для записи личных расходов: люди, чек, еда, топливо, доки, мелкий ремонт. Записи не смешиваются с командной кассой."))}</p>
+            <label class="shipcashbox-field shipcashbox-field--entry">
+              <span>${escapeHtml(tx("personalOpeningBalance", "Сколько денег было"))}</span>
+              <input type="text" id="entryPersonalOpeningBalance" inputmode="decimal" placeholder="0">
+            </label>
+            <button class="btn btn--primary" type="button" data-entry-start="personal">${escapeHtml(tx("entryPersonalAction", "Начать личный журнал"))}</button>
+          </div>
+        </section>
+
+        <section class="shipcashbox-entry-card shipcashbox-entry-card--crew">
+          <div class="shipcashbox-entry-card__copy">
+            <h2>${escapeHtml(tx("entryCrewTitle", "Судовая касса команды"))}</h2>
+            <p>${escapeHtml(tx("entryCrewText", "Режим для создания круиза или сезонной фонда. Связанный блокнот, взносы и итоговое выравнивание команды."))}</p>
+            <button class="btn btn--primary" type="button" data-entry-start="group">${escapeHtml(tx("entryCrewAction", "Создать судовую кассу"))}</button>
+          </div>
+          <div class="shipcashbox-entry-card__media" aria-hidden="true">
+            <img src="/ship-cashbox/assets/welcome-crew.webp" alt="" loading="eager" decoding="async">
+          </div>
+        </section>
+
+        <section class="shipcashbox-entry-card shipcashbox-entry-card--equalizer">
+          <div class="shipcashbox-entry-card__copy">
+            <h2>${escapeHtml(tx("equalizerTitle", "Посчитать вручную"))}</h2>
+            <p>${escapeHtml(tx("equalizerText", "Быстрый расчет для команды: кто внес больше, кто должен доплатить, без создания журнала."))}</p>
+            <div class="shipcashbox-equalizer">
+              <label class="shipcashbox-field shipcashbox-field--compact">
+                <span>${escapeHtml(t("sessionCurrency"))}</span>
+                <input type="text" id="equalizerCurrency" value="EUR" maxlength="6">
+              </label>
+              <label class="shipcashbox-field">
+                <span>${escapeHtml(tx("equalizerInputLabel", "Кто сколько оплатил"))}</span>
+                <textarea id="equalizerInput" rows="4" spellcheck="false">Лех 200
+Воа 467
+Катя 600</textarea>
+              </label>
+              <button class="btn btn--primary" type="button" id="equalizerCalculateButton">${escapeHtml(tx("equalizerAction", "Открыть расчет казначея"))}</button>
+              <div id="equalizerResult" class="shipcashbox-equalizer-output" aria-live="polite"></div>
+            </div>
+          </div>
+          <div class="shipcashbox-entry-card__media" aria-hidden="true">
+            <img src="/ship-cashbox/assets/welcome-calculator.webp" alt="" loading="eager" decoding="async">
+          </div>
+        </section>
+      </div>
+
+      <form class="shipcashbox-entry-invite" id="inviteForm">
+        <div class="shipcashbox-entry-invite__copy">
+          <strong>${escapeHtml(tx("entryInviteCardTitle", "Приглашение в группу"))}</strong>
+          <span>${escapeHtml(tx("entryInviteCardText", "Введите код из письма казначея, чтобы открыть свою роль участника в этой группе."))}</span>
         </div>
-        <p class="shipcashbox-note">${escapeHtml(t("guestParticipantText"))}</p>
-        <form class="shipcashbox-form" id="inviteForm">
-          <label class="shipcashbox-field">
-            <span>${escapeHtml(t("guestToken"))}</span>
-            <input type="text" id="inviteTokenField" value="${escapeHtml(state.inviteToken || "")}">
-          </label>
-          <div class="shipcashbox-actions">
-            <button class="btn btn--primary" type="submit">${escapeHtml(t("guestOpen"))}</button>
-          </div>
-        </form>
-        <p class="shipcashbox-note">${escapeHtml(t("guestLocalHint"))}</p>
-      </section>
+        <label class="shipcashbox-field">
+          <span>${escapeHtml(t("guestToken"))}</span>
+          <input type="text" id="inviteTokenField" value="${escapeHtml(state.inviteToken || "")}" inputmode="numeric" autocomplete="one-time-code" placeholder="000000">
+        </label>
+        <button class="btn btn--secondary" type="submit">${escapeHtml(t("guestOpen"))}</button>
+      </form>
     </div>
   `;
 
-  $("guestSiteLoginButton")?.addEventListener("click", async () => {
+  document.querySelectorAll("[data-entry-start]").forEach((button) => button.addEventListener("click", async () => {
     try {
-      if (typeof window.ensureToolAccess === "function") {
-        await window.ensureToolAccess({ requireLive: true });
-      } else if (typeof window.openToolAuthPrompt === "function") {
-        await window.openToolAuthPrompt();
-      }
-      await checkViewer();
+      await startEntryMode(button.dataset.entryStart || "group");
     } catch (error) {
       setFlash(error.message || t("loginFailed"));
     }
-  });
+  }));
 
   $("inviteForm")?.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -1066,7 +1828,24 @@ function renderGuest() {
       return;
     }
     state.inviteToken = token;
-    await loadParticipant(token);
+    try {
+      if (/^\d{6}$/.test(token.replace(/\D+/g, ""))) {
+        await verifyInviteCode(token);
+      } else {
+        await loadParticipant(token);
+      }
+    } catch (error) {
+      state.viewer = "guest";
+      state.participant = null;
+      render();
+      setFlash(error.message || t("noParticipant"), true);
+    }
+  });
+
+  $("equalizerCalculateButton")?.addEventListener("click", calculateGuestEqualizer);
+  $("equalizerInput")?.addEventListener("input", () => {
+    const output = $("equalizerResult");
+    if (output) output.innerHTML = "";
   });
 }
 
@@ -1209,7 +1988,17 @@ function treasurerNotebookSummary() {
   return session.updated_at ? `${t("autosaveSaved")}: ${formatDateTime(session.updated_at)}` : t("autosaveReady");
 }
 
-async function saveTreasurerNotebook({ preserveFocus = false, silent = false, submit = false } = {}) {
+function mergeTreasurerSaveOptions(current, incoming) {
+  const next = incoming || {};
+  if (!current) return { ...next };
+  return {
+    preserveFocus: Boolean(current.preserveFocus || next.preserveFocus),
+    silent: Boolean(current.silent && next.silent),
+    submit: Boolean(current.submit || next.submit),
+  };
+}
+
+async function performTreasurerNotebookSave({ preserveFocus = false, silent = false, submit = false } = {}) {
   if (!state.boot?.session) return null;
   window.clearTimeout(state.treasurerAutosaveTimer);
   state.treasurerAutosaveTimer = null;
@@ -1232,12 +2021,15 @@ async function saveTreasurerNotebook({ preserveFocus = false, silent = false, su
     saveCache(BOOT_CACHE_KEY, payload);
     localStorage.setItem(ENGAGED_KEY, "1");
     const treasurer = (payload.session?.participants || []).find((participant) => participant.id === payload.session?.treasurer_participant_id);
-    state.treasurerDraft = normalizedText(treasurer?.notebook_text || "");
+    const serverDraft = normalizedText(treasurer?.notebook_text || "");
+    const localDraftChangedDuringSave = !submit && normalizedText(state.treasurerDraft || "") !== draft;
+    state.treasurerDraft = localDraftChangedDuringSave ? normalizedText(state.treasurerDraft || "") : serverDraft;
     try {
       localStorage.setItem(treasurerDraftKey(payload.session?.id), state.treasurerDraft);
     } catch (error) {}
-    if (preserveFocus && !submit) {
-      preserveSelection("treasurerNotebook", () => render({ preserveWorkspace: true }));
+    const keepMounted = preserveFocus && !submit && document.activeElement instanceof HTMLTextAreaElement && document.activeElement.id === "treasurerNotebook";
+    if (keepMounted) {
+      setNotebookMeta("treasurerSaveMeta", treasurerNotebookSummary());
     } else {
       render({ preserveWorkspace: true });
     }
@@ -1248,6 +2040,34 @@ async function saveTreasurerNotebook({ preserveFocus = false, silent = false, su
     if (!silent) setFlash(error.message || t("loadFailed"), true);
     throw error;
   }
+}
+
+async function saveTreasurerNotebook(options = {}) {
+  window.clearTimeout(state.treasurerAutosaveTimer);
+  state.treasurerAutosaveTimer = null;
+  if (state.treasurerSaveInFlight) {
+    state.treasurerSaveQueued = mergeTreasurerSaveOptions(state.treasurerSaveQueued, options);
+    return state.treasurerSavePromise;
+  }
+
+  state.treasurerSaveInFlight = true;
+  state.treasurerSavePromise = (async () => {
+    let currentOptions = options;
+    let lastPayload = null;
+    try {
+      do {
+        state.treasurerSaveQueued = null;
+        lastPayload = await performTreasurerNotebookSave(currentOptions);
+        currentOptions = state.treasurerSaveQueued;
+      } while (currentOptions);
+      return lastPayload;
+    } finally {
+      state.treasurerSaveInFlight = false;
+      state.treasurerSavePromise = null;
+      state.treasurerSaveQueued = null;
+    }
+  })();
+  return state.treasurerSavePromise;
 }
 
 function scheduleTreasurerAutosave() {
@@ -1290,8 +2110,8 @@ function renderParticipant() {
   const syncMeta = participantSyncSummary();
   const footerAction = viewing.is_self && !viewing.read_only
     ? `
-        <button class="btn btn--secondary notebook-keep-focus" type="button" id="participantSaveButton" title="${escapeHtml(t("saveNotebookHelp"))}" aria-label="${escapeHtml(t("saveNotebookHelp"))}">${escapeHtml(t("saveNotebook"))}</button>
-        <button class="btn btn--primary notebook-keep-focus" type="button" id="participantSyncButton" title="${escapeHtml(t("syncNowHelp"))}" aria-label="${escapeHtml(t("syncNowHelp"))}">${escapeHtml(t("syncNow"))}</button>
+        <button class="btn btn--secondary shipcashbox-notebook-action shipcashbox-notebook-action--save notebook-keep-focus" type="button" id="participantSaveButton" title="${escapeHtml(t("saveNotebookHelp"))}" aria-label="${escapeHtml(t("saveNotebookHelp"))}">${escapeHtml(t("saveNotebook"))}</button>
+        <button class="btn btn--primary shipcashbox-notebook-action shipcashbox-notebook-action--submit notebook-keep-focus" type="button" id="participantSyncButton" title="${escapeHtml(t("syncNowHelp"))}" aria-label="${escapeHtml(t("syncNowHelp"))}">${escapeHtml(t("syncNow"))}</button>
       `
     : (viewing.is_self ? "" : `<a class="btn btn--secondary" href="?invite=${encodeURIComponent(participant.invite_token)}">${escapeHtml(t("backToMyNotebook"))}</a>`);
   $("participantView").innerHTML = `
@@ -1309,6 +2129,7 @@ function renderParticipant() {
       <div class="shipcashbox-notebook-shell">
         <textarea id="participantNotebook" class="shipcashbox-notebook-textarea" placeholder="${escapeHtml(t("notebookPlaceholder"))}" aria-label="${escapeHtml(t("participantNotebookTitle"))}" ${readOnly ? "readonly" : ""}>${escapeHtml(viewing.is_self ? state.participantDraft : (viewing.notebook_text || ""))}</textarea>
         ${renderNotebookLockOverlay()}
+        ${renderNotebookAssistant("participantNotebook", session.currency, readOnly || !viewing.is_self)}
       </div>
       ${renderNotebookBatches(viewing.notebook_batches || [], session.currency, viewing.is_self ? "participant" : "readonly")}
       ${readOnly && viewing.is_self && !state.editorLocked ? `<p class="shipcashbox-note">${escapeHtml(t("participantReadonly"))}</p>` : ""}
@@ -1329,7 +2150,7 @@ function renderParticipant() {
     $("participantSyncMeta").textContent = participantSyncSummary();
   });
   $("participantSaveButton")?.addEventListener("click", (event) => {
-    runButtonAction(event.currentTarget, t("autosaveSaving"), () => syncParticipant("manual", { submit: false }))
+    runButtonAction(event.currentTarget, t("autosaveSaving"), () => syncParticipant("manual", { submit: false, preserveFocus: true }))
       .catch((error) => setFlash(error.message || t("loadFailed")));
   });
   $("participantSyncButton")?.addEventListener("click", (event) => {
@@ -1339,6 +2160,8 @@ function renderParticipant() {
   bindRestoreNotebookButtons();
   $("openWorkspaceMenuButton")?.addEventListener("click", () => openWorkspaceModal("menu"));
   bindNotebookKeyboardTarget($("participantNotebook"));
+  bindNotebookAssistant($("participantNotebook"));
+  bindNotebookKeepFocus($("participantNotebook"));
   $("unlockNotebookButton")?.addEventListener("click", unlockNotebookEditor);
 }
 
@@ -1587,6 +2410,164 @@ function renderSettlementLines(lines, currency) {
   }).join("");
 }
 
+function transferTone(line) {
+  if (line.kind === "cashbox_payout") return "positive";
+  if (line.kind === "cashbox_topup") return "warning";
+  return "neutral";
+}
+
+function renderSettlementFlow(session, { compact = false } = {}) {
+  const data = buildDebtMatrix(session);
+  const lines = data.transferLines;
+  const maxAmount = Math.max(1, ...lines.map((line) => Number(line.amount || 0)));
+  if (!lines.length) {
+    return `
+      <section class="shipcashbox-settlement-flow shipcashbox-settlement-flow--empty">
+        <div class="shipcashbox-settlement-flow__empty">
+          <strong>${escapeHtml(tx("debtMatrixAllOk", "Все в порядке"))}</strong>
+          <span>${escapeHtml(t("noTransfers"))}</span>
+        </div>
+      </section>
+    `;
+  }
+
+  const visibleLines = compact ? lines.slice(0, 3) : lines;
+  const remaining = Math.max(0, lines.length - visibleLines.length);
+
+  return `
+    <section class="shipcashbox-settlement-flow${compact ? " shipcashbox-settlement-flow--compact" : ""}" aria-label="${escapeHtml(tx("debtMatrixTitle", "Кто кому должен"))}">
+      ${visibleLines.map((line) => {
+        const width = Math.max(14, Math.min(100, (Number(line.amount || 0) / maxAmount) * 100));
+        const tone = transferTone(line);
+        return `
+          <article class="shipcashbox-settlement-flow__row shipcashbox-settlement-flow__row--${escapeHtml(tone)}">
+            <div class="shipcashbox-settlement-flow__people">
+              <strong>${escapeHtml(line.fromName)}</strong>
+              <span aria-hidden="true">→</span>
+              <strong>${escapeHtml(line.toName)}</strong>
+            </div>
+            <div class="shipcashbox-settlement-flow__amount">
+              <span style="width:${width.toFixed(2)}%"></span>
+              <b>${escapeHtml(money(line.amount, data.currency))}</b>
+            </div>
+          </article>
+        `;
+      }).join("")}
+      ${remaining ? `<button class="shipcashbox-settlement-flow__more" type="button" data-workspace-window="settlement">+${escapeHtml(String(remaining))}</button>` : ""}
+    </section>
+  `;
+}
+
+function renderCashboxCommandDeck(session, treasurer) {
+  const totals = session.totals || {};
+  const participants = session.participants || [];
+  const personal = isPersonalSession(session);
+  const activeCount = participants.filter((participant) => participant.active !== false).length;
+  const syncedCount = participants.filter((participant) => participant.authorized_at || participant.role === "treasurer").length;
+  const transferCount = (session.settlement_preview?.lines || []).length;
+  const cashboxBalance = Number(totals.cashbox_balance || 0);
+  const balanceTone = cashboxBalance < -0.009 ? "negative" : cashboxBalance > 0.009 ? "positive" : "neutral";
+  if (personal) {
+    const recordCount = (treasurer?.entries || []).filter((entry) => entry.entry_kind === "expense" || entry.entry_kind === "contribution").length;
+    return `
+      <section class="shipcashbox-command-deck shipcashbox-command-deck--personal" aria-label="${escapeHtml(tx("personalSummaryTitle", "Личный отчет"))}">
+        <div class="shipcashbox-command-deck__hero shipcashbox-command-deck__hero--${balanceTone}">
+          <div>
+            <p>${escapeHtml(session.title || tx("personalDefaultTitle", "Личный журнал расходов"))}</p>
+            <strong>${escapeHtml(money(totals.cashbox_balance, session.currency, true))}</strong>
+            <span>${escapeHtml(tx("personalBalanceLabel", "Остаток"))}</span>
+          </div>
+          <button class="shipcashbox-command-deck__primary" type="button" data-workspace-window="reports">
+            <b>${escapeHtml(String(recordCount))}</b>
+            <span>${escapeHtml(tx("personalReportAction", "Отчет"))}</span>
+          </button>
+        </div>
+        <div class="shipcashbox-command-metrics">
+          <button type="button" data-workspace-window="reports">
+            <span>${escapeHtml(tx("personalIncomeLabel", "Приходы"))}</span>
+            <strong>${escapeHtml(money(totals.total_contributions, session.currency))}</strong>
+          </button>
+          <button type="button" data-workspace-window="reports">
+            <span>${escapeHtml(t("summaryExpenses"))}</span>
+            <strong>${escapeHtml(money(totals.total_expenses, session.currency))}</strong>
+          </button>
+          <button type="button" data-workspace-window="snapshot">
+            <span>${escapeHtml(tx("personalRecordsLabel", "Записи"))}</span>
+            <strong>${escapeHtml(String(recordCount))}</strong>
+          </button>
+          <button type="button" data-workspace-window="team">
+            <span>${escapeHtml(tx("personalSettingsLabel", "Настройки"))}</span>
+            <strong>${escapeHtml(session.currency || "EUR")}</strong>
+          </button>
+        </div>
+        <div class="shipcashbox-command-strip">
+          <div class="shipcashbox-command-strip__crew">
+            <span class="shipcashbox-command-avatar">
+              <span class="debt-avatar debt-avatar--0">${escapeHtml(participantInitials(treasurer?.display_name || "Personal", 0))}</span>
+              <b>${escapeHtml(tx("personalModeBadge", "Личный режим"))}</b>
+            </span>
+          </div>
+          <div class="shipcashbox-command-strip__spent">
+            <span>${escapeHtml(t("spentFooterLabel"))}</span>
+            <strong>${escapeHtml(money(treasurer?.expenses || 0, session.currency))}</strong>
+          </div>
+        </div>
+      </section>
+    `;
+  }
+  const participantChips = participants.slice(0, 7).map((participant, index) => `
+    <span class="shipcashbox-command-avatar" title="${escapeHtml(participant.display_name || "")}">
+      <span class="debt-avatar debt-avatar--${index % 8}">${escapeHtml(participantInitials(participant.display_name, index))}</span>
+      <b>${escapeHtml(participant.display_name || "-")}</b>
+    </span>
+  `).join("");
+  const extraParticipants = Math.max(0, participants.length - 7);
+
+  return `
+    <section class="shipcashbox-command-deck" aria-label="${escapeHtml(t("summaryTitle"))}">
+      <div class="shipcashbox-command-deck__hero shipcashbox-command-deck__hero--${balanceTone}">
+        <div>
+          <p>${escapeHtml(session.title || t("summaryTitle"))}</p>
+          <strong>${escapeHtml(money(totals.cashbox_balance, session.currency, true))}</strong>
+          <span>${escapeHtml(t("summaryCash"))}</span>
+        </div>
+        <button class="shipcashbox-command-deck__primary" type="button" data-workspace-window="settlement">
+          <b>${escapeHtml(String(transferCount))}</b>
+          <span>${escapeHtml(t("settlementTitle"))}</span>
+        </button>
+      </div>
+      <div class="shipcashbox-command-metrics">
+        <button type="button" data-workspace-window="snapshot">
+          <span>${escapeHtml(t("summaryExpenses"))}</span>
+          <strong>${escapeHtml(money(totals.total_expenses, session.currency))}</strong>
+        </button>
+        <button type="button" data-workspace-window="snapshot">
+          <span>${escapeHtml(t("summaryShare"))}</span>
+          <strong>${escapeHtml(money(totals.share, session.currency))}</strong>
+        </button>
+        <button type="button" data-workspace-window="team">
+          <span>${escapeHtml(t("participantsTitle"))}</span>
+          <strong>${escapeHtml(`${syncedCount}/${activeCount || participants.length}`)}</strong>
+        </button>
+        <button type="button" data-workspace-window="reports">
+          <span>${escapeHtml(t("summaryContributions"))}</span>
+          <strong>${escapeHtml(money(totals.total_contributions, session.currency))}</strong>
+        </button>
+      </div>
+      <div class="shipcashbox-command-strip">
+        <div class="shipcashbox-command-strip__crew">
+          ${participantChips}
+          ${extraParticipants ? `<span class="shipcashbox-command-avatar shipcashbox-command-avatar--more">+${escapeHtml(String(extraParticipants))}</span>` : ""}
+        </div>
+        <div class="shipcashbox-command-strip__spent">
+          <span>${escapeHtml(t("spentFooterLabel"))}</span>
+          <strong>${escapeHtml(money(treasurer?.expenses || 0, session.currency))}</strong>
+        </div>
+      </div>
+    </section>
+  `;
+}
+
 function participantInitials(name, index = 0) {
   const normalized = String(name || "").replace(/[^\p{L}\p{N}\s@._-]/gu, " ").trim();
   if (!normalized) return String(index + 1).padStart(2, "0");
@@ -1815,17 +2796,23 @@ function renderArchiveRows(archive = [], canReopen = false) {
   if (!archive.length) {
     return `<div class="shipcashbox-empty">${escapeHtml(t("archiveEmpty"))}</div>`;
   }
-  return archive.map((item) => `
-    <article class="shipcashbox-archive__row shipcashbox-archive__row--selectable">
-      <div class="shipcashbox-card__row">
-        <strong>${escapeHtml(item.title)}</strong>
-        <span class="shipcashbox-archive__status">${escapeHtml(t("archiveStatus"))}</span>
-      </div>
-      <div class="shipcashbox-archive__meta">${escapeHtml(t("archivedOn"))}: ${escapeHtml(item.closed_at || "")}</div>
-      <div class="shipcashbox-archive__meta">${escapeHtml(`${item.participants} · ${money(item.cashbox_balance, item.currency, true)}`)}</div>
-      <button class="shipcashbox-archive__cover open-archive-session-btn" type="button" data-id="${escapeHtml(item.id)}" data-can-reopen="${canReopen ? "1" : "0"}" title="${escapeHtml(t("openArchiveSnapshot"))}" aria-label="${escapeHtml(t("openArchiveSnapshot"))}"></button>
-    </article>
-  `).join("");
+  return archive.map((item) => {
+    const personal = item.session_mode === "personal";
+    const meta = personal
+      ? `${tx("personalArchiveMeta", "Личный журнал")} · ${money(item.cashbox_balance, item.currency, true)}`
+      : `${item.participants} · ${money(item.cashbox_balance, item.currency, true)}`;
+    return `
+      <article class="shipcashbox-archive__row shipcashbox-archive__row--selectable">
+        <div class="shipcashbox-card__row">
+          <strong>${escapeHtml(item.title)}</strong>
+          <span class="shipcashbox-archive__status">${escapeHtml(t("archiveStatus"))}</span>
+        </div>
+        <div class="shipcashbox-archive__meta">${escapeHtml(t("archivedOn"))}: ${escapeHtml(item.closed_at || "")}</div>
+        <div class="shipcashbox-archive__meta">${escapeHtml(meta)}</div>
+        <button class="shipcashbox-archive__cover open-archive-session-btn" type="button" data-id="${escapeHtml(item.id)}" data-can-reopen="${canReopen ? "1" : "0"}" title="${escapeHtml(t("openArchiveSnapshot"))}" aria-label="${escapeHtml(t("openArchiveSnapshot"))}"></button>
+      </article>
+    `;
+  }).join("");
 }
 
 function renderCrewDirectory(directory = []) {
@@ -1865,6 +2852,17 @@ function renderWorkspaceMenu() {
         </div>
       `;
     }
+    if (isPersonalSession(state.boot.session)) {
+      return `
+        <div class="shipcashbox-window-menu">
+          ${renderWindowMenuButton("snapshot", t("summaryTitle"), t("workspaceSnapshotText"))}
+          ${renderWindowMenuButton("reports", tx("personalReportAction", "Отчет"), tx("personalReportText", "Приходы, расходы, остаток и список записей."))}
+          ${renderWindowMenuButton("team", tx("personalSettingsLabel", "Настройки"), tx("personalSettingsText", "Название, валюта и начальный остаток личного журнала."))}
+          ${renderWindowMenuButton("archive", t("archiveTitle"), t("workspaceArchiveText"))}
+          ${renderWindowMenuButton("service", t("workspaceServiceTitle"), t("workspaceServiceText"))}
+        </div>
+      `;
+    }
     return `
       <div class="shipcashbox-window-menu">
         ${renderWindowMenuButton("snapshot", t("summaryTitle"), t("workspaceSnapshotText"))}
@@ -1890,6 +2888,9 @@ function renderWorkspaceMenu() {
 }
 
 function renderTreasurerReportsWindow(session) {
+  if (isPersonalSession(session)) {
+    return renderPersonalReportsWindow(session);
+  }
   const participants = session.participants || [];
   return `
     <div class="shipcashbox-stack">
@@ -1909,6 +2910,40 @@ function renderTreasurerReportsWindow(session) {
           ${renderWindowMenuButton("log-diagram", t("logDiagram"), t("logDiagramText"))}
           ${renderWindowMenuButton("log-tree", t("logTreeTitle"), t("logText"))}
         </div>
+      </section>
+    </div>
+  `;
+}
+
+function renderPersonalReportsWindow(session) {
+  const treasurer = (session.participants || []).find((participant) => participant.id === session.treasurer_participant_id) || (session.participants || [])[0] || {};
+  const totals = session.totals || {};
+  const entries = (treasurer.entries || []).filter((entry) => entry.entry_kind === "expense" || entry.entry_kind === "contribution");
+  const rows = entries.length ? entries.map((entry) => {
+    const income = entry.entry_kind === "contribution";
+    return `
+      <div class="shipcashbox-personal-report-row shipcashbox-personal-report-row--${income ? "income" : "expense"}">
+        <span>${escapeHtml(entry.note || entry.raw_text || "-")}</span>
+        <strong>${escapeHtml(money(Math.abs(Number(entry.amount || 0)), session.currency, income))}</strong>
+      </div>
+    `;
+  }).join("") : `<p class="shipcashbox-note">${escapeHtml(tx("personalReportEmpty", "Пока нет сохраненных приходов или расходов."))}</p>`;
+  return `
+    <div class="shipcashbox-stack">
+      <section class="shipcashbox-card shipcashbox-card--window">
+        <div class="shipcashbox-card__head">
+          <div>
+            <p class="section-heading__eyebrow">${escapeHtml(tx("personalSummaryTitle", "Личный отчет"))}</p>
+            <h2>${escapeHtml(tx("personalReportTitle", "Приходы и расходы"))}</h2>
+          </div>
+        </div>
+        <div class="shipcashbox-metrics shipcashbox-metrics--compact">
+          <div class="shipcashbox-metric"><span>${escapeHtml(tx("personalIncomeLabel", "Приходы"))}</span><strong>${escapeHtml(money(totals.total_contributions, session.currency))}</strong></div>
+          <div class="shipcashbox-metric"><span>${escapeHtml(t("summaryExpenses"))}</span><strong>${escapeHtml(money(totals.total_expenses, session.currency))}</strong></div>
+          <div class="shipcashbox-metric"><span>${escapeHtml(tx("personalBalanceLabel", "Остаток"))}</span><strong>${escapeHtml(money(totals.cashbox_balance, session.currency, true))}</strong></div>
+        </div>
+        <div class="shipcashbox-personal-report">${rows}</div>
+        <p class="shipcashbox-note">${escapeHtml(tx("personalReportHint", "Пишите приходы со знаком плюс: +500 аванс. Расходы можно писать обычной строкой: 40 топливо."))}</p>
       </section>
     </div>
   `;
@@ -1951,6 +2986,27 @@ function renderTreasurerLogTreeWindow(session) {
 }
 
 function renderTreasurerSnapshotWindow(session) {
+  if (isPersonalSession(session)) {
+    const totals = session.totals || {};
+    const treasurer = (session.participants || []).find((participant) => participant.id === session.treasurer_participant_id) || (session.participants || [])[0] || {};
+    const recordCount = (treasurer.entries || []).filter((entry) => entry.entry_kind === "expense" || entry.entry_kind === "contribution").length;
+    return `
+      <section class="shipcashbox-card shipcashbox-card--window">
+        <div class="shipcashbox-card__head">
+          <div>
+            <p class="section-heading__eyebrow">${escapeHtml(tx("personalSummaryTitle", "Личный отчет"))}</p>
+            <h2>${escapeHtml(tx("personalSummaryTitle", "Личный отчет"))}</h2>
+          </div>
+        </div>
+        <div class="shipcashbox-metrics">
+          <div class="shipcashbox-metric"><span>${escapeHtml(tx("personalBalanceLabel", "Остаток"))}</span><strong>${escapeHtml(money(totals.cashbox_balance, session.currency, true))}</strong></div>
+          <div class="shipcashbox-metric"><span>${escapeHtml(tx("personalIncomeLabel", "Приходы"))}</span><strong>${escapeHtml(money(totals.total_contributions, session.currency))}</strong></div>
+          <div class="shipcashbox-metric"><span>${escapeHtml(t("summaryExpenses"))}</span><strong>${escapeHtml(money(totals.total_expenses, session.currency))}</strong></div>
+          <div class="shipcashbox-metric"><span>${escapeHtml(tx("personalRecordsLabel", "Записи"))}</span><strong>${escapeHtml(String(recordCount))}</strong></div>
+        </div>
+      </section>
+    `;
+  }
   const totals = session.totals || {};
   return `
     <section class="shipcashbox-card shipcashbox-card--window">
@@ -1971,6 +3027,37 @@ function renderTreasurerSnapshotWindow(session) {
 }
 
 function renderTreasurerTeamWindow(session) {
+  if (isPersonalSession(session)) {
+    const treasurer = (session.participants || []).find((participant) => participant.id === session.treasurer_participant_id) || (session.participants || [])[0] || {};
+    return `
+      <section class="shipcashbox-card shipcashbox-card--window">
+        <div class="shipcashbox-card__head">
+          <div>
+            <p class="section-heading__eyebrow">${escapeHtml(tx("personalSettingsLabel", "Настройки"))}</p>
+            <h2>${escapeHtml(tx("personalSettingsTitle", "Личный журнал"))}</h2>
+          </div>
+        </div>
+        <p class="shipcashbox-note">${escapeHtml(tx("personalSettingsText", "Название, валюта и начальный остаток личного журнала."))}</p>
+        <div class="shipcashbox-form__grid">
+          <label class="shipcashbox-field">
+            <span>${escapeHtml(t("sessionTitle"))}</span>
+            <input type="text" id="sessionTitleInput" value="${escapeHtml(session.title)}">
+          </label>
+          <label class="shipcashbox-field">
+            <span>${escapeHtml(t("sessionCurrency"))}</span>
+            <input type="text" id="sessionCurrencyInput" value="${escapeHtml(session.currency)}" maxlength="6">
+          </label>
+          <label class="shipcashbox-field">
+            <span>${escapeHtml(tx("personalOpeningBalance", "Сколько денег было"))}</span>
+            <input type="text" id="personalOpeningBalanceInput" value="${escapeHtml(String(treasurer.cashbox_contribution ?? 0))}" inputmode="decimal">
+          </label>
+        </div>
+        <div class="shipcashbox-actions shipcashbox-actions--team">
+          <button class="btn btn--primary" type="button" id="saveSessionButton" title="${escapeHtml(t("saveSessionHelp"))}" aria-label="${escapeHtml(t("saveSessionHelp"))}">${escapeHtml(t("saveSession"))}</button>
+        </div>
+      </section>
+    `;
+  }
   const activeCount = (session.participants || []).filter((participant) => participant.authorized_at).length;
   const invitedCount = (session.participants || []).filter((participant) => participant.role !== "treasurer" && participant.invite_sent_at).length;
   return `
@@ -2018,6 +3105,7 @@ function renderTreasurerSettlementWindow(session) {
         </div>
       </div>
       <p class="shipcashbox-note">${escapeHtml(settlementText)}</p>
+      ${renderSettlementFlow(session)}
       <div class="shipcashbox-lines">${renderSettlementLines(session.settlement_preview?.lines || [], session.currency)}</div>
       <div class="shipcashbox-actions">
         <button class="btn btn--secondary print-settlement-pdf-btn" type="button" title="${escapeHtml(tx("debtMatrixPdfHelp", "Открыть альбомный отчет для печати или сохранения в PDF."))}" aria-label="${escapeHtml(tx("debtMatrixPdfHelp", "Открыть альбомный отчет для печати или сохранения в PDF."))}">${escapeHtml(tx("debtMatrixPdfButton", "Сохранить PDF"))}</button>
@@ -2027,7 +3115,32 @@ function renderTreasurerSettlementWindow(session) {
   `;
 }
 
+function renderPersonalArchiveDetailWindow(session) {
+  return `
+    <div class="shipcashbox-stack">
+      <section class="shipcashbox-card shipcashbox-card--window shipcashbox-card--archive-detail">
+        <div class="shipcashbox-card__head">
+          <div>
+            <p class="section-heading__eyebrow">${escapeHtml(t("archiveStatus"))}</p>
+            <h2>${escapeHtml(session.title || tx("personalArchiveTitle", "Архив личного журнала"))}</h2>
+            <p class="shipcashbox-note">${escapeHtml(t("archivedOn"))}: ${escapeHtml(session.closed_at || "")}</p>
+          </div>
+        </div>
+        <div class="shipcashbox-actions">
+          ${renderExports(session.exports || [])}
+          <button class="btn btn--primary reopen-session-btn" type="button" data-id="${escapeHtml(session.id)}" title="${escapeHtml(t("reopenCashboxHelp"))}" aria-label="${escapeHtml(t("reopenCashboxHelp"))}">${escapeHtml(t("reopenCashbox"))}</button>
+          <button class="btn btn--secondary delete-archive-session-btn" type="button" data-id="${escapeHtml(session.id)}" title="${escapeHtml(t("deleteArchiveHelp"))}" aria-label="${escapeHtml(t("deleteArchiveHelp"))}">${escapeHtml(t("deleteArchive"))}</button>
+        </div>
+      </section>
+      ${renderPersonalReportsWindow(session)}
+    </div>
+  `;
+}
+
 function renderArchiveDetailWindow(session) {
+  if (isPersonalSession(session)) {
+    return renderPersonalArchiveDetailWindow(session);
+  }
   const participants = session.participants || [];
   const totals = session.totals || {};
   return `
@@ -2140,37 +3253,38 @@ function renderServiceWindow() {
   `;
 }
 
-function renderTreasurerAttachments(session) {
+function receiptLinkLabel(commit, item, currency = "EUR") {
+  if (commit?.amount && commit?.note) {
+    return `${money(commit.amount, currency)} · ${commit.note} · ${t("lineProofAction")}`;
+  }
+  return `${item.alt || attachmentFileName(item.file_path) || t("photosTitle")} · ${t("lineProofAction")}`;
+}
+
+function renderTreasurerAttachments(session, currency = "EUR") {
   const items = Array.isArray(session.attachments) ? session.attachments : [];
   const canEdit = session.status === "active";
-  if (!items.length) {
-    return `<p class="shipcashbox-note">${escapeHtml(t("photosEmpty"))}</p>`;
-  }
+  if (!items.length) return "";
+  const ownerKey = `treasurer_${session.id}_${session.treasurer_participant_id || "owner"}`;
+  const commits = Object.values(loadNotebookCommits(ownerKey));
+  const commitsByPath = commits.reduce((map, commit) => {
+    const path = String(commit?.attachment_path || "");
+    if (path) map[path] = commit;
+    return map;
+  }, {});
 
   return `
-    <div class="shipcashbox-attachments">
+    <div class="shipcashbox-receipt-links">
       ${items.map((item) => {
         const href = escapeHtml(resolveAdminAssetUrl(item.file_path));
-        const label = escapeHtml(item.alt || attachmentFileName(item.file_path) || t("photosTitle"));
+        const commit = commitsByPath[item.file_path] || null;
+        const label = escapeHtml(receiptLinkLabel(commit, item, currency));
         const fileName = escapeHtml(attachmentFileName(item.file_path));
-        const pdf = isPdfAttachment(item);
         return `
-          <article class="shipcashbox-attachment">
-            ${pdf ? `
-              <a class="shipcashbox-attachment__media shipcashbox-attachment__media--document" href="${href}" target="_blank" rel="noopener">
-                <span class="shipcashbox-attachment__badge">PDF</span>
-                <strong>${escapeHtml(t("attachmentPdfLabel"))}</strong>
-                <span>${fileName}</span>
-              </a>
-            ` : `
-              <a class="shipcashbox-attachment__media" href="${href}" target="_blank" rel="noopener">
-                <img src="${href}" alt="${label}">
-              </a>
-            `}
-            <div class="shipcashbox-attachment__actions">
-              <a class="btn btn--secondary" href="${href}" target="_blank" rel="noopener">${escapeHtml(t("openPhoto"))}</a>
-              ${canEdit ? `<button class="btn btn--secondary delete-attachment-btn" type="button" data-attachment-id="${escapeHtml(item.id)}" title="${escapeHtml(t("removePhotoHelp"))}" aria-label="${escapeHtml(t("removePhotoHelp"))}">${escapeHtml(t("removePhoto"))}</button>` : ""}
-            </div>
+          <article class="shipcashbox-receipt-link-row">
+            <a class="shipcashbox-receipt-link ${commit ? "is-accounted" : ""}" href="${href}" target="_blank" rel="noopener" title="${fileName}">
+              <span class="shipcashbox-receipt-link__text">${commit ? "✓ " : ""}${label}</span>
+            </a>
+            ${canEdit ? `<button class="shipcashbox-receipt-link__delete delete-attachment-btn" type="button" data-attachment-id="${escapeHtml(item.id)}" title="${escapeHtml(t("removePhotoHelp"))}" aria-label="${escapeHtml(t("removePhotoHelp"))}">×</button>` : ""}
           </article>
         `;
       }).join("")}
@@ -2181,8 +3295,8 @@ function renderTreasurerAttachments(session) {
 function workspaceWindowPayload(windowName) {
   if (windowName === "menu") {
     return {
-      eyebrow: t("workspaceMenuEyebrow"),
-      title: t("workspaceMenuTitle"),
+      eyebrow: isPersonalSession() ? tx("personalModeBadge", "Личный режим") : t("workspaceMenuEyebrow"),
+      title: workspaceMenuTitleLabel(),
       body: renderWorkspaceMenu(),
     };
   }
@@ -2205,18 +3319,26 @@ function workspaceWindowPayload(windowName) {
 
   if (state.viewer === "treasurer" && state.boot?.session) {
     const { session, archive } = state.boot;
+    const personal = isPersonalSession(session);
     if (windowName === "snapshot") {
       return {
-        eyebrow: t("summaryTitle"),
-        title: t("summaryTitle"),
+        eyebrow: personal ? tx("personalSummaryTitle", "Личный отчет") : t("summaryTitle"),
+        title: personal ? tx("personalSummaryTitle", "Личный отчет") : t("summaryTitle"),
         body: renderTreasurerSnapshotWindow(session),
       };
     }
     if (windowName === "team") {
       return {
-        eyebrow: t("participantsTitle"),
-        title: t("participantsTitle"),
+        eyebrow: personal ? tx("personalSettingsLabel", "Настройки") : t("participantsTitle"),
+        title: personal ? tx("personalSettingsTitle", "Личный журнал") : t("participantsTitle"),
         body: renderTreasurerTeamWindow(session),
+      };
+    }
+    if (personal && ["settlement", "log-diagram", "log-tree"].includes(windowName)) {
+      return {
+        eyebrow: tx("personalSummaryTitle", "Личный отчет"),
+        title: tx("personalReportTitle", "Приходы и расходы"),
+        body: renderPersonalReportsWindow(session),
       };
     }
     if (windowName === "settlement") {
@@ -2228,8 +3350,8 @@ function workspaceWindowPayload(windowName) {
     }
     if (windowName === "reports") {
       return {
-        eyebrow: t("workspaceReportsTitle"),
-        title: t("workspaceReportsTitle"),
+        eyebrow: personal ? tx("personalSummaryTitle", "Личный отчет") : t("workspaceReportsTitle"),
+        title: personal ? tx("personalReportTitle", "Приходы и расходы") : t("workspaceReportsTitle"),
         body: renderTreasurerReportsWindow(session),
       };
     }
@@ -2287,8 +3409,13 @@ function renderTreasurer() {
             <span>${escapeHtml(t("groupNameLabel"))}</span>
             <input type="text" id="newSessionTitleInput" value="" placeholder="${escapeHtml(t("groupNamePlaceholder"))}">
           </label>
+          <label class="shipcashbox-field">
+            <span>${escapeHtml(tx("personalOpeningBalance", "Сколько денег было"))}</span>
+            <input type="text" id="newSessionOpeningInput" value="" inputmode="decimal" placeholder="0">
+          </label>
           <div class="shipcashbox-actions">
-            <button class="btn btn--primary" type="button" id="createSessionButton">${escapeHtml(t("createCashbox"))}</button>
+            <button class="btn btn--primary" type="button" id="createSessionButton" data-create-session-mode="group">${escapeHtml(t("createCashbox"))}</button>
+            <button class="btn btn--secondary" type="button" id="createPersonalSessionButton" data-create-session-mode="personal">${escapeHtml(tx("createPersonalJournal", "Создать личный журнал"))}</button>
             <button class="btn btn--secondary" type="button" id="shareToolButton">${escapeHtml(t("shareTool"))}</button>
           </div>
         </section>
@@ -2313,45 +3440,43 @@ function renderTreasurer() {
 
   const participants = session.participants || [];
   const treasurer = participants.find((participant) => participant.id === session.treasurer_participant_id) || participants[0];
+  const personal = isPersonalSession(session);
   const notebookText = normalizedText(state.treasurerDraft);
   const totals = session.totals || {};
   const readOnly = session.status !== "active" || state.editorLocked;
   const attachmentAction = session.status === "active"
-    ? `<button class="btn btn--secondary" type="button" id="attachReceiptButton" title="${escapeHtml(t("attachPhotoHelp"))}" aria-label="${escapeHtml(t("attachPhotoHelp"))}">${escapeHtml(t("attachPhoto"))}</button>`
+    ? `<button class="btn btn--secondary shipcashbox-notebook-action shipcashbox-notebook-action--attach" type="button" id="attachReceiptButton" title="${escapeHtml(t("attachPhoto"))}" aria-label="${escapeHtml(t("attachPhoto"))}"><span aria-hidden="true">📎</span><span class="shipcashbox-sr-only">${escapeHtml(t("attachPhoto"))}</span></button>`
     : "";
   const notebookAction = session.status === "active"
     ? `
-        <button class="btn btn--secondary notebook-keep-focus" type="button" id="treasurerSaveButton" title="${escapeHtml(t("saveNotebookHelp"))}" aria-label="${escapeHtml(t("saveNotebookHelp"))}">${escapeHtml(t("saveNotebook"))}</button>
-        <button class="btn btn--primary notebook-keep-focus" type="button" id="treasurerSubmitNotebookButton" title="${escapeHtml(t("submitNotebookHelp"))}" aria-label="${escapeHtml(t("submitNotebookHelp"))}">${escapeHtml(t("submitNotebook"))}</button>
+        <button class="btn btn--secondary shipcashbox-notebook-action shipcashbox-notebook-action--save notebook-keep-focus" type="button" id="treasurerSaveButton" title="${escapeHtml(t("saveNotebookHelp"))}" aria-label="${escapeHtml(t("saveNotebookHelp"))}">${escapeHtml(t("saveNotebook"))}</button>
+        <button class="btn btn--primary shipcashbox-notebook-action shipcashbox-notebook-action--submit notebook-keep-focus" type="button" id="treasurerSubmitNotebookButton" title="${escapeHtml(t("submitNotebookHelp"))}" aria-label="${escapeHtml(t("submitNotebookHelp"))}">${escapeHtml(t("submitNotebook"))}</button>
         ${attachmentAction}
       `
     : "";
   $("treasurerView").innerHTML = `
     <div class="shipcashbox-stack">
+      ${renderCashboxCommandDeck(session, treasurer)}
       <section class="shipcashbox-card shipcashbox-card--sticky shipcashbox-card--notebook">
         <div class="shipcashbox-card__head shipcashbox-workhead">
           <div>
             <p class="section-heading__eyebrow">${escapeHtml(session.title)}</p>
-            <h2 class="shipcashbox-work-title">${escapeHtml(t("treasurerNotebookTitle"))}</h2>
+            <h2 class="shipcashbox-work-title">${escapeHtml(personal ? tx("personalNotebookTitle", "Личный блокнот") : t("treasurerNotebookTitle"))}</h2>
           </div>
           <div class="shipcashbox-inline-actions">
-            <button class="btn btn--secondary" type="button" id="openWorkspaceMenuButton" title="${escapeHtml(t("workspaceMenuHelp"))}" aria-label="${escapeHtml(t("workspaceMenuHelp"))}">${escapeHtml(t("workspaceMenuAction"))}</button>
+            <button class="btn btn--secondary" type="button" id="openWorkspaceMenuButton" title="${escapeHtml(personal ? tx("personalWorkspaceMenuHelp", "Открывает отчет, настройки, архив и сервис личного журнала.") : t("workspaceMenuHelp"))}" aria-label="${escapeHtml(personal ? tx("personalWorkspaceMenuHelp", "Открывает отчет, настройки, архив и сервис личного журнала.") : t("workspaceMenuHelp"))}">${escapeHtml(workspaceMenuActionLabel())}</button>
           </div>
         </div>
         <div class="shipcashbox-notebook-shell">
-          <textarea id="treasurerNotebook" class="shipcashbox-notebook-textarea" placeholder="${escapeHtml(t("notebookPlaceholder"))}" aria-label="${escapeHtml(t("treasurerNotebookTitle"))}" ${readOnly ? "readonly" : ""}>${escapeHtml(notebookText)}</textarea>
+          <textarea id="treasurerNotebook" class="shipcashbox-notebook-textarea" placeholder="${escapeHtml(personal ? tx("personalNotebookPlaceholder", "+500 аванс / 40 топливо / 15 кофе") : t("notebookPlaceholder"))}" aria-label="${escapeHtml(personal ? tx("personalNotebookTitle", "Личный блокнот") : t("treasurerNotebookTitle"))}" ${readOnly ? "readonly" : ""}>${escapeHtml(notebookText)}</textarea>
+          <div class="shipcashbox-notebook-proof-rail" id="treasurerNotebookProofRail" aria-label="${escapeHtml(t("lineProofAction"))}" hidden></div>
           ${renderNotebookLockOverlay()}
+          ${renderNotebookAssistant("treasurerNotebook", session.currency, readOnly)}
         </div>
         ${renderNotebookBatches(treasurer?.notebook_batches || [], session.currency, "treasurer")}
-        <div class="shipcashbox-stack">
-          <div class="shipcashbox-card__row">
-            <strong>${escapeHtml(t("photosTitle"))}</strong>
-          </div>
-          ${renderTreasurerAttachments(session)}
-        </div>
         ${session.status !== "active" && !state.editorLocked ? `<p class="shipcashbox-note">${escapeHtml(t("participantReadonly"))}</p>` : ""}
         ${renderNotebookFooter({
-          label: t("spentFooterLabel"),
+          label: personal ? tx("personalSpentFooterLabel", "Расходы") : t("spentFooterLabel"),
           value: money(treasurer?.expenses || 0, session.currency),
           actionHtml: notebookAction,
           statusId: "treasurerSaveMeta",
@@ -2394,15 +3519,28 @@ function participantsPayloadFromState() {
 }
 
 async function saveSessionMeta(extra = {}, options = {}) {
-  const participants = $("participantsEditor") ? collectParticipantDrafts() : participantsPayloadFromState();
+  const personal = isPersonalSession(state.boot?.session);
+  const participants = personal
+    ? participantsPayloadFromState().slice(0, 1).map((participant) => ({
+        ...participant,
+        role: "treasurer",
+        display_name: participant.display_name || tx("personalModeBadge", "Личный режим"),
+        included_in_split: true,
+        cashbox_contribution: $("personalOpeningBalanceInput")?.value.trim() || participant.cashbox_contribution || "0",
+      }))
+    : ($("participantsEditor") ? collectParticipantDrafts() : participantsPayloadFromState());
   const treasurerParticipantId = state.boot?.session?.treasurer_participant_id || participants[0]?.id || "";
+  const previousSession = state.boot?.session;
+  const previousTreasurer = (previousSession?.participants || []).find((participant) => participant.id === previousSession?.treasurer_participant_id);
+  const previousServerDraft = normalizedText(previousTreasurer?.notebook_text || "");
+  const previousLocalDraft = normalizedText(state.treasurerDraft || "");
   const payload = await api("save-session", {
     method: "POST",
     body: JSON.stringify({
       id: state.boot.session.id,
       title: $("sessionTitleInput")?.value.trim() || state.boot.session.title,
       currency: $("sessionCurrencyInput")?.value.trim() || state.boot.session.currency || "EUR",
-      treasurer_expense_mode: "auto",
+      treasurer_expense_mode: personal ? "cashbox" : "auto",
       treasurer_participant_id: treasurerParticipantId,
       participants,
       attachment_post_id: extra.attachment_post_id ?? state.boot.session.attachment_post_id ?? null,
@@ -2410,7 +3548,12 @@ async function saveSessionMeta(extra = {}, options = {}) {
     }),
   });
   state.boot = payload;
-  state.treasurerDraft = normalizedText((payload.session?.participants || []).find((participant) => participant.id === payload.session?.treasurer_participant_id)?.notebook_text || "");
+  const serverDraft = normalizedText((payload.session?.participants || []).find((participant) => participant.id === payload.session?.treasurer_participant_id)?.notebook_text || "");
+  const preserveLocalDraft = previousLocalDraft !== previousServerDraft;
+  state.treasurerDraft = preserveLocalDraft ? previousLocalDraft : serverDraft;
+  try {
+    localStorage.setItem(treasurerDraftKey(payload.session?.id), state.treasurerDraft);
+  } catch (error) {}
   saveCache(BOOT_CACHE_KEY, payload);
   localStorage.setItem(ENGAGED_KEY, "1");
   render({ preserveWorkspace: true });
@@ -2484,20 +3627,23 @@ async function refreshCashboxAttachments(postId) {
   const post = await fetchCashboxMediaPost(postId);
   const attachments = Array.isArray(post.media) ? post.media.map(mapCashboxAttachment) : [];
   await saveSessionMeta({ attachment_post_id: post.id, attachments }, { silent: true });
+  return attachments;
 }
 
 function openAttachmentSheet() {
   const modal = $("attachmentSheet");
   if (!modal) return;
-  lockModalScroll();
   modal.hidden = false;
+  lockModalScroll();
 }
 
-function closeAttachmentSheet() {
+function closeAttachmentSheet(options = {}) {
   const modal = $("attachmentSheet");
   if (!modal) return;
   modal.hidden = true;
-  unlockModalScroll();
+  if (!options?.keepScrollLock) {
+    unlockModalScroll();
+  }
 }
 
 function asciiBytes(text) {
@@ -2614,63 +3760,913 @@ async function createLightPdfFile(file) {
   return new File([pdfBytes], `${baseName}.pdf`, { type: "application/pdf" });
 }
 
+async function createLightReceiptImageFile(file) {
+  const rasterized = await rasterizeImageForPdf(file, { maxLongSide: 1800, quality: 0.74 });
+  const baseName = slugify(String(file.name || "").replace(/\.[^.]+$/, "")) || "receipt-photo";
+  const blob = new Blob([rasterized.jpegBytes], { type: "image/jpeg" });
+  return new File([blob], `${baseName}.jpg`, {
+    type: "image/jpeg",
+    lastModified: file?.lastModified || Date.now(),
+  });
+}
+
+function todayInputValue() {
+  const date = new Date();
+  const offset = date.getTimezoneOffset() * 60000;
+  return new Date(date.getTime() - offset).toISOString().slice(0, 10);
+}
+
+function normalizeScanAmount(value) {
+  const normalized = String(value || "").trim().replace(/\s+/g, "").replace(",", ".");
+  const amount = Number.parseFloat(normalized);
+  if (!Number.isFinite(amount) || amount <= 0) return "";
+  return String(moneyRound(amount)).replace(/\.00$/, "");
+}
+
+function scanEngineApi() {
+  return window.ShipCashboxScanEngine && typeof window.ShipCashboxScanEngine.pickScanSuggestions === "function"
+    ? window.ShipCashboxScanEngine
+    : null;
+}
+
+async function fetchScanOcrStatus({ force = false } = {}) {
+  const now = Date.now();
+  if (!force && state.scanOcrStatus && (now - state.scanOcrStatusCheckedAt) < OCR_STATUS_CACHE_MS) {
+    return state.scanOcrStatus;
+  }
+  try {
+    const payload = await api("scan-ocr-status", { timeoutMs: OCR_TIMEOUT_MS });
+    state.scanOcrStatus = payload.ocr || { available: false, provider: "none", mode: "manual" };
+  } catch (error) {
+    state.scanOcrStatus = { available: false, provider: "none", mode: "manual", error: error.message || "OCR unavailable" };
+  }
+  state.scanOcrStatusCheckedAt = now;
+  return state.scanOcrStatus;
+}
+
+async function requestScanOcrCandidates(scanReview) {
+  if (!scanReview?.id) return null;
+  const status = await fetchScanOcrStatus();
+  if (!status?.available) return { available: false, provider: status?.provider || "none", text: "", lines: [] };
+  try {
+    const payload = await api("scan-ocr", {
+      method: "POST",
+      timeoutMs: OCR_TIMEOUT_MS,
+      body: JSON.stringify({
+        scan_id: scanReview.id,
+        attachment_path: scanReview.attachment?.file_path || "",
+        amount_only: true,
+      }),
+    });
+    return payload.ocr || null;
+  } catch (error) {
+    return { available: false, provider: status.provider || "tesseract-server", text: "", lines: [], error: error.message || "OCR unavailable" };
+  }
+}
+
+function mergeScanSuggestions(primary = {}, secondary = {}) {
+  const mergeByValue = (left = [], right = []) => {
+    const seen = new Set();
+    return [...left, ...right].filter((candidate) => {
+      const key = String(candidate?.value || candidate?.raw || "");
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  };
+  return {
+    amounts: mergeByValue(primary.amounts || [], secondary.amounts || []).slice(0, 5),
+    dates: mergeByValue(primary.dates || [], secondary.dates || []).slice(0, 5),
+    description: primary.description || secondary.description || "",
+    source: primary.source || secondary.source || "mixed",
+  };
+}
+
+function suggestionsFromOcrPayload(ocrPayload) {
+  const engine = scanEngineApi();
+  if (!engine || !ocrPayload) return { amounts: [], dates: [], description: "", source: "ocr" };
+  const sourceLines = Array.isArray(ocrPayload.lines) ? ocrPayload.lines : [];
+  const sourceText = String(ocrPayload.text || "");
+  const textOnlyLines = sourceText
+    .split(/\r?\n/)
+    .map((text) => ({ text: text.replace(/\s+/g, " ").trim() }))
+    .filter((line) => line.text);
+  const source = sourceLines.length ? sourceLines.concat(textOnlyLines) : sourceText;
+  if (!source || (Array.isArray(source) && !source.length)) return { amounts: [], dates: [], description: "", source: "ocr" };
+  const suggestions = engine.pickScanSuggestions(source, {
+    dayFirst: true,
+    maxAmounts: 5,
+    maxDates: 5,
+    minAmountScore: 25,
+    minDateScore: 25,
+  });
+  return {
+    amounts: Array.isArray(suggestions.amounts) ? suggestions.amounts : [],
+    dates: SCAN_AUTOFILL_DETAILS && Array.isArray(suggestions.dates) ? suggestions.dates : [],
+    description: SCAN_AUTOFILL_DETAILS ? buildOcrDescriptionHint(ocrPayload) : "",
+    source: "ocr",
+  };
+}
+
+function scanOcrLineTexts(ocrPayload) {
+  if (Array.isArray(ocrPayload?.lines) && ocrPayload.lines.length) {
+    return ocrPayload.lines
+      .map((line) => String(line?.text || "").replace(/\s+/g, " ").trim())
+      .filter(Boolean);
+  }
+  return String(ocrPayload?.text || "")
+    .split(/\r?\n/)
+    .map((line) => line.replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+}
+
+function cleanOcrDescriptionLine(line) {
+  return String(line || "")
+    .replace(/[|_]+/g, " ")
+    .replace(/[^\p{L}\p{N}\s.'’&/:%+-]/gu, " ")
+    .replace(/\s+\d+[.,]\d{1,2}\s*[A-ZА-Я]?\s*$/iu, (match) => match.toUpperCase())
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function isWeakOcrDescriptionLine(line) {
+  const text = String(line || "").toLowerCase();
+  if (text.length < 4) return true;
+  if (!/[a-zа-яčćđšž]/i.test(text)) return true;
+  if ((text.match(/[a-zа-яčćđšž]/gi) || []).length < 3) return true;
+  if (/(ukupno|total|gotovina|cash|uplaceno|pla[cć]eno|kusur|change|osnovica|porez|pdv|tax|stopa|datum|vrijeme|vreme|fiskal|racun|ra[cč]un|broj|operator|operater|iter|pib|jib|oib|enu|qr|http|www)/i.test(text)) return true;
+  if (/^\d+[\s.,:/-]*$/.test(text)) return true;
+  return false;
+}
+
+function ocrLineLooksLikeReceiptTotal(line) {
+  return /(ukupno|total|za\s+pla[cć]anje|gotovina|cash|uplaceno|pla[cć]eno|kusur|change|vrsta\s+poreza|osnovica|stopa|porez|pdv|tax|fiskalni\s+bon|fiskal)/i.test(String(line || ""));
+}
+
+function ocrLineLooksLikeItem(line) {
+  const text = String(line || "");
+  if (isWeakOcrDescriptionLine(text)) return false;
+  if (/(smart\s+trade|arsenal|pib|tivat|kotor|operator|operater|iter|datum|racun|ra[cč]un|fiskal|total|gotovina)/i.test(text)) return false;
+  const letterCount = (text.match(/[a-zа-яčćđšž]/gi) || []).length;
+  const hasProductKeyword = /(folija|kre[pb]|traka|navlaka|krznena|polir|sundjer|sun[dđ]er|usb|kesa|maskirna|spray|sprej|gelcoat|kist|pasta|teak|clean|polish|marina|diesel|fuel|bread|water|coffee|market)/i.test(text);
+  const hasMeasure = /\b\d+(?:[.,]\d+)?\s*(?:x|kom|mm|cm|m|my|ml|l|kg|g|pcs|pc)\b/i.test(text);
+  const hasPriceTail = /\d+[.,]\d{1,2}\s*[a-zа-я]?\s*$/i.test(text);
+  const hasUpperReceiptShape = /[A-ZČĆĐŠŽ]{2,}/.test(text) && /\d/.test(text);
+  return letterCount >= 5 && (hasProductKeyword || hasMeasure || hasPriceTail || hasUpperReceiptShape);
+}
+
+function scoreOcrItemLine(line) {
+  const text = String(line || "");
+  let score = 0;
+  const letterCount = (text.match(/[a-zа-яčćđšž]/gi) || []).length;
+  const wordCount = (text.match(/[\p{L}]{3,}/gu) || []).length;
+  if (/(folija|kre[pb]|traka|navlaka|krznena|polir|sundjer|sun[dđ]er|usb|kesa|maskirna|spray|sprej|gelcoat|kist|pasta|teak|clean|polish)/i.test(text)) score += 40;
+  if (/\b\d+(?:[.,]\d+)?\s*(?:x|kom|mm|cm|m|my|ml|l|kg|g|pcs|pc)\b/i.test(text)) score += 16;
+  if (/\d+[.,]\d{1,2}\s*[a-zа-я]?\s*$/i.test(text)) score += 12;
+  if (wordCount >= 2) score += 12;
+  if (wordCount >= 3) score += 8;
+  score += Math.min(letterCount, 24);
+  if (letterCount < 8) score -= 20;
+  return score;
+}
+
+function normalizeOcrItemDescription(line) {
+  return String(line || "")
+    .replace(/\b\d+[.,]\d{1,2}\s*[A-ZА-Я]?\s*$/iu, "")
+    .replace(/\b\d+[.,]\d{1,2}\s*$/u, "")
+    .replace(/\s+\d+\)?\s*$/u, "")
+    .replace(/\b(?:kom|pcs|pc)\b/gi, "")
+    .replace(/\s+[xX]\s+/g, " x ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function buildOcrDescriptionHint(ocrPayload) {
+  const lines = scanOcrLineTexts(ocrPayload).map(cleanOcrDescriptionLine).filter(Boolean);
+  const totalIndex = lines.findIndex(ocrLineLooksLikeReceiptTotal);
+  const upperBound = totalIndex > 0 ? totalIndex : lines.length;
+  const itemLines = lines
+    .slice(0, upperBound)
+    .map((line, index) => ({ line, index }))
+    .filter((item) => item.index >= 4 && ocrLineLooksLikeItem(item.line))
+    .map((item) => ({ line: normalizeOcrItemDescription(item.line), score: scoreOcrItemLine(item.line), index: item.index }))
+    .filter((item) => item.line && !isWeakOcrDescriptionLine(item.line))
+    .filter((item) => item.score >= 18)
+    .sort((a, b) => a.index - b.index)
+    .map((item) => item.line)
+    .filter((line) => line && !isWeakOcrDescriptionLine(line));
+  if (itemLines.length) {
+    return itemLines.slice(0, 5).join(" / ").replace(/\s+/g, " ").trim().slice(0, 180);
+  }
+  const fallback = lines.find((line, index) => index > 3 && !isWeakOcrDescriptionLine(line));
+  return String(fallback || "").slice(0, 96);
+}
+
+function scanReviewSourceText(sourceFile) {
+  const fileName = String(sourceFile?.name || "").replace(/\.[^.]+$/, "");
+  return fileName
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function scanReviewDescriptionHint(sourceFile, suggestions = {}) {
+  const source = scanReviewSourceText(sourceFile);
+  if (!source) return "";
+  let text = source
+    .replace(/\b\d{4}[.\-/]\d{1,2}[.\-/]\d{1,2}\b/g, " ")
+    .replace(/\b\d{1,2}[.\-/]\d{1,2}[.\-/]\d{2,4}\b/g, " ")
+    .replace(/(?:EUR|EURO|USD|GBP|RSD|DIN|HRK|BAM|CHF|JPY|CNY|RUB|€|\$|£|¥)/gi, " ");
+  (suggestions.amounts || []).slice(0, 3).forEach((candidate) => {
+    text = text.replace(String(candidate.raw || ""), " ");
+  });
+  return text
+    .replace(/\b(?:receipt|scan|photo|img|image|invoice|racun|bill|cashbox)\b/gi, " ")
+    .replace(/\b\d+(?:[.,]\d+)?\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 80);
+}
+
+function buildInitialScanSuggestions(sourceFile) {
+  const engine = scanEngineApi();
+  if (!engine) return { amounts: [], dates: [], description: "", source: "none" };
+  const text = scanReviewSourceText(sourceFile);
+  if (!text) return { amounts: [], dates: [], description: "", source: "none" };
+  const suggestions = engine.pickScanSuggestions(text, {
+    dayFirst: true,
+    maxAmounts: 3,
+    maxDates: 3,
+    minAmountScore: 30,
+    minDateScore: 30,
+  });
+  return {
+    amounts: Array.isArray(suggestions.amounts) ? suggestions.amounts : [],
+    dates: SCAN_AUTOFILL_DETAILS && Array.isArray(suggestions.dates) ? suggestions.dates : [],
+    description: SCAN_AUTOFILL_DETAILS ? scanReviewDescriptionHint(sourceFile, suggestions) : "",
+    source: "filename",
+  };
+}
+
+function renderScanReviewCandidates(suggestions = {}) {
+  const box = $("scanReviewCandidates");
+  if (!box) return;
+  const amounts = Array.isArray(suggestions.amounts) ? suggestions.amounts.slice(0, 3) : [];
+  const dates = Array.isArray(suggestions.dates) ? suggestions.dates.slice(0, 3) : [];
+  const description = String(suggestions.description || "").trim();
+  if (!amounts.length && !dates.length && !description) {
+    box.hidden = true;
+    box.innerHTML = "";
+    return;
+  }
+
+  const amountHtml = amounts.length ? `
+    <div class="shipcashbox-scan-review__candidate-group">
+      <strong>${escapeHtml(t("scanReviewCandidateAmount"))}</strong>
+      <div class="shipcashbox-scan-review__candidate-list">
+        ${amounts.map((candidate) => `<button type="button" class="shipcashbox-scan-review__candidate" data-scan-candidate-field="amount" data-value="${escapeHtml(String(candidate.value))}" title="${escapeHtml((candidate.reasonCodes || []).join(", "))}">${escapeHtml(String(candidate.raw || candidate.value))}</button>`).join("")}
+      </div>
+    </div>
+  ` : "";
+  const dateHtml = dates.length ? `
+    <div class="shipcashbox-scan-review__candidate-group">
+      <strong>${escapeHtml(t("scanReviewCandidateDate"))}</strong>
+      <div class="shipcashbox-scan-review__candidate-list">
+        ${dates.map((candidate) => `<button type="button" class="shipcashbox-scan-review__candidate" data-scan-candidate-field="date" data-value="${escapeHtml(String(candidate.value))}" title="${escapeHtml((candidate.reasonCodes || []).join(", "))}">${escapeHtml(String(candidate.raw || candidate.value))}</button>`).join("")}
+      </div>
+    </div>
+  ` : "";
+  const descriptionHtml = description ? `
+    <div class="shipcashbox-scan-review__candidate-group">
+      <strong>${escapeHtml(t("scanReviewCandidateDescription"))}</strong>
+      <div class="shipcashbox-scan-review__candidate-list">
+        <button type="button" class="shipcashbox-scan-review__candidate" data-scan-candidate-field="description" data-value="${escapeHtml(description)}">${escapeHtml(description)}</button>
+      </div>
+    </div>
+  ` : "";
+
+  box.innerHTML = `${amountHtml}${dateHtml}${descriptionHtml}`;
+  box.hidden = false;
+}
+
+async function enrichScanReviewWithOcr(scanId) {
+  if (!scanId || state.scanReview?.id !== scanId) return;
+  setScanReviewStatus(t("scanOcrChecking"));
+  const ocrPayload = await requestScanOcrCandidates(state.scanReview);
+  if (!ocrPayload || state.scanReview?.id !== scanId || state.scanReview.inserted) return;
+  if (!ocrPayload.available && !ocrPayload.text && !(ocrPayload.lines || []).length) {
+    setScanReviewStatus(t("scanOcrManualFallback"));
+    return;
+  }
+  const nextSuggestions = mergeScanSuggestions(suggestionsFromOcrPayload(ocrPayload), state.scanReview.suggestions || {});
+  state.scanReview.suggestions = nextSuggestions;
+  renderScanReviewCandidates(nextSuggestions);
+  const amount = $("scanReviewAmount");
+  const date = $("scanReviewDate");
+  const description = $("scanReviewDescription");
+  state.scanReview.applyingAutoFill = true;
+  if (amount instanceof HTMLInputElement && !state.scanReview.userEdited?.amount && nextSuggestions.amounts?.[0]?.value) {
+    amount.value = String(nextSuggestions.amounts[0].value);
+  }
+  if (SCAN_AUTOFILL_DETAILS && date instanceof HTMLInputElement && !state.scanReview.userEdited?.date && nextSuggestions.dates?.[0]?.value) {
+    date.value = String(nextSuggestions.dates[0].value);
+  }
+  if (SCAN_AUTOFILL_DETAILS && description instanceof HTMLInputElement && !state.scanReview.userEdited?.description && nextSuggestions.description) {
+    description.value = nextSuggestions.description;
+  }
+  state.scanReview.applyingAutoFill = false;
+  updateScanReviewInsertState();
+  setScanReviewStatus(t(nextSuggestions.amounts?.length ? "scanOcrCandidatesReady" : "scanOcrManualFallback"));
+}
+
+function applyScanReviewCandidate(button) {
+  if (!(button instanceof HTMLElement)) return;
+  const field = button.dataset.scanCandidateField || "";
+  const value = button.dataset.value || "";
+  const target = field === "amount"
+    ? $("scanReviewAmount")
+    : field === "date"
+      ? $("scanReviewDate")
+      : field === "description"
+        ? $("scanReviewDescription")
+        : null;
+  if (!(target instanceof HTMLInputElement)) return;
+  if (state.scanReview?.userEdited && field) {
+    state.scanReview.userEdited[field] = true;
+  }
+  target.value = value;
+  updateScanReviewInsertState();
+  target.focus({ preventScroll: true });
+}
+
+function scanInsertedIds(sessionId = state.boot?.session?.id) {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(scanInsertKey(sessionId)) || "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+function rememberScanInserted(scanId, sessionId = state.boot?.session?.id) {
+  if (!scanId) return;
+  const ids = scanInsertedIds(sessionId);
+  if (!ids.includes(scanId)) ids.push(scanId);
+  try {
+    localStorage.setItem(scanInsertKey(sessionId), JSON.stringify(ids.slice(-80)));
+  } catch (error) {}
+}
+
+function forgetScanInserted(scanId, sessionId = state.boot?.session?.id) {
+  if (!scanId) return;
+  const ids = scanInsertedIds(sessionId).filter((id) => id !== scanId);
+  try {
+    localStorage.setItem(scanInsertKey(sessionId), JSON.stringify(ids));
+  } catch (error) {}
+}
+
+function rememberReceiptDone(review, rawLine, attachment) {
+  const id = review?.file_id || review?.id || "";
+  if (!id) return null;
+  const item = {
+    id,
+    name: review?.file_name || attachment?.alt || attachmentFileName(attachment?.file_path || "") || t("receiptQueueUnnamed"),
+    raw: rawLine || "",
+    attachment_id: attachment?.id || "",
+    attachment_path: attachment?.file_path || "",
+    scan_id: review?.id || review?.scan_id || "",
+    committed_at: new Date().toISOString(),
+  };
+  const map = loadReceiptDoneMap();
+  map[id] = item;
+  saveReceiptDoneMap(map);
+  state.scanReviewQueueDone = [...(state.scanReviewQueueDone || []).filter((entry) => entry?.id !== id), item];
+  renderScanReviewQueueState();
+  return item;
+}
+
+function closeScanReviewModal(options = {}) {
+  const advanceQueue = Boolean(options?.advanceQueue);
+  const modal = $("scanReviewModal");
+  if (!modal) return;
+  modal.hidden = true;
+  if (state.scanReviewObjectUrl) {
+    URL.revokeObjectURL(state.scanReviewObjectUrl);
+  }
+  state.scanReviewObjectUrl = "";
+  state.scanReview = null;
+  if (!advanceQueue) {
+    state.scanReviewQueue = [];
+    state.scanReviewQueueTotal = 0;
+    state.scanReviewQueueActive = false;
+    state.scanReviewQueueDone = [];
+  }
+  unlockModalScroll();
+  if (state.viewer === "treasurer" && state.boot?.session) {
+    render();
+  }
+}
+
+function setScanReviewStatus(message = "", isError = false) {
+  const status = $("scanReviewStatus");
+  if (!status) return;
+  const prefix = scanReviewQueuePrefix();
+  status.textContent = prefix && message ? `${prefix} ${message}` : (message || prefix);
+  status.classList.toggle("is-error", Boolean(isError));
+}
+
+function scanReviewQueuePrefix() {
+  if (!state.scanReviewQueueActive || state.scanReviewQueueTotal <= 1) return "";
+  const remaining = Array.isArray(state.scanReviewQueue) ? state.scanReviewQueue.length : 0;
+  const current = Math.max(1, state.scanReviewQueueTotal - remaining);
+  return `${current}/${state.scanReviewQueueTotal}.`;
+}
+
+function renderScanReviewQueueState() {
+  const box = $("scanReviewQueueState");
+  if (!box) return;
+  const done = Array.isArray(state.scanReviewQueueDone) ? state.scanReviewQueueDone : [];
+  if (!state.scanReviewQueueActive || state.scanReviewQueueTotal <= 1) {
+    box.hidden = true;
+    box.innerHTML = "";
+    return;
+  }
+  const remaining = Array.isArray(state.scanReviewQueue) ? state.scanReviewQueue.length : 0;
+  const current = Math.max(1, state.scanReviewQueueTotal - remaining);
+  const chips = done.slice(-12).map((item) => `
+    <span class="shipcashbox-scan-review__queue-chip" title="${escapeHtml(item.name || "")}">
+      <span aria-hidden="true">✓</span>${escapeHtml(item.name || t("receiptQueueUnnamed"))}
+    </span>
+  `).join("");
+  box.innerHTML = `
+    <div class="shipcashbox-scan-review__queue-line">
+      <strong>${escapeHtml(t("receiptQueueProgress"))}: ${current}/${state.scanReviewQueueTotal}</strong>
+      ${done.length ? `<span>${escapeHtml(t("receiptQueueDone"))}: ${done.length}</span>` : ""}
+    </div>
+    ${chips ? `<div class="shipcashbox-scan-review__queue-chips">${chips}</div>` : ""}
+  `;
+  box.hidden = false;
+}
+
+function clampNumber(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function clampScanReviewPan() {
+  const zoom = state.scanReviewZoom;
+  const viewport = $("scanReviewViewport");
+  if (!viewport || zoom.scale <= 1) {
+    zoom.x = 0;
+    zoom.y = 0;
+    return;
+  }
+  const maxX = (viewport.clientWidth * (zoom.scale - 1)) / 2;
+  const maxY = (viewport.clientHeight * (zoom.scale - 1)) / 2;
+  zoom.x = clampNumber(zoom.x, -maxX, maxX);
+  zoom.y = clampNumber(zoom.y, -maxY, maxY);
+}
+
+function applyScanReviewZoom() {
+  const preview = $("scanReviewPreview");
+  if (!(preview instanceof HTMLImageElement)) return;
+  clampScanReviewPan();
+  const zoom = state.scanReviewZoom;
+  preview.style.setProperty("--scan-zoom", String(zoom.scale));
+  preview.style.setProperty("--scan-pan-x", `${Math.round(zoom.x)}px`);
+  preview.style.setProperty("--scan-pan-y", `${Math.round(zoom.y)}px`);
+  const resetButton = $("scanZoomResetButton");
+  if (resetButton) resetButton.textContent = `${Math.round(zoom.scale * 100)}%`;
+}
+
+function setScanReviewZoom(scale, center = true) {
+  const zoom = state.scanReviewZoom;
+  zoom.scale = clampNumber(Number(scale) || 1, 1, 5);
+  if (center || zoom.scale <= 1) {
+    zoom.x = 0;
+    zoom.y = 0;
+  }
+  applyScanReviewZoom();
+}
+
+function resetScanReviewZoom() {
+  state.scanReviewZoom = { scale: 1, x: 0, y: 0, pointers: new Map(), lastDistance: 0, dragX: 0, dragY: 0 };
+  $("scanReviewPreview")?.classList.remove("is-dragging");
+  applyScanReviewZoom();
+}
+
+function pointerDistance(a, b) {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+function bindScanReviewZoom() {
+  const viewport = $("scanReviewViewport");
+  const preview = $("scanReviewPreview");
+  if (!viewport || !(preview instanceof HTMLImageElement)) return;
+
+  $("scanZoomInButton")?.addEventListener("click", () => setScanReviewZoom(state.scanReviewZoom.scale + 0.5, false));
+  $("scanZoomOutButton")?.addEventListener("click", () => setScanReviewZoom(state.scanReviewZoom.scale - 0.5, false));
+  $("scanZoomResetButton")?.addEventListener("click", resetScanReviewZoom);
+
+  viewport.addEventListener("wheel", (event) => {
+    if (event.target instanceof HTMLElement && event.target.closest(".shipcashbox-scan-review__zoom")) return;
+    event.preventDefault();
+    const delta = event.deltaY < 0 ? 0.25 : -0.25;
+    setScanReviewZoom(state.scanReviewZoom.scale + delta, false);
+  }, { passive: false });
+
+  viewport.addEventListener("dblclick", (event) => {
+    if (event.target instanceof HTMLElement && event.target.closest(".shipcashbox-scan-review__zoom")) return;
+    event.preventDefault();
+    setScanReviewZoom(state.scanReviewZoom.scale < 2.5 ? 3 : 1, false);
+  });
+
+  viewport.addEventListener("pointerdown", (event) => {
+    if (!(event.target instanceof HTMLElement)) return;
+    if (event.target.closest(".shipcashbox-scan-review__zoom")) return;
+    event.preventDefault();
+    viewport.setPointerCapture?.(event.pointerId);
+    const zoom = state.scanReviewZoom;
+    zoom.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    preview.classList.add("is-dragging");
+    if (zoom.pointers.size === 1) {
+      zoom.dragX = event.clientX;
+      zoom.dragY = event.clientY;
+    } else if (zoom.pointers.size === 2) {
+      const points = [...zoom.pointers.values()];
+      zoom.lastDistance = pointerDistance(points[0], points[1]);
+    }
+  });
+
+  viewport.addEventListener("pointermove", (event) => {
+    const zoom = state.scanReviewZoom;
+    if (!zoom.pointers.has(event.pointerId)) return;
+    event.preventDefault();
+    zoom.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    if (zoom.pointers.size >= 2) {
+      const points = [...zoom.pointers.values()];
+      const distance = pointerDistance(points[0], points[1]);
+      if (zoom.lastDistance > 0) {
+        zoom.scale = clampNumber(zoom.scale * (distance / zoom.lastDistance), 1, 5);
+      }
+      zoom.lastDistance = distance;
+      applyScanReviewZoom();
+      return;
+    }
+    if (zoom.scale <= 1) return;
+    zoom.x += event.clientX - zoom.dragX;
+    zoom.y += event.clientY - zoom.dragY;
+    zoom.dragX = event.clientX;
+    zoom.dragY = event.clientY;
+    applyScanReviewZoom();
+  });
+
+  const finishPointer = (event) => {
+    const zoom = state.scanReviewZoom;
+    zoom.pointers.delete(event.pointerId);
+    zoom.lastDistance = 0;
+    if (zoom.pointers.size === 0) {
+      preview.classList.remove("is-dragging");
+    }
+  };
+  viewport.addEventListener("pointerup", finishPointer);
+  viewport.addEventListener("pointercancel", finishPointer);
+  viewport.addEventListener("lostpointercapture", finishPointer);
+}
+
+function setScanReviewInsertEnabled(enabled) {
+  const button = $("scanReviewInsertButton");
+  if (!(button instanceof HTMLButtonElement)) return;
+  if (state.scanReview?.inserted) {
+    button.disabled = false;
+    button.textContent = t("scanReviewInserted");
+    return;
+  }
+  button.disabled = !enabled;
+  button.textContent = t("scanReviewInsert");
+}
+
+function scanReviewHasCompleteDraft() {
+  return Boolean(
+    state.scanReview?.proofStatus === "saved"
+    && state.scanReview?.attachment?.file_path
+    && normalizeScanAmount($("scanReviewAmount")?.value || "")
+    && String($("scanReviewDescription")?.value || "").trim()
+  );
+}
+
+function updateScanReviewInsertState() {
+  setScanReviewInsertEnabled(scanReviewHasCompleteDraft());
+}
+
+function markScanReviewProofSaved(scanId, attachment) {
+  if (!scanId || state.scanReview?.id !== scanId) return;
+  if (!attachment?.file_path) {
+    markScanReviewProofFailed(scanId, t("uploadPhotoFailed"));
+    return;
+  }
+  state.scanReview.attachment = attachment || null;
+  state.scanReview.proofStatus = "saved";
+  const pdfName = $("scanReviewPdfName");
+  if (pdfName && attachment?.file_path) pdfName.textContent = attachmentFileName(attachment.file_path) || pdfName.textContent;
+  updateScanReviewInsertState();
+  renderScanReviewQueueState();
+  setScanReviewStatus(t("scanProofSaved"));
+}
+
+function markScanReviewProofFailed(scanId, message = "") {
+  if (!scanId || state.scanReview?.id !== scanId) return;
+  state.scanReview.proofStatus = "failed";
+  setScanReviewInsertEnabled(false);
+  setScanReviewStatus(message || t("scanProofFailed"), true);
+}
+
+function openScanReviewModal({ sourceFile, pdfFile, attachment, proofStatus = "saved" } = {}) {
+  const modal = $("scanReviewModal");
+  if (!modal || !sourceFile || !state.boot?.session) return;
+  if (state.scanReviewObjectUrl) URL.revokeObjectURL(state.scanReviewObjectUrl);
+  state.scanReviewObjectUrl = URL.createObjectURL(sourceFile);
+  const scanId = receiptFileId(sourceFile);
+  const doneMap = loadReceiptDoneMap();
+  const doneProofPath = String(doneMap[scanId]?.attachment_path || "");
+  const attachmentPaths = new Set((state.boot?.session?.attachments || []).map((item) => String(item?.file_path || "")).filter(Boolean));
+  state.scanReview = {
+    id: scanId,
+    file_id: scanId,
+    file_name: receiptFileName(sourceFile),
+    attachment,
+    proofStatus,
+    suggestions: buildInitialScanSuggestions(sourceFile),
+    userEdited: { amount: false, date: false, description: false },
+    applyingAutoFill: false,
+    inserted: Boolean(doneProofPath && attachmentPaths.has(doneProofPath)),
+  };
+  const preview = $("scanReviewPreview");
+  if (preview) preview.src = state.scanReviewObjectUrl;
+  resetScanReviewZoom();
+  const pdfName = $("scanReviewPdfName");
+  if (pdfName) pdfName.textContent = pdfFile?.name || attachmentFileName(attachment?.file_path) || t("attachmentPdfLabel");
+  const amount = $("scanReviewAmount");
+  const date = $("scanReviewDate");
+  const description = $("scanReviewDescription");
+  if (amount) amount.value = "";
+  if (date) date.value = "";
+  if (description) description.value = "";
+  renderScanReviewCandidates(state.scanReview.suggestions);
+  updateScanReviewInsertState();
+  renderScanReviewQueueState();
+  setScanReviewStatus(t(proofStatus === "saving" ? "scanProofSaving" : "scanReviewReady"));
+  lockModalScroll();
+  modal.hidden = false;
+  window.setTimeout(() => amount?.focus({ preventScroll: true }), 120);
+  return scanId;
+}
+
+function buildScanNotebookLine({ amount, date, description }) {
+  const parts = [];
+  if (date) parts.push(date);
+  parts.push(description || t("scanReviewDefaultDescription"));
+  return `${amount} ${parts.join(" ")}`.trim();
+}
+
+function appendScanLineToTreasurerNotebook(rawLine, scanId, attachment = null) {
+  const textarea = $("treasurerNotebook");
+  const currentDraft = textarea instanceof HTMLTextAreaElement ? textarea.value : state.treasurerDraft;
+  const cleanDraft = normalizedText(currentDraft || "");
+  const markedLine = markNotebookLineCommitted(rawLine);
+  const nextDraft = cleanDraft ? `${cleanDraft}\n${markedLine}` : markedLine;
+  state.treasurerDraft = nextDraft;
+  saveTreasurerDraft(nextDraft);
+  const parsed = parseNotebookExpenseLine(rawLine);
+  const ownerKey = currentNotebookOwnerKey();
+  if (parsed && ownerKey) {
+    const commits = loadNotebookCommits(ownerKey);
+    commits[notebookLineHash(parsed.raw)] = {
+      amount: parsed.amount,
+      note: parsed.note,
+      raw: parsed.raw,
+      source: "scan",
+      scan_id: scanId,
+      attachment_id: attachment?.id || "",
+      attachment_path: attachment?.file_path || "",
+      attachment_name: attachment?.alt || attachmentFileName(attachment?.file_path || ""),
+      committed_at: new Date().toISOString(),
+    };
+    saveNotebookCommits(commits, ownerKey);
+  }
+  if (textarea instanceof HTMLTextAreaElement) {
+    textarea.value = nextDraft;
+    textarea.selectionStart = nextDraft.length;
+    textarea.selectionEnd = nextDraft.length;
+    suppressNotebookAssistant(textarea);
+    renderNotebookProofRail(textarea);
+  }
+  setNotebookMeta("treasurerSaveMeta", t("scanReviewInsertedStatus"));
+  scheduleTreasurerAutosave();
+}
+
+function insertScanDraftToNotebook() {
+  if (!state.scanReview?.id) return;
+  if (state.scanReview.inserted) {
+    setScanReviewStatus(t("receiptQueueAllDone"));
+    setFlash(t("receiptQueueAllDone"));
+    return;
+  }
+  if (state.scanReview.proofStatus !== "saved") {
+    setScanReviewStatus(t(state.scanReview.proofStatus === "saving" ? "scanReviewWaitProof" : "scanProofFailed"), true);
+    return;
+  }
+  if (!state.scanReview.attachment?.file_path) {
+    setScanReviewStatus(t("scanReviewWaitProof"), true);
+    return;
+  }
+  const amount = normalizeScanAmount($("scanReviewAmount")?.value || "");
+  const date = String($("scanReviewDate")?.value || "").trim();
+  const description = String($("scanReviewDescription")?.value || "").trim();
+  if (!amount || !description) {
+    setScanReviewStatus(t("scanReviewValidation"), true);
+    return;
+  }
+  const rawLine = buildScanNotebookLine({ amount, date, description });
+  appendScanLineToTreasurerNotebook(rawLine, state.scanReview.id, state.scanReview.attachment);
+  rememberReceiptDone(state.scanReview, rawLine, state.scanReview.attachment);
+  rememberScanInserted(state.scanReview.id);
+  state.scanReview.inserted = true;
+  advanceScanReviewQueue();
+}
+
+function advanceScanReviewQueue() {
+  const hasNext = state.scanReviewQueueActive && Array.isArray(state.scanReviewQueue) && state.scanReviewQueue.length > 0;
+  if (!hasNext) suppressNotebookAssistant("treasurerNotebook");
+  closeScanReviewModal({ advanceQueue: hasNext });
+  if (hasNext) {
+    window.setTimeout(openNextReceiptFromQueue, 120);
+  } else {
+    state.scanReviewQueue = [];
+    state.scanReviewQueueTotal = 0;
+    state.scanReviewQueueActive = false;
+    suppressNotebookAssistant("treasurerNotebook");
+  }
+}
+
+function skipScanReviewItem() {
+  if (!state.scanReview?.id) return;
+  setScanReviewStatus(t("scanReviewSkipped"));
+  window.setTimeout(advanceScanReviewQueue, 160);
+}
+
+function startReceiptReviewQueue(files) {
+  const doneMap = loadReceiptDoneMap();
+  const attachmentPaths = new Set(
+    (state.boot?.session?.attachments || [])
+      .map((attachment) => String(attachment?.file_path || ""))
+      .filter(Boolean)
+  );
+  const hasStoredProof = (item) => {
+    const done = doneMap[item.id];
+    if (!done) return false;
+    const proofPath = String(done.attachment_path || "");
+    return Boolean(proofPath && attachmentPaths.has(proofPath));
+  };
+  const allItems = Array.from(files || [])
+    .filter(isReceiptImageFile)
+    .map((file) => ({ file, id: receiptFileId(file), name: receiptFileName(file) }));
+  if (!allItems.length) {
+    setFlash(t("uploadPhotoFailed"), true);
+    setNotebookMeta("treasurerSaveMeta", t("uploadPhotoFailed"));
+    closeAttachmentSheet();
+    return;
+  }
+  const alreadyDone = allItems
+    .filter(hasStoredProof)
+    .map((item) => ({ ...doneMap[item.id], id: item.id, name: doneMap[item.id]?.name || item.name }));
+  const items = allItems.filter((item) => !hasStoredProof(item));
+  if (!items.length) {
+    if (allItems.length) {
+      setFlash(t("receiptQueueAllDone"));
+      setNotebookMeta("treasurerSaveMeta", t("receiptQueueAllDone"));
+    }
+    closeAttachmentSheet();
+    return;
+  }
+  state.scanReviewQueue = items;
+  state.scanReviewQueueTotal = allItems.length;
+  state.scanReviewQueueActive = true;
+  state.scanReviewQueueDone = alreadyDone;
+  closeAttachmentSheet({ keepScrollLock: true });
+  openNextReceiptFromQueue();
+}
+
+async function openNextReceiptFromQueue() {
+  if (!state.scanReviewQueueActive || !state.scanReviewQueue.length) {
+    advanceScanReviewQueue();
+    return;
+  }
+  const item = state.scanReviewQueue.shift();
+  if (!item?.file) {
+    openNextReceiptFromQueue();
+    return;
+  }
+  const file = item.file;
+  setNotebookMeta("treasurerSaveMeta", t("receiptPhotoPreparing"));
+  const scanId = openScanReviewModal({ sourceFile: file, pdfFile: file, attachment: null, proofStatus: "saving" });
+  try {
+    let uploadFile = file;
+    try {
+      uploadFile = await createLightReceiptImageFile(file);
+    } catch (error) {
+      uploadFile = file;
+    }
+    setNotebookMeta("treasurerSaveMeta", t("uploadingPhoto"));
+    const attachment = await uploadCashboxAttachment(uploadFile);
+    markScanReviewProofSaved(scanId, attachment);
+  } catch (error) {
+    markScanReviewProofFailed(scanId, error.message || t("uploadPhotoFailed"));
+  }
+}
+
 async function handleCashboxAttachmentFile(file, mode = "gallery") {
   if (!file) return;
   let uploadFile = file;
+  let sourceFile = file;
   if (mode === "scan") {
     setNotebookMeta("treasurerSaveMeta", t("scanPdfPreparing"));
     uploadFile = await createLightPdfFile(file);
+    const scanId = openScanReviewModal({ sourceFile, pdfFile: uploadFile, attachment: null, proofStatus: "saving" });
+    try {
+      const attachment = await uploadCashboxAttachment(uploadFile);
+      markScanReviewProofSaved(scanId, attachment);
+      return { scan: true, attachment };
+    } catch (error) {
+      markScanReviewProofFailed(scanId, error.message || t("scanProofFailed"));
+      throw error;
+    }
   } else {
     setNotebookMeta("treasurerSaveMeta", t("uploadingPhoto"));
   }
-  await uploadCashboxAttachment(uploadFile);
+  const attachment = await uploadCashboxAttachment(uploadFile);
+  return { scan: false, attachment };
 }
 
 function bindAttachmentSheetUi() {
+  bindScanReviewZoom();
   $("attachmentGalleryButton")?.addEventListener("click", () => $("cashboxAttachmentGalleryInput")?.click());
   $("attachmentCameraButton")?.addEventListener("click", () => $("cashboxAttachmentCameraInput")?.click());
-  $("attachmentScanButton")?.addEventListener("click", () => $("cashboxAttachmentScanInput")?.click());
+  $("scanReviewInsertButton")?.addEventListener("click", insertScanDraftToNotebook);
+  $("scanReviewCancelButton")?.addEventListener("click", skipScanReviewItem);
+  [
+    ["scanReviewAmount", "amount"],
+    ["scanReviewDate", "date"],
+    ["scanReviewDescription", "description"],
+  ].forEach(([id, field]) => {
+    $(id)?.addEventListener("input", () => {
+      if (state.scanReview?.userEdited && !state.scanReview.applyingAutoFill) {
+        state.scanReview.userEdited[field] = true;
+      }
+      updateScanReviewInsertState();
+    });
+  });
+  $("scanReviewCandidates")?.addEventListener("click", (event) => {
+    const button = event.target instanceof HTMLElement ? event.target.closest("[data-scan-candidate-field]") : null;
+    if (button) applyScanReviewCandidate(button);
+  });
 
   const bindInput = (id, mode) => {
     $(id)?.addEventListener("change", async (event) => {
-      const file = event.target.files?.[0];
+      const files = Array.from(event.target.files || []);
       event.target.value = "";
-      if (!file) return;
-      closeAttachmentSheet();
-      try {
-        await handleCashboxAttachmentFile(file, mode);
-        setNotebookMeta("treasurerSaveMeta", treasurerNotebookSummary());
-        setFlash(t("photoAttached"));
-      } catch (error) {
-        setNotebookMeta("treasurerSaveMeta", treasurerNotebookSummary());
-        setFlash(error.message || t(mode === "scan" ? "scanPdfFailed" : "uploadPhotoFailed"), true);
-      }
+      if (!files.length) return;
+      startReceiptReviewQueue(files);
     });
   };
 
   bindInput("cashboxAttachmentGalleryInput", "gallery");
   bindInput("cashboxAttachmentCameraInput", "camera");
-  bindInput("cashboxAttachmentScanInput", "scan");
 }
 
 async function uploadCashboxAttachment(file) {
-  const postId = await ensureCashboxMediaPost();
   const formData = new FormData();
   formData.append("file", file);
-  await adminProxyApi(`/admin/posts/${encodeURIComponent(postId)}/media`, {
-    method: "POST",
-    body: formData,
-  });
-  await refreshCashboxAttachments(postId);
+  const payload = await apiForm("upload-attachment", formData);
+  state.boot = payload;
+  saveCache(BOOT_CACHE_KEY, payload);
+  const attachment = payload.attachment || payload.session?.attachments?.[payload.session.attachments.length - 1] || null;
+  if (!attachment?.file_path) {
+    throw new Error(t("uploadPhotoFailed"));
+  }
+  return attachment;
 }
 
-async function deleteCashboxAttachment(attachmentId) {
-  const postId = state.boot?.session?.attachment_post_id;
-  if (!postId || !attachmentId) return;
-  await adminProxyApi(`/admin/posts/${encodeURIComponent(postId)}/media/${encodeURIComponent(attachmentId)}`, {
-    method: "DELETE",
+async function deleteCashboxAttachment(attachmentId, options = {}) {
+  if (!attachmentId) return;
+  const payload = await api("delete-attachment", {
+    method: "POST",
+    body: JSON.stringify({ attachment_id: attachmentId }),
   });
-  await refreshCashboxAttachments(postId);
+  state.boot = payload;
+  saveCache(BOOT_CACHE_KEY, payload);
+  if (options?.renderAfter !== false) {
+    render({ preserveWorkspace: true });
+  }
 }
 
 async function openArchiveSession(id) {
@@ -2746,12 +4742,15 @@ function bindRestoreNotebookButtons() {
 }
 
 function bindTreasurerUi() {
-  $("createSessionButton")?.addEventListener("click", async () => {
+  document.querySelectorAll("[data-create-session-mode]").forEach((button) => button.addEventListener("click", async () => {
     try {
+      const mode = button.dataset.createSessionMode === "personal" ? "personal" : "group";
       const payload = await api("create-session", {
         method: "POST",
         body: JSON.stringify({
-          title: $("newSessionTitleInput")?.value.trim() || "",
+          mode,
+          title: $("newSessionTitleInput")?.value.trim() || (mode === "personal" ? tx("personalDefaultTitle", "Личный журнал расходов") : ""),
+          opening_balance: $("newSessionOpeningInput")?.value.trim() || "0",
         }),
       });
       state.boot = payload;
@@ -2761,14 +4760,17 @@ function bindTreasurerUi() {
     } catch (error) {
       setFlash(error.message || t("loadFailed"));
     }
-  });
+  }));
   $("saveSessionButton")?.addEventListener("click", () => saveSessionMeta().catch((error) => setFlash(error.message || t("loadFailed"))));
   $("shareToolButton")?.addEventListener("click", () => shareToolLink().catch((error) => setFlash(error.message || t("loadFailed"))));
   $("openWorkspaceMenuButton")?.addEventListener("click", () => openWorkspaceModal("menu"));
+  document.querySelectorAll("#treasurerView [data-workspace-window]").forEach((button) => {
+    button.addEventListener("click", () => openWorkspaceModal(button.dataset.workspaceWindow || "menu"));
+  });
   $("quickInviteParticipantButton")?.addEventListener("click", openTeamInviteDraft);
   $("attachReceiptButton")?.addEventListener("click", openAttachmentSheet);
   $("treasurerSaveButton")?.addEventListener("click", (event) => {
-    runButtonAction(event.currentTarget, t("autosaveSaving"), () => saveTreasurerNotebook({ preserveFocus: false, silent: false }))
+    runButtonAction(event.currentTarget, t("autosaveSaving"), () => saveTreasurerNotebook({ preserveFocus: true, silent: false }))
       .catch((error) => setFlash(error.message || t("loadFailed"), true));
   });
   $("treasurerSubmitNotebookButton")?.addEventListener("click", (event) => {
@@ -2790,6 +4792,9 @@ function bindTreasurerUi() {
     saveTreasurerNotebook({ preserveFocus: false, silent: true }).catch(() => {});
   });
   bindNotebookKeyboardTarget($("treasurerNotebook"));
+  bindNotebookAssistant($("treasurerNotebook"));
+  bindNotebookProofRail($("treasurerNotebook"));
+  bindNotebookKeepFocus($("treasurerNotebook"));
   $("unlockNotebookButton")?.addEventListener("click", unlockNotebookEditor);
   bindRestoreNotebookButtons();
   document.querySelectorAll(".delete-attachment-btn").forEach((button) => {
@@ -3015,7 +5020,7 @@ function openWorkspaceModal(windowName = "menu", options = {}) {
   $("workspaceModal").hidden = false;
   $("workspaceModal").dataset.window = windowName;
   $("workspaceModal").classList.toggle("shipcashbox-modal--workscreen", windowName !== "menu");
-  $("workspaceModalMenuButton").textContent = t("workspaceMenuAction");
+  $("workspaceModalMenuButton").textContent = workspaceMenuActionLabel();
   $("workspaceCloseButton").textContent = t("close");
   $("workspaceModalEyebrow").textContent = payload.eyebrow;
   $("workspaceModalTitle").textContent = payload.title;
@@ -3333,7 +5338,18 @@ function currentScheduleSlotId(date = new Date()) {
   return `${dateKey}_${slot.label}`;
 }
 
-async function syncParticipant(syncSource = "manual", { silent = false, submit = false } = {}) {
+function mergeParticipantSaveOptions(current, incoming) {
+  const next = incoming || {};
+  if (!current) return { ...next };
+  return {
+    syncSource: current.syncSource === "manual" || next.syncSource === "manual" ? "manual" : (next.syncSource || current.syncSource || "manual"),
+    silent: Boolean(current.silent && next.silent),
+    submit: Boolean(current.submit || next.submit),
+    preserveFocus: Boolean(current.preserveFocus || next.preserveFocus),
+  };
+}
+
+async function performParticipantSync(syncSource = "manual", { silent = false, submit = false, preserveFocus = false } = {}) {
   const participant = state.participant?.participant;
   if (!participant || participant.read_only) return null;
   const notebookText = normalizedText(state.participantDraft || participant.notebook_text || "");
@@ -3341,6 +5357,7 @@ async function syncParticipant(syncSource = "manual", { silent = false, submit =
     setFlash(t("emptyNotebookSubmit"), true);
     return null;
   }
+  const keepMounted = !submit && preserveFocus && document.activeElement instanceof HTMLTextAreaElement && document.activeElement.id === "participantNotebook";
   const response = await api("participant-save", {
     method: "POST",
     body: JSON.stringify({
@@ -3351,25 +5368,65 @@ async function syncParticipant(syncSource = "manual", { silent = false, submit =
     }),
   });
 
+  const localDraftChangedDuringSync = !submit && normalizedText(state.participantDraft || "") !== notebookText;
   if (response.sync_result === "noop") {
     state.participant = response;
-    state.participantDraft = notebookText;
+    state.participantDraft = localDraftChangedDuringSync ? normalizedText(state.participantDraft || "") : notebookText;
+    try {
+      localStorage.setItem(participantDraftKey(participant.invite_token), state.participantDraft);
+    } catch (error) {}
     saveCache(`${PARTICIPANT_CACHE_PREFIX}${participant.invite_token}`, response);
     if (!silent) setFlash(t("syncNoChanges"));
-    render();
+    if (keepMounted) {
+      setNotebookMeta("participantSyncMeta", participantSyncSummary());
+    } else {
+      render();
+    }
     return response;
   }
 
   state.participant = response;
-  state.participantDraft = normalizedText(response.participant.notebook_text || "");
+  const serverDraft = normalizedText(response.participant.notebook_text || "");
+  state.participantDraft = localDraftChangedDuringSync ? normalizedText(state.participantDraft || "") : serverDraft;
   try {
     localStorage.setItem(participantDraftKey(participant.invite_token), state.participantDraft);
   } catch (error) {}
   saveCache(`${PARTICIPANT_CACHE_PREFIX}${participant.invite_token}`, response);
   localStorage.setItem(ENGAGED_KEY, "1");
-  render();
+  if (keepMounted) {
+    setNotebookMeta("participantSyncMeta", participantSyncSummary());
+  } else {
+    render();
+  }
   if (!silent) setFlash(t(response.sync_result === "submitted" ? "notebookSubmitted" : "saved"));
   return response;
+}
+
+async function syncParticipant(syncSource = "manual", { silent = false, submit = false, preserveFocus = false } = {}) {
+  const options = { syncSource, silent, submit, preserveFocus };
+  if (state.participantSaveInFlight) {
+    state.participantSaveQueued = mergeParticipantSaveOptions(state.participantSaveQueued, options);
+    return state.participantSavePromise;
+  }
+
+  state.participantSaveInFlight = true;
+  state.participantSavePromise = (async () => {
+    let currentOptions = options;
+    let lastPayload = null;
+    try {
+      do {
+        state.participantSaveQueued = null;
+        lastPayload = await performParticipantSync(currentOptions.syncSource || "manual", currentOptions);
+        currentOptions = state.participantSaveQueued;
+      } while (currentOptions);
+      return lastPayload;
+    } finally {
+      state.participantSaveInFlight = false;
+      state.participantSavePromise = null;
+      state.participantSaveQueued = null;
+    }
+  })();
+  return state.participantSavePromise;
 }
 
 function maybeRunScheduledParticipantSync() {
@@ -3439,6 +5496,7 @@ async function loadTreasurerBoot() {
 }
 
 async function loadParticipant(token) {
+  clearWelcomePreviewUrl();
   stopParticipantSchedule();
   stopTreasurerAutosave();
   resetEditorLock();
@@ -3469,6 +5527,31 @@ async function loadParticipant(token) {
   }
 }
 
+async function verifyInviteCode(code) {
+  clearWelcomePreviewUrl();
+  const cleanCode = String(code || "").replace(/\D+/g, "");
+  if (!/^\d{6}$/.test(cleanCode)) {
+    throw new Error(tx("inviteCodeInvalid", "Введите 6 цифр кода приглашения"));
+  }
+  stopParticipantSchedule();
+  stopTreasurerAutosave();
+  resetEditorLock();
+  state.viewer = "participant";
+  state.boot = null;
+  state.treasurerDraft = "";
+  const payload = await api("verify-invite-code", {
+    method: "POST",
+    body: JSON.stringify({ code: cleanCode }),
+  });
+  const token = payload.participant?.invite_token || cleanCode;
+  state.inviteToken = cleanCode;
+  state.participant = payload;
+  state.participantDraft = loadParticipantDraft(token, payload.participant.notebook_text, payload.participant.read_only);
+  saveCache(`${PARTICIPANT_CACHE_PREFIX}${token}`, payload);
+  render();
+  startParticipantSchedule();
+}
+
 async function checkViewer() {
   if (viewerCheckPromise) return viewerCheckPromise;
   viewerCheckPromise = checkViewerNow();
@@ -3480,7 +5563,28 @@ async function checkViewer() {
 }
 
 async function checkViewerNow() {
-  state.inviteToken = new URLSearchParams(window.location.search).get("invite") || "";
+  if (isWelcomePreview()) {
+    stopParticipantSchedule();
+    stopTreasurerAutosave();
+    resetEditorLock();
+    state.viewer = "guest";
+    state.boot = null;
+    state.participant = null;
+    state.participantDraft = "";
+    state.treasurerDraft = "";
+    render();
+    return;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const inviteCode = params.get("inviteCode") || "";
+  if (inviteCode) {
+    state.inviteToken = inviteCode.replace(/\D+/g, "").slice(0, 6);
+    await verifyInviteCode(inviteCode);
+    return;
+  }
+
+  state.inviteToken = params.get("invite") || "";
   if (state.inviteToken) {
     await loadParticipant(state.inviteToken);
     return;
@@ -3579,9 +5683,9 @@ function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
   navigator.serviceWorker.addEventListener("message", (event) => {
     if (event.data?.type !== "SHIP_CASHBOX_SW_ACTIVATED") return;
-    if (localStorage.getItem(SHELL_REFRESH_KEY) === event.data.cache) return;
-    localStorage.setItem(SHELL_REFRESH_KEY, event.data.cache || SHELL_VERSION);
-    window.location.reload();
+    try {
+      localStorage.setItem(SHELL_PURGE_KEY, SHELL_VERSION);
+    } catch (error) {}
   });
   navigator.serviceWorker.register("./sw.js").then((registration) => {
     registration.update().catch(() => {});
@@ -3668,6 +5772,9 @@ document.addEventListener("click", (event) => {
   if (target instanceof HTMLElement && target.dataset.closeAttachment === "1") {
     closeAttachmentSheet();
   }
+  if (target instanceof HTMLElement && target.dataset.closeScanReview === "1") {
+    closeScanReviewModal();
+  }
   if (target instanceof HTMLElement && target.dataset.closeWorkspace === "1") {
     closeWorkspaceModal();
   }
@@ -3683,6 +5790,7 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
     closeHelpPopovers();
     closeAppMenu();
+    closeScanReviewModal();
   }
 });
 
@@ -3693,6 +5801,9 @@ document.addEventListener("brkovicToolAuthChanged", () => {
 document.addEventListener("DOMContentLoaded", async () => {
   document.querySelectorAll("#cashboxAppMenuButton, #cashboxMobileMenuButton").forEach((button) => {
     button.addEventListener("click", openAppMenu);
+  });
+  document.querySelectorAll("#cashboxStartButton, #cashboxMobileStartButton").forEach((button) => {
+    button.addEventListener("click", openStartScreen);
   });
   $("cashboxMenuWorkspace")?.addEventListener("click", () => {
     closeAppMenu();

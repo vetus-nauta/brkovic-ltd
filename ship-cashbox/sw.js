@@ -1,13 +1,17 @@
-const CACHE_NAME = "ship-cashbox-shell-v20260602-01";
+const CACHE_NAME = "ship-cashbox-shell-v20260603-59";
 const SHELL = [
   "./index.html",
-  "./assets/app.css?v=20260602-cashbox-debt-pdf-01",
-  "./assets/app.js?v=20260602-cashbox-debt-pdf-01",
+  "./assets/app.css?v=20260603-cashbox-solo-mode-22",
+  "./assets/scan-engine.js?v=20260603-cashbox-solo-mode-22",
+  "./assets/app.js?v=20260603-cashbox-solo-mode-22",
+  "./assets/welcome-journal.webp",
+  "./assets/welcome-crew.webp",
+  "./assets/welcome-calculator.webp",
   "./manifest.webmanifest",
   "../js/config.js",
   "../js/language.js?v=20260531-language-menu-01",
   "../js/seo.js?v=20260531-clarity-01",
-  "../js/main.js?v=20260601-auth-flow-04",
+  "../js/main.js?v=20260602-auth-gate-cashbox-01",
   "../js/navdesk.js?v=20260601-runtime-i18n-01",
   "../lang/ru.json",
   "../lang/en.json",
@@ -50,10 +54,6 @@ self.addEventListener("activate", (event) => {
         const url = new URL(client.url);
         if (url.origin === self.location.origin && url.pathname.includes("/ship-cashbox/")) {
           client.postMessage({ type: "SHIP_CASHBOX_SW_ACTIVATED", cache: CACHE_NAME });
-          if (!url.searchParams.has("sw-refresh")) {
-            url.searchParams.set("sw-refresh", CACHE_NAME);
-            return client.navigate(url.toString()).catch(() => {});
-          }
         }
         return Promise.resolve();
       })))

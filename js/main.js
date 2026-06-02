@@ -1839,6 +1839,9 @@
 
   function isToolActionCandidate(target) {
     if (!target) return false;
+    if (target.closest('.shipcashbox-page, .shipcashbox-appbar, .shipcashbox-modal, .shipcashbox-app-menu')) {
+      return false;
+    }
     if (target.closest('[data-game-promo-open]')) {
       return false;
     }
@@ -1988,17 +1991,21 @@
   }
 
   function bindToolActionAuthGate() {
+    const isShipCashboxPage = document.body?.classList.contains('shipcashbox-body')
+      || Boolean(document.querySelector('.shipcashbox-page'));
     if (!document.querySelector('.navdesk-page, #deliveryCalc, #management-calculator, a[href*="game.brkovic.ltd"]')) return;
 
     const protectedSelector = [
-      '.navdesk-page button[id]',
-      '.navdesk-page .navdesk-tool-card',
-      '.navdesk-page a[href^="navdesk-"]',
+      isShipCashboxPage ? '' : '.navdesk-page button[id]',
+      isShipCashboxPage ? '' : '.navdesk-page .navdesk-tool-card',
+      isShipCashboxPage ? '' : '.navdesk-page a[href^="navdesk-"]',
       '#deliveryCalc button',
       '#management-calculator button',
       'a[href*="game.brkovic.ltd"]',
       '[data-tool-auth-action]',
-    ].join(', ');
+    ].filter(Boolean).join(', ');
+
+    if (!protectedSelector) return;
 
     document.addEventListener('click', async (event) => {
       const target = event.target.closest(protectedSelector);

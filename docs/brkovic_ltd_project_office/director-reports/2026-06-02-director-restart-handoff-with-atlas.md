@@ -38,6 +38,46 @@ commit 06be263 - ship cashbox debt report and director handoff
 
 If `git status` shows new dirty files, inspect before editing. Do not reset or revert without understanding who made the changes.
 
+## Local Etalon / WebStorm Pairing
+
+The local browser site already exists. Do not create a new localhost server, mock server, Python/PHP stub, or third project copy unless the user explicitly asks.
+
+Use the paired workflow:
+
+```text
+GitHub/source copy:  /home/alexey/GitHub/Revoyacht/brkovic-ltd
+WebStorm/test copy: /home/alexey/WebstormProjects/brkovic-ltd
+```
+
+When the user says local site, localhost, WebStorm, or browser view, assume they mean the WebStorm/test copy and existing localhost.
+
+If code is changed in the GitHub/source copy, mirror the touched files into the WebStorm/test copy before asking for browser inspection.
+
+Known local browser targets:
+
+```text
+http://127.0.0.1:18090/
+http://127.0.0.1:18091/
+http://127.0.0.1:18091/ship-cashbox/index.html
+```
+
+Do not treat this as the current Ship Cashbox etalon:
+
+```text
+http://brkovic-local.local/
+```
+
+It may show an old Apache/PHP stub.
+
+For Ship Cashbox, if the browser looks stale after JS/CSS/service-worker changes, clear local service-worker/browser cache before assuming files did not change:
+
+```text
+Hard refresh.
+DevTools -> Application -> Service Workers -> unregister /ship-cashbox/.
+Clear site data for the local origin.
+Reopen http://127.0.0.1:18091/ship-cashbox/index.html.
+```
+
 ## Atlas / Database State
 
 MongoDB Atlas is connected and is the live primary backend for the journal backend.
@@ -127,6 +167,21 @@ Critical rule:
 ```text
 Do not break the quick expense notebook.
 Do not rewrite working API, handlers, autosave, attachment, photo, scan, invite, or settlement payload logic unless a specific bug requires it.
+```
+
+Scan proof behavior to preserve:
+
+```text
+Scan to PDF saves a lightweight PDF proof first.
+Then the scan review modal asks for amount, date, and description.
+Insert into notebook appends one committed `✓` line and uses existing autosave.
+It must not auto-submit an expense log record and must not overwrite unsaved local notebook text.
+OCR/Tesseract may later provide candidates, but user confirmation remains mandatory.
+Current OCR foundation is `ship-cashbox/assets/scan-engine.js`, loaded before `app.js` as `20260602-cashbox-ocr-provider-01`.
+It provides deterministic amount/date candidate scoring; candidate chips only fill fields.
+API actions `scan-ocr-status` and `scan-ocr` exist. `scan-ocr` has a prepared Tesseract extractor path.
+Current local provider is `none`: `tesseract` is not installed, `pdftoppm` and `timeout` are available.
+Current API version: `2026.06.02-ship-cashbox-ocr-extractor-01`.
 ```
 
 The reference package from the user is:

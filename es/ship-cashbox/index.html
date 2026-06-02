@@ -63,7 +63,7 @@
   <link rel="stylesheet" href="/css/main.css?v=20260601-auth-modal-01" />
   <link rel="stylesheet" href="/css/responsive.css?v=20260531-site-menu-button-01" />
   <link rel="stylesheet" href="/css/navdesk.css?v=20260531-shipcashbox-card-01" />
-  <link rel="stylesheet" href="/ship-cashbox/assets/app.css?v=20260602-cashbox-debt-pdf-01" />
+  <link rel="stylesheet" href="/ship-cashbox/assets/app.css?v=20260603-cashbox-solo-mode-22" />
   <link rel="icon" type="image/png" href="/favicons/favicon-clean.png?v=2" />
   <link rel="apple-touch-icon" href="/favicons/apple-touch-icon-clean.png?v=2" />
   <meta name="rights" content="© BRKOVIC / VETUS NAUTA. All rights reserved." />
@@ -86,6 +86,9 @@
         </div>
       </div>
       <div class="shipcashbox-appbar__actions">
+        <button type="button" class="site-menu-button shipcashbox-start-button" id="cashboxStartButton">
+          <span id="cashboxStartButtonText" data-i18n="cashboxStartButton">Start</span>
+        </button>
         <button type="button" class="site-menu-button shipcashbox-menu-button" id="cashboxAppMenuButton" aria-haspopup="dialog" aria-controls="cashboxAppMenuModal">
           <span class="site-menu-button__icon" aria-hidden="true"><span></span><span></span><span></span></span>
           <span id="cashboxAppMenuButtonText" data-i18n="cashboxAppMenuButton">Menú</span>
@@ -97,6 +100,9 @@
       <div class="shipcashbox-mobile-masthead" aria-label="Caja a bordo" data-i18n-aria-label="navdesk_tool_cashbox_title">
         <span id="mobileMastheadTitle" data-i18n="navdesk_tool_cashbox_title">Caja a bordo</span>
         <strong>VETUS NAUTA - Brkovic</strong>
+        <button type="button" class="site-menu-button shipcashbox-start-button shipcashbox-start-button--mobile" id="cashboxMobileStartButton">
+          <span id="cashboxMobileStartButtonText" data-i18n="cashboxStartButton">Start</span>
+        </button>
         <button type="button" class="site-menu-button shipcashbox-menu-button shipcashbox-menu-button--mobile" id="cashboxMobileMenuButton" aria-haspopup="dialog" aria-controls="cashboxAppMenuModal">
           <span class="site-menu-button__icon" aria-hidden="true"><span></span><span></span><span></span></span>
           <span id="cashboxMobileMenuButtonText" data-i18n="cashboxAppMenuButton">Menú</span>
@@ -260,14 +266,60 @@
             <strong data-i18n="attachFromCamera">Usar cámara</strong>
             <span data-i18n="attachFromCameraHelp">Añade rápidamente una foto del recibo sin conversión.</span>
           </button>
-          <button type="button" class="shipcashbox-window-link" id="attachmentScanButton">
-            <strong data-i18n="attachScanPdf">Escanear a PDF</strong>
-            <span data-i18n="attachScanPdfHelp">Toma una foto y guárdala como un PDF ligero para compartir e imprimir.</span>
-          </button>
         </div>
-        <input type="file" id="cashboxAttachmentGalleryInput" accept="image/*,application/pdf" hidden>
+        <input type="file" id="cashboxAttachmentGalleryInput" accept="image/*" multiple hidden>
         <input type="file" id="cashboxAttachmentCameraInput" accept="image/*" capture="environment" hidden>
-        <input type="file" id="cashboxAttachmentScanInput" accept="image/*" capture="environment" hidden>
+      </section>
+    </div>
+
+    <div class="shipcashbox-modal" id="scanReviewModal" hidden>
+      <div class="shipcashbox-modal__backdrop" data-close-scan-review="1"></div>
+      <section class="shipcashbox-modal__card shipcashbox-modal__card--scan section--paper" role="dialog" aria-modal="true" aria-labelledby="scanReviewTitle">
+        <div class="shipcashbox-modal__head">
+          <div>
+            <p class="section-heading__eyebrow" id="scanReviewEyebrow" data-i18n="scanReviewEyebrow">Photo proof</p>
+            <h2 id="scanReviewTitle" data-i18n="scanReviewTitle">Check the amount</h2>
+          </div>
+          <button type="button" class="btn btn--secondary" data-close-scan-review="1" id="scanReviewCloseButton" data-i18n="close">Close</button>
+        </div>
+        <div class="shipcashbox-scan-review__queue" id="scanReviewQueueState" hidden></div>
+        <div class="shipcashbox-scan-review">
+          <figure class="shipcashbox-scan-review__proof">
+            <div class="shipcashbox-scan-review__viewport" id="scanReviewViewport">
+              <img id="scanReviewPreview" alt="" draggable="false" />
+              <div class="shipcashbox-scan-review__zoom" aria-label="Receipt photo zoom">
+                <button type="button" id="scanZoomOutButton" aria-label="Zoom out" title="Zoom out">−</button>
+                <button type="button" id="scanZoomResetButton" aria-label="Reset zoom" title="Reset zoom">100%</button>
+                <button type="button" id="scanZoomInButton" aria-label="Zoom in" title="Zoom in">+</button>
+              </div>
+            </div>
+            <figcaption>
+              <span data-i18n="scanReviewProofSaved">Receipt photo saved</span>
+              <strong id="scanReviewPdfName">PDF</strong>
+            </figcaption>
+          </figure>
+          <div class="shipcashbox-scan-review__form">
+            <p class="shipcashbox-note" id="scanReviewText" data-i18n="scanReviewText">Enter amount and description for this receipt. The app inserts one accounted notebook line and links it to the saved photo.</p>
+            <label class="shipcashbox-field">
+              <span data-i18n="scanReviewAmountLabel">Priority amount</span>
+              <input type="text" id="scanReviewAmount" inputmode="decimal" autocomplete="off" placeholder="85.50">
+            </label>
+            <label class="shipcashbox-field">
+              <span data-i18n="scanReviewDateLabel">Document date (optional)</span>
+              <input type="date" id="scanReviewDate">
+            </label>
+            <label class="shipcashbox-field">
+              <span data-i18n="scanReviewDescriptionLabel">Description</span>
+              <input type="text" id="scanReviewDescription" autocomplete="off" placeholder="diesel / market / marina" data-i18n-placeholder="scanReviewDescriptionPlaceholder">
+            </label>
+            <p class="shipcashbox-scan-review__status" id="scanReviewStatus" aria-live="polite"></p>
+            <div class="shipcashbox-scan-review__candidates" id="scanReviewCandidates" hidden></div>
+            <div class="shipcashbox-actions shipcashbox-scan-review__actions">
+              <button type="button" class="btn btn--primary" id="scanReviewInsertButton" data-i18n="scanReviewInsert">Insert into notebook</button>
+              <button type="button" class="btn btn--secondary" id="scanReviewCancelButton" data-i18n="scanReviewLater">Later</button>
+            </div>
+          </div>
+        </div>
       </section>
     </div>
 
@@ -312,8 +364,9 @@
   <script src="/js/config.js"></script>
   <script src="/js/language.js?v=20260531-language-menu-01"></script>
   <script src="/js/seo.js?v=20260531-clarity-01"></script>
-  <script src="/js/main.js?v=20260601-auth-flow-04"></script>
+  <script src="/js/main.js?v=20260602-auth-gate-cashbox-01"></script>
   <script src="/js/navdesk.js?v=20260601-runtime-i18n-01"></script>
-  <script src="/ship-cashbox/assets/app.js?v=20260602-cashbox-debt-pdf-01"></script>
+  <script src="/ship-cashbox/assets/scan-engine.js?v=20260603-cashbox-solo-mode-22"></script>
+  <script src="/ship-cashbox/assets/app.js?v=20260603-cashbox-solo-mode-22"></script>
 </body>
 </html>
