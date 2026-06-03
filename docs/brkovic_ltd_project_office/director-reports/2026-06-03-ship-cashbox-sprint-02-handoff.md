@@ -4,7 +4,7 @@
 **Source repo:** `/home/alexey/GitHub/Revoyacht/brkovic-ltd`
 **WebStorm/local mirror:** `/home/alexey/WebstormProjects/brkovic-ltd`
 **Branch:** `handoff-2026-05-20-full`
-**Local check target:** `http://127.0.0.1:18090/ship-cashbox/index.html?welcome=1&reload=20260603-cashbox-solo-mode-22`
+**Local check target:** `http://127.0.0.1:18090/ship-cashbox/index.html?welcome=1&reload=20260603-cashbox-dual-mode-25`
 
 This handoff contains no secrets, passwords, SMTP credentials, MongoDB URIs, invite tokens, or uploaded receipt images.
 
@@ -45,9 +45,9 @@ Do not create a third localhost copy, mock server, Python stub, or alternate Apa
 ## Current Runtime Versions
 
 ```text
-Ship Cashbox shell: 20260603-cashbox-solo-mode-22
-Service worker cache: ship-cashbox-shell-v20260603-59
-API version: 2026.06.03-ship-cashbox-solo-mode-02
+Ship Cashbox shell: 20260603-cashbox-dual-mode-25
+Service worker cache: ship-cashbox-shell-v20260603-62
+API version: 2026.06.03-ship-cashbox-dual-mode-03
 ```
 
 If the browser looks stale, assume service worker/browser cache first:
@@ -56,7 +56,7 @@ If the browser looks stale, assume service worker/browser cache first:
 Hard refresh.
 If needed, unregister /ship-cashbox/ service worker.
 Clear site data for 127.0.0.1.
-Reopen the URL with reload=20260603-cashbox-solo-mode-22.
+Reopen the URL with reload=20260603-cashbox-dual-mode-25.
 ```
 
 ## What Was Completed
@@ -151,11 +151,11 @@ git diff --check - ok
 HTTP smoke on `127.0.0.1:18090`:
 
 ```text
-/ship-cashbox/index.html?welcome=1&reload=20260603-cashbox-solo-mode-22 -> 200
-/ship-cashbox/assets/app.js?v=20260603-cashbox-solo-mode-22 -> 200
-/ship-cashbox/assets/app.css?v=20260603-cashbox-solo-mode-22 -> 200
-/ship-cashbox/sw.js?reload=20260603-cashbox-solo-mode-22 -> 200
-/ship-cashbox/api/?action=me -> 200, version 2026.06.03-ship-cashbox-solo-mode-02
+/ship-cashbox/index.html?welcome=1&reload=20260603-cashbox-dual-mode-25 -> 200
+/ship-cashbox/assets/app.js?v=20260603-cashbox-dual-mode-25 -> 200
+/ship-cashbox/assets/app.css?v=20260603-cashbox-dual-mode-25 -> 200
+/ship-cashbox/sw.js?reload=20260603-cashbox-dual-mode-25 -> 200
+/ship-cashbox/api/?action=me -> 200, version 2026.06.03-ship-cashbox-dual-mode-03
 verify-invite-code with 000000 -> controlled 404, not runtime failure
 ```
 
@@ -185,3 +185,14 @@ Recommended scope:
 - final pass on welcome screen proportions and cards;
 - browser cache-reset affordance if stale UI keeps confusing review;
 - no change to notebook persistence mechanics unless a reproducible bug appears.
+
+## Sprint 03 Mode Isolation Update
+
+After the initial Sprint 03 polish, start actions were corrected to be mode-isolated:
+
+```text
+Personal start -> /api/?action=boot&mode=personal
+Group start    -> /api/?action=boot&mode=group
+```
+
+This prevents an active group session from opening when the user explicitly taps `Веду свои расходы`. The backend now permits one active personal journal and one active group cashbox for the same owner. It still blocks a second active session of the same mode.

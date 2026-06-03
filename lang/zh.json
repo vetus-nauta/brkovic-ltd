@@ -1351,5 +1351,15 @@
   "personalWorkspaceMenuHelp": "打开个人日志的报告、设置、归档和服务工具。",
   "personalSpentFooterLabel": "支出",
   "personalArchiveMeta": "个人日志",
-  "personalArchiveTitle": "个人日志归档"
+  "personalArchiveTitle": "个人日志归档",
+  "cacheResetAction": "刷新应用",
+  "cacheResetEyebrow": "版本",
+  "cacheResetTitle": "刷新应用",
+  "cacheResetText": "如果界面看起来仍是旧版，请清理应用缓存并打开当前构建 {version}。记录和草稿不会删除。",
+  "cacheResetWorking": "正在刷新应用并清理旧缓存...",
+  "modeStartLabel": "开始",
+  "modePersonalLabel": "个人",
+  "modeGroupLabel": "船员",
+  "modeParticipantLabel": "成员",
+  "modeChipHelp": "当前日志模式"
 }

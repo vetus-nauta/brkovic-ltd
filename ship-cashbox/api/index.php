@@ -12,7 +12,7 @@ session_set_cookie_params([
 ]);
 session_start();
 
-const APP_VERSION = '2026.06.03-ship-cashbox-solo-mode-02';
+const APP_VERSION = '2026.06.03-ship-cashbox-dual-mode-03';
 const AUTH_BASE = 'https://brkovic.ltd/api';
 const STORAGE_DIR = __DIR__ . '/../storage';
 const SESSIONS_DIR = STORAGE_DIR . '/sessions';
@@ -1599,10 +1599,14 @@ function require_session_owner(array $session): void {
     }
 }
 
-function find_active_session_for_owner(string $ownerEmail): ?array {
+function find_active_session_for_owner(string $ownerEmail, ?string $mode = null): ?array {
+    $mode = in_array($mode, ['group', 'personal'], true) ? $mode : null;
     $legacy = null;
     foreach (list_sessions() as $session) {
         if (($session['status'] ?? '') !== 'active') {
+            continue;
+        }
+        if ($mode !== null && normalized_session_mode($session) !== $mode) {
             continue;
         }
         $sessionOwner = session_owner_email($session);
@@ -2195,13 +2199,13 @@ function restore_treasurer_notebook_batch(array $payload): array {
 
 function create_new_session(array $payload = []): array {
     $ownerEmail = current_auth_email();
-    $current = find_active_session_for_owner($ownerEmail);
-    if ($current && ($current['status'] ?? '') === 'active') {
-        fail('У вас уже есть активная касса', 409);
-    }
     $mode = in_array(($payload['mode'] ?? $payload['session_mode'] ?? ''), ['group', 'personal'], true)
         ? (string) ($payload['mode'] ?? $payload['session_mode'])
         : 'group';
+    $current = find_active_session_for_owner($ownerEmail, $mode);
+    if ($current && ($current['status'] ?? '') === 'active') {
+        fail($mode === 'personal' ? 'У вас уже есть активный личный журнал' : 'У вас уже есть активная судовая касса', 409);
+    }
     $session = default_session($ownerEmail, $mode);
     if (trim((string) ($payload['title'] ?? '')) !== '') {
         $session['title'] = trim((string) $payload['title']);
@@ -2882,7 +2886,8 @@ if ($action === 'verify-invite-code') {
 require_auth();
 
 if ($action === 'boot') {
-    $session = find_active_session_for_owner(current_auth_email());
+    $mode = in_array(($_GET['mode'] ?? ''), ['group', 'personal'], true) ? (string) $_GET['mode'] : null;
+    $session = find_active_session_for_owner(current_auth_email(), $mode);
     respond(build_treasurer_payload($session) + ['version' => APP_VERSION]);
 }
 

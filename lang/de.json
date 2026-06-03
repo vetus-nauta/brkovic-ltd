@@ -1351,5 +1351,15 @@
   "personalWorkspaceMenuHelp": "Öffnet Bericht, Einstellungen, Archiv und Service des persönlichen Journals.",
   "personalSpentFooterLabel": "Ausgaben",
   "personalArchiveMeta": "Persönliches Journal",
-  "personalArchiveTitle": "Archiv des persönlichen Journals"
+  "personalArchiveTitle": "Archiv des persönlichen Journals",
+  "cacheResetAction": "App aktualisieren",
+  "cacheResetEyebrow": "Version",
+  "cacheResetTitle": "App aktualisieren",
+  "cacheResetText": "Wenn der Bildschirm veraltet wirkt, leeren Sie den App-Cache und öffnen Sie Build {version}. Einträge und Entwürfe werden nicht gelöscht.",
+  "cacheResetWorking": "App wird aktualisiert und alter Cache geleert...",
+  "modeStartLabel": "Start",
+  "modePersonalLabel": "Privat",
+  "modeGroupLabel": "Crew",
+  "modeParticipantLabel": "Mitglied",
+  "modeChipHelp": "Aktueller Journalmodus"
 }

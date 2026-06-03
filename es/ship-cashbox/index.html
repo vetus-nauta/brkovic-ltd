@@ -63,7 +63,7 @@
   <link rel="stylesheet" href="/css/main.css?v=20260601-auth-modal-01" />
   <link rel="stylesheet" href="/css/responsive.css?v=20260531-site-menu-button-01" />
   <link rel="stylesheet" href="/css/navdesk.css?v=20260531-shipcashbox-card-01" />
-  <link rel="stylesheet" href="/ship-cashbox/assets/app.css?v=20260603-cashbox-solo-mode-22" />
+  <link rel="stylesheet" href="/ship-cashbox/assets/app.css?v=20260603-cashbox-dual-mode-25" />
   <link rel="icon" type="image/png" href="/favicons/favicon-clean.png?v=2" />
   <link rel="apple-touch-icon" href="/favicons/apple-touch-icon-clean.png?v=2" />
   <meta name="rights" content="© BRKOVIC / VETUS NAUTA. All rights reserved." />
@@ -85,6 +85,7 @@
           <span>VETUS NAUTA - Brkovic</span>
         </div>
       </div>
+      <span class="shipcashbox-mode-chip" id="cashboxModeChip" data-cashbox-mode-chip>Start</span>
       <div class="shipcashbox-appbar__actions">
         <button type="button" class="site-menu-button shipcashbox-start-button" id="cashboxStartButton">
           <span id="cashboxStartButtonText" data-i18n="cashboxStartButton">Start</span>
@@ -99,6 +100,7 @@
     <main class="navdesk-page navdesk-tool-page navdesk-shipcashbox-page shipcashbox-page">
       <div class="shipcashbox-mobile-masthead" aria-label="Caja a bordo" data-i18n-aria-label="navdesk_tool_cashbox_title">
         <span id="mobileMastheadTitle" data-i18n="navdesk_tool_cashbox_title">Caja a bordo</span>
+        <span class="shipcashbox-mode-chip shipcashbox-mode-chip--mobile" id="cashboxMobileModeChip" data-cashbox-mode-chip>Start</span>
         <strong>VETUS NAUTA - Brkovic</strong>
         <button type="button" class="site-menu-button shipcashbox-start-button shipcashbox-start-button--mobile" id="cashboxMobileStartButton">
           <span id="cashboxMobileStartButtonText" data-i18n="cashboxStartButton">Start</span>
@@ -201,6 +203,7 @@
             <span class="shipcashbox-app-menu__group-dot" id="cashboxMenuGroupDot" aria-hidden="true" hidden></span>
           </button>
           <button type="button" class="management-modal-nav__button" id="cashboxMenuInstall" data-i18n="pwa_install_menu">Instalar la app</button>
+          <button type="button" class="management-modal-nav__button" id="cashboxMenuRefresh" data-i18n="cacheResetAction">Refresh app</button>
         </nav>
         <section class="site-menu-language shipcashbox-app-menu__language" aria-labelledby="cashboxLanguageTitle">
           <div class="site-menu-language__head">
@@ -366,7 +369,7 @@
   <script src="/js/seo.js?v=20260531-clarity-01"></script>
   <script src="/js/main.js?v=20260602-auth-gate-cashbox-01"></script>
   <script src="/js/navdesk.js?v=20260601-runtime-i18n-01"></script>
-  <script src="/ship-cashbox/assets/scan-engine.js?v=20260603-cashbox-solo-mode-22"></script>
-  <script src="/ship-cashbox/assets/app.js?v=20260603-cashbox-solo-mode-22"></script>
+  <script src="/ship-cashbox/assets/scan-engine.js?v=20260603-cashbox-dual-mode-25"></script>
+  <script src="/ship-cashbox/assets/app.js?v=20260603-cashbox-dual-mode-25"></script>
 </body>
 </html>

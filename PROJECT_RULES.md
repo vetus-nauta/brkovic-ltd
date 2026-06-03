@@ -73,9 +73,10 @@ Ship Cashbox product map:
 ```text
 docs/ship-cashbox-product-map-sprint-01.md
 docs/ship-cashbox-solo-mode-sprint-02.md
+docs/ship-cashbox-visual-polish-sprint-03.md
 ```
 
-Keep the product route locked: personal journal, crew ship cashbox, quick equalizer, and group invitation by code. Do not reintroduce unrelated dashboards, admin panels, or feature-card sprawl into the operational screens. Personal mode must not show group, treasurer, participant, invite, settlement, share, or who-owes-whom language.
+Keep the product route locked: personal journal, crew ship cashbox, quick equalizer, and group invitation by code. Do not reintroduce unrelated dashboards, admin panels, or feature-card sprawl into the operational screens. Personal mode must not show group, treasurer, participant, invite, settlement, share, or who-owes-whom language. Personal and group starts are mode-isolated: an active group must not hijack the personal journal entry.
 
 Canonical management data file:
 

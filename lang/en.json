@@ -1372,5 +1372,15 @@
   "personalWorkspaceMenuHelp": "Opens the personal journal report, settings, archive, and service tools.",
   "personalSpentFooterLabel": "Expenses",
   "personalArchiveMeta": "Personal journal",
-  "personalArchiveTitle": "Personal journal archive"
+  "personalArchiveTitle": "Personal journal archive",
+  "cacheResetAction": "Refresh app",
+  "cacheResetEyebrow": "Version",
+  "cacheResetTitle": "Refresh app",
+  "cacheResetText": "If the screen looks stale, clear the app cache and open the current build {version}. Records and drafts are not deleted.",
+  "cacheResetWorking": "Refreshing the app and clearing the old cache...",
+  "modeStartLabel": "Start",
+  "modePersonalLabel": "Personal",
+  "modeGroupLabel": "Crew",
+  "modeParticipantLabel": "Member",
+  "modeChipHelp": "Current journal mode"
 }

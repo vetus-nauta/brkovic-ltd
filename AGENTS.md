@@ -116,9 +116,10 @@ Ship Cashbox must follow the locked product map:
 ```text
 docs/ship-cashbox-product-map-sprint-01.md
 docs/ship-cashbox-solo-mode-sprint-02.md
+docs/ship-cashbox-visual-polish-sprint-03.md
 ```
 
-Do not turn Ship Cashbox back into a set of unrelated cards or admin panels. Preserve the four entry scenarios: personal journal, crew ship cashbox, quick equalizer, and group invitation by code. In personal mode, do not leak group, treasurer, participant, invite, settlement, share, or who-owes-whom language.
+Do not turn Ship Cashbox back into a set of unrelated cards or admin panels. Preserve the four entry scenarios: personal journal, crew ship cashbox, quick equalizer, and group invitation by code. In personal mode, do not leak group, treasurer, participant, invite, settlement, share, or who-owes-whom language. Personal and group starts are mode-isolated: an active group must not hijack the personal journal entry.
 
 ## Yacht Management Rule
 

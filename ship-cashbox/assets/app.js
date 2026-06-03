@@ -8,7 +8,7 @@ const THEME_KEY = "navdesk_watch_theme_v1";
 const ENGAGED_KEY = "ship_cashbox_engaged_v1";
 const DISMISSED_INSTALL_KEY = "ship_cashbox_install_dismissed_v1";
 const BOOT_CACHE_KEY = "ship_cashbox_boot_cache_v1";
-const SHELL_VERSION = "20260603-cashbox-solo-mode-22";
+const SHELL_VERSION = "20260603-cashbox-dual-mode-25";
 const SHELL_PURGE_KEY = "ship_cashbox_shell_purge_v1";
 const PARTICIPANT_CACHE_PREFIX = "ship_cashbox_participant_cache_v1_";
 const PARTICIPANT_DRAFT_PREFIX = "ship_cashbox_participant_draft_v1_";
@@ -485,6 +485,13 @@ function currentViewerDisplayLabel() {
   return t("viewerGuest");
 }
 
+function currentModeLabel() {
+  if (!hasActiveGroup()) return tx("modeStartLabel", "Старт");
+  if (isPersonalSession()) return tx("modePersonalLabel", "Личный");
+  if (state.viewer === "participant") return tx("modeParticipantLabel", "Участник");
+  return tx("modeGroupLabel", "Команда");
+}
+
 function syncAppModeClasses() {
   const active = hasActiveGroup();
   document.body.classList.toggle("shipcashbox-has-active-group", active);
@@ -944,6 +951,28 @@ async function clearShipCashboxCaches() {
   } catch (error) {}
 }
 
+async function resetShipCashboxShell() {
+  await clearShipCashboxCaches();
+  if ("serviceWorker" in navigator) {
+    try {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations
+        .filter((registration) => registration.scope.includes("/ship-cashbox/"))
+        .map((registration) => registration.unregister()));
+    } catch (error) {}
+  }
+  try {
+    localStorage.removeItem(SHELL_PURGE_KEY);
+  } catch (error) {}
+}
+
+function reloadWithCurrentShell() {
+  const url = new URL(window.location.href);
+  url.searchParams.set("reload", SHELL_VERSION);
+  url.searchParams.set("cache-reset", String(Date.now()));
+  window.location.replace(url.toString());
+}
+
 async function purgeLegacyShellCaches() {
   if (localStorage.getItem(SHELL_PURGE_KEY) === SHELL_VERSION) return;
   await clearShipCashboxCaches();
@@ -1088,6 +1117,7 @@ function updateTopbarText() {
   if ($("cashboxMenuWorkspace")) $("cashboxMenuWorkspace").textContent = workspaceMenuTitleLabel();
   if ($("cashboxMenuGroupText")) $("cashboxMenuGroupText").textContent = isPersonalSession() ? tx("cashboxMenuPersonal", "Журнал") : t("cashboxMenuGroup");
   if ($("cashboxMenuInstall")) $("cashboxMenuInstall").textContent = t("pwa_install_menu");
+  if ($("cashboxMenuRefresh")) $("cashboxMenuRefresh").textContent = tx("cacheResetAction", "Обновить приложение");
   if ($("cashboxLanguageKicker")) $("cashboxLanguageKicker").textContent = t("cashboxMenuLanguage");
   if ($("cashboxLanguageTitle")) $("cashboxLanguageTitle").textContent = t("site_menu_language_title");
   if ($("cashboxLanguageNowLabel")) $("cashboxLanguageNowLabel").textContent = t("site_menu_language_current_label");
@@ -1097,6 +1127,10 @@ function updateTopbarText() {
   if ($("heroIntro")) $("heroIntro").textContent = t("heroIntro");
   if ($("heroDescription")) $("heroDescription").textContent = t("heroDescription");
   if ($("mobileMastheadTitle")) $("mobileMastheadTitle").textContent = t("heroTitle");
+  document.querySelectorAll("[data-cashbox-mode-chip]").forEach((chip) => {
+    chip.textContent = currentModeLabel();
+    chip.title = tx("modeChipHelp", "Текущий режим журнала");
+  });
   if ($("openMainSiteNew")) $("openMainSiteNew").textContent = t("backToMainSite");
   if ($("backToMainSite")) $("backToMainSite").textContent = t("backToMainSite");
   if ($("backToNavDesk")) $("backToNavDesk").textContent = t("backToNavDesk");
@@ -1702,7 +1736,7 @@ async function startEntryMode(mode = "group") {
     await window.openToolAuthPrompt();
   }
 
-  const boot = await api("boot");
+  const boot = await api(`boot&mode=${encodeURIComponent(sessionMode)}`);
   if (boot.session) {
     state.viewer = "treasurer";
     state.boot = boot;
@@ -1712,10 +1746,6 @@ async function startEntryMode(mode = "group") {
     );
     saveCache(BOOT_CACHE_KEY, boot);
     render();
-    const activeMode = isPersonalSession(boot.session) ? "personal" : "group";
-    if (activeMode !== sessionMode) {
-      setFlash(tx("activeSessionDifferentMode", "У вас уже открыт другой активный журнал. Сначала завершите его или продолжайте в нем."), true);
-    }
     return;
   }
 
@@ -1963,6 +1993,13 @@ async function handleAppInstallAction() {
   state.installPrompt = null;
   localStorage.setItem(DISMISSED_INSTALL_KEY, "1");
   render();
+}
+
+async function handleAppRefreshAction() {
+  closeAppMenu();
+  setFlash(tx("cacheResetWorking", "Обновляем приложение и очищаем старый кэш..."), true);
+  await resetShipCashboxShell();
+  reloadWithCurrentShell();
 }
 
 function participantStatusLabel(status) {
@@ -3246,6 +3283,18 @@ function renderServiceWindow() {
         <p class="shipcashbox-note">${escapeHtml(t("workspaceServiceText"))}</p>
         <div class="shipcashbox-actions">
           <button class="btn btn--primary" type="button" id="workspaceShareToolButton" title="${escapeHtml(t("shareToolHelp"))}" aria-label="${escapeHtml(t("shareToolHelp"))}">${escapeHtml(t("shareTool"))}</button>
+        </div>
+      </section>
+      <section class="shipcashbox-card shipcashbox-card--window shipcashbox-card--service-reset">
+        <div class="shipcashbox-card__head">
+          <div>
+            <p class="section-heading__eyebrow">${escapeHtml(tx("cacheResetEyebrow", "Версия"))}</p>
+            <h2>${escapeHtml(tx("cacheResetTitle", "Обновить приложение"))}</h2>
+          </div>
+        </div>
+        <p class="shipcashbox-note">${escapeHtml(txf("cacheResetText", "Если экран выглядит старым, очистите кэш приложения и откройте текущую сборку {version}. Записи и черновики не удаляются.", { version: SHELL_VERSION }))}</p>
+        <div class="shipcashbox-actions">
+          <button class="btn btn--secondary" type="button" id="workspaceCacheResetButton">${escapeHtml(tx("cacheResetAction", "Обновить приложение"))}</button>
         </div>
       </section>
       ${installBox ? installBox : `<section class="shipcashbox-card shipcashbox-card--window"><p class="shipcashbox-empty">${escapeHtml(t("workspaceServiceEmpty"))}</p></section>`}
@@ -5119,6 +5168,7 @@ function toggleHelpPopover(trigger) {
 
 function bindWorkspaceModalUi() {
   $("workspaceShareToolButton")?.addEventListener("click", () => shareToolLink().catch((error) => setFlash(error.message || t("loadFailed"))));
+  $("workspaceCacheResetButton")?.addEventListener("click", () => handleAppRefreshAction().catch((error) => setFlash(error.message || t("loadFailed"), true)));
   $("shareLogButton")?.addEventListener("click", () => shareExpenseLog().catch((error) => setFlash(error.message || t("loadFailed"))));
   $("printLogButton")?.addEventListener("click", printExpenseLog);
   document.querySelectorAll(".print-settlement-pdf-btn").forEach((button) => {
@@ -5820,6 +5870,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
   $("cashboxMenuInstall")?.addEventListener("click", () => {
     handleAppInstallAction().catch((error) => setFlash(error.message || t("loadFailed"), true));
+  });
+  $("cashboxMenuRefresh")?.addEventListener("click", () => {
+    handleAppRefreshAction().catch((error) => setFlash(error.message || t("loadFailed"), true));
   });
   $("cashboxLanguageList")?.addEventListener("click", async (event) => {
     const button = event.target.closest?.("[data-cashbox-lang]");

@@ -1372,5 +1372,15 @@
   "personalWorkspaceMenuHelp": "Открывает отчет, настройки, архив и сервис личного журнала.",
   "personalSpentFooterLabel": "Расходы",
   "personalArchiveMeta": "Личный журнал",
-  "personalArchiveTitle": "Архив личного журнала"
+  "personalArchiveTitle": "Архив личного журнала",
+  "cacheResetAction": "Обновить приложение",
+  "cacheResetEyebrow": "Версия",
+  "cacheResetTitle": "Обновить приложение",
+  "cacheResetText": "Если экран выглядит старым, очистите кэш приложения и откройте текущую сборку {version}. Записи и черновики не удаляются.",
+  "cacheResetWorking": "Обновляем приложение и очищаем старый кэш...",
+  "modeStartLabel": "Старт",
+  "modePersonalLabel": "Личный",
+  "modeGroupLabel": "Команда",
+  "modeParticipantLabel": "Участник",
+  "modeChipHelp": "Текущий режим журнала"
 }

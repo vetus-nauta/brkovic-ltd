@@ -71,8 +71,9 @@ The personal journal button:
 
 - clears welcome-preview flags;
 - authenticates if needed;
-- creates a personal session only when no active session exists;
-- does not overwrite an existing active group session.
+- opens an existing active personal session if one exists;
+- creates a personal session only when no active personal session exists;
+- does not overwrite or open an existing active group session.
 
 ## Operational Behavior
 
@@ -128,6 +129,7 @@ In personal mode:
 
 - Start screen personal card has opening balance input.
 - Personal creation sends `opening_balance` to backend.
+- Personal start is isolated from active group sessions via `boot&mode=personal`.
 - Personal top menu does not say `Группа`.
 - Personal workspace button does not say `Меню кассы`.
 - Personal footer says expenses, not treasurer/cashbox language.

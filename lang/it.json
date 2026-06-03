@@ -1351,5 +1351,15 @@
   "personalWorkspaceMenuHelp": "Apre report, impostazioni, archivio e strumenti del diario personale.",
   "personalSpentFooterLabel": "Spese",
   "personalArchiveMeta": "Diario personale",
-  "personalArchiveTitle": "Archivio diario personale"
+  "personalArchiveTitle": "Archivio diario personale",
+  "cacheResetAction": "Aggiorna app",
+  "cacheResetEyebrow": "Versione",
+  "cacheResetTitle": "Aggiorna app",
+  "cacheResetText": "Se la schermata sembra vecchia, svuota la cache dell’app e apri la build corrente {version}. Registrazioni e bozze non vengono eliminate.",
+  "cacheResetWorking": "Aggiornamento app e pulizia della vecchia cache...",
+  "modeStartLabel": "Start",
+  "modePersonalLabel": "Personale",
+  "modeGroupLabel": "Equipaggio",
+  "modeParticipantLabel": "Membro",
+  "modeChipHelp": "Modalità diario corrente"
 }

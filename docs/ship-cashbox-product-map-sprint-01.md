@@ -143,17 +143,17 @@ Personal journal button:
 
 - Clears preview URL flags.
 - Authenticates if needed.
-- Opens an existing active session if one exists.
-- Creates a personal session only when no active session exists.
-- If an active group session already exists, opens it and warns that another active mode is already open.
+- Opens an existing active personal session if one exists.
+- Creates a personal session only when no active personal session exists.
+- Does not overwrite or open an active group session.
 
 Crew ship cashbox button:
 
 - Clears preview URL flags.
 - Authenticates if needed.
-- Opens an existing active session if one exists.
-- Creates a group session only when no active session exists.
-- If an active personal session already exists, opens it and warns that another active mode is already open.
+- Opens an existing active group session if one exists.
+- Creates a group session only when no active group session exists.
+- Does not overwrite or open an active personal session.
 
 Invitation code button:
 
@@ -225,8 +225,9 @@ Source discipline:
 
 ## Current Sprint 01 Runtime Version
 
-Current expected shell after this sprint: `20260603-cashbox-solo-mode-22` or later.
+Current expected shell after this sprint: `20260603-cashbox-dual-mode-25` or later.
 
 ## Related Sprint Locks
 
 - `docs/ship-cashbox-solo-mode-sprint-02.md` locks personal journal behavior and forbidden group-language leakage.
+- `docs/ship-cashbox-visual-polish-sprint-03.md` locks visual shell polish and safe cache-refresh behavior.
