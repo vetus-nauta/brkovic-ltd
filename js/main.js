@@ -311,6 +311,7 @@
   }
 
   function setupSiteMenu() {
+    if (document.body && document.body.classList.contains("shipcashbox-body")) return;
     const topbar = document.querySelector(".topbar");
     if (!topbar) return;
 

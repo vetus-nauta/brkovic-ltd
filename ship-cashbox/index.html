@@ -63,7 +63,7 @@
   <link rel="stylesheet" href="../css/main.css?v=20260601-auth-modal-01" />
   <link rel="stylesheet" href="../css/responsive.css?v=20260531-site-menu-button-01" />
   <link rel="stylesheet" href="../css/navdesk.css?v=20260531-shipcashbox-card-01" />
-  <link rel="stylesheet" href="assets/app.css?v=20260603-cashbox-dual-mode-25" />
+  <link rel="stylesheet" href="assets/app.css?v=20260603-cashbox-entry-final-order-01" />
   <link rel="icon" type="image/png" href="../favicons/favicon-clean.png?v=2" />
   <link rel="apple-touch-icon" href="../favicons/apple-touch-icon-clean.png?v=2" />
   <meta name="rights" content="© BRKOVIC / VETUS NAUTA. All rights reserved." />
@@ -77,7 +77,29 @@
     }());
   </script>
   <div class="site-shell">
-    <header class="shipcashbox-appbar" aria-label="Ship Cashbox" data-i18n-aria-label="navdesk_tool_cashbox_title">
+    <div class="navdesk-header-card" id="cashboxGuestTopbar">
+      <header class="topbar topbar--site-menu" aria-label="VETUS NAUTA - Brkovic">
+        <a href="/index.html#hero" class="brand brand--image" aria-label="VETUS NAUTA - Brkovic home" data-i18n-aria-label="a11y_brand_home">
+          <span class="brand__picture brand__picture--home">
+            <img src="/brand/logo-header-inline-light.png" alt="VETUS NAUTA - Brkovic" class="brand__logo-image brand__logo-image--desktop navdesk-logo" />
+            <img src="/brand/logo-header-mobile.png" alt="VETUS NAUTA - Brkovic" class="brand__logo-image brand__logo-image--mobile navdesk-logo navdesk-logo--mobile" />
+          </span>
+        </a>
+        <div class="topbar__actions">
+          <div class="navdesk-header-theme navdesk-theme-compact" id="navdesk-theme-card">
+            <div class="navdesk-theme-switch" role="group" aria-label="Screen mode" data-i18n-aria-label="a11y_screen_mode">
+              <button type="button" class="navdesk-theme-switch__btn is-active" data-navdesk-theme="day" aria-label="Day mode" title="Day mode" data-i18n-aria-label="a11y_day_mode" data-i18n-title="a11y_day_mode">☀</button>
+              <button type="button" class="navdesk-theme-switch__btn" data-navdesk-theme="night" aria-label="Night mode" title="Night mode" data-i18n-aria-label="a11y_night_mode" data-i18n-title="a11y_night_mode">☾</button>
+            </div>
+          </div>
+          <button type="button" class="site-menu-button" id="cashboxGuestMenuButton" aria-haspopup="dialog" aria-controls="cashboxAppMenuModal">
+            <span class="site-menu-button__icon" aria-hidden="true"><span></span><span></span><span></span></span>
+            <span id="cashboxGuestMenuButtonText" data-i18n="cashboxAppMenuButton">Menu</span>
+          </button>
+        </div>
+      </header>
+    </div>
+    <header class="shipcashbox-appbar" id="cashboxWorkspaceAppbar" hidden aria-label="Ship Cashbox" data-i18n-aria-label="navdesk_tool_cashbox_title">
       <div class="shipcashbox-appbar__brand">
         <span class="shipcashbox-appbar__mark">VN</span>
         <div>
@@ -98,7 +120,7 @@
     </header>
 
     <main class="navdesk-page navdesk-tool-page navdesk-shipcashbox-page shipcashbox-page">
-      <div class="shipcashbox-mobile-masthead" aria-label="Ship Cashbox" data-i18n-aria-label="navdesk_tool_cashbox_title">
+      <div class="shipcashbox-mobile-masthead" id="cashboxMobileMasthead" hidden aria-label="Ship Cashbox" data-i18n-aria-label="navdesk_tool_cashbox_title">
         <span id="mobileMastheadTitle" data-i18n="navdesk_tool_cashbox_title">Ship Cashbox</span>
         <span class="shipcashbox-mode-chip shipcashbox-mode-chip--mobile" id="cashboxMobileModeChip" data-cashbox-mode-chip>Start</span>
         <strong>VETUS NAUTA - Brkovic</strong>
@@ -111,7 +133,7 @@
         </button>
       </div>
 
-      <section class="section navdesk-hero section--paper shipcashbox-hero">
+      <section class="section navdesk-hero section--paper shipcashbox-hero" id="cashboxSiteHero" hidden>
         <div class="navdesk-hero__grid navdesk-hero__grid--single">
           <div class="navdesk-hero__copy">
             <div class="section-heading section-heading--editorial navdesk-hero__heading">
@@ -196,6 +218,7 @@
           <button type="button" class="management-modal__close" data-close-app-menu="1" aria-label="Close" data-i18n-aria-label="close">×</button>
         </div>
         <nav class="management-modal-nav shipcashbox-app-menu__nav" aria-label="Cashbox menu" data-i18n-aria-label="workspaceMenuTitle">
+          <button type="button" class="management-modal-nav__button" id="cashboxMenuStart" data-i18n="cashboxStartButton">Start</button>
           <a href="../navdesk.html" id="cashboxMenuNavdesk" data-i18n="cashboxMenuNavdesk">Nav Desk</a>
           <button type="button" class="management-modal-nav__button" id="cashboxMenuWorkspace" data-i18n="workspaceMenuTitle">Cashbox menu</button>
           <button type="button" class="management-modal-nav__button shipcashbox-app-menu__group" id="cashboxMenuGroup">
@@ -335,6 +358,7 @@
             <h2 id="workspaceModalTitle" data-i18n="workspaceMenuTitle">Cashbox menu</h2>
           </div>
           <div class="shipcashbox-inline-actions">
+            <button type="button" class="btn btn--secondary" id="workspaceStartButton" data-i18n="cashboxStartButton">Start</button>
             <button type="button" class="btn btn--secondary" id="workspaceModalMenuButton" data-i18n="workspaceMenuAction">Cashbox menu</button>
             <button type="button" class="btn btn--secondary" data-close-workspace="1" id="workspaceCloseButton" data-i18n="close">Close</button>
           </div>
@@ -367,9 +391,9 @@
   <script src="../js/config.js"></script>
   <script src="../js/language.js?v=20260531-language-menu-01"></script>
   <script src="../js/seo.js?v=20260531-clarity-01"></script>
-  <script src="../js/main.js?v=20260602-auth-gate-cashbox-01"></script>
+  <script src="../js/main.js?v=20260603-site-menu-guard-01"></script>
   <script src="../js/navdesk.js?v=20260601-runtime-i18n-01"></script>
-  <script src="assets/scan-engine.js?v=20260603-cashbox-dual-mode-25"></script>
-  <script src="assets/app.js?v=20260603-cashbox-dual-mode-25"></script>
+  <script src="assets/scan-engine.js?v=20260603-cashbox-entry-final-order-01"></script>
+  <script src="assets/app.js?v=20260603-cashbox-entry-final-order-01"></script>
 </body>
 </html>

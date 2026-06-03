@@ -8,8 +8,11 @@ const THEME_KEY = "navdesk_watch_theme_v1";
 const ENGAGED_KEY = "ship_cashbox_engaged_v1";
 const DISMISSED_INSTALL_KEY = "ship_cashbox_install_dismissed_v1";
 const BOOT_CACHE_KEY = "ship_cashbox_boot_cache_v1";
-const SHELL_VERSION = "20260603-cashbox-dual-mode-25";
+const SHELL_VERSION = "20260603-cashbox-entry-final-order-01";
 const SHELL_PURGE_KEY = "ship_cashbox_shell_purge_v1";
+const LAST_MODE_KEY = "ship_cashbox_last_explicit_mode_v1";
+const EQUALIZER_DRAFT_KEY = "ship_cashbox_equalizer_draft_v1";
+const EQUALIZER_HISTORY_KEY = "ship_cashbox_equalizer_history_v1";
 const PARTICIPANT_CACHE_PREFIX = "ship_cashbox_participant_cache_v1_";
 const PARTICIPANT_DRAFT_PREFIX = "ship_cashbox_participant_draft_v1_";
 const PARTICIPANT_SLOT_PREFIX = "ship_cashbox_participant_slot_v1_";
@@ -57,6 +60,7 @@ const state = {
   treasurerSaveInFlight: false,
   treasurerSavePromise: null,
   treasurerSaveQueued: null,
+  equalizerLastResult: null,
   scanReview: null,
   scanReviewObjectUrl: "",
   scanReviewZoom: { scale: 1, x: 0, y: 0, pointers: new Map(), lastDistance: 0, dragX: 0, dragY: 0 },
@@ -226,6 +230,13 @@ function txf(key, fallback = "", replacements = {}) {
     text = text.replaceAll(`{${name}}`, String(value ?? ""));
   });
   return text;
+}
+
+function confirmByWord(messageKey, fallback, wordKey, fallbackWord) {
+  const word = tx(wordKey, fallbackWord);
+  const message = txf(messageKey, fallback, { word });
+  const value = window.prompt(message, "");
+  return String(value || "").trim().toUpperCase() === String(word || "").trim().toUpperCase();
 }
 
 function normalizeToolLang(value) {
@@ -501,9 +512,37 @@ function syncAppModeClasses() {
   document.body.classList.toggle("shipcashbox-viewer-guest", state.viewer === "guest");
 }
 
+function syncChromeVisibility() {
+  const guest = state.viewer === "guest";
+  if ($("cashboxGuestTopbar")) $("cashboxGuestTopbar").hidden = !guest;
+  if ($("cashboxWorkspaceAppbar")) $("cashboxWorkspaceAppbar").hidden = guest;
+  if ($("cashboxMobileMasthead")) $("cashboxMobileMasthead").hidden = guest;
+  if ($("cashboxSiteHero")) $("cashboxSiteHero").hidden = true;
+}
+
 function isWelcomePreview() {
   const params = new URLSearchParams(window.location.search);
   return params.get("welcome") === "1" || params.get("entry") === "1";
+}
+
+function normalizeEntryMode(mode) {
+  return mode === "personal" ? "personal" : mode === "group" ? "group" : "";
+}
+
+function lastExplicitMode() {
+  try {
+    return normalizeEntryMode(localStorage.getItem(LAST_MODE_KEY) || "");
+  } catch (error) {
+    return "";
+  }
+}
+
+function rememberExplicitMode(mode) {
+  const normalized = normalizeEntryMode(mode);
+  if (!normalized) return;
+  try {
+    localStorage.setItem(LAST_MODE_KEY, normalized);
+  } catch (error) {}
 }
 
 function clearWelcomePreviewUrl() {
@@ -520,9 +559,38 @@ function openStartScreen() {
   url.searchParams.delete("invite");
   url.searchParams.delete("inviteCode");
   url.searchParams.delete("entry");
+  url.searchParams.delete("tool");
   url.searchParams.set("welcome", "1");
   url.searchParams.set("reload", SHELL_VERSION);
   window.location.assign(url.toString());
+}
+
+function isEqualizerToolOpen() {
+  const params = new URLSearchParams(window.location.search);
+  return isWelcomePreview() && params.get("tool") === "equalizer";
+}
+
+function openEqualizerTool() {
+  const url = new URL(window.location.href);
+  url.searchParams.delete("invite");
+  url.searchParams.delete("inviteCode");
+  url.searchParams.delete("entry");
+  url.searchParams.set("welcome", "1");
+  url.searchParams.set("tool", "equalizer");
+  url.searchParams.set("reload", SHELL_VERSION);
+  window.history.pushState({}, "", url.toString());
+  state.viewer = "guest";
+  render();
+}
+
+function closeEqualizerTool() {
+  const url = new URL(window.location.href);
+  url.searchParams.delete("tool");
+  url.searchParams.set("welcome", "1");
+  url.searchParams.set("reload", SHELL_VERSION);
+  window.history.pushState({}, "", url.toString());
+  state.equalizerLastResult = null;
+  render();
 }
 
 function notebookCanLock() {
@@ -1109,6 +1177,9 @@ function updateTopbarText() {
   if ($("appbarTitle")) $("appbarTitle").textContent = t("heroTitle");
   if ($("cashboxStartButtonText")) $("cashboxStartButtonText").textContent = tx("cashboxStartButton", "Старт");
   if ($("cashboxMobileStartButtonText")) $("cashboxMobileStartButtonText").textContent = tx("cashboxStartButton", "Старт");
+  if ($("cashboxMenuStart")) $("cashboxMenuStart").textContent = tx("cashboxStartButton", "Старт");
+  if ($("workspaceStartButton")) $("workspaceStartButton").textContent = tx("cashboxStartButton", "Старт");
+  if ($("cashboxGuestMenuButtonText")) $("cashboxGuestMenuButtonText").textContent = t("cashboxAppMenuButton");
   if ($("cashboxAppMenuButtonText")) $("cashboxAppMenuButtonText").textContent = t("cashboxAppMenuButton");
   if ($("cashboxMobileMenuButtonText")) $("cashboxMobileMenuButtonText").textContent = t("cashboxAppMenuButton");
   if ($("cashboxAppMenuEyebrow")) $("cashboxAppMenuEyebrow").textContent = t("heroTitle");
@@ -1590,13 +1661,15 @@ function renderNotebookLockOverlay() {
   `;
 }
 
-function renderExports(exports = []) {
+function renderExports(exports = [], options = {}) {
   if (!exports.length) return "";
   const grouped = Object.fromEntries(exports.map((item) => [item.type, item.file_path]));
+  const settlementPdfLabel = options.personal ? tx("personalExportReportPdf", "Отчет PDF") : t("exportSettlementPdf");
+  const settlementTxtLabel = options.personal ? tx("personalExportReportTxt", "Отчет TXT") : t("exportSettlementTxt");
   return `
     <div class="shipcashbox-share-actions">
-      ${grouped.settlement_pdf ? `<a class="btn btn--secondary" href="${escapeHtml(grouped.settlement_pdf)}" target="_blank" rel="noopener">${escapeHtml(t("exportSettlementPdf"))}</a>` : ""}
-      ${grouped.settlement_txt ? `<a class="btn btn--secondary" href="${escapeHtml(grouped.settlement_txt)}" target="_blank" rel="noopener">${escapeHtml(t("exportSettlementTxt"))}</a>` : ""}
+      ${grouped.settlement_pdf ? `<a class="btn btn--secondary" href="${escapeHtml(grouped.settlement_pdf)}" target="_blank" rel="noopener">${escapeHtml(settlementPdfLabel)}</a>` : ""}
+      ${grouped.settlement_txt ? `<a class="btn btn--secondary" href="${escapeHtml(grouped.settlement_txt)}" target="_blank" rel="noopener">${escapeHtml(settlementTxtLabel)}</a>` : ""}
       ${grouped.expense_log_pdf ? `<a class="btn btn--secondary" href="${escapeHtml(grouped.expense_log_pdf)}" target="_blank" rel="noopener">${escapeHtml(t("exportLogPdf"))}</a>` : ""}
       ${grouped.expense_log_txt ? `<a class="btn btn--secondary" href="${escapeHtml(grouped.expense_log_txt)}" target="_blank" rel="noopener">${escapeHtml(t("exportLogTxt"))}</a>` : ""}
     </div>
@@ -1706,34 +1779,235 @@ function renderEqualizerResult(settlement, currency = "EUR") {
   `;
 }
 
+function loadEqualizerDraft() {
+  try {
+    const draft = JSON.parse(localStorage.getItem(EQUALIZER_DRAFT_KEY) || "{}");
+    return {
+      currency: String(draft.currency || "EUR").trim().toUpperCase().slice(0, 6) || "EUR",
+      input: String(draft.input || ""),
+    };
+  } catch (error) {
+    return { currency: "EUR", input: "" };
+  }
+}
+
+function saveEqualizerDraft(input = "", currency = "EUR") {
+  try {
+    localStorage.setItem(EQUALIZER_DRAFT_KEY, JSON.stringify({
+      input: String(input || ""),
+      currency: String(currency || "EUR").trim().toUpperCase().slice(0, 6) || "EUR",
+      updatedAt: new Date().toISOString(),
+    }));
+  } catch (error) {}
+}
+
+function loadEqualizerHistory() {
+  try {
+    const items = JSON.parse(localStorage.getItem(EQUALIZER_HISTORY_KEY) || "[]");
+    return Array.isArray(items) ? items.filter((item) => item && typeof item === "object").slice(0, 12) : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+function saveEqualizerHistory(items = []) {
+  try {
+    localStorage.setItem(EQUALIZER_HISTORY_KEY, JSON.stringify(items.slice(0, 12)));
+  } catch (error) {}
+}
+
+function renderEqualizerHistory() {
+  const items = loadEqualizerHistory();
+  if (!items.length) {
+    return `<div class="shipcashbox-equalizer-empty">${escapeHtml(tx("equalizerNoSaved", "Сохраненных расчетов пока нет."))}</div>`;
+  }
+  return `
+    <div class="shipcashbox-equalizer-history">
+      ${items.map((item) => `
+        <article class="shipcashbox-equalizer-saved">
+          <div class="shipcashbox-equalizer-saved__head">
+            <div>
+              <strong>${escapeHtml(item.title || tx("equalizerSavedFallback", "Расчет"))}</strong>
+              <span>${escapeHtml(formatDateTime(item.savedAt || ""))}</span>
+            </div>
+            <div>
+              <b>${escapeHtml(money(item.total || 0, item.currency || "EUR"))}</b>
+              <span>${escapeHtml(tx("equalizerShare", "доля"))}: ${escapeHtml(money(item.share || 0, item.currency || "EUR"))}</span>
+            </div>
+          </div>
+          <div class="shipcashbox-equalizer-saved__transfers">
+            ${(item.transfers || []).length
+              ? item.transfers.map((line) => `<span>${escapeHtml(line.fromName || "-")} → ${escapeHtml(line.toName || "-")} <b>${escapeHtml(money(line.amount || 0, item.currency || "EUR"))}</b></span>`).join("")
+              : `<span>${escapeHtml(t("noTransfers"))}</span>`}
+          </div>
+        </article>
+      `).join("")}
+    </div>
+  `;
+}
+
+function refreshEqualizerHistory() {
+  const target = $("equalizerHistory");
+  if (target) target.innerHTML = renderEqualizerHistory();
+}
+
 function calculateGuestEqualizer() {
   const input = $("equalizerInput");
   const output = $("equalizerResult");
   const currency = String($("equalizerCurrency")?.value || "EUR").trim().toUpperCase().slice(0, 6) || "EUR";
-  if (!(input instanceof HTMLTextAreaElement) || !output) return;
+  if (!(input instanceof HTMLTextAreaElement) || !output) return null;
+  saveEqualizerDraft(input.value, currency);
   const parsed = parseEqualizerInput(input.value);
+  state.equalizerLastResult = null;
   if (parsed.errors.length) {
     output.innerHTML = `<div class="shipcashbox-equalizer-error">${escapeHtml(tx("equalizerParseError", "Не понял строки"))}: ${escapeHtml(parsed.errors.slice(0, 3).join("; "))}</div>`;
-    return;
+    return null;
   }
   if (parsed.entries.length < 2) {
     output.innerHTML = `<div class="shipcashbox-equalizer-error">${escapeHtml(tx("equalizerNeedTwo", "Нужно минимум два человека."))}</div>`;
-    return;
+    return null;
   }
   if (parsed.entries.length > 40) {
     output.innerHTML = `<div class="shipcashbox-equalizer-error">${escapeHtml(tx("equalizerMaxPeople", "Максимум 40 человек."))}</div>`;
-    return;
+    return null;
   }
-  output.innerHTML = renderEqualizerResult(buildEqualizerSettlement(parsed.entries), currency);
+  const settlement = buildEqualizerSettlement(parsed.entries);
+  state.equalizerLastResult = {
+    input: input.value,
+    currency,
+    settlement,
+  };
+  output.innerHTML = renderEqualizerResult(settlement, currency);
+  return state.equalizerLastResult;
+}
+
+function saveCurrentEqualizerResult() {
+  const current = state.equalizerLastResult || calculateGuestEqualizer();
+  if (!current?.settlement?.people?.length) return;
+  const title = (current.settlement.people || []).slice(0, 3).map((person) => person.name).join(", ");
+  const item = {
+    id: `equalizer-${Date.now()}`,
+    title: title || tx("equalizerSavedFallback", "Расчет"),
+    savedAt: new Date().toISOString(),
+    input: current.input,
+    currency: current.currency,
+    total: current.settlement.total,
+    share: current.settlement.share,
+    people: current.settlement.people,
+    transfers: current.settlement.transfers,
+  };
+  saveEqualizerHistory([item, ...loadEqualizerHistory()]);
+  refreshEqualizerHistory();
+  setFlash(tx("equalizerSaved", "Расчет сохранен на этом устройстве."));
+}
+
+function renderEqualizerTool() {
+  const draft = loadEqualizerDraft();
+  const inputValue = draft.input || "Лех 200\nВоа 467\nКатя 600";
+  $("guestView").innerHTML = `
+    <div class="shipcashbox-entry-screen shipcashbox-equalizer-page">
+      <section class="shipcashbox-entry-hero shipcashbox-entry-hero--compact">
+        <div class="shipcashbox-entry-hero__copy">
+          <p>${escapeHtml(tx("equalizerKicker", "Быстрый расчет"))}</p>
+          <h2>${escapeHtml(tx("equalizerPageTitle", "Быстрый финансовый расчет"))}</h2>
+          <span>${escapeHtml(tx("equalizerPageText", "Отдельный расчет без создания журнала: внесите людей и суммы, получите финальные переводы и сохраните результат на этом устройстве."))}</span>
+        </div>
+        <button class="btn btn--secondary" type="button" id="equalizerBackButton">${escapeHtml(tx("equalizerBackToStart", "На старт"))}</button>
+      </section>
+
+      <section class="shipcashbox-equalizer-board">
+        <div class="shipcashbox-equalizer-board__input">
+          <div class="shipcashbox-card__head">
+            <div>
+              <p class="section-heading__eyebrow">${escapeHtml(tx("equalizerKicker", "Быстрый расчет"))}</p>
+              <h2>${escapeHtml(tx("equalizerTitle", "Посчитать вручную"))}</h2>
+            </div>
+          </div>
+          <div class="shipcashbox-equalizer">
+            <label class="shipcashbox-field shipcashbox-field--compact">
+              <span>${escapeHtml(t("sessionCurrency"))}</span>
+              <input type="text" id="equalizerCurrency" value="${escapeHtml(draft.currency || "EUR")}" maxlength="6">
+            </label>
+            <label class="shipcashbox-field">
+              <span>${escapeHtml(tx("equalizerInputLabel", "Кто сколько оплатил"))}</span>
+              <textarea id="equalizerInput" rows="7" spellcheck="false">${escapeHtml(inputValue)}</textarea>
+            </label>
+            <div class="shipcashbox-actions">
+              <button class="btn btn--primary" type="button" id="equalizerCalculateButton">${escapeHtml(tx("equalizerAction", "Посчитать переводы"))}</button>
+              <button class="btn btn--secondary" type="button" id="equalizerSaveButton">${escapeHtml(tx("equalizerSaveAction", "Сохранить расчет"))}</button>
+            </div>
+            <p class="shipcashbox-note">${escapeHtml(tx("equalizerSaveText", "Сохранение локальное: расчет останется на этом устройстве и не создаст групповую кассу."))}</p>
+          </div>
+        </div>
+        <div class="shipcashbox-equalizer-board__result">
+          <div id="equalizerResult" class="shipcashbox-equalizer-output" aria-live="polite"></div>
+          <section>
+            <div class="shipcashbox-card__head">
+              <div>
+                <p class="section-heading__eyebrow">${escapeHtml(tx("equalizerSavedKicker", "Сохранено"))}</p>
+                <h2>${escapeHtml(tx("equalizerSavedTitle", "Последние расчеты"))}</h2>
+              </div>
+            </div>
+            <div id="equalizerHistory">${renderEqualizerHistory()}</div>
+          </section>
+        </div>
+      </section>
+    </div>
+  `;
+
+  $("equalizerBackButton")?.addEventListener("click", closeEqualizerTool);
+  $("equalizerCalculateButton")?.addEventListener("click", calculateGuestEqualizer);
+  $("equalizerSaveButton")?.addEventListener("click", saveCurrentEqualizerResult);
+  $("equalizerInput")?.addEventListener("input", () => {
+    const output = $("equalizerResult");
+    if (output) output.innerHTML = "";
+    state.equalizerLastResult = null;
+    saveEqualizerDraft($("equalizerInput")?.value || "", $("equalizerCurrency")?.value || "EUR");
+  });
+  $("equalizerCurrency")?.addEventListener("input", () => {
+    state.equalizerLastResult = null;
+    saveEqualizerDraft($("equalizerInput")?.value || "", $("equalizerCurrency")?.value || "EUR");
+  });
+}
+
+function renderEntryHeroText() {
+  let text = escapeHtml(tx("entryText", "Деньги исчезают тихо. + получил-сохрани, - потратил-запиши!"));
+  text = text.replace(/(^|[\s(])\+(?=\s)/, '$1<span class="shipcashbox-entry-sign shipcashbox-entry-sign--plus">+</span>');
+  text = text.replace(/([,.!]\s*)-(?=\s)/, '$1<span class="shipcashbox-entry-sign shipcashbox-entry-sign--minus">-</span>');
+  return text;
+}
+
+async function hasCashboxOwnerAccess() {
+  try {
+    const me = await api("me", { timeoutMs: AUTH_TIMEOUT_MS });
+    return Boolean(me?.authenticated);
+  } catch (error) {
+    return false;
+  }
+}
+
+async function ensureCashboxOwnerAccess() {
+  if (await hasCashboxOwnerAccess()) return true;
+
+  if (typeof window.ensureToolAccess === "function") {
+    const allowed = await window.ensureToolAccess({ requireLive: !IS_LOCAL });
+    if (!allowed) return false;
+  } else if (typeof window.openToolAuthPrompt === "function") {
+    const result = await window.openToolAuthPrompt();
+    if (!result?.authenticated) return false;
+  }
+
+  return await hasCashboxOwnerAccess();
 }
 
 async function startEntryMode(mode = "group") {
   clearWelcomePreviewUrl();
   const sessionMode = mode === "personal" ? "personal" : "group";
-  if (typeof window.ensureToolAccess === "function") {
-    await window.ensureToolAccess({ requireLive: true });
-  } else if (typeof window.openToolAuthPrompt === "function") {
-    await window.openToolAuthPrompt();
+  rememberExplicitMode(sessionMode);
+  const hasAccess = await ensureCashboxOwnerAccess();
+  if (!hasAccess) {
+    setFlash(tx("authRequired", "Нужно войти, чтобы открыть журнал."), true);
+    return;
   }
 
   const boot = await api(`boot&mode=${encodeURIComponent(sessionMode)}`);
@@ -1754,7 +2028,7 @@ async function startEntryMode(mode = "group") {
     body: JSON.stringify({
       mode: sessionMode,
       title: sessionMode === "personal" ? tx("personalDefaultTitle", "Личный журнал расходов") : tx("groupDefaultTitle", "Судовая касса"),
-      opening_balance: sessionMode === "personal" ? ($("entryPersonalOpeningBalance")?.value.trim() || "0") : 0,
+      opening_balance: sessionMode === "personal" ? "0" : 0,
     }),
   });
   state.viewer = "treasurer";
@@ -1766,13 +2040,17 @@ async function startEntryMode(mode = "group") {
 }
 
 function renderGuest() {
+  if (isEqualizerToolOpen()) {
+    renderEqualizerTool();
+    return;
+  }
   $("guestView").innerHTML = `
     <div class="shipcashbox-entry-screen">
       <section class="shipcashbox-entry-hero">
         <div class="shipcashbox-entry-hero__copy">
-          <p>NavDesk</p>
+          <p>${escapeHtml(tx("entryEyebrow", "VETUS NAUTA"))}</p>
           <h2>${escapeHtml(tx("entryTitle", "Судовой журнал расходов"))}</h2>
-          <span>${escapeHtml(tx("entryText", "Деньги на борту должны быть понятны всем: кто сдал, кто потратил, кому вернуть."))}</span>
+          <span>${renderEntryHeroText()}</span>
         </div>
       </section>
 
@@ -1782,21 +2060,17 @@ function renderGuest() {
             <img src="/ship-cashbox/assets/welcome-journal.webp" alt="" loading="eager" decoding="async">
           </div>
           <div class="shipcashbox-entry-card__copy">
-            <h2>${escapeHtml(tx("entryPersonalTitle", "Веду свои расходы"))}</h2>
-            <p>${escapeHtml(tx("entryPersonalText", "Режим для записи личных расходов: люди, чек, еда, топливо, доки, мелкий ремонт. Записи не смешиваются с командной кассой."))}</p>
-            <label class="shipcashbox-field shipcashbox-field--entry">
-              <span>${escapeHtml(tx("personalOpeningBalance", "Сколько денег было"))}</span>
-              <input type="text" id="entryPersonalOpeningBalance" inputmode="decimal" placeholder="0">
-            </label>
-            <button class="btn btn--primary" type="button" data-entry-start="personal">${escapeHtml(tx("entryPersonalAction", "Начать личный журнал"))}</button>
+            <h2>${escapeHtml(tx("entryPersonalTitle", "Личный учет"))}</h2>
+            <p>${escapeHtml(tx("entryPersonalText", "Личный журнал: приходы со знаком плюс, расходы обычными строками, сохраненные записи и простой отчет."))}</p>
+            <button class="btn btn--primary" type="button" data-entry-start="personal">${escapeHtml(tx("entryPersonalAction", "К учету"))}</button>
           </div>
         </section>
 
         <section class="shipcashbox-entry-card shipcashbox-entry-card--crew">
           <div class="shipcashbox-entry-card__copy">
-            <h2>${escapeHtml(tx("entryCrewTitle", "Судовая касса команды"))}</h2>
-            <p>${escapeHtml(tx("entryCrewText", "Режим для создания круиза или сезонной фонда. Связанный блокнот, взносы и итоговое выравнивание команды."))}</p>
-            <button class="btn btn--primary" type="button" data-entry-start="group">${escapeHtml(tx("entryCrewAction", "Создать судовую кассу"))}</button>
+            <h2>${escapeHtml(tx("entryCrewTitle", "Команда"))}</h2>
+            <p>${escapeHtml(tx("entryCrewText", "Общий блокнот, взносы и финальное выравнивание команды."))}</p>
+            <button class="btn btn--primary" type="button" data-entry-start="group">${escapeHtml(tx("entryCrewAction", "К кассе"))}</button>
           </div>
           <div class="shipcashbox-entry-card__media" aria-hidden="true">
             <img src="/ship-cashbox/assets/welcome-crew.webp" alt="" loading="eager" decoding="async">
@@ -1807,20 +2081,8 @@ function renderGuest() {
           <div class="shipcashbox-entry-card__copy">
             <h2>${escapeHtml(tx("equalizerTitle", "Посчитать вручную"))}</h2>
             <p>${escapeHtml(tx("equalizerText", "Быстрый расчет для команды: кто внес больше, кто должен доплатить, без создания журнала."))}</p>
-            <div class="shipcashbox-equalizer">
-              <label class="shipcashbox-field shipcashbox-field--compact">
-                <span>${escapeHtml(t("sessionCurrency"))}</span>
-                <input type="text" id="equalizerCurrency" value="EUR" maxlength="6">
-              </label>
-              <label class="shipcashbox-field">
-                <span>${escapeHtml(tx("equalizerInputLabel", "Кто сколько оплатил"))}</span>
-                <textarea id="equalizerInput" rows="4" spellcheck="false">Лех 200
-Воа 467
-Катя 600</textarea>
-              </label>
-              <button class="btn btn--primary" type="button" id="equalizerCalculateButton">${escapeHtml(tx("equalizerAction", "Открыть расчет казначея"))}</button>
-              <div id="equalizerResult" class="shipcashbox-equalizer-output" aria-live="polite"></div>
-            </div>
+            <button class="btn btn--primary" type="button" id="openEqualizerToolButton">${escapeHtml(tx("equalizerOpenAction", "Открыть расчет"))}</button>
+            <p class="shipcashbox-note">${escapeHtml(tx("equalizerCardNote", "Отдельная страница: ввод, итоговые переводы и локальное сохранение результата."))}</p>
           </div>
           <div class="shipcashbox-entry-card__media" aria-hidden="true">
             <img src="/ship-cashbox/assets/welcome-calculator.webp" alt="" loading="eager" decoding="async">
@@ -1838,6 +2100,7 @@ function renderGuest() {
           <input type="text" id="inviteTokenField" value="${escapeHtml(state.inviteToken || "")}" inputmode="numeric" autocomplete="one-time-code" placeholder="000000">
         </label>
         <button class="btn btn--secondary" type="submit">${escapeHtml(t("guestOpen"))}</button>
+        <div class="shipcashbox-entry-rights">${escapeHtml(tx("entryCopyright", "© Vetus Nauta / Brkovic. All rights reserved."))}</div>
       </form>
     </div>
   `;
@@ -1872,11 +2135,7 @@ function renderGuest() {
     }
   });
 
-  $("equalizerCalculateButton")?.addEventListener("click", calculateGuestEqualizer);
-  $("equalizerInput")?.addEventListener("input", () => {
-    const output = $("equalizerResult");
-    if (output) output.innerHTML = "";
-  });
+  $("openEqualizerToolButton")?.addEventListener("click", openEqualizerTool);
 }
 
 function renderAppMenuLanguage() {
@@ -2204,7 +2463,7 @@ function renderParticipant() {
 
 function renderParticipantRows(participants) {
   const treasurerId = state.boot?.session?.treasurer_participant_id || participants.find((participant) => participant.role === "treasurer")?.id || "";
-  return participants.map((participant) => `
+  return participants.filter((participant) => participant.active !== false).map((participant) => `
     <div class="shipcashbox-participant-row" data-participant-id="${escapeHtml(participant.id)}" data-participant-role="${escapeHtml(participant.role)}" data-authorized="${participant.authorized_at ? "1" : "0"}" data-is-treasurer="${participant.id === treasurerId ? "1" : "0"}">
       <div class="shipcashbox-participant-row__top shipcashbox-participant-row__top--editor">
         <label class="shipcashbox-field">
@@ -2495,70 +2754,372 @@ function renderSettlementFlow(session, { compact = false } = {}) {
   `;
 }
 
+function settlementParticipantPreview(session, selectedId = "") {
+  const data = buildDebtMatrix(session);
+  const treasurerId = session.treasurer_participant_id || "";
+  const participants = data.participants.filter((participant) => participant.active !== false && participant.id !== treasurerId);
+  const preferred = selectedId && participants.find((participant) => participant.id === selectedId)
+    ? selectedId
+    : (participants.find((participant) => Number(data.outgoing.get(participant.id) || 0) > 0.009 || Number(data.incoming.get(participant.id) || 0) > 0.009)?.id || participants[0]?.id || "");
+  const participant = participants.find((item) => item.id === preferred) || null;
+  const lines = participant
+    ? data.transferLines.filter((line) => line.fromId === participant.id || line.toId === participant.id)
+    : [];
+  const outgoing = participant ? Number(data.outgoing.get(participant.id) || 0) : 0;
+  const incoming = participant ? Number(data.incoming.get(participant.id) || 0) : 0;
+  const net = moneyRound(incoming - outgoing);
+  return { data, participants, participant, selectedId: preferred, lines, outgoing, incoming, net };
+}
+
+function renderSettlementSummaryCards(session) {
+  const totals = session.totals || {};
+  const data = buildDebtMatrix(session);
+  return `
+    <div class="shipcashbox-settlement-summary" aria-label="${escapeHtml(tx("debtMatrixSummary", "Сводка расчета"))}">
+      <article>
+        <span>${escapeHtml(t("summaryExpenses"))}</span>
+        <strong>${escapeHtml(money(totals.total_expenses || 0, session.currency))}</strong>
+      </article>
+      <article>
+        <span>${escapeHtml(t("summaryShare"))}</span>
+        <strong>${escapeHtml(money(totals.share || 0, session.currency))}</strong>
+      </article>
+      <article>
+        <span>${escapeHtml(t("summaryCash"))}</span>
+        <strong>${escapeHtml(money(totals.cashbox_balance || 0, session.currency, true))}</strong>
+      </article>
+      <article>
+        <span>${escapeHtml(tx("settlementTransfersCount", "Переводы"))}</span>
+        <strong>${escapeHtml(String(data.transferLines.length))}</strong>
+      </article>
+    </div>
+  `;
+}
+
+function buildCloseAudit(session) {
+  const participants = (session.participants || []).filter((participant) => participant.active !== false);
+  const lines = session.settlement_preview?.lines || [];
+  const periods = Array.isArray(session.treasurer_periods) ? session.treasurer_periods : [];
+  const signedOff = Array.isArray(session.participant_settlements) ? session.participant_settlements : [];
+  const missingEmail = participants.filter((participant) => !String(participant.email || "").trim());
+  const openTextOwners = participants.filter((participant) => String(participant.notebook_text || "").trim() !== "");
+  const treasurerId = session.treasurer_participant_id || "";
+  const treasurer = participants.find((participant) => participant.id === treasurerId) || null;
+  const serverTreasurerText = normalizedText(treasurer?.notebook_text || "");
+  const localTreasurerDraft = normalizedText(state.treasurerDraft || serverTreasurerText);
+  const hasUnsavedLocalTreasurerDraft = localTreasurerDraft !== serverTreasurerText;
+  const emailReady = participants.length - missingEmail.length;
+  const exportCount = 4;
+  const warnings = [];
+
+  if (missingEmail.length) {
+    warnings.push(txf("closeAuditMissingEmail", "Без email: {names}", { names: missingEmail.map((participant) => participant.display_name || "-").join(", ") }));
+  }
+  if (hasUnsavedLocalTreasurerDraft) {
+    warnings.push(tx("closeAuditLocalDraft", "Есть локальный черновик казначея, который еще не синхронизирован с сервером."));
+  }
+  if (!participants.length) {
+    warnings.push(tx("closeAuditNoCrew", "Нет активного экипажа для закрытия."));
+  }
+
+  return {
+    status: warnings.length ? "warning" : "ready",
+    warnings,
+    participants,
+    missingEmail,
+    draftOwners,
+    emailReady,
+    exportCount,
+    transferCount: lines.length,
+    signedOffCount: signedOff.length,
+    periodCount: Math.max(1, periods.length || 1),
+    openTextCount: openTextOwners.length,
+    hasUnsavedLocalTreasurerDraft,
+  };
+}
+
+function renderCloseAudit(session) {
+  const audit = buildCloseAudit(session);
+  const ready = audit.status === "ready";
+  const warningItems = audit.warnings.length
+    ? audit.warnings.map((warning) => `<li>${escapeHtml(warning)}</li>`).join("")
+    : `<li>${escapeHtml(tx("closeAuditNoWarnings", "Критичных предупреждений нет."))}</li>`;
+  return `
+    <section class="shipcashbox-close-audit shipcashbox-close-audit--${ready ? "ready" : "warning"}">
+      <div class="shipcashbox-close-audit__head">
+        <div>
+          <span>${escapeHtml(tx("closeAuditEyebrow", "Перед закрытием"))}</span>
+          <strong>${escapeHtml(tx("closeAuditTitle", "Проверка кассы"))}</strong>
+        </div>
+        <b>${escapeHtml(ready ? tx("closeAuditReady", "Можно закрывать") : tx("closeAuditWarning", "Есть предупреждения"))}</b>
+      </div>
+      <div class="shipcashbox-close-audit__grid">
+        <article><span>${escapeHtml(tx("closeAuditEmails", "Email"))}</span><strong>${escapeHtml(`${audit.emailReady}/${audit.participants.length}`)}</strong></article>
+        <article><span>${escapeHtml(tx("closeAuditTransfers", "Переводы"))}</span><strong>${escapeHtml(String(audit.transferCount))}</strong></article>
+        <article><span>${escapeHtml(tx("closeAuditExports", "Файлы"))}</span><strong>${escapeHtml(String(audit.exportCount))}</strong></article>
+        <article><span>${escapeHtml(tx("closeAuditPeriods", "Периоды"))}</span><strong>${escapeHtml(String(audit.periodCount))}</strong></article>
+        <article><span>${escapeHtml(tx("closeAuditSignedOff", "Списаны"))}</span><strong>${escapeHtml(String(audit.signedOffCount))}</strong></article>
+        <article><span>${escapeHtml(tx("closeAuditOpenTextCount", "Открытые"))}</span><strong>${escapeHtml(String(audit.openTextCount))}</strong></article>
+      </div>
+      <ul class="shipcashbox-close-audit__warnings">${warningItems}</ul>
+      <p>${escapeHtml(tx("closeAuditAfterClose", "После закрытия архив и письма создаются автоматически, а следующая касса откроется пустой."))}</p>
+    </section>
+  `;
+}
+
+function renderSingleParticipantSettlementResult(session, selectedId = "") {
+  const preview = settlementParticipantPreview(session, selectedId);
+  if (!preview.participants.length || !preview.participant) {
+    return `<div class="shipcashbox-empty">${escapeHtml(t("emptyLines"))}</div>`;
+  }
+
+  const netTone = preview.net < -0.009 ? "negative" : preview.net > 0.009 ? "positive" : "neutral";
+  const netLabel = preview.net < -0.009
+    ? tx("singleSettlementOwes", "Он должен")
+    : preview.net > 0.009
+      ? tx("singleSettlementReceives", "Ему должны")
+      : tx("singleSettlementEven", "Закрыт ровно");
+  const linesHtml = preview.lines.length
+    ? preview.lines.map((line) => {
+      const role = line.fromId === preview.participant.id ? tx("singleSettlementPays", "платит") : tx("singleSettlementGets", "получает");
+      const counterparty = line.fromId === preview.participant.id ? line.toName : line.fromName;
+      return `
+        <article class="shipcashbox-single-settlement__line">
+          <span>${escapeHtml(role)}</span>
+          <strong>${escapeHtml(counterparty)}</strong>
+          <b>${escapeHtml(money(line.amount, preview.data.currency))}</b>
+        </article>
+      `;
+    }).join("")
+    : `<div class="shipcashbox-single-settlement__empty">${escapeHtml(tx("singleSettlementNoLines", "По текущему расчету этому участнику ничего переводить не нужно."))}</div>`;
+
+  return `
+    <div class="shipcashbox-single-settlement__result" data-single-settlement-result>
+      <div class="shipcashbox-single-settlement__totals">
+        <article>
+          <span>${escapeHtml(tx("singleSettlementPaysTotal", "Должен отдать"))}</span>
+          <strong>${escapeHtml(money(preview.outgoing, preview.data.currency))}</strong>
+        </article>
+        <article>
+          <span>${escapeHtml(tx("singleSettlementGetsTotal", "Должен получить"))}</span>
+          <strong>${escapeHtml(money(preview.incoming, preview.data.currency))}</strong>
+        </article>
+        <article class="shipcashbox-single-settlement__net shipcashbox-single-settlement__net--${netTone}">
+          <span>${escapeHtml(netLabel)}</span>
+          <strong>${escapeHtml(money(Math.abs(preview.net), preview.data.currency))}</strong>
+        </article>
+      </div>
+      <div class="shipcashbox-single-settlement__lines">${linesHtml}</div>
+    </div>
+  `;
+}
+
+function renderSingleParticipantSettlementCard(session) {
+  const preview = settlementParticipantPreview(session);
+  if (!preview.participants.length) {
+    return `
+      <section class="shipcashbox-single-settlement shipcashbox-single-settlement--locked">
+        <div class="shipcashbox-single-settlement__head">
+          <div>
+            <strong>${escapeHtml(tx("singleSettlementTitle", "Рассчитать члена экипажа"))}</strong>
+            <span>${escapeHtml(tx("singleSettlementNoCandidate", "Нет активного члена экипажа для списания. Казначей не выводится через эту кнопку."))}</span>
+          </div>
+          <button class="btn btn--secondary" type="button" disabled>${escapeHtml(tx("singleSettlementLockedAction", "Недоступно"))}</button>
+        </div>
+      </section>
+    `;
+  }
+  const options = preview.participants.map((participant) => `
+    <option value="${escapeHtml(participant.id)}"${participant.id === preview.selectedId ? " selected" : ""}>${escapeHtml(participant.display_name || "-")}</option>
+  `).join("");
+  return `
+    <section class="shipcashbox-single-settlement">
+      <div class="shipcashbox-single-settlement__head">
+        <div>
+          <strong>${escapeHtml(tx("singleSettlementTitle", "Рассчитать члена экипажа"))}</strong>
+          <span>${escapeHtml(tx("singleSettlementText", "Если человек сходит раньше, рассчитайте его отдельно и продолжайте кассу без него."))}</span>
+        </div>
+        <label class="shipcashbox-field shipcashbox-single-settlement__select">
+          <span>${escapeHtml(tx("singleSettlementParticipant", "Член экипажа"))}</span>
+          <select data-single-settlement-select>
+            ${options}
+          </select>
+        </label>
+      </div>
+      ${renderSingleParticipantSettlementResult(session, preview.selectedId)}
+      <div class="shipcashbox-single-settlement__actions">
+        <p class="shipcashbox-note">${escapeHtml(tx("singleSettlementDraftNote", "После подтверждения человек будет исключен из будущих расчетов, а здесь останется запись его расчета."))}</p>
+        <button class="btn btn--primary settle-participant-btn" type="button" data-participant-id="${escapeHtml(preview.selectedId)}">${escapeHtml(tx("singleSettlementRemoveAction", "Рассчитать и списать"))}</button>
+      </div>
+    </section>
+  `;
+}
+
+function renderParticipantSettlementEvents(session) {
+  const events = Array.isArray(session.participant_settlements) ? session.participant_settlements : [];
+  const periods = Array.isArray(session.treasurer_periods) ? session.treasurer_periods : [];
+  const participantById = new Map((session.participants || []).map((participant) => [participant.id, participant]));
+  const timeline = [
+    ...periods.map((period) => ({
+      at: period.started_at || "",
+      name: participantById.get(period.treasurer_participant_id)?.display_name || period.treasurer_participant_id || "-",
+      text: period.reason === "treasurer_rotation"
+        ? tx("crewRotationTimelineTreasurer", "Принял казну")
+        : tx("crewRotationTimelineStarted", "Открыл кассу"),
+    })),
+    ...events.map((event) => {
+      const net = Number(event.net || 0);
+      const netLabel = net < -0.009
+        ? tx("singleSettlementOwes", "Он должен")
+        : net > 0.009
+          ? tx("singleSettlementReceives", "Ему должны")
+          : tx("singleSettlementEven", "Закрыт ровно");
+      return {
+        at: event.settled_at || "",
+        name: event.display_name || "-",
+        text: `${netLabel} ${money(Math.abs(net), event.currency || session.currency)}`,
+      };
+    }),
+  ].filter((item) => item.at || item.name).sort((a, b) => String(b.at || "").localeCompare(String(a.at || "")));
+  if (!timeline.length) return "";
+  return `
+    <section class="shipcashbox-settlement-events">
+      <strong>${escapeHtml(tx("crewRotationTimelineTitle", "Лента ротации"))}</strong>
+      <div class="shipcashbox-settlement-events__list">
+        ${timeline.map((event) => `
+            <article class="shipcashbox-settlement-event">
+              <div>
+                <b>${escapeHtml(event.name || "-")}</b>
+                <span>${escapeHtml(formatDateTime(event.at || ""))}</span>
+              </div>
+              <strong>${escapeHtml(event.text || "")}</strong>
+            </article>
+          `).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function renderTreasurerRotationCard(session) {
+  const treasurerId = session.treasurer_participant_id || "";
+  const currentTreasurer = (session.participants || []).find((participant) => participant.id === treasurerId) || null;
+  const candidates = (session.participants || []).filter((participant) => participant.active !== false && participant.id !== treasurerId);
+  const totals = session.totals || {};
+  const hasFinancialActivity = Number(totals.total_contributions || 0) > 0.009
+    || Number(totals.total_expenses || 0) > 0.009
+    || (Array.isArray(session.participant_settlements) && session.participant_settlements.length > 0);
+  const periodCount = Array.isArray(session.treasurer_periods) ? session.treasurer_periods.length : 1;
+  if (!candidates.length) {
+    return `
+      <section class="shipcashbox-rotation-card">
+        <div>
+          <strong>${escapeHtml(tx("crewRotationTreasurerTitle", "Передать казну"))}</strong>
+          <span>${escapeHtml(tx("crewRotationNoTreasurerCandidate", "Добавьте еще одного члена экипажа, чтобы передать роль казначея."))}</span>
+        </div>
+      </section>
+    `;
+  }
+  return `
+    <section class="shipcashbox-rotation-card">
+      <div class="shipcashbox-rotation-card__head">
+        <div>
+          <strong>${escapeHtml(tx("crewRotationTreasurerTitle", "Передать казну"))}</strong>
+          <span>${escapeHtml(txf("crewRotationTreasurerText", "Сейчас казну ведет {name}. После передачи старый казначей остается членом экипажа.", { name: currentTreasurer?.display_name || t("treasurerTag") }))}</span>
+        </div>
+        <label class="shipcashbox-field shipcashbox-single-settlement__select">
+          <span>${escapeHtml(tx("crewRotationNewTreasurer", "Новый казначей"))}</span>
+          <select id="crewRotationTreasurerSelect">
+            ${candidates.map((participant) => `<option value="${escapeHtml(participant.id)}">${escapeHtml(participant.display_name || "-")}</option>`).join("")}
+          </select>
+        </label>
+      </div>
+      <div class="shipcashbox-single-settlement__actions">
+        <p class="shipcashbox-note">${escapeHtml(hasFinancialActivity
+          ? tx("crewRotationTreasurerPeriodNote", "Передача закроет текущий период казначея и откроет новый. Старые расходы останутся в своем периоде.")
+          : tx("crewRotationTreasurerNote", "Это меняет роль в активной кассе, но не закрывает расчеты старого казначея."))} ${escapeHtml(txf("crewRotationPeriodsCount", "Периодов: {count}", { count: periodCount }))}</p>
+        <button class="btn btn--primary" type="button" id="rotateTreasurerButton">${escapeHtml(tx("crewRotationTreasurerAction", "Передать казну"))}</button>
+      </div>
+    </section>
+  `;
+}
+
+function renderCrewRotationWindow(session) {
+  return `
+    <div class="shipcashbox-settlement-board shipcashbox-rotation-board">
+      <section class="shipcashbox-card shipcashbox-card--window">
+        <div class="shipcashbox-card__head">
+          <div>
+            <p class="section-heading__eyebrow">${escapeHtml(tx("crewRotationEyebrow", "Экипаж"))}</p>
+            <h2>${escapeHtml(tx("crewRotationTitle", "Ротация экипажа"))}</h2>
+          </div>
+        </div>
+        <p class="shipcashbox-note">${escapeHtml(tx("crewRotationText", "Рабочий раздел для ухода, прихода и смены роли без закрытия всей судовой кассы."))}</p>
+      </section>
+      ${renderSingleParticipantSettlementCard(session)}
+      ${renderTreasurerRotationCard(session)}
+      <section class="shipcashbox-rotation-card">
+        <div class="shipcashbox-rotation-card__head">
+          <div>
+            <strong>${escapeHtml(tx("crewRotationAddTitle", "Принять члена экипажа"))}</strong>
+            <span>${escapeHtml(tx("crewRotationAddText", "Новый человек добавляется через командный состав и дальше участвует в текущей кассе."))}</span>
+          </div>
+          <button class="btn btn--secondary" type="button" id="crewRotationAddButton">${escapeHtml(tx("crewRotationAddAction", "Добавить в экипаж"))}</button>
+        </div>
+      </section>
+      ${renderParticipantSettlementEvents(session)}
+    </div>
+  `;
+}
+
 function renderCashboxCommandDeck(session, treasurer) {
   const totals = session.totals || {};
   const participants = session.participants || [];
   const personal = isPersonalSession(session);
-  const activeCount = participants.filter((participant) => participant.active !== false).length;
-  const syncedCount = participants.filter((participant) => participant.authorized_at || participant.role === "treasurer").length;
+  const activeParticipants = participants.filter((participant) => participant.active !== false);
+  const activeCount = activeParticipants.length;
+  const syncedCount = activeParticipants.filter((participant) => participant.authorized_at || participant.role === "treasurer").length;
   const transferCount = (session.settlement_preview?.lines || []).length;
   const cashboxBalance = Number(totals.cashbox_balance || 0);
   const balanceTone = cashboxBalance < -0.009 ? "negative" : cashboxBalance > 0.009 ? "positive" : "neutral";
   if (personal) {
     const recordCount = (treasurer?.entries || []).filter((entry) => entry.entry_kind === "expense" || entry.entry_kind === "contribution").length;
     return `
-      <section class="shipcashbox-command-deck shipcashbox-command-deck--personal" aria-label="${escapeHtml(tx("personalSummaryTitle", "Личный отчет"))}">
-        <div class="shipcashbox-command-deck__hero shipcashbox-command-deck__hero--${balanceTone}">
+      <section class="shipcashbox-personal-quiet" aria-label="${escapeHtml(tx("personalSummaryTitle", "Личный отчет"))}">
+        <div class="shipcashbox-personal-quiet__balance shipcashbox-personal-quiet__balance--${balanceTone}">
           <div>
-            <p>${escapeHtml(session.title || tx("personalDefaultTitle", "Личный журнал расходов"))}</p>
-            <strong>${escapeHtml(money(totals.cashbox_balance, session.currency, true))}</strong>
             <span>${escapeHtml(tx("personalBalanceLabel", "Остаток"))}</span>
+            <strong>${escapeHtml(money(totals.cashbox_balance, session.currency, true))}</strong>
           </div>
-          <button class="shipcashbox-command-deck__primary" type="button" data-workspace-window="reports">
-            <b>${escapeHtml(String(recordCount))}</b>
-            <span>${escapeHtml(tx("personalReportAction", "Отчет"))}</span>
-          </button>
+          <p>${escapeHtml(tx("autosaveLocal", "Записи сохраняются локально сразу, как в заметках."))}</p>
         </div>
-        <div class="shipcashbox-command-metrics">
-          <button type="button" data-workspace-window="reports">
+        <div class="shipcashbox-personal-quiet__stats">
+          <span>
             <span>${escapeHtml(tx("personalIncomeLabel", "Приходы"))}</span>
             <strong>${escapeHtml(money(totals.total_contributions, session.currency))}</strong>
-          </button>
-          <button type="button" data-workspace-window="reports">
+          </span>
+          <span>
             <span>${escapeHtml(t("summaryExpenses"))}</span>
             <strong>${escapeHtml(money(totals.total_expenses, session.currency))}</strong>
-          </button>
-          <button type="button" data-workspace-window="snapshot">
+          </span>
+          <span>
             <span>${escapeHtml(tx("personalRecordsLabel", "Записи"))}</span>
             <strong>${escapeHtml(String(recordCount))}</strong>
-          </button>
-          <button type="button" data-workspace-window="team">
-            <span>${escapeHtml(tx("personalSettingsLabel", "Настройки"))}</span>
+          </span>
+          <span>
+            <span>${escapeHtml(tx("modePersonalLabel", "Личный"))}</span>
             <strong>${escapeHtml(session.currency || "EUR")}</strong>
-          </button>
-        </div>
-        <div class="shipcashbox-command-strip">
-          <div class="shipcashbox-command-strip__crew">
-            <span class="shipcashbox-command-avatar">
-              <span class="debt-avatar debt-avatar--0">${escapeHtml(participantInitials(treasurer?.display_name || "Personal", 0))}</span>
-              <b>${escapeHtml(tx("personalModeBadge", "Личный режим"))}</b>
-            </span>
-          </div>
-          <div class="shipcashbox-command-strip__spent">
-            <span>${escapeHtml(t("spentFooterLabel"))}</span>
-            <strong>${escapeHtml(money(treasurer?.expenses || 0, session.currency))}</strong>
-          </div>
+          </span>
         </div>
       </section>
     `;
   }
-  const participantChips = participants.slice(0, 7).map((participant, index) => `
+  const participantChips = activeParticipants.slice(0, 7).map((participant, index) => `
     <span class="shipcashbox-command-avatar" title="${escapeHtml(participant.display_name || "")}">
       <span class="debt-avatar debt-avatar--${index % 8}">${escapeHtml(participantInitials(participant.display_name, index))}</span>
       <b>${escapeHtml(participant.display_name || "-")}</b>
     </span>
   `).join("");
-  const extraParticipants = Math.max(0, participants.length - 7);
+  const extraParticipants = Math.max(0, activeParticipants.length - 7);
 
   return `
     <section class="shipcashbox-command-deck" aria-label="${escapeHtml(t("summaryTitle"))}">
@@ -2842,7 +3403,7 @@ function renderArchiveRows(archive = [], canReopen = false) {
       <article class="shipcashbox-archive__row shipcashbox-archive__row--selectable">
         <div class="shipcashbox-card__row">
           <strong>${escapeHtml(item.title)}</strong>
-          <span class="shipcashbox-archive__status">${escapeHtml(t("archiveStatus"))}</span>
+          <span class="shipcashbox-archive__status">${escapeHtml(personal ? tx("personalArchiveStatus", "Закрыт") : t("archiveStatus"))}</span>
         </div>
         <div class="shipcashbox-archive__meta">${escapeHtml(t("archivedOn"))}: ${escapeHtml(item.closed_at || "")}</div>
         <div class="shipcashbox-archive__meta">${escapeHtml(meta)}</div>
@@ -2850,6 +3411,12 @@ function renderArchiveRows(archive = [], canReopen = false) {
       </article>
     `;
   }).join("");
+}
+
+function archiveRowsForCurrentMode(archive = []) {
+  if (state.viewer !== "treasurer" || !state.boot?.session) return archive;
+  const personal = isPersonalSession(state.boot.session);
+  return archive.filter((item) => (item.session_mode === "personal") === personal);
 }
 
 function renderCrewDirectory(directory = []) {
@@ -2892,11 +3459,11 @@ function renderWorkspaceMenu() {
     if (isPersonalSession(state.boot.session)) {
       return `
         <div class="shipcashbox-window-menu">
-          ${renderWindowMenuButton("snapshot", t("summaryTitle"), t("workspaceSnapshotText"))}
+          ${renderWindowMenuButton("snapshot", tx("personalSummaryTitle", "Личный отчет"), tx("personalSnapshotText", "Остаток, приходы, расходы и число записей."))}
           ${renderWindowMenuButton("reports", tx("personalReportAction", "Отчет"), tx("personalReportText", "Приходы, расходы, остаток и список записей."))}
           ${renderWindowMenuButton("team", tx("personalSettingsLabel", "Настройки"), tx("personalSettingsText", "Название, валюта и начальный остаток личного журнала."))}
-          ${renderWindowMenuButton("archive", t("archiveTitle"), t("workspaceArchiveText"))}
-          ${renderWindowMenuButton("service", t("workspaceServiceTitle"), t("workspaceServiceText"))}
+          ${renderWindowMenuButton("archive", tx("personalArchiveTitle", "Архив личного журнала"), tx("personalArchiveText", "Закрытые личные журналы и сохраненные отчеты."))}
+          ${renderWindowMenuButton("service", tx("personalServiceTitle", "Сервис журнала"), tx("personalServiceText", "Ссылка, установка и обновление приложения."))}
         </div>
       `;
     }
@@ -2904,6 +3471,7 @@ function renderWorkspaceMenu() {
       <div class="shipcashbox-window-menu">
         ${renderWindowMenuButton("snapshot", t("summaryTitle"), t("workspaceSnapshotText"))}
         ${renderWindowMenuButton("team", t("participantsTitle"), t("workspaceTeamText"))}
+        ${renderWindowMenuButton("crew-rotation", tx("crewRotationTitle", "Ротация экипажа"), tx("crewRotationMenuText", "Уход, приход и смена казначея без закрытия всей кассы."))}
         ${renderWindowMenuButton("settlement", t("settlementTitle"), t("workspaceSettlementText"))}
         ${renderWindowMenuButton("reports", t("workspaceReportsTitle"), t("workspaceReportsText"))}
         ${renderWindowMenuButton("archive", t("archiveTitle"), t("workspaceArchiveText"))}
@@ -3090,7 +3658,7 @@ function renderTreasurerTeamWindow(session) {
           </label>
         </div>
         <div class="shipcashbox-actions shipcashbox-actions--team">
-          <button class="btn btn--primary" type="button" id="saveSessionButton" title="${escapeHtml(t("saveSessionHelp"))}" aria-label="${escapeHtml(t("saveSessionHelp"))}">${escapeHtml(t("saveSession"))}</button>
+          <button class="btn btn--primary" type="button" id="saveSessionButton" title="${escapeHtml(tx("personalSaveJournalHelp", "Сохранить название, валюту и начальный остаток."))}" aria-label="${escapeHtml(tx("personalSaveJournalHelp", "Сохранить название, валюту и начальный остаток."))}">${escapeHtml(tx("personalSaveJournal", "Сохранить журнал"))}</button>
         </div>
       </section>
     `;
@@ -3142,9 +3710,13 @@ function renderTreasurerSettlementWindow(session) {
         </div>
       </div>
       <p class="shipcashbox-note">${escapeHtml(settlementText)}</p>
-      ${renderSettlementFlow(session)}
-      <div class="shipcashbox-lines">${renderSettlementLines(session.settlement_preview?.lines || [], session.currency)}</div>
+      <div class="shipcashbox-settlement-board">
+        ${renderSettlementSummaryCards(session)}
+        ${renderSettlementFlow(session)}
+        ${renderCloseAudit(session)}
+      </div>
       <div class="shipcashbox-actions">
+        <button class="btn btn--secondary" type="button" data-workspace-window="crew-rotation">${escapeHtml(tx("crewRotationSettlementAction", "Рассчитать члена экипажа"))}</button>
         <button class="btn btn--secondary print-settlement-pdf-btn" type="button" title="${escapeHtml(tx("debtMatrixPdfHelp", "Открыть альбомный отчет для печати или сохранения в PDF."))}" aria-label="${escapeHtml(tx("debtMatrixPdfHelp", "Открыть альбомный отчет для печати или сохранения в PDF."))}">${escapeHtml(tx("debtMatrixPdfButton", "Сохранить PDF"))}</button>
         <button class="btn btn--primary" type="button" id="confirmSettlementButton" title="${escapeHtml(t("settleNowHelp"))}" aria-label="${escapeHtml(t("settleNowHelp"))}">${escapeHtml(t("settleNow"))}</button>
       </div>
@@ -3158,14 +3730,14 @@ function renderPersonalArchiveDetailWindow(session) {
       <section class="shipcashbox-card shipcashbox-card--window shipcashbox-card--archive-detail">
         <div class="shipcashbox-card__head">
           <div>
-            <p class="section-heading__eyebrow">${escapeHtml(t("archiveStatus"))}</p>
+            <p class="section-heading__eyebrow">${escapeHtml(tx("personalArchiveStatus", "Закрыт"))}</p>
             <h2>${escapeHtml(session.title || tx("personalArchiveTitle", "Архив личного журнала"))}</h2>
             <p class="shipcashbox-note">${escapeHtml(t("archivedOn"))}: ${escapeHtml(session.closed_at || "")}</p>
           </div>
         </div>
         <div class="shipcashbox-actions">
-          ${renderExports(session.exports || [])}
-          <button class="btn btn--primary reopen-session-btn" type="button" data-id="${escapeHtml(session.id)}" title="${escapeHtml(t("reopenCashboxHelp"))}" aria-label="${escapeHtml(t("reopenCashboxHelp"))}">${escapeHtml(t("reopenCashbox"))}</button>
+          ${renderExports(session.exports || [], { personal: true })}
+          <button class="btn btn--primary reopen-session-btn" type="button" data-id="${escapeHtml(session.id)}" title="${escapeHtml(tx("personalReopenJournalHelp", "Снова открыть личный журнал, чтобы внести забытые записи."))}" aria-label="${escapeHtml(tx("personalReopenJournalHelp", "Снова открыть личный журнал, чтобы внести забытые записи."))}">${escapeHtml(tx("personalReopenJournal", "Открыть журнал"))}</button>
           <button class="btn btn--secondary delete-archive-session-btn" type="button" data-id="${escapeHtml(session.id)}" title="${escapeHtml(t("deleteArchiveHelp"))}" aria-label="${escapeHtml(t("deleteArchiveHelp"))}">${escapeHtml(t("deleteArchive"))}</button>
         </div>
       </section>
@@ -3257,32 +3829,37 @@ function renderParticipantSettlementWindow() {
 
 function renderServiceWindow() {
   const installBox = renderInstallBox();
+  const personal = isPersonalSession();
+  const guideEyebrow = personal ? tx("personalGuideEyebrow", "Личный журнал") : t("guideEyebrow");
+  const guideTitle = personal ? tx("personalGuideTitle", "Как вести личные расходы") : t("guideTitle");
+  const guideSteps = personal
+    ? ["personalGuideStep1", "personalGuideStep2", "personalGuideStep3", "personalGuideStep4"].map((key) => tx(key, ""))
+    : [t("guideStep1"), t("guideStep2"), t("guideStep3"), t("guideStep4")];
+  const serviceTitle = personal ? tx("personalServiceTitle", "Сервис журнала") : t("workspaceServiceTitle");
+  const serviceText = personal ? tx("personalServiceText", "Ссылка, установка и обновление приложения.") : t("workspaceServiceText");
   return `
     <div class="shipcashbox-stack">
       <section class="shipcashbox-card shipcashbox-card--window">
         <div class="shipcashbox-card__head">
           <div>
-            <p class="section-heading__eyebrow">${escapeHtml(t("guideEyebrow"))}</p>
-            <h2>${escapeHtml(t("guideTitle"))}</h2>
+            <p class="section-heading__eyebrow">${escapeHtml(guideEyebrow)}</p>
+            <h2>${escapeHtml(guideTitle)}</h2>
           </div>
         </div>
         <div class="shipcashbox-guide">
-          <p>${escapeHtml(t("guideStep1"))}</p>
-          <p>${escapeHtml(t("guideStep2"))}</p>
-          <p>${escapeHtml(t("guideStep3"))}</p>
-          <p>${escapeHtml(t("guideStep4"))}</p>
+          ${guideSteps.map((step) => `<p>${escapeHtml(step)}</p>`).join("")}
         </div>
       </section>
       <section class="shipcashbox-card shipcashbox-card--window">
         <div class="shipcashbox-card__head">
           <div>
             <p class="section-heading__eyebrow">${escapeHtml(t("shareTool"))}</p>
-            <h2>${escapeHtml(t("workspaceServiceTitle"))}</h2>
+            <h2>${escapeHtml(serviceTitle)}</h2>
           </div>
         </div>
-        <p class="shipcashbox-note">${escapeHtml(t("workspaceServiceText"))}</p>
+        <p class="shipcashbox-note">${escapeHtml(serviceText)}</p>
         <div class="shipcashbox-actions">
-          <button class="btn btn--primary" type="button" id="workspaceShareToolButton" title="${escapeHtml(t("shareToolHelp"))}" aria-label="${escapeHtml(t("shareToolHelp"))}">${escapeHtml(t("shareTool"))}</button>
+          <button class="btn btn--primary" type="button" id="workspaceShareToolButton" title="${escapeHtml(personal ? tx("personalShareToolHelp", "Отправить ссылку на этот инструмент.") : t("shareToolHelp"))}" aria-label="${escapeHtml(personal ? tx("personalShareToolHelp", "Отправить ссылку на этот инструмент.") : t("shareToolHelp"))}">${escapeHtml(t("shareTool"))}</button>
         </div>
       </section>
       <section class="shipcashbox-card shipcashbox-card--window shipcashbox-card--service-reset">
@@ -3351,17 +3928,19 @@ function workspaceWindowPayload(windowName) {
   }
 
   if (state.viewer === "treasurer" && state.boot && windowName === "archive") {
+    const personal = isPersonalSession(state.boot.session);
     return {
-      eyebrow: t("archiveTitle"),
-      title: t("archiveTitle"),
-      body: `<section class="shipcashbox-card shipcashbox-card--window"><div class="shipcashbox-archive">${renderArchiveRows(state.boot.archive || [], false)}</div></section>`,
+      eyebrow: personal ? tx("personalArchiveTitle", "Архив личного журнала") : t("archiveTitle"),
+      title: personal ? tx("personalArchiveTitle", "Архив личного журнала") : t("archiveTitle"),
+      body: `<section class="shipcashbox-card shipcashbox-card--window"><div class="shipcashbox-archive">${renderArchiveRows(archiveRowsForCurrentMode(state.boot.archive || []), false)}</div></section>`,
     };
   }
 
   if (state.viewer === "treasurer" && windowName === "service") {
+    const personal = isPersonalSession();
     return {
-      eyebrow: t("workspaceServiceTitle"),
-      title: t("workspaceServiceTitle"),
+      eyebrow: personal ? tx("personalServiceTitle", "Сервис журнала") : t("workspaceServiceTitle"),
+      title: personal ? tx("personalServiceTitle", "Сервис журнала") : t("workspaceServiceTitle"),
       body: renderServiceWindow(),
     };
   }
@@ -3381,6 +3960,13 @@ function workspaceWindowPayload(windowName) {
         eyebrow: personal ? tx("personalSettingsLabel", "Настройки") : t("participantsTitle"),
         title: personal ? tx("personalSettingsTitle", "Личный журнал") : t("participantsTitle"),
         body: renderTreasurerTeamWindow(session),
+      };
+    }
+    if (!personal && windowName === "crew-rotation") {
+      return {
+        eyebrow: tx("crewRotationEyebrow", "Экипаж"),
+        title: tx("crewRotationTitle", "Ротация экипажа"),
+        body: renderCrewRotationWindow(session),
       };
     }
     if (personal && ["settlement", "log-diagram", "log-tree"].includes(windowName)) {
@@ -4695,6 +5281,8 @@ function bindAttachmentSheetUi() {
 async function uploadCashboxAttachment(file) {
   const formData = new FormData();
   formData.append("file", file);
+  formData.append("session_id", state.boot?.session?.id || "");
+  formData.append("session_mode", state.boot?.session?.session_mode || "");
   const payload = await apiForm("upload-attachment", formData);
   state.boot = payload;
   saveCache(BOOT_CACHE_KEY, payload);
@@ -4709,7 +5297,11 @@ async function deleteCashboxAttachment(attachmentId, options = {}) {
   if (!attachmentId) return;
   const payload = await api("delete-attachment", {
     method: "POST",
-    body: JSON.stringify({ attachment_id: attachmentId }),
+    body: JSON.stringify({
+      attachment_id: attachmentId,
+      session_id: state.boot?.session?.id || "",
+      session_mode: state.boot?.session?.session_mode || "",
+    }),
   });
   state.boot = payload;
   saveCache(BOOT_CACHE_KEY, payload);
@@ -4861,7 +5453,7 @@ function bindTreasurerUi() {
     });
   });
   $("confirmSettlementButton")?.addEventListener("click", async () => {
-    if (!window.confirm(t("confirmSettlement"))) return;
+    if (!confirmByWord("confirmSettlementByWord", "Чтобы закрыть кассу, введите {word}. Архив и письма будут созданы автоматически.", "confirmSettlementWord", "ЗАКРЫТЬ")) return;
     try {
       const payload = await api("confirm-settlement", {
         method: "POST",
@@ -4878,10 +5470,14 @@ function bindTreasurerUi() {
   });
   document.querySelectorAll(".reopen-session-btn").forEach((button) => {
     button.addEventListener("click", async () => {
+      if (!confirmByWord("reopenArchiveByWord", "Чтобы восстановить архив, введите {word}. Текущая активная касса должна быть закрыта.", "reopenArchiveWord", "ВОССТАНОВИТЬ")) return;
       try {
         const payload = await api("reopen-session", {
           method: "POST",
-          body: JSON.stringify({ id: button.dataset.id }),
+          body: JSON.stringify({
+            id: button.dataset.id,
+            mode: state.boot?.session?.session_mode || "",
+          }),
         });
         state.boot = payload;
         saveCache(BOOT_CACHE_KEY, payload);
@@ -4893,11 +5489,15 @@ function bindTreasurerUi() {
   });
   document.querySelectorAll(".delete-archive-session-btn").forEach((button) => {
     button.addEventListener("click", async () => {
-      if (!window.confirm(t("deleteArchiveConfirm"))) return;
+      if (!confirmByWord("deleteArchiveByWord", "Чтобы удалить карточку архива, введите {word}. На сервере она будет храниться еще 10 дней.", "deleteArchiveWord", "УДАЛИТЬ")) return;
       try {
         const payload = await api("delete-archive-session", {
           method: "POST",
-          body: JSON.stringify({ id: button.dataset.id }),
+          body: JSON.stringify({
+            id: button.dataset.id,
+            mode: state.boot?.session?.session_mode || "",
+            current_session_id: state.boot?.session?.id || "",
+          }),
         });
         state.boot = payload;
         saveCache(BOOT_CACHE_KEY, payload);
@@ -5177,10 +5777,88 @@ function bindWorkspaceModalUi() {
   document.querySelectorAll(".print-archive-settlement-pdf-btn").forEach((button) => {
     button.addEventListener("click", () => printArchiveSettlementPdf(button.dataset.id || ""));
   });
+  document.querySelectorAll("[data-single-settlement-select]").forEach((select) => {
+    select.addEventListener("change", () => {
+      const card = select.closest(".shipcashbox-single-settlement");
+      const result = card?.querySelector("[data-single-settlement-result]");
+      if (!result || !state.boot?.session) return;
+      result.outerHTML = renderSingleParticipantSettlementResult(state.boot.session, select.value || "");
+      const action = card?.querySelector(".settle-participant-btn");
+      if (action) action.dataset.participantId = select.value || "";
+    });
+  });
+  document.querySelectorAll(".settle-participant-btn").forEach((button) => {
+    button.addEventListener("click", async () => {
+      if (button.dataset.busy === "1") return;
+      const participantId = button.dataset.participantId || "";
+      const participantName = state.boot?.session?.participants?.find((participant) => participant.id === participantId)?.display_name || "";
+      if (!participantId) return;
+      if (!window.confirm(txf("singleSettlementRemoveConfirm", "Рассчитать {name} и вывести из будущего учета?", { name: participantName || tx("singleSettlementParticipant", "Участник") }))) return;
+      try {
+        button.dataset.busy = "1";
+        button.disabled = true;
+        button.setAttribute("aria-busy", "true");
+        button.textContent = tx("singleSettlementProcessing", "Списываю...");
+        const payload = await api("settle-participant", {
+          method: "POST",
+          body: JSON.stringify({ id: state.boot.session.id, participant_id: participantId }),
+        });
+        state.boot = payload;
+        saveCache(BOOT_CACHE_KEY, payload);
+        localStorage.setItem(ENGAGED_KEY, "1");
+        render({ preserveWorkspace: true });
+        openWorkspaceModal("crew-rotation");
+        setFlash(tx("singleSettlementRemoved", "Член экипажа рассчитан и списан из будущего учета."));
+      } catch (error) {
+        setFlash(error.message || t("loadFailed"), true);
+      } finally {
+        delete button.dataset.busy;
+        button.disabled = false;
+        button.setAttribute("aria-busy", "false");
+        button.textContent = tx("singleSettlementRemoveAction", "Рассчитать и списать");
+      }
+    });
+  });
+  $("rotateTreasurerButton")?.addEventListener("click", async () => {
+    const button = $("rotateTreasurerButton");
+    if (!button || button.disabled || button.dataset.busy === "1") return;
+    const select = $("crewRotationTreasurerSelect");
+    const participantId = select?.value || "";
+    const participantName = state.boot?.session?.participants?.find((participant) => participant.id === participantId)?.display_name || "";
+    if (!participantId) return;
+    if (!window.confirm(txf("crewRotationTreasurerConfirm", "Передать казну: {name}?", { name: participantName || tx("crewRotationNewTreasurer", "Новый казначей") }))) return;
+    try {
+      button.dataset.busy = "1";
+      button.disabled = true;
+      button.setAttribute("aria-busy", "true");
+      button.textContent = tx("crewRotationTreasurerProcessing", "Передаю...");
+      const payload = await api("rotate-treasurer", {
+        method: "POST",
+        body: JSON.stringify({ id: state.boot.session.id, participant_id: participantId }),
+      });
+      state.boot = payload;
+      saveCache(BOOT_CACHE_KEY, payload);
+      localStorage.setItem(ENGAGED_KEY, "1");
+      render({ preserveWorkspace: true });
+      openWorkspaceModal("crew-rotation");
+      setFlash(tx("crewRotationTreasurerDone", "Казна передана новому казначею."));
+    } catch (error) {
+      setFlash(error.message || t("loadFailed"), true);
+    } finally {
+      delete button.dataset.busy;
+      button.disabled = false;
+      button.setAttribute("aria-busy", "false");
+      button.textContent = tx("crewRotationTreasurerAction", "Передать казну");
+    }
+  });
+  $("crewRotationAddButton")?.addEventListener("click", () => {
+    openWorkspaceModal("team");
+    window.setTimeout(() => addParticipantDraftRow(), 80);
+  });
   $("saveSessionButton") && ($("saveSessionButton").onclick = () => saveSessionMeta().catch((error) => setFlash(error.message || t("loadFailed"))));
   $("addParticipantButton") && ($("addParticipantButton").onclick = () => addParticipantDraftRow());
   $("confirmSettlementButton") && ($("confirmSettlementButton").onclick = async () => {
-    if (!window.confirm(t("confirmSettlement"))) return;
+    if (!confirmByWord("confirmSettlementByWord", "Чтобы закрыть кассу, введите {word}. Архив и письма будут созданы автоматически.", "confirmSettlementWord", "ЗАКРЫТЬ")) return;
     try {
       const payload = await api("confirm-settlement", {
         method: "POST",
@@ -5197,6 +5875,7 @@ function bindWorkspaceModalUi() {
   });
   document.querySelectorAll(".reopen-session-btn").forEach((button) => {
     button.onclick = async () => {
+      if (!confirmByWord("reopenArchiveByWord", "Чтобы восстановить архив, введите {word}. Текущая активная касса должна быть закрыта.", "reopenArchiveWord", "ВОССТАНОВИТЬ")) return;
       try {
         const payload = await api("reopen-session", {
           method: "POST",
@@ -5212,7 +5891,7 @@ function bindWorkspaceModalUi() {
   });
   document.querySelectorAll(".delete-archive-session-btn").forEach((button) => {
     button.onclick = async () => {
-      if (!window.confirm(t("deleteArchiveConfirm"))) return;
+      if (!confirmByWord("deleteArchiveByWord", "Чтобы удалить карточку архива, введите {word}. На сервере она будет храниться еще 10 дней.", "deleteArchiveWord", "УДАЛИТЬ")) return;
       try {
         const payload = await api("delete-archive-session", {
           method: "POST",
@@ -5515,32 +6194,72 @@ function bindInstallUi() {
   });
 }
 
-async function loadTreasurerBoot() {
-  stopParticipantSchedule();
-  stopTreasurerAutosave();
-  resetEditorLock();
+function applyTreasurerBootPayload(payload) {
   state.viewer = "treasurer";
   state.participant = null;
   state.participantDraft = "";
+  state.boot = payload;
+  state.treasurerDraft = loadTreasurerDraft(
+    payload.session?.id,
+    (payload.session?.participants || []).find((participant) => participant.id === payload.session?.treasurer_participant_id)?.notebook_text || ""
+  );
+  saveCache(BOOT_CACHE_KEY, payload);
+  render();
+}
+
+function renderStartChoice(message = "") {
+  state.viewer = "guest";
+  state.boot = null;
+  state.participant = null;
+  state.participantDraft = "";
+  state.treasurerDraft = "";
+  render();
+  if (message) setFlash(message);
+}
+
+async function loadTreasurerBoot(mode = "") {
+  stopParticipantSchedule();
+  stopTreasurerAutosave();
+  resetEditorLock();
+  const preferredMode = normalizeEntryMode(mode) || lastExplicitMode();
   try {
-    const payload = await api("boot");
-    state.boot = payload;
-    state.treasurerDraft = loadTreasurerDraft(payload.session?.id, (payload.session?.participants || []).find((participant) => participant.id === payload.session?.treasurer_participant_id)?.notebook_text || "");
-    saveCache(BOOT_CACHE_KEY, payload);
-    render();
+    if (preferredMode) {
+      const payload = await api(`boot&mode=${encodeURIComponent(preferredMode)}`);
+      if (payload.session) {
+        applyTreasurerBootPayload(payload);
+        return;
+      }
+      renderStartChoice(tx("entryChooseWorkspace", "Выберите, с чем работаете сейчас."));
+      return;
+    }
+
+    const results = await Promise.allSettled([
+      api("boot&mode=personal"),
+      api("boot&mode=group"),
+    ]);
+    const fulfilled = results
+      .filter((result) => result.status === "fulfilled")
+      .map((result) => result.value);
+    const activePayloads = fulfilled.filter((payload) => payload.session);
+
+    if (activePayloads.length === 1) {
+      applyTreasurerBootPayload(activePayloads[0]);
+      return;
+    }
+
+    if (!fulfilled.length) {
+      throw results.find((result) => result.status === "rejected")?.reason || new Error(t("loadFailed"));
+    }
+
+    renderStartChoice(activePayloads.length > 1 ? tx("entryChooseWorkspace", "Выберите, с чем работаете сейчас.") : "");
   } catch (error) {
     const cached = loadCache(BOOT_CACHE_KEY);
     if (cached) {
-      state.boot = cached;
-      state.treasurerDraft = loadTreasurerDraft(cached.session?.id, (cached.session?.participants || []).find((participant) => participant.id === cached.session?.treasurer_participant_id)?.notebook_text || "");
-      render();
+      applyTreasurerBootPayload(cached);
       setFlash(t("offlineCache"), true);
       return;
     }
-    state.boot = null;
-    state.treasurerDraft = "";
-    state.viewer = "guest";
-    render();
+    renderStartChoice();
     setFlash(error.message || t("loadFailed"), true);
   }
 }
@@ -5698,6 +6417,7 @@ function render(options = {}) {
   const preservedWorkspaceScroll = shouldPreserveWorkspace ? ($("workspaceModalBody")?.scrollTop || 0) : 0;
   applyTheme();
   syncAppModeClasses();
+  syncChromeVisibility();
   updateTopbarText();
   if (!shouldPreserveWorkspace) {
     closeWorkspaceModal();
@@ -5721,6 +6441,7 @@ function render(options = {}) {
     renderGuest();
   }
   syncAppModeClasses();
+  syncChromeVisibility();
   updateTopbarText();
   if (shouldPreserveWorkspace) {
     window.requestAnimationFrame(() => {
@@ -5849,12 +6570,18 @@ document.addEventListener("brkovicToolAuthChanged", () => {
 });
 
 document.addEventListener("DOMContentLoaded", async () => {
-  document.querySelectorAll("#cashboxAppMenuButton, #cashboxMobileMenuButton").forEach((button) => {
+  syncChromeVisibility();
+  document.querySelectorAll("#cashboxGuestMenuButton, #cashboxAppMenuButton, #cashboxMobileMenuButton").forEach((button) => {
     button.addEventListener("click", openAppMenu);
   });
   document.querySelectorAll("#cashboxStartButton, #cashboxMobileStartButton").forEach((button) => {
     button.addEventListener("click", openStartScreen);
   });
+  $("cashboxMenuStart")?.addEventListener("click", () => {
+    closeAppMenu();
+    openStartScreen();
+  });
+  $("workspaceStartButton")?.addEventListener("click", openStartScreen);
   $("cashboxMenuWorkspace")?.addEventListener("click", () => {
     closeAppMenu();
     openWorkspaceModal("menu");
@@ -5888,7 +6615,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       button.disabled = false;
     }
   });
-  document.querySelector(".shipcashbox-app-menu__theme")?.addEventListener("click", (event) => {
+  document.addEventListener("click", (event) => {
     const button = event.target.closest?.("[data-cashbox-theme]");
     if (!button) return;
     localStorage.setItem(THEME_KEY, button.dataset.cashboxTheme === "night" ? "night" : "day");
