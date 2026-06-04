@@ -18,6 +18,7 @@
 /ship-cashbox/storage/.ship-cashbox-secret
 /ship-cashbox/storage/.ship-cashbox.env
 /ship-cashbox/storage/sessions/**/*.json
+/ship-cashbox/storage/backups/
 /ship-cashbox/storage/exports/*
 !/ship-cashbox/storage/exports/.gitkeep
 !/ship-cashbox/storage/.htaccess
