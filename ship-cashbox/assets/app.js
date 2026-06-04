@@ -8,7 +8,7 @@ const THEME_KEY = "navdesk_watch_theme_v1";
 const ENGAGED_KEY = "ship_cashbox_engaged_v1";
 const DISMISSED_INSTALL_KEY = "ship_cashbox_install_dismissed_v1";
 const BOOT_CACHE_KEY = "ship_cashbox_boot_cache_v1";
-const SHELL_VERSION = "20260604-cashbox-menu-hidden-25";
+const SHELL_VERSION = "20260605-cashbox-structure-repair-26";
 const SHELL_PURGE_KEY = "ship_cashbox_shell_purge_v1";
 const SHELL_RELEASE_STATE_KEY = "ship_cashbox_shell_release_state_v1";
 const LAST_MODE_KEY = "ship_cashbox_last_explicit_mode_v1";
@@ -2630,24 +2630,24 @@ function toggleAccountPanel() {
 async function openActiveJournal() {
   closeAppMenu();
   const cachedMode = normalizeEntryMode(loadCache(BOOT_CACHE_KEY)?.session?.session_mode);
-  const preferredMode = normalizeEntryMode(activeSession()?.session_mode) || lastExplicitMode() || cachedMode;
-  if (!preferredMode) {
-    renderStartChoice();
-    showSoftNoticeModal(
-      tx("activeJournalEmptyTitle", "Активного журнала пока нет"),
-      tx("activeJournalEmptyText", "Начните работу в личном журнале, кассе команды или ручном расчете. После этого пункт «Активный журнал» будет сразу возвращать вас в последнюю рабочую сессию.")
-    );
-    return;
-  }
+  const modeCandidates = [
+    normalizeEntryMode(activeSession()?.session_mode),
+    lastExplicitMode(),
+    cachedMode,
+    "personal",
+    "group",
+  ].filter(Boolean).filter((mode, index, list) => list.indexOf(mode) === index);
   try {
-    const payload = await api(`boot&mode=${encodeURIComponent(preferredMode)}`);
-    if (payload.session) {
-      applyTreasurerBootPayload(payload);
-      return;
+    for (const mode of modeCandidates) {
+      const payload = await api(`boot&mode=${encodeURIComponent(mode)}`);
+      if (payload.session) {
+        applyTreasurerBootPayload(payload);
+        return;
+      }
     }
   } catch (error) {
     const cached = loadCache(BOOT_CACHE_KEY);
-    if (cached?.session?.status === "active" && normalizeEntryMode(cached.session.session_mode) === preferredMode) {
+    if (cached?.session?.status === "active") {
       applyTreasurerBootPayload(cached);
       setFlash(t("offlineCache"), true);
       return;
@@ -4569,7 +4569,7 @@ function renderTreasurer() {
         <div class="shipcashbox-notebook-shell">
           ${renderNotebookSheetMeta(notebookText, session.currency, selectedReadyRecord)}
           ${selectedReadyRecord ? renderReadyRecordLayer(selectedReadyRecord, session.currency) : ""}
-          <textarea id="treasurerNotebook" class="shipcashbox-notebook-textarea" placeholder="${escapeHtml(personal ? tx("personalNotebookPlaceholder", "+500 аванс / 40 топливо / 15 кофе") : t("notebookPlaceholder"))}" aria-label="${escapeHtml(personal ? tx("personalNotebookTitle", "Личный блокнот") : t("treasurerNotebookTitle"))}" ${readOnly ? "readonly" : ""}>${escapeHtml(notebookText)}</textarea>
+          <textarea id="treasurerNotebook" class="shipcashbox-notebook-textarea" placeholder="${escapeHtml(personal ? tx("personalNotebookPlaceholder", "Введите строки учета: сумма и пояснение.") : t("notebookPlaceholder"))}" aria-label="${escapeHtml(personal ? tx("personalNotebookTitle", "Личный блокнот") : t("treasurerNotebookTitle"))}" ${readOnly ? "readonly" : ""}>${escapeHtml(notebookText)}</textarea>
           <div class="shipcashbox-notebook-proof-rail" id="treasurerNotebookProofRail" aria-label="${escapeHtml(t("lineProofAction"))}" hidden></div>
           ${renderNotebookLockOverlay()}
         </div>

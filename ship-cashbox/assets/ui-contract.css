@@ -486,6 +486,35 @@ body.navdesk-theme-night.shipcashbox-body .shipcashbox-app-menu__settings--top {
   gap: 7px !important;
 }
 
+.shipcashbox-body .shipcashbox-app-menu .management-modal-nav__button,
+.shipcashbox-body .shipcashbox-app-menu .management-modal-nav a {
+  border: 1px solid rgba(185, 150, 94, 0.20) !important;
+  border-radius: 16px !important;
+  background:
+    linear-gradient(135deg, rgba(255, 250, 239, 0.92), rgba(238, 231, 216, 0.74)) !important;
+  color: var(--cashbox-text-day) !important;
+  box-shadow: none !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.01em !important;
+}
+
+.shipcashbox-body .shipcashbox-app-menu .management-modal-nav__button:hover,
+.shipcashbox-body .shipcashbox-app-menu .management-modal-nav__button:focus-visible,
+.shipcashbox-body .shipcashbox-app-menu .management-modal-nav a:hover,
+.shipcashbox-body .shipcashbox-app-menu .management-modal-nav a:focus-visible {
+  border-color: rgba(185, 150, 94, 0.36) !important;
+  background:
+    linear-gradient(135deg, rgba(255, 245, 221, 0.96), rgba(230, 212, 177, 0.82)) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-app-menu .management-modal-nav__button,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-app-menu .management-modal-nav a {
+  border-color: rgba(226, 189, 118, 0.20) !important;
+  background:
+    linear-gradient(135deg, rgba(42, 48, 48, 0.92), rgba(25, 32, 34, 0.88)) !important;
+  color: var(--cashbox-text-night) !important;
+}
+
 .shipcashbox-body .shipcashbox-app-menu__account[hidden] {
   display: none !important;
 }

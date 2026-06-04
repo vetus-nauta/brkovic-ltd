@@ -106,7 +106,7 @@
   }
 
   async function loadTranslations(lang) {
-    const langUrl = new URL(`../lang/${lang}.json?v=20260531-language-menu-01`, scriptUrl);
+    const langUrl = new URL(`../lang/${lang}.json?v=20260605-language-api-01`, scriptUrl);
     const response = await fetch(langUrl.href, { cache: "no-store" });
     if (!response.ok) throw new Error("Failed to load language file");
     return response.json();

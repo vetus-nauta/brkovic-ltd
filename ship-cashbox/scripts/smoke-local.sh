@@ -2,9 +2,9 @@
 set -eu
 
 BASE_URL="${BASE_URL:-http://127.0.0.1:18090}"
-SHELL_VERSION="${SHELL_VERSION:-20260604-cashbox-menu-hidden-25}"
+SHELL_VERSION="${SHELL_VERSION:-20260605-cashbox-structure-repair-26}"
 API_VERSION="${API_VERSION:-2026.06.04-ship-cashbox-storage-01}"
-SW_CACHE="${SW_CACHE:-ship-cashbox-shell-v20260604-151}"
+SW_CACHE="${SW_CACHE:-ship-cashbox-shell-v20260605-152}"
 TMP_DIR="${TMPDIR:-/tmp}/ship-cashbox-smoke"
 mkdir -p "$TMP_DIR"
 
@@ -55,6 +55,7 @@ fetch css "$BASE_URL/ship-cashbox/assets/app.css?v=$SHELL_VERSION" "$TMP_DIR/app
 fetch ui_css "$BASE_URL/ship-cashbox/assets/ui-contract.css?v=$SHELL_VERSION" "$TMP_DIR/ui-contract.css"
 fetch sw "$BASE_URL/ship-cashbox/sw.js?reload=$SHELL_VERSION" "$TMP_DIR/sw.js"
 fetch main_js "$BASE_URL/js/main.js?v=20260603-site-menu-guard-01" "$TMP_DIR/main.js"
+fetch language_js "$BASE_URL/js/language.js?v=20260605-language-api-01" "$TMP_DIR/language.js"
 fetch api_me "$BASE_URL/ship-cashbox/api/?action=me" "$TMP_DIR/me.json"
 fetch storage_health "$BASE_URL/ship-cashbox/api/?action=storage-health" "$TMP_DIR/storage-health.json"
 
@@ -77,6 +78,8 @@ contains js_no_modeless_boot_guard "boot&mode=" "$TMP_DIR/app.js"
 contains js_ready_records "renderCashboxReadyRecordsPanel" "$TMP_DIR/app.js"
 contains js_recovery_log "appendRecoveryLog" "$TMP_DIR/app.js"
 contains js_update_copy "защищенном сервере" "$TMP_DIR/app.js"
+contains language_api "BRKOVIC_LANGUAGE" "$TMP_DIR/language.js"
+contains language_options "Deutsch" "$TMP_DIR/language.js"
 contains css_personal_quiet "shipcashbox-personal-quiet" "$TMP_DIR/app.css"
 contains css_brand_header "Reuse the real Nav Desk header" "$TMP_DIR/app.css"
 contains css_equalizer_board "shipcashbox-equalizer-board" "$TMP_DIR/app.css"
