@@ -77,6 +77,15 @@ Private env file, not committed:
 ship-cashbox/storage/.ship-cashbox.env
 ```
 
+The same private env file is installed locally in both paired project copies:
+
+```text
+/home/alexey/GitHub/Revoyacht/brkovic-ltd/ship-cashbox/storage/.ship-cashbox.env
+/home/alexey/WebstormProjects/brkovic-ltd/ship-cashbox/storage/.ship-cashbox.env
+```
+
+Both files are local secrets and must remain ignored by Git.
+
 WebStorm datasource:
 
 ```text
