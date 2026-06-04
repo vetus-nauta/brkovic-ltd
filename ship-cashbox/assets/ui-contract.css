@@ -1,0 +1,2961 @@
+/* Ship Cashbox product UI contract.
+   Mobile-first final layer loaded after app.css. Keep this file small, direct, and semantic. */
+
+:root {
+  --cashbox-bg-day: #eef2f1;
+  --cashbox-bg-night: #101719;
+  --cashbox-surface-day: rgba(249, 251, 249, 0.96);
+  --cashbox-surface-night: rgba(16, 25, 30, 0.96);
+  --cashbox-surface-soft-day: rgba(237, 245, 243, 0.96);
+  --cashbox-surface-soft-night: rgba(18, 30, 35, 0.96);
+  --cashbox-line-day: rgba(16, 36, 58, 0.12);
+  --cashbox-line-night: rgba(226, 189, 118, 0.16);
+  --cashbox-text-day: #10243a;
+  --cashbox-text-night: #fff0cf;
+  --cashbox-muted-day: rgba(16, 36, 58, 0.66);
+  --cashbox-muted-night: rgba(248, 232, 199, 0.68);
+  --cashbox-accent: #b9965e;
+  --cashbox-radius: clamp(14px, 4vw, 22px);
+  --cashbox-gap: clamp(8px, 2.4vw, 16px);
+  --cashbox-pad: clamp(12px, 3.8vw, 22px);
+  --cashbox-touch: 44px;
+}
+
+.shipcashbox-body {
+  background:
+    radial-gradient(circle at 16% 8%, rgba(72, 125, 150, 0.12), transparent 30rem),
+    radial-gradient(circle at 88% 6%, rgba(196, 156, 92, 0.10), transparent 28rem),
+    var(--cashbox-bg-day) !important;
+  color: var(--cashbox-text-day);
+}
+
+body.navdesk-theme-night.shipcashbox-body {
+  background:
+    radial-gradient(circle at 16% 8%, rgba(72, 125, 150, 0.12), transparent 30rem),
+    radial-gradient(circle at 88% 6%, rgba(196, 156, 92, 0.08), transparent 28rem),
+    var(--cashbox-bg-night) !important;
+  color: var(--cashbox-text-night);
+}
+
+.shipcashbox-body .site-shell {
+  width: min(1120px, calc(100vw - clamp(16px, 4vw, 40px))) !important;
+  padding-block: clamp(8px, 2dvh, 18px) max(18px, env(safe-area-inset-bottom)) !important;
+}
+
+.shipcashbox-body .navdesk-page,
+.shipcashbox-body .shipcashbox-page,
+.shipcashbox-body .shipcashbox-workspace-section,
+.shipcashbox-body .shipcashbox-workspace-card,
+.shipcashbox-body .shipcashbox-shell,
+.shipcashbox-body .shipcashbox-panel,
+.shipcashbox-body .shipcashbox-stack {
+  min-width: 0 !important;
+}
+
+.shipcashbox-body .shipcashbox-workspace-card {
+  border-radius: var(--cashbox-radius) !important;
+}
+
+/* Header: theme switch lives in app menu, header keeps one light action. */
+.shipcashbox-body #cashboxGuestTopbar .navdesk-header-theme,
+.shipcashbox-body #navdesk-theme-card {
+  display: none !important;
+}
+
+.shipcashbox-body .shipcashbox-app-menu[hidden],
+.shipcashbox-body .shipcashbox-app-menu[aria-hidden="true"]:not(.is-open) {
+  display: none !important;
+}
+
+.shipcashbox-body .shipcashbox-app-menu {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 1200 !important;
+  min-width: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  margin: 0 !important;
+  padding: calc(env(safe-area-inset-top) + 14px) 12px calc(env(safe-area-inset-bottom) + 14px) !important;
+  place-items: start center !important;
+  background: transparent !important;
+  overflow: hidden !important;
+}
+
+.shipcashbox-body .shipcashbox-app-menu.is-open {
+  display: grid !important;
+}
+
+.shipcashbox-body .shipcashbox-app-menu .management-modal__backdrop {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 0 !important;
+  background: rgba(16, 36, 58, 0.22) !important;
+  backdrop-filter: blur(8px) saturate(125%) !important;
+  -webkit-backdrop-filter: blur(8px) saturate(125%) !important;
+}
+
+.shipcashbox-body .shipcashbox-app-menu .management-modal__dialog {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+.shipcashbox-body.shipcashbox-viewer-guest #cashboxGuestTopbar {
+  width: 100% !important;
+  margin: 0 auto var(--cashbox-gap) !important;
+}
+
+.shipcashbox-body.shipcashbox-viewer-guest #cashboxGuestTopbar .topbar.topbar--site-menu {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-height: 76px !important;
+  padding: 8px 10px 8px 12px !important;
+  border-radius: calc(var(--cashbox-radius) + 6px) !important;
+}
+
+.shipcashbox-body.shipcashbox-viewer-guest #cashboxGuestTopbar .brand,
+.shipcashbox-body.shipcashbox-viewer-guest #cashboxGuestTopbar .brand.brand--image {
+  min-width: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+}
+
+.shipcashbox-body.shipcashbox-viewer-guest #cashboxGuestTopbar .brand__picture--home {
+  width: 100% !important;
+  min-width: 0 !important;
+  justify-content: flex-start !important;
+  overflow: hidden !important;
+}
+
+.shipcashbox-body.shipcashbox-viewer-guest #cashboxGuestTopbar .brand__logo-image.navdesk-logo,
+body.navdesk-theme-night.shipcashbox-body.shipcashbox-viewer-guest #cashboxGuestTopbar .brand__logo-image.navdesk-logo {
+  width: min(100%, 260px) !important;
+  max-width: 260px !important;
+  height: clamp(48px, 14vw, 60px) !important;
+  max-height: 60px !important;
+  margin: 0 !important;
+  object-fit: contain !important;
+  object-position: left center !important;
+}
+
+.shipcashbox-body.shipcashbox-viewer-guest #cashboxGuestTopbar .topbar__actions {
+  width: auto !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  justify-self: end !important;
+  justify-content: end !important;
+  gap: 6px !important;
+}
+
+.shipcashbox-body #cashboxGuestMenuButton,
+.shipcashbox-body .shipcashbox-menu-button {
+  width: var(--cashbox-touch) !important;
+  min-width: var(--cashbox-touch) !important;
+  height: var(--cashbox-touch) !important;
+  min-height: var(--cashbox-touch) !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 13px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--cashbox-text-day) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body #cashboxGuestMenuButton,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-menu-button {
+  color: var(--cashbox-text-night) !important;
+}
+
+.shipcashbox-body #cashboxGuestMenuButton > span:last-child,
+.shipcashbox-body .shipcashbox-menu-button > span:last-child {
+  display: none !important;
+}
+
+.shipcashbox-body #cashboxGuestMenuButton .site-menu-button__icon,
+.shipcashbox-body .shipcashbox-menu-button .site-menu-button__icon {
+  display: grid !important;
+  place-items: center !important;
+  width: 24px !important;
+  min-width: 24px !important;
+  height: 18px !important;
+  min-height: 18px !important;
+  gap: 5px !important;
+}
+
+.shipcashbox-body #cashboxGuestMenuButton .site-menu-button__icon span,
+.shipcashbox-body .shipcashbox-menu-button .site-menu-button__icon span {
+  width: 24px !important;
+  min-width: 24px !important;
+  height: 2px !important;
+  min-height: 2px !important;
+  border-radius: 999px !important;
+  background: currentColor !important;
+}
+
+.shipcashbox-body .shipcashbox-cash-menu-button {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: auto !important;
+  min-width: 58px !important;
+  height: var(--cashbox-touch) !important;
+  min-height: var(--cashbox-touch) !important;
+  padding: 0 11px !important;
+  border: 1px solid var(--cashbox-line-day) !important;
+  border-radius: 14px !important;
+  background: rgba(249, 251, 249, 0.72) !important;
+  box-shadow: none !important;
+  color: var(--cashbox-text-day) !important;
+  font-size: 0.72rem !important;
+  font-weight: 850 !important;
+  letter-spacing: 0.02em !important;
+  line-height: 1 !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-cash-menu-button {
+  border-color: var(--cashbox-line-night) !important;
+  background: rgba(16, 25, 30, 0.72) !important;
+  color: var(--cashbox-text-night) !important;
+}
+
+/* Product surfaces: one visual system for entry, workspace, forms, menus. */
+.shipcashbox-body .shipcashbox-entry-hero,
+.shipcashbox-body .shipcashbox-entry-card,
+.shipcashbox-body .shipcashbox-entry-invite,
+.shipcashbox-body .shipcashbox-card,
+.shipcashbox-body .shipcashbox-window-link,
+.shipcashbox-body .shipcashbox-modal__card,
+.shipcashbox-body .shipcashbox-app-menu .management-modal__dialog,
+.shipcashbox-body .shipcashbox-field input,
+.shipcashbox-body .shipcashbox-field textarea,
+.shipcashbox-body .shipcashbox-field select,
+.shipcashbox-body .shipcashbox-notebook-textarea {
+  border-color: var(--cashbox-line-day) !important;
+  border-radius: var(--cashbox-radius) !important;
+  background: var(--cashbox-surface-day) !important;
+  box-shadow: none !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-entry-hero,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-entry-card,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-entry-invite,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-card,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-window-link,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal__card,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-app-menu .management-modal__dialog,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-field input,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-field textarea,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-field select,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-notebook-textarea {
+  border-color: var(--cashbox-line-night) !important;
+  background: var(--cashbox-surface-night) !important;
+}
+
+.shipcashbox-body h1,
+.shipcashbox-body h2,
+.shipcashbox-body h3,
+.shipcashbox-body h4,
+.shipcashbox-body strong {
+  color: var(--cashbox-text-day) !important;
+  text-shadow: none !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body h1,
+body.navdesk-theme-night.shipcashbox-body h2,
+body.navdesk-theme-night.shipcashbox-body h3,
+body.navdesk-theme-night.shipcashbox-body h4,
+body.navdesk-theme-night.shipcashbox-body strong {
+  color: var(--cashbox-text-night) !important;
+}
+
+.shipcashbox-body p,
+.shipcashbox-body span,
+.shipcashbox-body label,
+.shipcashbox-body .shipcashbox-note,
+.shipcashbox-body .shipcashbox-field span {
+  color: var(--cashbox-muted-day);
+}
+
+body.navdesk-theme-night.shipcashbox-body p,
+body.navdesk-theme-night.shipcashbox-body span,
+body.navdesk-theme-night.shipcashbox-body label,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-note,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-field span {
+  color: var(--cashbox-muted-night);
+}
+
+/* Entry screen: mobile is primary, desktop only expands. */
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-workspace-card {
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-screen {
+  display: grid !important;
+  width: 100% !important;
+  max-width: 1040px !important;
+  margin-inline: auto !important;
+  gap: var(--cashbox-gap) !important;
+}
+
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-hero {
+  min-height: auto !important;
+  padding: var(--cashbox-pad) !important;
+}
+
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-hero__copy {
+  max-width: none !important;
+  gap: 3px !important;
+  justify-items: start !important;
+}
+
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-hero__copy p {
+  margin: 0 !important;
+  color: var(--cashbox-accent) !important;
+  font-size: clamp(0.62rem, 2.8vw, 0.72rem) !important;
+  letter-spacing: 0.08em !important;
+}
+
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-hero__copy h2 {
+  max-width: 15ch !important;
+  margin: 0 !important;
+  font-size: clamp(1.55rem, 8vw, 2.35rem) !important;
+  letter-spacing: -0.035em !important;
+  line-height: 0.98 !important;
+}
+
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-hero__copy span {
+  max-width: 58ch !important;
+  margin: 0 !important;
+  font-size: clamp(0.76rem, 3.4vw, 0.9rem) !important;
+  line-height: 1.22 !important;
+}
+
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-grid {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: var(--cashbox-gap) !important;
+  background: transparent !important;
+}
+
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card,
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--journal,
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--crew,
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--equalizer {
+  display: grid !important;
+  grid-row: auto !important;
+  grid-template-columns: minmax(104px, 38%) minmax(0, 1fr) !important;
+  min-height: clamp(138px, 39vw, 190px) !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card__media,
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--journal .shipcashbox-entry-card__media,
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--crew .shipcashbox-entry-card__media,
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--equalizer .shipcashbox-entry-card__media {
+  min-height: 0 !important;
+  height: 100% !important;
+  aspect-ratio: auto !important;
+}
+
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card__media img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card__copy,
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--journal .shipcashbox-entry-card__copy,
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--crew .shipcashbox-entry-card__copy,
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--equalizer .shipcashbox-entry-card__copy {
+  display: grid !important;
+  align-content: center !important;
+  min-width: 0 !important;
+  padding: clamp(12px, 3.6vw, 18px) !important;
+  gap: clamp(6px, 1.8vw, 9px) !important;
+}
+
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card h2,
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--journal h2 {
+  margin: 0 !important;
+  font-size: clamp(1.12rem, 5.8vw, 1.55rem) !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1.02 !important;
+  overflow-wrap: anywhere;
+}
+
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card p {
+  margin: 0 !important;
+  font-size: clamp(0.76rem, 3.45vw, 0.9rem) !important;
+  line-height: 1.24 !important;
+}
+
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card .btn {
+  width: fit-content !important;
+  max-width: 100% !important;
+  min-height: 34px !important;
+  padding: 0 13px !important;
+  font-size: clamp(0.72rem, 3.1vw, 0.84rem) !important;
+}
+
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-invite {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 10px !important;
+  padding: var(--cashbox-pad) !important;
+}
+
+/* Workspace and modal mobile comfort. */
+.shipcashbox-body .shipcashbox-appbar,
+.shipcashbox-body .shipcashbox-mobile-masthead {
+  width: min(100%, 1040px) !important;
+  margin-inline: auto !important;
+}
+
+.shipcashbox-body .shipcashbox-grid,
+.shipcashbox-body .shipcashbox-grid--treasurer,
+.shipcashbox-body .shipcashbox-equalizer-board,
+.shipcashbox-body .shipcashbox-equalizer-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)) !important;
+}
+
+.shipcashbox-body .shipcashbox-card,
+.shipcashbox-body .shipcashbox-window-link {
+  padding: var(--cashbox-pad) !important;
+}
+
+.shipcashbox-body .shipcashbox-field input,
+.shipcashbox-body .shipcashbox-field textarea,
+.shipcashbox-body .shipcashbox-field select {
+  width: 100% !important;
+  min-height: var(--cashbox-touch) !important;
+  font-size: 16px !important;
+}
+
+.shipcashbox-body .shipcashbox-actions,
+.shipcashbox-body .shipcashbox-notebook-footer,
+.shipcashbox-body .shipcashbox-notebook-footer__actions {
+  grid-template-columns: 1fr !important;
+  align-items: stretch !important;
+}
+
+.shipcashbox-body .shipcashbox-actions .btn,
+.shipcashbox-body .shipcashbox-notebook-footer__actions .btn,
+.shipcashbox-body .shipcashbox-window-link {
+  min-height: var(--cashbox-touch) !important;
+}
+
+.shipcashbox-body .shipcashbox-app-menu .management-modal__dialog,
+.shipcashbox-body .shipcashbox-modal__card {
+  width: min(100%, calc(100vw - 24px)) !important;
+  max-width: 520px !important;
+  max-height: min(86dvh, 760px) !important;
+  overflow: auto !important;
+  padding: var(--cashbox-pad) !important;
+}
+
+.shipcashbox-body .shipcashbox-app-menu .management-modal__dialog {
+  max-width: 390px !important;
+}
+
+.shipcashbox-body .shipcashbox-app-menu__settings--top {
+  margin: 0 0 10px !important;
+  padding: 10px 12px !important;
+  border: 1px solid var(--cashbox-line-day) !important;
+  border-radius: 16px !important;
+  background: var(--cashbox-surface-soft-day) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-app-menu__settings--top {
+  border-color: var(--cashbox-line-night) !important;
+  background: var(--cashbox-surface-soft-night) !important;
+}
+
+.shipcashbox-body .shipcashbox-app-menu .management-modal-nav a,
+.shipcashbox-body .shipcashbox-app-menu .management-modal-nav__button {
+  min-height: var(--cashbox-touch) !important;
+  border-radius: 14px !important;
+}
+
+.shipcashbox-body .shipcashbox-app-menu__nav {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 7px !important;
+}
+
+.shipcashbox-body .shipcashbox-app-menu__account[hidden] {
+  display: none !important;
+}
+
+.shipcashbox-body .shipcashbox-language-modal .shipcashbox-modal__card {
+  max-width: 360px !important;
+}
+
+.shipcashbox-body .shipcashbox-language-modal__status {
+  margin: 0 0 10px !important;
+  font-size: 0.76rem !important;
+}
+
+.shipcashbox-body .shipcashbox-language-modal__list {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 7px !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+.shipcashbox-body .shipcashbox-language-modal__list .site-menu-language__option {
+  min-height: 52px !important;
+  padding: 7px 5px !important;
+  border-radius: 13px !important;
+  font-size: 0.68rem !important;
+  line-height: 1.05 !important;
+  text-align: center !important;
+}
+
+.shipcashbox-body .shipcashbox-language-modal__list .site-menu-language__name {
+  display: block !important;
+  font-size: 0.82rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.03em !important;
+}
+
+.shipcashbox-body .shipcashbox-language-modal__list .site-menu-language__full {
+  display: block !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  color: var(--cashbox-muted-day) !important;
+  font-size: 0.56rem !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-language-modal__list .site-menu-language__full {
+  color: var(--cashbox-muted-night) !important;
+}
+
+.shipcashbox-body .shipcashbox-language-modal__list .site-menu-language__current,
+.shipcashbox-body .shipcashbox-language-modal__list .site-menu-language__pending {
+  display: none !important;
+}
+
+.shipcashbox-body .shipcashbox-window-link.is-disabled,
+.shipcashbox-body .shipcashbox-window-link:disabled {
+  cursor: not-allowed !important;
+  opacity: 0.52 !important;
+}
+
+@media (max-width: 390px) {
+  .shipcashbox-body .site-shell {
+    width: min(100%, calc(100vw - 12px)) !important;
+  }
+
+  .shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card,
+  .shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--journal,
+  .shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--crew,
+  .shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--equalizer {
+    grid-template-columns: minmax(96px, 36%) minmax(0, 1fr) !important;
+  }
+}
+
+@media (min-width: 720px) {
+  .shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card,
+  .shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--journal,
+  .shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--crew,
+  .shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--equalizer {
+    grid-template-columns: 1fr !important;
+    min-height: 0 !important;
+  }
+
+  .shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card__media,
+  .shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--journal .shipcashbox-entry-card__media,
+  .shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--crew .shipcashbox-entry-card__media,
+  .shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--equalizer .shipcashbox-entry-card__media {
+    height: auto !important;
+    aspect-ratio: 16 / 10 !important;
+  }
+}
+
+@media (min-width: 1040px) {
+  .shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-hero__copy h2 {
+    font-size: 2.2rem !important;
+  }
+}
+
+/* Readability and media reliability pass. */
+.shipcashbox-body .shipcashbox-flash {
+  width: 100% !important;
+  margin: 0 0 var(--cashbox-gap) !important;
+  padding: 10px 14px !important;
+  border: 1px solid var(--cashbox-line-day) !important;
+  border-radius: 16px !important;
+  background: rgba(249, 251, 249, 0.92) !important;
+  color: var(--cashbox-muted-day) !important;
+  font-size: 0.86rem !important;
+  font-weight: 750 !important;
+  line-height: 1.25 !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest).shipcashbox-has-active-group .shipcashbox-flash {
+  position: fixed !important;
+  left: max(10px, env(safe-area-inset-left)) !important;
+  right: max(10px, env(safe-area-inset-right)) !important;
+  bottom: max(12px, env(safe-area-inset-bottom)) !important;
+  z-index: 1200 !important;
+  width: auto !important;
+  max-width: min(420px, calc(100vw - 20px)) !important;
+  margin: 0 auto !important;
+  pointer-events: none !important;
+  box-shadow: 0 14px 42px rgba(16, 36, 58, 0.16) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-flash {
+  border-color: var(--cashbox-line-night) !important;
+  background: rgba(16, 25, 30, 0.92) !important;
+  color: var(--cashbox-muted-night) !important;
+}
+
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card__media {
+  position: relative !important;
+  overflow: hidden !important;
+  background:
+    linear-gradient(135deg, rgba(16, 36, 58, 0.18), rgba(185, 150, 94, 0.22)),
+    #d7ddd8 !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card__media {
+  background:
+    linear-gradient(135deg, rgba(226, 189, 118, 0.18), rgba(16, 36, 58, 0.32)),
+    #182026 !important;
+}
+
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card__media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(255,255,255,0.08), transparent 34%, rgba(255,255,255,0.06));
+  pointer-events: none;
+}
+
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card__media img {
+  position: relative !important;
+  z-index: 1 !important;
+  display: block !important;
+  opacity: 1 !important;
+}
+
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card__media:has(img[src])::after {
+  opacity: 0.18;
+}
+
+/* Active journal polish pass. */
+.shipcashbox-body.shipcashbox-viewer-guest #cashboxGuestCashMenuButton {
+  display: none !important;
+}
+
+.shipcashbox-body .shipcashbox-appbar .shipcashbox-mode-chip,
+.shipcashbox-body .shipcashbox-mobile-masthead .shipcashbox-mode-chip {
+  display: none !important;
+}
+
+.shipcashbox-body .shipcashbox-appbar__actions,
+.shipcashbox-body .shipcashbox-mobile-masthead {
+  gap: 6px !important;
+}
+
+.shipcashbox-body .shipcashbox-modal-x,
+.shipcashbox-body #workspaceCloseButton.shipcashbox-modal-x {
+  display: inline-grid !important;
+  place-items: center !important;
+  width: 38px !important;
+  min-width: 38px !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  padding: 0 !important;
+  border: 1px solid var(--cashbox-line-day) !important;
+  border-radius: 999px !important;
+  background: rgba(249, 251, 249, 0.72) !important;
+  color: var(--cashbox-text-day) !important;
+  box-shadow: none !important;
+  font-size: 1.2rem !important;
+  line-height: 1 !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal-x,
+body.navdesk-theme-night.shipcashbox-body #workspaceCloseButton.shipcashbox-modal-x {
+  border-color: var(--cashbox-line-night) !important;
+  background: rgba(16, 25, 30, 0.72) !important;
+  color: var(--cashbox-text-night) !important;
+}
+
+.shipcashbox-body .shipcashbox-modal__head {
+  align-items: start !important;
+  gap: 10px !important;
+}
+
+.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-modal__card--workspace,
+.shipcashbox-body .shipcashbox-modal__card--workspace {
+  max-width: min(390px, calc(100vw - 26px)) !important;
+  max-height: min(82dvh, 720px) !important;
+  padding: clamp(12px, 3.4vw, 18px) !important;
+}
+
+.shipcashbox-body .shipcashbox-modal__card--workspace .shipcashbox-modal__head h2 {
+  max-width: 9ch !important;
+  margin: 0 !important;
+  font-size: clamp(1.35rem, 7vw, 1.9rem) !important;
+  line-height: 1.02 !important;
+}
+
+.shipcashbox-body .shipcashbox-window-menu {
+  gap: 8px !important;
+}
+
+.shipcashbox-body .shipcashbox-window-link {
+  min-height: 0 !important;
+  padding: 13px 14px !important;
+}
+
+.shipcashbox-body .shipcashbox-window-link strong {
+  font-size: 0.98rem !important;
+  line-height: 1.12 !important;
+}
+
+.shipcashbox-body .shipcashbox-window-link span {
+  font-size: 0.82rem !important;
+  line-height: 1.28 !important;
+}
+
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-screen {
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card,
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--journal,
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--crew,
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--equalizer {
+  grid-template-columns: minmax(94px, 34%) minmax(0, 1fr) !important;
+  min-height: clamp(122px, 34vw, 154px) !important;
+  max-height: 170px !important;
+}
+
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card__media,
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--journal .shipcashbox-entry-card__media,
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--crew .shipcashbox-entry-card__media,
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--equalizer .shipcashbox-entry-card__media {
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 100% !important;
+  max-height: 170px !important;
+  overflow: hidden !important;
+}
+
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card__media img {
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 100% !important;
+  max-height: 170px !important;
+  object-fit: cover !important;
+  object-position: center !important;
+}
+
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card h2,
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--journal h2,
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--crew h2,
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--equalizer h2 {
+  font-size: clamp(1rem, 5.1vw, 1.38rem) !important;
+}
+
+.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card p {
+  font-size: clamp(0.72rem, 3.15vw, 0.84rem) !important;
+}
+
+.shipcashbox-body .shipcashbox-card--snapshot,
+.shipcashbox-body .shipcashbox-card--hero,
+.shipcashbox-body .shipcashbox-balance-card,
+.shipcashbox-body .shipcashbox-summary-hero {
+  background:
+    linear-gradient(135deg, rgba(232, 242, 236, 0.96), rgba(248, 247, 239, 0.96)) !important;
+}
+
+.shipcashbox-body .shipcashbox-card--snapshot strong,
+.shipcashbox-body .shipcashbox-balance-card strong,
+.shipcashbox-body .shipcashbox-summary-hero strong {
+  color: var(--cashbox-text-day) !important;
+}
+
+.shipcashbox-body .shipcashbox-participant-chip,
+.shipcashbox-body .shipcashbox-pill,
+.shipcashbox-body .shipcashbox-line-assistant,
+.shipcashbox-body .shipcashbox-notebook-current-line {
+  border-color: rgba(80, 118, 92, 0.18) !important;
+  background: rgba(234, 242, 236, 0.72) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-card--snapshot,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-card--hero,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-balance-card,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-summary-hero {
+  background:
+    linear-gradient(135deg, rgba(21, 35, 38, 0.98), rgba(26, 31, 31, 0.98)) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-participant-chip,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-pill,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-line-assistant,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-notebook-current-line {
+  border-color: rgba(226, 189, 118, 0.14) !important;
+  background: rgba(226, 189, 118, 0.07) !important;
+}
+
+.shipcashbox-body .shipcashbox-soft-notice .shipcashbox-modal__card {
+  max-width: 360px !important;
+  border-color: rgba(16, 36, 58, 0.10) !important;
+  background: rgba(249, 251, 249, 0.82) !important;
+  backdrop-filter: blur(18px) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-soft-notice .shipcashbox-modal__card {
+  border-color: rgba(226, 189, 118, 0.14) !important;
+  background: rgba(16, 25, 30, 0.82) !important;
+}
+
+.shipcashbox-body .shipcashbox-command-deck__hero--positive,
+.shipcashbox-body .shipcashbox-command-deck__hero {
+  background:
+    radial-gradient(circle at 12% 0%, rgba(255, 255, 255, 0.64), transparent 42%),
+    linear-gradient(135deg, #edf5ee, #dfece4) !important;
+  color: var(--cashbox-text-day) !important;
+}
+
+.shipcashbox-body .shipcashbox-command-deck__hero--positive p,
+.shipcashbox-body .shipcashbox-command-deck__hero--positive span,
+.shipcashbox-body .shipcashbox-command-deck__hero p,
+.shipcashbox-body .shipcashbox-command-deck__hero span {
+  color: var(--cashbox-muted-day) !important;
+}
+
+.shipcashbox-body .shipcashbox-command-deck__hero--positive strong,
+.shipcashbox-body .shipcashbox-command-deck__hero strong {
+  color: var(--cashbox-text-day) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-command-deck__hero--positive,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-command-deck__hero {
+  background:
+    radial-gradient(circle at 12% 0%, rgba(226, 189, 118, 0.12), transparent 42%),
+    linear-gradient(135deg, #172529, #1c2624) !important;
+  color: var(--cashbox-text-night) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-command-deck__hero--positive p,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-command-deck__hero--positive span,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-command-deck__hero p,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-command-deck__hero span {
+  color: var(--cashbox-muted-night) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-command-deck__hero--positive strong,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-command-deck__hero strong {
+  color: var(--cashbox-text-night) !important;
+}
+
+/* Ship Cashbox entry fullscreen contract.
+   This deliberately beats the late app.css guest layout block that narrows the phone screen. */
+body.shipcashbox-body.shipcashbox-viewer-guest {
+  --cashbox-phone-gutter: clamp(6px, 2.1vw, 10px);
+  --cashbox-entry-width: min(100%, calc(100vw - (var(--cashbox-phone-gutter) * 2)));
+}
+
+body.shipcashbox-body.shipcashbox-viewer-guest .site-shell {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: max(6px, env(safe-area-inset-top)) var(--cashbox-phone-gutter) max(10px, env(safe-area-inset-bottom)) !important;
+}
+
+body.shipcashbox-body.shipcashbox-viewer-guest #cashboxGuestTopbar,
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-workspace-section,
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-workspace-card,
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-shell,
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-panel,
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-screen {
+  width: var(--cashbox-entry-width) !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+body.shipcashbox-body.shipcashbox-viewer-guest #cashboxGuestTopbar {
+  margin-bottom: clamp(8px, 2.4vw, 12px) !important;
+}
+
+body.shipcashbox-body.shipcashbox-viewer-guest #cashboxGuestTopbar .topbar.topbar--site-menu {
+  width: 100% !important;
+  min-height: clamp(76px, 21vw, 96px) !important;
+  margin: 0 !important;
+  padding: clamp(9px, 2.6vw, 13px) clamp(10px, 3vw, 14px) !important;
+  border-radius: clamp(18px, 5.8vw, 28px) !important;
+  grid-template-columns: minmax(0, 1fr) var(--cashbox-touch) !important;
+}
+
+body.shipcashbox-body.shipcashbox-viewer-guest #cashboxGuestTopbar .brand,
+body.shipcashbox-body.shipcashbox-viewer-guest #cashboxGuestTopbar .brand.brand--image,
+body.shipcashbox-body.shipcashbox-viewer-guest #cashboxGuestTopbar .brand__picture--home {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+}
+
+body.shipcashbox-body.shipcashbox-viewer-guest #cashboxGuestTopbar .brand__logo-image.navdesk-logo,
+body.navdesk-theme-night.shipcashbox-body.shipcashbox-viewer-guest #cashboxGuestTopbar .brand__logo-image.navdesk-logo {
+  width: min(100%, 282px) !important;
+  max-width: 282px !important;
+  height: clamp(52px, 16vw, 68px) !important;
+  max-height: 68px !important;
+  object-fit: contain !important;
+  object-position: left center !important;
+}
+
+body.shipcashbox-body.shipcashbox-viewer-guest .navdesk-page,
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-page {
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 0 !important;
+  align-content: start !important;
+  padding: 0 !important;
+  gap: 0 !important;
+}
+
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-workspace-section,
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-workspace-card,
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-shell,
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-panel {
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-statusline--workspace {
+  display: none !important;
+}
+
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-screen {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  row-gap: clamp(8px, 2.4vw, 12px) !important;
+  overflow: visible !important;
+}
+
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-hero {
+  width: 100% !important;
+  min-height: 0 !important;
+  padding: clamp(13px, 3.6vw, 18px) clamp(14px, 4vw, 22px) !important;
+  border-radius: clamp(16px, 4.8vw, 22px) !important;
+}
+
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-hero__copy {
+  max-width: none !important;
+  justify-items: center !important;
+  text-align: center !important;
+}
+
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-hero__copy h2 {
+  max-width: 12ch !important;
+  font-size: clamp(1.78rem, 8.1vw, 2.45rem) !important;
+  line-height: 0.94 !important;
+}
+
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-grid {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: clamp(8px, 2.4vw, 12px) !important;
+  width: 100% !important;
+  max-width: none !important;
+}
+
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card,
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--journal,
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--crew,
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--equalizer {
+  width: 100% !important;
+  max-width: none !important;
+  display: grid !important;
+  grid-row: auto !important;
+  grid-template-columns: minmax(100px, 34%) minmax(0, 1fr) !important;
+  min-height: clamp(132px, 35vw, 160px) !important;
+  max-height: none !important;
+  overflow: hidden !important;
+  border-radius: clamp(16px, 4.8vw, 22px) !important;
+}
+
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card__media,
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--journal .shipcashbox-entry-card__media,
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--crew .shipcashbox-entry-card__media,
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--equalizer .shipcashbox-entry-card__media {
+  width: 100% !important;
+  height: auto !important;
+  min-height: clamp(132px, 35vw, 160px) !important;
+  max-height: none !important;
+  aspect-ratio: auto !important;
+}
+
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card__media img {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: inherit !important;
+  max-height: none !important;
+  object-fit: cover !important;
+  transform: none !important;
+}
+
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card__copy,
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--journal .shipcashbox-entry-card__copy,
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--crew .shipcashbox-entry-card__copy,
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--equalizer .shipcashbox-entry-card__copy {
+  min-width: 0 !important;
+  padding: clamp(12px, 3.4vw, 17px) !important;
+  gap: clamp(6px, 1.7vw, 9px) !important;
+  align-content: center !important;
+}
+
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card h2,
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--journal h2,
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--crew h2,
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--equalizer h2 {
+  font-size: clamp(1.08rem, 5.6vw, 1.52rem) !important;
+  line-height: 1.03 !important;
+  overflow-wrap: anywhere !important;
+}
+
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card p {
+  font-size: clamp(0.75rem, 3.25vw, 0.9rem) !important;
+  line-height: 1.24 !important;
+}
+
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card .btn {
+  min-height: 34px !important;
+  padding: 0 13px !important;
+}
+
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-invite {
+  width: 100% !important;
+  grid-template-columns: 1fr !important;
+  gap: clamp(8px, 2.4vw, 12px) !important;
+  padding: clamp(12px, 3.4vw, 17px) !important;
+  border-radius: clamp(16px, 4.8vw, 22px) !important;
+}
+
+@media (min-width: 720px) {
+  body.shipcashbox-body.shipcashbox-viewer-guest {
+    --cashbox-entry-width: min(1040px, calc(100vw - 40px));
+  }
+
+  body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card,
+  body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--journal,
+  body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--crew,
+  body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--equalizer {
+    grid-template-columns: 1fr !important;
+  }
+
+  body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card__media,
+  body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--journal .shipcashbox-entry-card__media,
+  body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--crew .shipcashbox-entry-card__media,
+  body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card--equalizer .shipcashbox-entry-card__media {
+    aspect-ratio: 16 / 10 !important;
+    min-height: 0 !important;
+  }
+}
+
+/* Ship Cashbox workspace fullscreen contract.
+   The entry screen is solved above; active journals must not fall back into the old nested card shell. */
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) {
+  --cashbox-work-gutter: clamp(6px, 2.1vw, 10px);
+  --cashbox-work-width: 100%;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .site-shell {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: max(6px, env(safe-area-inset-top)) var(--cashbox-work-gutter) max(10px, env(safe-area-inset-bottom)) !important;
+}
+
+html:has(body.shipcashbox-body:not(.shipcashbox-viewer-guest)) {
+  overflow-x: hidden !important;
+  scrollbar-gutter: auto !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) {
+  overflow-x: hidden !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(.shipcashbox-stack--cashbox-home) {
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(.shipcashbox-stack--cashbox-home) .site-shell {
+  display: grid !important;
+  grid-template-rows: minmax(0, 1fr) !important;
+  height: var(--cashbox-vvh, 100svh) !important;
+  max-height: var(--cashbox-vvh, 100svh) !important;
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(.shipcashbox-stack--cashbox-home) .shipcashbox-page {
+  display: grid !important;
+  grid-template-rows: auto minmax(0, 1fr) !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(.shipcashbox-stack--cashbox-home) .shipcashbox-workspace-section,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(.shipcashbox-stack--cashbox-home) .shipcashbox-workspace-card,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(.shipcashbox-stack--cashbox-home) .shipcashbox-shell,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(.shipcashbox-stack--cashbox-home) .shipcashbox-panel {
+  height: 100% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .navdesk-page,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-page {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  align-content: start !important;
+  padding: 0 !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-appbar,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-mobile-masthead,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-workspace-section,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-workspace-card,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-shell,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-panel,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-panel > .shipcashbox-stack {
+  width: var(--cashbox-work-width) !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  box-sizing: border-box !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-workspace-card,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest).shipcashbox-has-active-group .shipcashbox-workspace-card {
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-shell,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-panel,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-grid,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-grid--treasurer,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-stack,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-card,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-command-deck,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-personal-quiet,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-form__grid,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-actions,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-notebook-footer,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-notebook-shell {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-card img,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-panel img,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-modal__card img {
+  max-width: 100% !important;
+  height: auto !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-card--notebook {
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-notebook-textarea {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-modal {
+  padding: max(8px, env(safe-area-inset-top)) var(--cashbox-work-gutter) max(8px, env(safe-area-inset-bottom)) !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-modal__card,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-modal__card--workspace,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-modal--workscreen .shipcashbox-modal__card--workspace,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-modal__card--scan,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-app-menu .management-modal__dialog {
+  width: var(--cashbox-work-width) !important;
+  max-width: min(520px, var(--cashbox-work-width)) !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+@media (max-width: 860px) {
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-page {
+    gap: clamp(7px, 2.2vw, 10px) !important;
+    padding-bottom: max(10px, env(safe-area-inset-bottom)) !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-mobile-masthead {
+    top: max(6px, env(safe-area-inset-top)) !important;
+    min-height: 42px !important;
+    padding: 8px 10px !important;
+    border-radius: clamp(14px, 4vw, 18px) !important;
+    box-shadow: none !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest).shipcashbox-has-active-group .shipcashbox-workspace-card {
+    min-height: calc(var(--cashbox-vvh, 100svh) - 58px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-shell,
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-panel,
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-panel > .shipcashbox-stack,
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-grid,
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-stack {
+    gap: clamp(7px, 2.2vw, 10px) !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-card {
+    padding: clamp(11px, 3.4vw, 14px) !important;
+    border-radius: clamp(14px, 4.2vw, 18px) !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest).shipcashbox-has-active-group .shipcashbox-card--notebook {
+    min-height: calc(var(--cashbox-vvh, 100svh) - 76px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+    grid-template-rows: auto minmax(190px, 1fr) auto auto !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-notebook-textarea {
+    min-height: clamp(220px, 48svh, 520px) !important;
+    padding: 13px 14px 76px !important;
+    resize: none !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-actions,
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-notebook-footer,
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-notebook-footer__actions,
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-window-actions {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-modal__card,
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-modal__card--workspace,
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-modal--workscreen .shipcashbox-modal__card--workspace,
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-modal__card--scan,
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-app-menu .management-modal__dialog {
+    width: var(--cashbox-work-width) !important;
+    max-width: var(--cashbox-work-width) !important;
+    max-height: calc(100svh - (var(--cashbox-work-gutter) * 2)) !important;
+  }
+}
+
+@media (min-width: 861px) {
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) {
+    --cashbox-work-gutter: clamp(18px, 3vw, 40px);
+    --cashbox-work-width: min(1120px, calc(100vw - (var(--cashbox-work-gutter) * 2)));
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .site-shell {
+    padding-block: clamp(12px, 2dvh, 20px) max(20px, env(safe-area-inset-bottom)) !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-appbar,
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-workspace-section,
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-workspace-card,
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-shell,
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-panel {
+    width: var(--cashbox-work-width) !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-workspace-card {
+    padding: clamp(10px, 1.2vw, 14px) !important;
+    border-radius: var(--cashbox-radius) !important;
+  }
+}
+
+/* Ship Cashbox journal flow contract: cashbox overview and live journal are separate states. */
+.shipcashbox-body .shipcashbox-stack--cashbox-home,
+.shipcashbox-body .shipcashbox-stack--journal {
+  gap: clamp(8px, 2.2vw, 12px) !important;
+}
+
+.shipcashbox-body .shipcashbox-command-metric--split {
+  grid-column: span 2 !important;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+.shipcashbox-body .shipcashbox-command-metric--split > span {
+  display: grid !important;
+  align-content: center !important;
+  min-width: 0 !important;
+  padding: 10px 12px !important;
+}
+
+.shipcashbox-body .shipcashbox-command-metric--split > span + span {
+  border-left: 1px solid var(--cashbox-line-day) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-command-metric--split > span + span {
+  border-left-color: var(--cashbox-line-night) !important;
+}
+
+.shipcashbox-body .shipcashbox-card--ready-records {
+  padding: clamp(12px, 3vw, 16px) !important;
+}
+
+.shipcashbox-body .shipcashbox-card--ready-records > .shipcashbox-card__head {
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+.shipcashbox-body .shipcashbox-create-record-btn {
+  min-height: 38px !important;
+  padding: 0 15px !important;
+  border-radius: 999px !important;
+  white-space: nowrap !important;
+}
+
+.shipcashbox-body .shipcashbox-submitted-records--compact {
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+.shipcashbox-body .shipcashbox-submitted-records--compact .shipcashbox-submitted-records__head {
+  display: none !important;
+}
+
+.shipcashbox-body .shipcashbox-submitted-record__button {
+  min-height: 54px !important;
+  border-radius: 16px !important;
+  background: rgba(249, 251, 249, 0.72) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-submitted-record__button {
+  background: rgba(16, 25, 30, 0.72) !important;
+}
+
+.shipcashbox-body .shipcashbox-submitted-record__button strong {
+  font-size: clamp(0.92rem, 3.8vw, 1rem) !important;
+}
+
+.shipcashbox-body .shipcashbox-submitted-record__sum {
+  color: var(--cashbox-muted-day) !important;
+  font-size: 0.88rem !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-submitted-record__sum {
+  color: var(--cashbox-muted-night) !important;
+}
+
+.shipcashbox-body .shipcashbox-work-title--ledger {
+  display: flex !important;
+  align-items: baseline !important;
+  gap: 8px !important;
+  max-width: 100% !important;
+  white-space: nowrap !important;
+}
+
+.shipcashbox-body .shipcashbox-work-title--ledger span {
+  color: var(--cashbox-accent) !important;
+  font-size: 0.72em !important;
+  letter-spacing: -0.02em !important;
+}
+
+.shipcashbox-body .shipcashbox-back-to-cashbox {
+  min-height: 34px !important;
+  padding: 0 12px !important;
+  border-radius: 999px !important;
+  font-size: 0.82rem !important;
+  white-space: nowrap !important;
+}
+
+.shipcashbox-body .shipcashbox-ready-layer {
+  display: grid !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 0 8px !important;
+  padding: 12px 14px !important;
+  border: 1px solid var(--cashbox-line-day) !important;
+  border-radius: var(--cashbox-radius) !important;
+  background: rgba(16, 36, 58, 0.045) !important;
+  color: var(--cashbox-muted-day) !important;
+  font: inherit !important;
+  text-align: left !important;
+  cursor: pointer !important;
+  white-space: pre-wrap !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-ready-layer {
+  border-color: var(--cashbox-line-night) !important;
+  background: rgba(248, 232, 199, 0.055) !important;
+  color: var(--cashbox-muted-night) !important;
+}
+
+.shipcashbox-body .shipcashbox-ready-layer__meta {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  margin-bottom: 8px !important;
+  font-size: 0.74rem !important;
+  font-weight: 850 !important;
+  letter-spacing: 0.03em !important;
+}
+
+.shipcashbox-body .shipcashbox-ready-layer__text {
+  overflow-wrap: anywhere !important;
+  font-size: clamp(0.9rem, 3.7vw, 1rem) !important;
+  line-height: 1.42 !important;
+}
+
+.shipcashbox-body .shipcashbox-notebook-attach-inline {
+  position: static !important;
+  z-index: 3 !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  width: 38px !important;
+  height: 38px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: rgba(16, 36, 58, 0.56) !important;
+  font-size: 1.34rem !important;
+  line-height: 1 !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-notebook-attach-inline {
+  color: rgba(248, 232, 199, 0.58) !important;
+}
+
+.shipcashbox-body .shipcashbox-notebook-attach-inline:hover,
+.shipcashbox-body .shipcashbox-notebook-attach-inline:focus-visible {
+  color: var(--cashbox-accent) !important;
+  outline: none !important;
+  transform: translateY(-1px) !important;
+}
+
+.shipcashbox-body .shipcashbox-stack--journal .shipcashbox-notebook-footer__actions {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 42px !important;
+  justify-content: stretch !important;
+  width: 100% !important;
+}
+
+.shipcashbox-body .shipcashbox-stack--journal .shipcashbox-notebook-action--submit {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+.shipcashbox-body .shipcashbox-notebook-action--submit {
+  display: inline-grid !important;
+  grid-auto-flow: row !important;
+  place-items: center !important;
+  gap: 1px !important;
+  line-height: 1.08 !important;
+}
+
+.shipcashbox-body .shipcashbox-notebook-action__label {
+  display: block !important;
+}
+
+.shipcashbox-body .shipcashbox-notebook-action__total {
+  display: block !important;
+  font-size: 0.66rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.01em !important;
+  line-height: 1 !important;
+  opacity: 0.72 !important;
+}
+
+.shipcashbox-body .shipcashbox-card--notebook .shipcashbox-notebook-footer {
+  position: relative !important;
+  bottom: auto !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 8px 12px !important;
+  margin-top: 8px !important;
+  padding: 10px 12px !important;
+  border-color: var(--cashbox-line-day) !important;
+  border-radius: 16px !important;
+  background: rgba(249, 251, 249, 0.72) !important;
+  box-shadow: none !important;
+}
+
+.shipcashbox-body .shipcashbox-card--notebook .shipcashbox-notebook-footer__actions {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+}
+
+.shipcashbox-body .shipcashbox-card--notebook .shipcashbox-notebook-footer__status {
+  grid-column: 1 !important;
+  min-width: 0 !important;
+  color: var(--cashbox-muted-day) !important;
+  font-size: 0.72rem !important;
+  line-height: 1.22 !important;
+}
+
+.shipcashbox-body .shipcashbox-card--notebook .shipcashbox-notebook-footer__metric {
+  grid-column: 1 !important;
+  justify-items: start !important;
+  margin-left: 0 !important;
+}
+
+.shipcashbox-body .shipcashbox-card--notebook .shipcashbox-notebook-footer__metric span,
+.shipcashbox-body .shipcashbox-card--notebook .shipcashbox-notebook-footer__metric strong {
+  display: none !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-card--notebook .shipcashbox-notebook-footer {
+  border-color: var(--cashbox-line-night) !important;
+  background: rgba(16, 25, 30, 0.72) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-card--notebook .shipcashbox-notebook-footer__status {
+  color: var(--cashbox-muted-night) !important;
+}
+
+.shipcashbox-body .shipcashbox-ready-edit-modal .shipcashbox-modal__card {
+  width: min(360px, calc(100vw - 28px)) !important;
+  border-color: rgba(36, 55, 72, 0.14) !important;
+  background: rgba(249, 251, 249, 0.86) !important;
+  box-shadow: 0 18px 52px rgba(16, 36, 58, 0.18) !important;
+  backdrop-filter: blur(18px) saturate(1.12) !important;
+}
+
+.shipcashbox-body .shipcashbox-ready-edit-modal__actions {
+  display: grid !important;
+  grid-template-columns: 1fr 1.2fr !important;
+  gap: 8px !important;
+  margin-top: 12px !important;
+}
+
+.shipcashbox-body .shipcashbox-ready-edit-modal__actions .btn {
+  min-height: 40px !important;
+  border-radius: 999px !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-ready-edit-modal .shipcashbox-modal__card {
+  border-color: rgba(211, 191, 150, 0.16) !important;
+  background: rgba(16, 25, 30, 0.88) !important;
+  box-shadow: 0 18px 52px rgba(0, 0, 0, 0.34) !important;
+}
+
+@media (max-width: 520px) {
+  .shipcashbox-body .shipcashbox-command-metrics {
+    grid-template-columns: 1fr !important;
+  }
+
+  .shipcashbox-body .shipcashbox-command-metric--split {
+    grid-column: auto !important;
+  }
+
+  .shipcashbox-body .shipcashbox-card--ready-records > .shipcashbox-card__head,
+  .shipcashbox-body .shipcashbox-stack--journal .shipcashbox-workhead {
+    grid-template-columns: 1fr !important;
+  }
+
+  .shipcashbox-body .shipcashbox-create-record-btn,
+  .shipcashbox-body .shipcashbox-back-to-cashbox {
+    justify-self: start !important;
+  }
+
+  .shipcashbox-body .shipcashbox-work-title--ledger {
+    font-size: clamp(1rem, 5vw, 1.18rem) !important;
+  }
+
+  .shipcashbox-body .shipcashbox-card--notebook .shipcashbox-notebook-footer {
+    grid-template-columns: 1fr !important;
+    padding: 9px 10px !important;
+  }
+
+  .shipcashbox-body .shipcashbox-card--notebook .shipcashbox-notebook-footer__actions {
+    grid-column: 1 !important;
+    grid-row: auto !important;
+    justify-content: stretch !important;
+  }
+
+  .shipcashbox-body .shipcashbox-stack--journal .shipcashbox-notebook-footer__actions {
+    grid-template-columns: minmax(0, 1fr) 42px !important;
+    width: 100% !important;
+  }
+
+  .shipcashbox-body .shipcashbox-card--notebook .shipcashbox-notebook-action--submit {
+    min-width: 0 !important;
+    min-height: 42px !important;
+    padding-inline: 16px !important;
+  }
+}
+
+/* Language selector: light glass sheet pinned to the top. */
+.shipcashbox-body .shipcashbox-language-modal {
+  align-items: start !important;
+  justify-items: center !important;
+  padding: max(12px, env(safe-area-inset-top)) clamp(10px, 3vw, 18px) 0 !important;
+}
+
+.shipcashbox-body .shipcashbox-language-modal .shipcashbox-modal__backdrop {
+  background:
+    linear-gradient(180deg, rgba(16, 36, 58, 0.14), rgba(16, 36, 58, 0.02) 58%, transparent) !important;
+  backdrop-filter: blur(2px) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-language-modal .shipcashbox-modal__backdrop {
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.08) 58%, transparent) !important;
+}
+
+.shipcashbox-body .shipcashbox-language-modal .shipcashbox-modal__card {
+  width: min(100%, 356px) !important;
+  max-width: calc(100vw - 20px) !important;
+  max-height: none !important;
+  margin: 0 auto !important;
+  padding: 12px !important;
+  border: 1px solid rgba(255, 255, 255, 0.52) !important;
+  border-radius: 22px !important;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.76), rgba(241, 247, 245, 0.54)) !important;
+  box-shadow: 0 18px 42px rgba(16, 36, 58, 0.16) !important;
+  backdrop-filter: blur(18px) saturate(1.25) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-language-modal .shipcashbox-modal__card {
+  border-color: rgba(226, 189, 118, 0.18) !important;
+  background:
+    linear-gradient(145deg, rgba(16, 25, 30, 0.78), rgba(20, 34, 39, 0.58)) !important;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28) !important;
+}
+
+.shipcashbox-body .shipcashbox-language-modal .shipcashbox-modal__head {
+  position: static !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 34px !important;
+  align-items: start !important;
+  gap: 8px !important;
+  min-height: 0 !important;
+  margin: 0 0 8px !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+.shipcashbox-body .shipcashbox-language-modal .shipcashbox-modal__head h2 {
+  margin: 0 !important;
+  font-size: clamp(1rem, 5vw, 1.22rem) !important;
+  line-height: 1.05 !important;
+}
+
+.shipcashbox-body .shipcashbox-language-modal__close,
+.shipcashbox-body #cashboxLanguageCloseButton.shipcashbox-language-modal__close {
+  width: 34px !important;
+  min-width: 34px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: var(--cashbox-muted-day) !important;
+  font-size: 1.25rem !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-language-modal__close,
+body.navdesk-theme-night.shipcashbox-body #cashboxLanguageCloseButton.shipcashbox-language-modal__close {
+  color: var(--cashbox-muted-night) !important;
+}
+
+.shipcashbox-body .shipcashbox-language-modal__status {
+  margin: 0 0 8px !important;
+  color: var(--cashbox-muted-day) !important;
+  font-size: 0.72rem !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-language-modal__status {
+  color: var(--cashbox-muted-night) !important;
+}
+
+/* Entry title hard polish: keep the start hero compact on mobile. */
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-hero__copy h2 {
+  max-width: 16ch !important;
+  font-size: clamp(1.12rem, 5.2vw, 1.48rem) !important;
+  line-height: 0.98 !important;
+  letter-spacing: -0.055em !important;
+}
+
+@media (min-width: 720px) {
+  body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-hero__copy h2 {
+    font-size: clamp(1.35rem, 2.5vw, 1.7rem) !important;
+  }
+}
+
+/* Language auto-hint: detach the legacy inline card from the header. */
+body.shipcashbox-body #cashboxGuestTopbar .language-hint {
+  position: fixed !important;
+  top: max(12px, env(safe-area-inset-top)) !important;
+  left: 50% !important;
+  z-index: 1200 !important;
+  width: min(356px, calc(100vw - 22px)) !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 12px 12px 12px 14px !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: start !important;
+  gap: 10px !important;
+  border: 1px solid rgba(255, 255, 255, 0.52) !important;
+  border-radius: 22px !important;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.76), rgba(241, 247, 245, 0.54)) !important;
+  box-shadow: 0 18px 42px rgba(16, 36, 58, 0.16) !important;
+  color: var(--cashbox-muted-day) !important;
+  font-size: 0.88rem !important;
+  font-weight: 760 !important;
+  line-height: 1.32 !important;
+  transform: translateX(-50%) !important;
+  backdrop-filter: blur(18px) saturate(1.25) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body #cashboxGuestTopbar .language-hint {
+  border-color: rgba(226, 189, 118, 0.18) !important;
+  background:
+    linear-gradient(145deg, rgba(16, 25, 30, 0.78), rgba(20, 34, 39, 0.58)) !important;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28) !important;
+  color: var(--cashbox-muted-night) !important;
+}
+
+body.shipcashbox-body #cashboxGuestTopbar .language-hint span {
+  min-width: 0 !important;
+}
+
+body.shipcashbox-body #cashboxGuestTopbar .language-hint button {
+  min-width: 0 !important;
+  min-height: 34px !important;
+  padding: 0 12px !important;
+  border: 1px solid var(--cashbox-line-day) !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.42) !important;
+  color: var(--cashbox-text-day) !important;
+  box-shadow: none !important;
+  font-size: 0.82rem !important;
+  font-weight: 850 !important;
+  white-space: nowrap !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body #cashboxGuestTopbar .language-hint button {
+  border-color: var(--cashbox-line-night) !important;
+  background: rgba(16, 25, 30, 0.42) !important;
+  color: var(--cashbox-text-night) !important;
+}
+
+/* Entry hero geometry: compact title needs compact spacing too. */
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-screen {
+  row-gap: clamp(7px, 2vw, 10px) !important;
+}
+
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-hero {
+  min-height: 0 !important;
+  padding: clamp(10px, 2.8vw, 14px) clamp(12px, 3.4vw, 16px) !important;
+  border-radius: clamp(15px, 4.2vw, 20px) !important;
+}
+
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-hero__copy {
+  display: grid !important;
+  justify-items: center !important;
+  align-content: center !important;
+  gap: 3px !important;
+  min-height: 0 !important;
+  text-align: center !important;
+}
+
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-hero__copy p {
+  margin: 0 !important;
+  font-size: clamp(0.56rem, 2.4vw, 0.66rem) !important;
+  line-height: 1 !important;
+  letter-spacing: 0.08em !important;
+}
+
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-hero__copy h2 {
+  max-width: 17ch !important;
+  margin: 0 !important;
+  font-size: clamp(1.08rem, 4.9vw, 1.42rem) !important;
+  line-height: 0.96 !important;
+  letter-spacing: -0.05em !important;
+}
+
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-hero__copy span {
+  max-width: 31ch !important;
+  margin: 0 !important;
+  font-size: clamp(0.68rem, 3vw, 0.8rem) !important;
+  line-height: 1.18 !important;
+}
+
+@media (min-width: 720px) {
+  body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-hero {
+    padding: 14px 18px !important;
+  }
+
+  body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-hero__copy h2 {
+    font-size: clamp(1.28rem, 2.25vw, 1.62rem) !important;
+  }
+}
+
+/* Entry hero final tight pass. */
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-hero {
+  padding: 9px 12px !important;
+}
+
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-hero__copy {
+  gap: 2px !important;
+}
+
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-hero__copy h2 {
+  max-width: 18ch !important;
+  font-size: clamp(1rem, 4.45vw, 1.28rem) !important;
+  line-height: 0.95 !important;
+}
+
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-hero__copy span {
+  max-width: 34ch !important;
+  font-size: clamp(0.64rem, 2.75vw, 0.74rem) !important;
+  line-height: 1.14 !important;
+}
+
+/* Entry hero copy: one-line title, one-line full description. */
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-hero__copy {
+  width: 100% !important;
+  gap: 4px !important;
+}
+
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-hero__copy h2 {
+  width: 100% !important;
+  max-width: none !important;
+  font-size: clamp(0.98rem, 4.25vw, 1.2rem) !important;
+  line-height: 1 !important;
+  letter-spacing: -0.052em !important;
+  white-space: nowrap !important;
+}
+
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-hero__copy span {
+  width: 100% !important;
+  max-width: none !important;
+  font-size: clamp(0.58rem, 2.55vw, 0.68rem) !important;
+  line-height: 1.08 !important;
+  white-space: nowrap !important;
+}
+
+/* Entry hero professional type balance. */
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-hero {
+  padding: 10px 12px !important;
+}
+
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-hero__copy {
+  gap: 3px !important;
+}
+
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-hero__copy p {
+  font-size: clamp(0.57rem, 2.45vw, 0.66rem) !important;
+  line-height: 1 !important;
+  opacity: 0.94 !important;
+}
+
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-hero__copy h2 {
+  font-size: clamp(1.08rem, 4.68vw, 1.32rem) !important;
+  line-height: 1.02 !important;
+  letter-spacing: -0.048em !important;
+  white-space: nowrap !important;
+}
+
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-hero__copy span {
+  color: var(--cashbox-muted-day) !important;
+  font-size: clamp(0.62rem, 2.68vw, 0.72rem) !important;
+  font-weight: 760 !important;
+  letter-spacing: -0.01em !important;
+  line-height: 1.12 !important;
+  white-space: nowrap !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-hero__copy span {
+  color: var(--cashbox-muted-night) !important;
+}
+
+/* Entry hero final optical balance against mode cards. */
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-hero {
+  padding: 10px 12px !important;
+}
+
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-hero__copy {
+  gap: 4px !important;
+}
+
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-hero__copy h2 {
+  font-size: clamp(1.1rem, 4.9vw, 1.34rem) !important;
+  line-height: 1.02 !important;
+  letter-spacing: -0.082em !important;
+  white-space: nowrap !important;
+}
+
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-hero__copy span {
+  font-size: clamp(0.64rem, 2.75vw, 0.73rem) !important;
+  font-weight: 760 !important;
+  letter-spacing: -0.038em !important;
+  line-height: 1.14 !important;
+  white-space: nowrap !important;
+}
+
+/* Journal draft state: replaces the old line-by-line accounting assistant. */
+.shipcashbox-body .shipcashbox-journal-draft-state {
+  display: grid;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(36, 55, 72, 0.12);
+  border-radius: 18px;
+  color: rgba(20, 34, 50, 0.76);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.72), rgba(246, 242, 232, 0.56));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.66);
+}
+
+.shipcashbox-body .shipcashbox-journal-draft-state > div:first-child {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.shipcashbox-body .shipcashbox-journal-draft-state span {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.shipcashbox-body .shipcashbox-journal-draft-state strong {
+  color: rgba(18, 35, 54, 0.92);
+  font-size: 0.82rem;
+  font-weight: 850;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+.shipcashbox-body .shipcashbox-journal-draft-state p {
+  margin: 0;
+  color: rgba(48, 62, 76, 0.72);
+  font-size: 0.76rem;
+  line-height: 1.28;
+}
+
+.shipcashbox-body .shipcashbox-journal-draft-state__totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.shipcashbox-body .shipcashbox-journal-draft-state__totals span {
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.58);
+  color: rgba(27, 42, 58, 0.76);
+  font-size: 0.64rem;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.shipcashbox-body .shipcashbox-journal-draft-state--positive strong {
+  color: #216647;
+}
+
+.shipcashbox-body .shipcashbox-journal-draft-state--negative strong {
+  color: #9f3d35;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-journal-draft-state {
+  border-color: rgba(211, 191, 150, 0.14);
+  color: rgba(231, 236, 232, 0.78);
+  background: linear-gradient(135deg, rgba(22, 30, 37, 0.78), rgba(34, 32, 25, 0.52));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-journal-draft-state strong {
+  color: rgba(246, 240, 224, 0.92);
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-journal-draft-state p {
+  color: rgba(226, 232, 228, 0.68);
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-journal-draft-state__totals span {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(230, 236, 232, 0.72);
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-journal-draft-state--positive strong {
+  color: #8bcba9;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-journal-draft-state--negative strong {
+  color: #e6a096;
+}
+
+/* Live journal final contract: one feed, bounded active scroll, polished edit sheet. */
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-stack--journal {
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-card--notebook {
+  display: grid !important;
+  grid-template-rows: auto minmax(0, 1fr) auto auto !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-card--notebook .shipcashbox-workhead {
+  flex: 0 0 auto !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-notebook-shell {
+  display: block !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  scrollbar-width: none !important;
+  border: 1px solid var(--cashbox-line-day) !important;
+  border-radius: 18px !important;
+  background: rgba(249, 251, 249, 0.72) !important;
+  overscroll-behavior: contain !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-notebook-shell::-webkit-scrollbar,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-ready-layer::-webkit-scrollbar,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-notebook-textarea::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-notebook-shell {
+  border-color: var(--cashbox-line-night) !important;
+  background: rgba(16, 25, 30, 0.72) !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-ready-layer {
+  max-height: none !important;
+  margin: 0 !important;
+  overflow: visible !important;
+  padding: 13px 14px 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: rgba(71, 87, 105, 0.72) !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-ready-layer {
+  color: rgba(210, 218, 214, 0.68) !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-ready-layer__meta {
+  margin-bottom: 6px !important;
+  opacity: 0.82 !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-ready-layer__text {
+  color: inherit !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-notebook-textarea {
+  display: block !important;
+  height: auto !important;
+  min-height: 132px !important;
+  max-height: none !important;
+  overflow: hidden !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  resize: none !important;
+  overscroll-behavior: contain !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-notebook-shell:not(:has(.shipcashbox-ready-layer)) .shipcashbox-notebook-textarea {
+  min-height: 100% !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-notebook-textarea:focus {
+  box-shadow: inset 0 0 0 1px rgba(27, 55, 88, 0.08) !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-ready-layer + .shipcashbox-notebook-textarea {
+  min-height: 148px !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-journal-draft-state {
+  margin-top: 7px !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-ready-edit-modal {
+  place-items: end center !important;
+  padding: 12px !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-ready-edit-modal .shipcashbox-modal__card {
+  align-self: end !important;
+  width: min(360px, calc(100vw - 28px)) !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: min(46svh, 360px) !important;
+  overflow: auto !important;
+  padding: 16px !important;
+  border-radius: 24px !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-ready-edit-modal .shipcashbox-modal__head {
+  position: static !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-ready-edit-modal .shipcashbox-modal__head h2 {
+  margin: 4px 0 0 !important;
+  font-size: clamp(1.28rem, 6vw, 1.72rem) !important;
+  line-height: 1.02 !important;
+  letter-spacing: -0.05em !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-ready-edit-modal #readyRecordEditText {
+  margin: 14px 0 0 !important;
+  font-size: 0.86rem !important;
+  line-height: 1.42 !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-ready-edit-modal__actions {
+  margin-top: 16px !important;
+}
+
+@media (max-width: 860px) {
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest).shipcashbox-has-active-group .shipcashbox-workspace-card,
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest).shipcashbox-has-active-group .shipcashbox-shell,
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest).shipcashbox-has-active-group .shipcashbox-panel,
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest).shipcashbox-has-active-group .shipcashbox-panel > .shipcashbox-stack {
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest).shipcashbox-has-active-group .shipcashbox-card--notebook {
+    height: calc(var(--cashbox-vvh, 100svh) - 74px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+    max-height: calc(var(--cashbox-vvh, 100svh) - 74px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+    grid-template-rows: auto minmax(0, 1fr) auto auto !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-notebook-shell {
+    display: block !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-ready-layer {
+    max-height: none !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-notebook-textarea {
+    min-height: 118px !important;
+    padding: 13px 46px 52px 14px !important;
+  }
+}
+
+/* Cashbox home alignment: personal and group screens share one compact rhythm. */
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-stack--cashbox-home {
+  display: grid !important;
+  grid-template-rows: auto minmax(0, 1fr) !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: 100% !important;
+}
+
+.shipcashbox-body .shipcashbox-personal-quiet {
+  grid-template-columns: 1fr !important;
+  gap: 8px !important;
+  padding: 8px !important;
+  border-color: var(--cashbox-line-day) !important;
+  background: var(--cashbox-surface-soft-day) !important;
+  box-shadow: none !important;
+}
+
+.shipcashbox-body .shipcashbox-personal-quiet__balance {
+  grid-template-columns: minmax(0, 1fr) !important;
+  min-height: 76px !important;
+  padding: 11px 12px !important;
+  border: 1px solid var(--cashbox-line-day) !important;
+  border-radius: 16px !important;
+  background: rgba(249, 251, 249, 0.82) !important;
+}
+
+.shipcashbox-body .shipcashbox-personal-quiet__balance strong {
+  font-size: clamp(1.28rem, 6vw, 1.82rem) !important;
+}
+
+.shipcashbox-body .shipcashbox-personal-quiet__balance p {
+  margin-top: 4px !important;
+  max-width: 36ch !important;
+  font-size: 0.72rem !important;
+}
+
+.shipcashbox-body .shipcashbox-personal-quiet__stats {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 7px !important;
+}
+
+.shipcashbox-body .shipcashbox-personal-quiet__stats > span {
+  min-height: 52px !important;
+  padding: 8px 9px !important;
+  border-color: var(--cashbox-line-day) !important;
+  border-radius: 14px !important;
+  background: rgba(249, 251, 249, 0.72) !important;
+}
+
+.shipcashbox-body .shipcashbox-personal-quiet__stats strong {
+  font-size: clamp(0.82rem, 3.7vw, 0.98rem) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-personal-quiet {
+  border-color: var(--cashbox-line-night) !important;
+  background: var(--cashbox-surface-soft-night) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-personal-quiet__balance,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-personal-quiet__stats > span {
+  border-color: var(--cashbox-line-night) !important;
+  background: rgba(16, 25, 30, 0.72) !important;
+}
+
+/* Ready records: create card first, accumulated records scroll inside the same screen. */
+.shipcashbox-body .shipcashbox-card--ready-records {
+  display: grid !important;
+  align-content: stretch !important;
+  align-self: stretch !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  padding: clamp(8px, 2.4vw, 12px) !important;
+}
+
+.shipcashbox-body .shipcashbox-ready-records-flow {
+  display: grid !important;
+  grid-template-columns: minmax(118px, 0.44fr) minmax(0, 1fr) !important;
+  align-items: start !important;
+  gap: 8px !important;
+  height: 100% !important;
+  min-height: 0 !important;
+}
+
+.shipcashbox-body .shipcashbox-ready-create-card {
+  display: grid !important;
+  place-items: center !important;
+  align-content: center !important;
+  align-self: start !important;
+  gap: 6px !important;
+  height: auto !important;
+  min-height: 104px !important;
+  max-height: 112px !important;
+  padding: 12px !important;
+  border: 1px dashed rgba(36, 55, 72, 0.26) !important;
+  border-radius: 18px !important;
+  background: transparent !important;
+  color: var(--cashbox-text-day) !important;
+  box-shadow: none !important;
+  cursor: pointer !important;
+  font: inherit !important;
+  text-align: center !important;
+}
+
+.shipcashbox-body .shipcashbox-ready-create-card span {
+  display: grid !important;
+  place-items: center !important;
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 999px !important;
+  background: rgba(36, 55, 72, 0.08) !important;
+  font-size: 1.65rem !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
+}
+
+.shipcashbox-body .shipcashbox-ready-create-card strong {
+  max-width: 11ch !important;
+  color: var(--cashbox-muted-day) !important;
+  font-size: 0.72rem !important;
+  font-weight: 850 !important;
+  letter-spacing: 0.03em !important;
+  line-height: 1.08 !important;
+  text-transform: uppercase !important;
+}
+
+.shipcashbox-body .shipcashbox-ready-records-flow__list {
+  display: grid !important;
+  grid-template-rows: auto minmax(0, 1fr) !important;
+  gap: 7px !important;
+  height: 100% !important;
+  min-height: 0 !important;
+}
+
+.shipcashbox-body .shipcashbox-ready-records-flow__label {
+  margin: 0 !important;
+  color: var(--cashbox-muted-day) !important;
+  font-size: 0.66rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.08em !important;
+  line-height: 1 !important;
+  text-transform: uppercase !important;
+}
+
+.shipcashbox-body .shipcashbox-empty--ready {
+  align-self: stretch !important;
+  min-height: 78px !important;
+  margin: 0 !important;
+}
+
+.shipcashbox-body .shipcashbox-submitted-records--compact {
+  display: grid !important;
+  grid-template-rows: minmax(0, 1fr) !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+.shipcashbox-body .shipcashbox-submitted-records--compact .shipcashbox-submitted-records__grid {
+  align-content: start !important;
+  align-items: start !important;
+  grid-auto-rows: max-content !important;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)) !important;
+  height: 100% !important;
+  max-height: none !important;
+  overflow: auto !important;
+  padding-right: 0 !important;
+  scrollbar-width: none !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+.shipcashbox-body .shipcashbox-submitted-records--compact .shipcashbox-submitted-records__grid::-webkit-scrollbar {
+  display: none !important;
+}
+
+.shipcashbox-body .shipcashbox-submitted-record__button {
+  min-height: 50px !important;
+  padding: 8px 9px !important;
+  border-radius: 14px !important;
+}
+
+.shipcashbox-body .shipcashbox-submitted-record__button--active {
+  border-color: rgba(47, 104, 71, 0.26) !important;
+  background:
+    linear-gradient(135deg, rgba(47, 104, 71, 0.08), rgba(249, 251, 249, 0.94)) !important;
+}
+
+.shipcashbox-body .shipcashbox-submitted-record__button--active strong {
+  color: #2f6847 !important;
+}
+
+.shipcashbox-body .shipcashbox-submitted-record__button--active small {
+  color: rgba(47, 104, 71, 0.68) !important;
+}
+
+.shipcashbox-body .shipcashbox-submitted-record__button strong {
+  font-size: 0.8rem !important;
+  line-height: 1.06 !important;
+}
+
+.shipcashbox-body .shipcashbox-submitted-record__button small,
+.shipcashbox-body .shipcashbox-submitted-record__sum {
+  font-size: 0.68rem !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-ready-create-card {
+  border-color: rgba(211, 191, 150, 0.24) !important;
+  color: var(--cashbox-text-night) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-ready-create-card span {
+  background: rgba(211, 191, 150, 0.12) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-ready-create-card strong,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-ready-records-flow__label {
+  color: var(--cashbox-muted-night) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-submitted-record__button--active {
+  border-color: rgba(139, 203, 169, 0.26) !important;
+  background:
+    linear-gradient(135deg, rgba(139, 203, 169, 0.12), rgba(16, 25, 30, 0.9)) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-submitted-record__button--active strong {
+  color: #8bcba9 !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-submitted-record__button--active small {
+  color: rgba(139, 203, 169, 0.7) !important;
+}
+
+/* Mobile header: the cashbox menu is a left-side navigation affordance, not a right card. */
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-appbar {
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr) auto !important;
+  align-items: center !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-appbar__brand {
+  grid-column: 2 !important;
+  justify-self: start !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-appbar__actions {
+  display: contents !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #cashboxWorkspaceCashMenuButton {
+  grid-column: 1 !important;
+  justify-self: start !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #cashboxAppMenuButton {
+  grid-column: 3 !important;
+  justify-self: end !important;
+}
+
+@media (max-width: 860px) {
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-appbar {
+    display: none !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-mobile-masthead {
+    display: grid !important;
+    grid-template-columns: auto minmax(0, 1fr) auto !important;
+    align-items: center !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-cash-menu-button--mobile {
+    order: 1 !important;
+    justify-self: start !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) #mobileMastheadTitle {
+    order: 2 !important;
+    justify-self: start !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-mobile-masthead > strong {
+    display: none !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-menu-button--mobile {
+    order: 3 !important;
+    justify-self: end !important;
+  }
+
+  .shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-stack--cashbox-home {
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+    gap: 7px !important;
+  }
+
+  .shipcashbox-body .shipcashbox-ready-records-flow {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: auto minmax(0, 1fr) !important;
+    align-items: stretch !important;
+  }
+
+  .shipcashbox-body .shipcashbox-ready-create-card {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    width: 100% !important;
+    min-height: 56px !important;
+    max-height: 62px !important;
+    padding: 9px 12px !important;
+    border-radius: 16px !important;
+    text-align: left !important;
+  }
+
+  .shipcashbox-body .shipcashbox-ready-create-card span {
+    flex: 0 0 auto !important;
+    width: 30px !important;
+    height: 30px !important;
+    font-size: 1.42rem !important;
+  }
+
+  .shipcashbox-body .shipcashbox-ready-create-card strong {
+    max-width: none !important;
+    font-size: 0.68rem !important;
+    white-space: nowrap !important;
+  }
+
+  .shipcashbox-body .shipcashbox-submitted-records--compact .shipcashbox-submitted-records__grid {
+    grid-template-columns: 1fr !important;
+    height: 100% !important;
+    max-height: none !important;
+  }
+}
+
+body.shipcashbox-body .shipcashbox-appbar[hidden],
+body.shipcashbox-body .shipcashbox-mobile-masthead[hidden],
+body.shipcashbox-body .navdesk-header-card[hidden] {
+  display: none !important;
+}
+
+/* Equalizer page: keep the manual calculator in the same card grammar as the journal. */
+.shipcashbox-body .shipcashbox-card--equalizer-input,
+.shipcashbox-body .shipcashbox-card--equalizer-result {
+  min-width: 0 !important;
+  align-content: start !important;
+}
+
+.shipcashbox-body .shipcashbox-card--equalizer-input .shipcashbox-card__head,
+.shipcashbox-body .shipcashbox-card--equalizer-result .shipcashbox-card__head {
+  align-items: center !important;
+}
+
+.shipcashbox-body .shipcashbox-equalizer-history-card {
+  display: grid !important;
+  gap: 8px !important;
+  min-height: 0 !important;
+}
+
+@media (max-width: 560px) {
+  .shipcashbox-body .shipcashbox-equalizer-board {
+    grid-template-columns: 1fr !important;
+  }
+
+  .shipcashbox-body .shipcashbox-card--equalizer-input,
+  .shipcashbox-body .shipcashbox-card--equalizer-result {
+    padding: 11px !important;
+  }
+}
+
+/* Ready record trash: hidden red action exposed by a left/right swipe. */
+.shipcashbox-body .shipcashbox-submitted-record__swipe {
+  position: relative !important;
+  overflow: hidden !important;
+  border-radius: 14px !important;
+  background: transparent !important;
+  cursor: grab !important;
+  touch-action: pan-y !important;
+}
+
+.shipcashbox-body .shipcashbox-submitted-record__swipe.is-trash-open {
+  background: linear-gradient(135deg, #9f2f27, #d34a3f) !important;
+}
+
+.shipcashbox-body .shipcashbox-submitted-record__swipe.is-trash-dragging {
+  cursor: grabbing !important;
+  background: linear-gradient(135deg, #9f2f27, #d34a3f) !important;
+}
+
+.shipcashbox-body .shipcashbox-submitted-record__trash {
+  position: absolute !important;
+  inset: 0 0 0 auto !important;
+  z-index: 1 !important;
+  display: grid !important;
+  place-items: center !important;
+  align-content: center !important;
+  width: 76px !important;
+  padding: 6px !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: #fff !important;
+  cursor: pointer !important;
+  font: inherit !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  text-align: center !important;
+}
+
+.shipcashbox-body .shipcashbox-submitted-record__swipe.is-trash-open .shipcashbox-submitted-record__trash {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+.shipcashbox-body .shipcashbox-submitted-record__swipe.is-trash-dragging .shipcashbox-submitted-record__trash {
+  opacity: 1 !important;
+}
+
+.shipcashbox-body .shipcashbox-submitted-record__trash span {
+  font-size: 1.05rem !important;
+  line-height: 1 !important;
+}
+
+.shipcashbox-body .shipcashbox-submitted-record__trash strong {
+  font-size: 0.56rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.04em !important;
+  line-height: 1.05 !important;
+  text-transform: uppercase !important;
+}
+
+.shipcashbox-body .shipcashbox-submitted-record__swipe .shipcashbox-submitted-record__button {
+  position: relative !important;
+  z-index: 2 !important;
+  background: #f9fbf9 !important;
+  transform: translateX(var(--trash-shift, 0)) !important;
+  transition: transform 150ms ease !important;
+}
+
+.shipcashbox-body .shipcashbox-submitted-record__swipe.is-trash-dragging .shipcashbox-submitted-record__button {
+  transition: none !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-submitted-record__swipe .shipcashbox-submitted-record__button {
+  background: #10191e !important;
+}
+
+.shipcashbox-body .shipcashbox-submitted-record__swipe.is-trash-open .shipcashbox-submitted-record__button {
+  --trash-shift: -76px;
+}
+
+.shipcashbox-body .shipcashbox-ready-trash-modal {
+  place-items: end center !important;
+  padding: 12px !important;
+}
+
+.shipcashbox-body .shipcashbox-ready-trash-modal .shipcashbox-modal__card {
+  width: min(360px, calc(100vw - 28px)) !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: min(48svh, 380px) !important;
+  overflow: auto !important;
+  padding: 16px !important;
+  border-color: rgba(159, 47, 39, 0.18) !important;
+  border-radius: 24px !important;
+  background: rgba(255, 248, 245, 0.92) !important;
+  box-shadow: 0 18px 52px rgba(96, 24, 18, 0.2) !important;
+  backdrop-filter: blur(18px) saturate(1.12) !important;
+}
+
+.shipcashbox-body .shipcashbox-ready-trash-modal .shipcashbox-modal__head {
+  position: static !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+.shipcashbox-body .shipcashbox-ready-trash-modal .shipcashbox-modal__head h2 {
+  margin: 4px 0 0 !important;
+  color: #7f241e !important;
+  font-size: clamp(1.22rem, 5.6vw, 1.62rem) !important;
+  line-height: 1.04 !important;
+  letter-spacing: -0.05em !important;
+}
+
+.shipcashbox-body .shipcashbox-ready-trash-modal__actions {
+  display: grid !important;
+  grid-template-columns: 1fr 1.15fr !important;
+  gap: 8px !important;
+  margin-top: 16px !important;
+}
+
+.shipcashbox-body .shipcashbox-ready-trash-modal__actions .btn {
+  min-height: 40px !important;
+  border-radius: 999px !important;
+}
+
+.shipcashbox-body .shipcashbox-danger-action {
+  border-color: rgba(159, 47, 39, 0.2) !important;
+  background: linear-gradient(135deg, #8f2a23, #d44b40) !important;
+  color: #fff !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-ready-trash-modal .shipcashbox-modal__card {
+  border-color: rgba(231, 126, 112, 0.22) !important;
+  background: rgba(30, 18, 18, 0.9) !important;
+  box-shadow: 0 18px 52px rgba(0, 0, 0, 0.36) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-ready-trash-modal .shipcashbox-modal__head h2 {
+  color: #f0b0a8 !important;
+}
+
+/* Journal footer final alignment: submit and attachment stay in one row. */
+.shipcashbox-body .shipcashbox-card--notebook .shipcashbox-notebook-footer__actions,
+.shipcashbox-body .shipcashbox-stack--journal .shipcashbox-notebook-footer__actions {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 42px !important;
+  grid-auto-flow: column !important;
+  align-items: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+.shipcashbox-body .shipcashbox-card--notebook .shipcashbox-notebook-action--submit,
+.shipcashbox-body .shipcashbox-stack--journal .shipcashbox-notebook-action--submit {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 42px !important;
+  border-color: rgba(185, 150, 94, 0.34) !important;
+  background: linear-gradient(135deg, rgba(185, 150, 94, 0.92), rgba(146, 117, 72, 0.96)) !important;
+  color: #fff8e7 !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
+}
+
+.shipcashbox-body .shipcashbox-card--notebook .shipcashbox-notebook-attach-inline,
+.shipcashbox-body .shipcashbox-stack--journal .shipcashbox-notebook-attach-inline {
+  width: 42px !important;
+  min-width: 42px !important;
+  height: 42px !important;
+  min-height: 42px !important;
+  border: 1px solid rgba(185, 150, 94, 0.24) !important;
+  border-radius: 14px !important;
+  background: rgba(185, 150, 94, 0.1) !important;
+  color: #927548 !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-card--notebook .shipcashbox-notebook-action--submit,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-stack--journal .shipcashbox-notebook-action--submit {
+  border-color: rgba(226, 189, 118, 0.32) !important;
+  background: linear-gradient(135deg, rgba(201, 162, 96, 0.9), rgba(122, 98, 61, 0.94)) !important;
+  color: #fff0cf !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-card--notebook .shipcashbox-notebook-attach-inline,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-stack--journal .shipcashbox-notebook-attach-inline {
+  border-color: rgba(226, 189, 118, 0.24) !important;
+  background: rgba(226, 189, 118, 0.11) !important;
+  color: rgba(248, 232, 199, 0.76) !important;
+}
+
+/* Final journal header/footer polish: active workspaces use centered Records chrome and no body scrollbar. */
+html:has(body.shipcashbox-body:not(.shipcashbox-viewer-guest)),
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) {
+  scrollbar-width: none !important;
+}
+
+html:has(body.shipcashbox-body:not(.shipcashbox-viewer-guest))::-webkit-scrollbar,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest)::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(.shipcashbox-stack--journal) {
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(.shipcashbox-stack--journal) .site-shell {
+  display: grid !important;
+  grid-template-rows: minmax(0, 1fr) !important;
+  height: var(--cashbox-vvh, 100svh) !important;
+  max-height: var(--cashbox-vvh, 100svh) !important;
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(.shipcashbox-stack--journal) .shipcashbox-page {
+  display: grid !important;
+  grid-template-rows: auto minmax(0, 1fr) !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+@media (max-width: 860px) {
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-mobile-masthead {
+    grid-template-columns: minmax(64px, auto) minmax(0, 1fr) minmax(44px, auto) !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) #mobileMastheadTitle {
+    justify-self: center !important;
+    text-align: center !important;
+    font-size: 0.82rem !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.1em !important;
+    line-height: 1 !important;
+    text-transform: uppercase !important;
+  }
+}
+
+.shipcashbox-body .shipcashbox-card--notebook .shipcashbox-notebook-action__label,
+.shipcashbox-body .shipcashbox-stack--journal .shipcashbox-notebook-action__label {
+  display: block !important;
+  font-size: 0.84rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.015em !important;
+  line-height: 1 !important;
+}
+
+.shipcashbox-body .shipcashbox-card--notebook .shipcashbox-notebook-action__total,
+.shipcashbox-body .shipcashbox-stack--journal .shipcashbox-notebook-action__total {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  margin-top: 4px !important;
+  font-size: 0.58rem !important;
+  font-weight: 850 !important;
+  letter-spacing: 0.06em !important;
+  line-height: 1 !important;
+  opacity: 0.82 !important;
+  text-transform: uppercase !important;
+}
+
+.shipcashbox-body .shipcashbox-card--notebook .shipcashbox-notebook-action--submit,
+.shipcashbox-body .shipcashbox-stack--journal .shipcashbox-notebook-action--submit {
+  min-height: 44px !important;
+  border-radius: 16px !important;
+}
+
+/* Beige action system: dark primary buttons should match the attachment control, not dominate the journal. */
+.shipcashbox-body .btn--primary:not(.shipcashbox-danger-action),
+.shipcashbox-body .shipcashbox-card--notebook .shipcashbox-notebook-action--submit,
+.shipcashbox-body .shipcashbox-stack--journal .shipcashbox-notebook-action--submit {
+  border-color: rgba(185, 150, 94, 0.24) !important;
+  background: rgba(185, 150, 94, 0.1) !important;
+  color: #927548 !important;
+  box-shadow: none !important;
+}
+
+.shipcashbox-body .btn--primary:not(.shipcashbox-danger-action):hover,
+.shipcashbox-body .btn--primary:not(.shipcashbox-danger-action):focus-visible,
+.shipcashbox-body .shipcashbox-card--notebook .shipcashbox-notebook-action--submit:hover,
+.shipcashbox-body .shipcashbox-card--notebook .shipcashbox-notebook-action--submit:focus-visible,
+.shipcashbox-body .shipcashbox-stack--journal .shipcashbox-notebook-action--submit:hover,
+.shipcashbox-body .shipcashbox-stack--journal .shipcashbox-notebook-action--submit:focus-visible {
+  border-color: rgba(185, 150, 94, 0.34) !important;
+  background: rgba(185, 150, 94, 0.16) !important;
+  color: #7f653e !important;
+  box-shadow: 0 8px 20px rgba(146, 117, 72, 0.12) !important;
+  outline: none !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .btn--primary:not(.shipcashbox-danger-action),
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-card--notebook .shipcashbox-notebook-action--submit,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-stack--journal .shipcashbox-notebook-action--submit {
+  border-color: rgba(226, 189, 118, 0.24) !important;
+  background: rgba(226, 189, 118, 0.11) !important;
+  color: rgba(248, 232, 199, 0.86) !important;
+  box-shadow: none !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .btn--primary:not(.shipcashbox-danger-action):hover,
+body.navdesk-theme-night.shipcashbox-body .btn--primary:not(.shipcashbox-danger-action):focus-visible,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-card--notebook .shipcashbox-notebook-action--submit:hover,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-card--notebook .shipcashbox-notebook-action--submit:focus-visible,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-stack--journal .shipcashbox-notebook-action--submit:hover,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-stack--journal .shipcashbox-notebook-action--submit:focus-visible {
+  border-color: rgba(226, 189, 118, 0.34) !important;
+  background: rgba(226, 189, 118, 0.17) !important;
+  color: #fff0cf !important;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18) !important;
+  outline: none !important;
+}
+
+/* Journal sheet final composition: date/net sit on the sheet, fixed and active text stay one continuous note. */
+.shipcashbox-body .shipcashbox-notebook-sheet-meta {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  padding: 13px 14px 3px !important;
+  color: rgba(71, 87, 105, 0.72) !important;
+  font-size: 0.74rem !important;
+  font-weight: 850 !important;
+  letter-spacing: 0.02em !important;
+  line-height: 1.15 !important;
+  pointer-events: none !important;
+}
+
+.shipcashbox-body .shipcashbox-notebook-sheet-meta strong {
+  color: rgba(27, 42, 60, 0.88) !important;
+  font-size: 0.74rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.01em !important;
+  white-space: nowrap !important;
+}
+
+.shipcashbox-body .shipcashbox-ready-layer,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-ready-layer {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 2px 14px 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: rgba(71, 87, 105, 0.74) !important;
+  font: inherit !important;
+  text-align: left !important;
+  white-space: pre-wrap !important;
+  cursor: pointer !important;
+}
+
+.shipcashbox-body .shipcashbox-ready-layer__text,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-ready-layer__text {
+  display: block !important;
+  overflow-wrap: anywhere !important;
+  color: inherit !important;
+  font-size: clamp(0.9rem, 3.7vw, 1rem) !important;
+  line-height: 1.42 !important;
+}
+
+.shipcashbox-body .shipcashbox-notebook-shell:has(.shipcashbox-ready-layer) .shipcashbox-notebook-textarea,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-notebook-shell:has(.shipcashbox-ready-layer) .shipcashbox-notebook-textarea {
+  margin-top: 0 !important;
+  padding-top: 4px !important;
+  border-top: 0 !important;
+  box-shadow: none !important;
+}
+
+.shipcashbox-body .shipcashbox-notebook-shell:has(.shipcashbox-ready-layer) .shipcashbox-notebook-textarea:focus,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-notebook-shell:has(.shipcashbox-ready-layer) .shipcashbox-notebook-textarea:focus {
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-notebook-sheet-meta,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-ready-layer {
+  color: rgba(210, 218, 214, 0.68) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-notebook-sheet-meta strong {
+  color: rgba(248, 232, 199, 0.86) !important;
+}

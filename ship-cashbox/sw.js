@@ -1,9 +1,10 @@
-const CACHE_NAME = "ship-cashbox-shell-v20260603-105";
+const CACHE_NAME = "ship-cashbox-shell-v20260604-151";
 const SHELL = [
   "./index.html",
-  "./assets/app.css?v=20260603-cashbox-entry-final-order-01",
-  "./assets/scan-engine.js?v=20260603-cashbox-entry-final-order-01",
-  "./assets/app.js?v=20260603-cashbox-entry-final-order-01",
+  "./assets/app.css?v=20260604-cashbox-menu-hidden-25",
+  "./assets/ui-contract.css?v=20260604-cashbox-menu-hidden-25",
+  "./assets/scan-engine.js?v=20260604-cashbox-menu-hidden-25",
+  "./assets/app.js?v=20260604-cashbox-menu-hidden-25",
   "./assets/welcome-journal.webp",
   "./assets/welcome-crew.webp",
   "./assets/welcome-calculator.webp",

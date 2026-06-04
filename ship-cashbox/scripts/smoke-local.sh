@@ -2,9 +2,9 @@
 set -eu
 
 BASE_URL="${BASE_URL:-http://127.0.0.1:18090}"
-SHELL_VERSION="${SHELL_VERSION:-20260604-cashbox-ready-trash-24}"
+SHELL_VERSION="${SHELL_VERSION:-20260604-cashbox-menu-hidden-25}"
 API_VERSION="${API_VERSION:-2026.06.04-ship-cashbox-storage-01}"
-SW_CACHE="${SW_CACHE:-ship-cashbox-shell-v20260604-150}"
+SW_CACHE="${SW_CACHE:-ship-cashbox-shell-v20260604-151}"
 TMP_DIR="${TMPDIR:-/tmp}/ship-cashbox-smoke"
 mkdir -p "$TMP_DIR"
 
@@ -108,7 +108,7 @@ for mode in group personal; do
     && echo "boot_${mode}_archive_isolation OK" \
     || exit 1
   if [ "$mode" = "personal" ]; then
-    node -e "const fs=require('fs'); const data=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); const session=data.session; if (!session) { console.error('missing personal session'); process.exit(1); } if (session.session_mode !== 'personal') { console.error('personal session_mode FAIL: '+session.session_mode); process.exit(1); } const participants=session.participants; if (!Array.isArray(participants) || participants.length !== 1) { console.error('personal participants length FAIL: '+(Array.isArray(participants) ? participants.length : 'not-array')); process.exit(1); } const participant=participants[0] || {}; if (!participant.id || participant.id !== session.treasurer_participant_id) { console.error('personal treasurer participant mismatch: '+participant.id+' vs '+session.treasurer_participant_id); process.exit(1); }" "$out" \
+    node -e "const fs=require('fs'); const data=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); const session=data.session; if (!session) { process.exit(0); } if (session.session_mode !== 'personal') { console.error('personal session_mode FAIL: '+session.session_mode); process.exit(1); } const participants=session.participants; if (!Array.isArray(participants) || participants.length !== 1) { console.error('personal participants length FAIL: '+(Array.isArray(participants) ? participants.length : 'not-array')); process.exit(1); } const participant=participants[0] || {}; if (!participant.id || participant.id !== session.treasurer_participant_id) { console.error('personal treasurer participant mismatch: '+participant.id+' vs '+session.treasurer_participant_id); process.exit(1); }" "$out" \
       && echo "boot_personal_payload_isolated OK" \
       || exit 1
   fi

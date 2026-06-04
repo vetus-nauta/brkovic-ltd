@@ -8,8 +8,9 @@ const THEME_KEY = "navdesk_watch_theme_v1";
 const ENGAGED_KEY = "ship_cashbox_engaged_v1";
 const DISMISSED_INSTALL_KEY = "ship_cashbox_install_dismissed_v1";
 const BOOT_CACHE_KEY = "ship_cashbox_boot_cache_v1";
-const SHELL_VERSION = "20260603-cashbox-entry-final-order-01";
+const SHELL_VERSION = "20260604-cashbox-menu-hidden-25";
 const SHELL_PURGE_KEY = "ship_cashbox_shell_purge_v1";
+const SHELL_RELEASE_STATE_KEY = "ship_cashbox_shell_release_state_v1";
 const LAST_MODE_KEY = "ship_cashbox_last_explicit_mode_v1";
 const EQUALIZER_DRAFT_KEY = "ship_cashbox_equalizer_draft_v1";
 const EQUALIZER_HISTORY_KEY = "ship_cashbox_equalizer_history_v1";
@@ -18,6 +19,8 @@ const PARTICIPANT_DRAFT_PREFIX = "ship_cashbox_participant_draft_v1_";
 const PARTICIPANT_SLOT_PREFIX = "ship_cashbox_participant_slot_v1_";
 const TREASURER_DRAFT_PREFIX = "ship_cashbox_treasurer_draft_v1_";
 const NOTEBOOK_COMMIT_PREFIX = "ship_cashbox_notebook_commits_v1_";
+const WORKSPACE_VIEW_PREFIX = "ship_cashbox_workspace_view_v1_";
+const RECOVERY_LOG_PREFIX = "ship_cashbox_recovery_log_v1_";
 const SCAN_INSERT_PREFIX = "ship_cashbox_scan_insert_v1_";
 const RECEIPT_DONE_PREFIX = "ship_cashbox_receipt_done_v1_";
 const API_TIMEOUT_MS = 18000;
@@ -70,7 +73,12 @@ const state = {
   scanReviewQueueDone: [],
   scanOcrStatus: null,
   scanOcrStatusCheckedAt: 0,
+  shellUpdateAvailable: false,
+  shellVersionChanges: 0,
   notebookAssistantSuppressedUntil: {},
+  cashboxWorkspaceView: "cashbox",
+  activeReadyRecord: null,
+  editingReadyRecord: null,
   editorLocked: false,
   hiddenAt: 0,
 };
@@ -92,7 +100,16 @@ function isModalOpen(id) {
 function anyModalOpen() {
   const appMenu = $("cashboxAppMenuModal");
   const isAppMenuOpen = Boolean(appMenu?.classList.contains("is-open"));
-  return isModalOpen("qrModal") || isModalOpen("attachmentSheet") || isModalOpen("scanReviewModal") || isModalOpen("workspaceModal") || isModalOpen("cashboxExitModal") || isAppMenuOpen;
+  return isModalOpen("qrModal")
+    || isModalOpen("attachmentSheet")
+    || isModalOpen("scanReviewModal")
+    || isModalOpen("workspaceModal")
+    || isModalOpen("cashboxExitModal")
+    || isModalOpen("cashboxLanguageModal")
+    || isModalOpen("cashboxSoftNoticeModal")
+    || isModalOpen("readyRecordEditModal")
+    || isModalOpen("readyRecordTrashModal")
+    || isAppMenuOpen;
 }
 
 function lockModalScroll() {
@@ -311,6 +328,47 @@ function notebookCommitKey(ownerKey) {
   return `${NOTEBOOK_COMMIT_PREFIX}${ownerKey}`;
 }
 
+function workspaceViewKey(sessionId = activeSession()?.id) {
+  return `${WORKSPACE_VIEW_PREFIX}${sessionId || "local"}`;
+}
+
+function recoveryLogKey(sessionId = activeSession()?.id) {
+  return `${RECOVERY_LOG_PREFIX}${sessionId || "local"}`;
+}
+
+function readWorkspaceView(sessionId = activeSession()?.id) {
+  try {
+    const value = localStorage.getItem(workspaceViewKey(sessionId)) || "";
+    return value === "journal" ? "journal" : "cashbox";
+  } catch (error) {
+    return "cashbox";
+  }
+}
+
+function saveWorkspaceView(view, sessionId = activeSession()?.id) {
+  const normalized = view === "journal" ? "journal" : "cashbox";
+  state.cashboxWorkspaceView = normalized;
+  try {
+    localStorage.setItem(workspaceViewKey(sessionId), normalized);
+  } catch (error) {}
+}
+
+function appendRecoveryLog(eventType, payload = {}, sessionId = activeSession()?.id) {
+  try {
+    const key = recoveryLogKey(sessionId);
+    const entries = JSON.parse(localStorage.getItem(key) || "[]");
+    const next = Array.isArray(entries) ? entries : [];
+    next.push({
+      id: `rec_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      event: String(eventType || "event"),
+      at: new Date().toISOString(),
+      shell: SHELL_VERSION,
+      payload,
+    });
+    localStorage.setItem(key, JSON.stringify(next.slice(-500)));
+  } catch (error) {}
+}
+
 function scanInsertKey(sessionId) {
   return `${SCAN_INSERT_PREFIX}${sessionId || "local"}`;
 }
@@ -420,6 +478,42 @@ function parseNotebookExpenseLine(rawLine) {
   return { amount, note, raw };
 }
 
+function parseNotebookJournalLine(rawLine) {
+  const raw = stripNotebookCommitMarker(rawLine);
+  const match = raw.match(/^([+-])?\s*(€)?\s*(\d+(?:[.,]\d+)?)\s*(.*)$/u);
+  if (!match) return null;
+  const amount = moneyRound(Math.abs(Number(String(match[3] || "0").replace(",", "."))));
+  if (!amount) return null;
+  const sign = String(match[1] || "");
+  const note = String(match[4] || "").trim();
+  return {
+    amount,
+    note,
+    raw,
+    kind: sign === "+" ? "contribution" : "expense",
+  };
+}
+
+function notebookDraftSummary(text = "") {
+  const rows = String(text || "").replace(/\r/g, "").split("\n").map((line) => line.trim()).filter(Boolean);
+  return rows.reduce((summary, line) => {
+    const parsed = parseNotebookJournalLine(line);
+    if (!parsed) return { ...summary, notes: summary.notes + 1 };
+    if (parsed.kind === "contribution") {
+      return {
+        ...summary,
+        income: moneyRound(summary.income + parsed.amount),
+        net: moneyRound(summary.net + parsed.amount),
+      };
+    }
+    return {
+      ...summary,
+      expense: moneyRound(summary.expense + parsed.amount),
+      net: moneyRound(summary.net - parsed.amount),
+    };
+  }, { lines: rows.length, income: 0, expense: 0, net: 0, notes: 0 });
+}
+
 function textareaLineInfo(textarea) {
   if (!(textarea instanceof HTMLTextAreaElement)) return null;
   const value = textarea.value || "";
@@ -459,6 +553,11 @@ function workspaceMenuTitleLabel() {
 
 function workspaceMenuActionLabel() {
   return isPersonalSession() ? tx("personalWorkspaceMenuAction", "Меню журнала") : t("workspaceMenuAction");
+}
+
+function workspaceHeaderTitleLabel() {
+  if (!hasActiveGroup()) return tx("cashboxStartHeaderTitle", "Судовой журнал расходов");
+  return tx("recordsWorkspaceTitle", "ЗАПИСИ");
 }
 
 function currentParticipantPayload() {
@@ -881,6 +980,11 @@ function saveParticipantDraft(text) {
   const token = state.participant?.participant?.invite_token;
   if (!token) return;
   state.participantDraft = normalizedText(text);
+  appendRecoveryLog("participant-draft", {
+    token,
+    text: state.participantDraft,
+    hash: hashText(state.participantDraft),
+  }, state.participant?.session?.id);
   try {
     localStorage.setItem(participantDraftKey(token), state.participantDraft);
   } catch (error) {}
@@ -896,9 +1000,17 @@ function saveTreasurerDraft(text) {
   const sessionId = state.boot?.session?.id;
   if (!sessionId) return;
   state.treasurerDraft = normalizedText(text);
+  appendRecoveryLog("treasurer-draft", {
+    text: state.treasurerDraft,
+    hash: hashText(state.treasurerDraft),
+  }, sessionId);
   try {
     localStorage.setItem(treasurerDraftKey(sessionId), state.treasurerDraft);
   } catch (error) {}
+}
+
+function hasActiveTreasurerDraft() {
+  return Boolean(normalizedText(state.treasurerDraft || "").trim());
 }
 
 function clearTreasurerDraft(sessionId) {
@@ -1034,6 +1146,43 @@ async function resetShipCashboxShell() {
   } catch (error) {}
 }
 
+function readShellReleaseState() {
+  try {
+    return JSON.parse(localStorage.getItem(SHELL_RELEASE_STATE_KEY) || "{}") || {};
+  } catch (error) {
+    return {};
+  }
+}
+
+function writeShellReleaseState(payload) {
+  try {
+    localStorage.setItem(SHELL_RELEASE_STATE_KEY, JSON.stringify(payload || {}));
+  } catch (error) {}
+}
+
+function trackShellVersionState() {
+  const previous = readShellReleaseState();
+  let count = Number(previous.pendingCount || 0);
+  if (previous.version && previous.version !== SHELL_VERSION) {
+    count = Math.min(99, count + 1);
+  }
+  const next = { version: SHELL_VERSION, pendingCount: count, checkedAt: new Date().toISOString() };
+  writeShellReleaseState(next);
+  state.shellVersionChanges = count;
+}
+
+function resetShellVersionCounter() {
+  state.shellVersionChanges = 0;
+  state.shellUpdateAvailable = false;
+  writeShellReleaseState({ version: SHELL_VERSION, pendingCount: 0, checkedAt: new Date().toISOString() });
+}
+
+function maybeSuggestShellUpdate() {
+  if (state.viewer === "guest") return;
+  if (!state.shellUpdateAvailable && Number(state.shellVersionChanges || 0) < 5) return;
+  setFlash(tx("cashboxUpdateSuggestion", "Доступна новая версия судового журнала. Данные учетной записи сохранены на защищенном сервере и восстановятся после первого входа."), true);
+}
+
 function reloadWithCurrentShell() {
   const url = new URL(window.location.href);
   url.searchParams.set("reload", SHELL_VERSION);
@@ -1074,10 +1223,17 @@ function setNotebookMeta(id, message) {
 function setButtonBusy(button, busy, busyText = "") {
   if (!(button instanceof HTMLButtonElement)) return;
   if (!button.dataset.idleText) button.dataset.idleText = button.textContent || "";
+  if (!button.dataset.idleHtml) button.dataset.idleHtml = button.innerHTML || "";
   button.disabled = Boolean(busy);
   button.setAttribute("aria-busy", busy ? "true" : "false");
   button.classList.toggle("is-busy", Boolean(busy));
-  button.textContent = busy ? (busyText || t("autosaveSaving")) : button.dataset.idleText;
+  if (busy) {
+    button.textContent = busyText || t("autosaveSaving");
+  } else if (button.dataset.idleHtml) {
+    button.innerHTML = button.dataset.idleHtml;
+  } else {
+    button.textContent = button.dataset.idleText;
+  }
 }
 
 async function runButtonAction(button, busyText, action) {
@@ -1147,48 +1303,37 @@ function sameOriginOpener() {
   }
 }
 
-function returnToNavDesk(href = "../navdesk.html") {
+function returnToNavDesk(href = "/navdesk.html") {
   const url = resolvedAppUrl(href);
-  const opener = sameOriginOpener();
-  if (opener) {
-    try {
-      if (!opener.location.pathname.endsWith("/navdesk.html")) {
-        opener.location.href = url;
-      }
-      opener.focus();
-    } catch (error) {
-      window.location.href = url;
-      return;
-    }
-    window.close();
-    if (!window.closed) {
-      window.location.href = url;
-    }
-    return;
-  }
-  const navdeskWindow = window.open(url, "brkovic_navdesk", "noopener");
-  if (!navdeskWindow) {
-    window.location.href = url;
-  }
+  window.location.href = url;
+}
+
+function navigateSameWindowFromCashbox(href = "/index.html#hero") {
+  window.location.href = resolvedAppUrl(href);
 }
 
 function updateTopbarText() {
   document.documentElement.lang = state.lang;
-  if ($("appbarTitle")) $("appbarTitle").textContent = t("heroTitle");
+  if ($("appbarTitle")) $("appbarTitle").textContent = workspaceHeaderTitleLabel();
   if ($("cashboxStartButtonText")) $("cashboxStartButtonText").textContent = tx("cashboxStartButton", "Старт");
   if ($("cashboxMobileStartButtonText")) $("cashboxMobileStartButtonText").textContent = tx("cashboxStartButton", "Старт");
-  if ($("cashboxMenuStart")) $("cashboxMenuStart").textContent = tx("cashboxStartButton", "Старт");
+  if ($("cashboxMenuStart")) $("cashboxMenuStart").textContent = tx("cashboxMenuHome", "В начало");
+  if ($("cashboxMenuJournal")) $("cashboxMenuJournal").textContent = tx("cashboxMenuActiveJournal", "Активный журнал");
+  if ($("cashboxGuestCashMenuButtonText")) $("cashboxGuestCashMenuButtonText").textContent = tx("cashboxCashMenuButton", "Касса");
+  if ($("cashboxWorkspaceCashMenuButtonText")) $("cashboxWorkspaceCashMenuButtonText").textContent = tx("cashboxCashMenuButton", "Касса");
+  if ($("cashboxMobileCashMenuButtonText")) $("cashboxMobileCashMenuButtonText").textContent = tx("cashboxCashMenuButton", "Касса");
   if ($("workspaceStartButton")) $("workspaceStartButton").textContent = tx("cashboxStartButton", "Старт");
   if ($("cashboxGuestMenuButtonText")) $("cashboxGuestMenuButtonText").textContent = t("cashboxAppMenuButton");
   if ($("cashboxAppMenuButtonText")) $("cashboxAppMenuButtonText").textContent = t("cashboxAppMenuButton");
   if ($("cashboxMobileMenuButtonText")) $("cashboxMobileMenuButtonText").textContent = t("cashboxAppMenuButton");
   if ($("cashboxAppMenuEyebrow")) $("cashboxAppMenuEyebrow").textContent = t("heroTitle");
-  if ($("cashboxAppMenuTitle")) $("cashboxAppMenuTitle").textContent = workspaceMenuTitleLabel();
+  if ($("cashboxAppMenuTitle")) $("cashboxAppMenuTitle").textContent = tx("cashboxAppMenuTitle", "Меню");
+  if ($("cashboxMenuMainSite")) $("cashboxMenuMainSite").textContent = tx("cashboxMenuVetusNauta", "Vetus Nauta");
   if ($("cashboxMenuNavdesk")) $("cashboxMenuNavdesk").textContent = t("cashboxMenuNavdesk");
-  if ($("cashboxMenuWorkspace")) $("cashboxMenuWorkspace").textContent = workspaceMenuTitleLabel();
-  if ($("cashboxMenuGroupText")) $("cashboxMenuGroupText").textContent = isPersonalSession() ? tx("cashboxMenuPersonal", "Журнал") : t("cashboxMenuGroup");
-  if ($("cashboxMenuInstall")) $("cashboxMenuInstall").textContent = t("pwa_install_menu");
-  if ($("cashboxMenuRefresh")) $("cashboxMenuRefresh").textContent = tx("cacheResetAction", "Обновить приложение");
+  if ($("cashboxMenuLanguageOpen")) $("cashboxMenuLanguageOpen").textContent = tx("cashboxMenuLanguageChoice", "Выбор языка");
+  if ($("cashboxMenuAccountToggle")) $("cashboxMenuAccountToggle").textContent = t("cashboxMenuAccount");
+  if ($("cashboxMenuInstall")) $("cashboxMenuInstall").textContent = installMenuLabel();
+  if ($("cashboxMenuRefresh")) $("cashboxMenuRefresh").textContent = refreshMenuLabel();
   if ($("cashboxLanguageKicker")) $("cashboxLanguageKicker").textContent = t("cashboxMenuLanguage");
   if ($("cashboxLanguageTitle")) $("cashboxLanguageTitle").textContent = t("site_menu_language_title");
   if ($("cashboxLanguageNowLabel")) $("cashboxLanguageNowLabel").textContent = t("site_menu_language_current_label");
@@ -1197,7 +1342,7 @@ function updateTopbarText() {
   if ($("heroTitle")) $("heroTitle").textContent = t("heroTitle");
   if ($("heroIntro")) $("heroIntro").textContent = t("heroIntro");
   if ($("heroDescription")) $("heroDescription").textContent = t("heroDescription");
-  if ($("mobileMastheadTitle")) $("mobileMastheadTitle").textContent = t("heroTitle");
+  if ($("mobileMastheadTitle")) $("mobileMastheadTitle").textContent = workspaceHeaderTitleLabel();
   document.querySelectorAll("[data-cashbox-mode-chip]").forEach((chip) => {
     chip.textContent = currentModeLabel();
     chip.title = tx("modeChipHelp", "Текущий режим журнала");
@@ -1225,7 +1370,31 @@ function updateTopbarText() {
 function installInstructionText() {
   const ua = navigator.userAgent || "";
   if (/iPhone|iPad|iPod/i.test(ua)) return t("installIos");
+  if (/Android/i.test(ua)) return tx("installAndroid", "Android: откройте меню браузера и выберите установку приложения.");
+  if (/Linux/i.test(ua)) return tx("installLinux", "Linux: установите приложение из адресной строки или меню браузера.");
   return t("installDesktop");
+}
+
+function installTargetLabel() {
+  const ua = navigator.userAgent || "";
+  const platform = navigator.platform || "";
+  if (/iPhone|iPad|iPod/i.test(ua)) return "iPhone";
+  if (/Android/i.test(ua)) return "Android";
+  if (/Linux/i.test(ua) || /Linux/i.test(platform)) return "Linux";
+  if (/Win/i.test(platform)) return "PC";
+  if (/Mac/i.test(platform)) return "Mac";
+  return tx("installTargetDevice", "устройство");
+}
+
+function installMenuLabel() {
+  return txf("cashboxMenuInstallFor", "Установка на {device}", { device: installTargetLabel() });
+}
+
+function refreshMenuLabel() {
+  const count = Number(state.shellVersionChanges || 0);
+  const base = tx("cacheResetAction", "Обновить приложение");
+  if (state.shellUpdateAvailable) return `${base} · ${tx("cashboxUpdateReady", "готово")}`;
+  return count > 0 ? `${base} · ${count}/5` : base;
 }
 
 function renderInstallBox() {
@@ -1301,6 +1470,52 @@ function renderNotebookAssistant(id, currency = "EUR", readOnly = false) {
       <a class="shipcashbox-line-assistant__button shipcashbox-line-assistant__proof" id="${escapeHtml(id)}ProofLink" href="#" target="_blank" rel="noopener" hidden>${escapeHtml(t("lineProofAction"))}</a>
     </div>
   `;
+}
+
+function notebookDraftNetText(text = "", currency = "EUR") {
+  const summary = notebookDraftSummary(text);
+  return money(summary.net || 0, currency, true);
+}
+
+function renderNotebookSubmitLabel(text = "", currency = "EUR") {
+  const label = tx("fixNotebookRecordsShort", "Фиксация");
+  const route = tx("fixNotebookRecordsRoute", "К записям");
+  return `
+    <span class="shipcashbox-notebook-action__label">${escapeHtml(label)}</span>
+    <small class="shipcashbox-notebook-action__total">${escapeHtml(route)}</small>
+  `;
+}
+
+function refreshNotebookSubmitTotal(button, text = "", currency = "EUR") {
+  if (!(button instanceof HTMLButtonElement)) return;
+  const total = button.querySelector("[data-notebook-submit-total]");
+  if (total) total.textContent = notebookDraftNetText(text, currency);
+  const sheetTotal = document.querySelector("[data-notebook-sheet-total]");
+  if (sheetTotal) sheetTotal.textContent = notebookDraftNetText(text, currency);
+  button.dataset.idleHtml = button.innerHTML;
+  button.dataset.idleText = button.textContent || "";
+}
+
+function renderJournalDraftState() {
+  return "";
+}
+
+function refreshJournalDraftState(textarea) {
+  if (!(textarea instanceof HTMLTextAreaElement)) return;
+  const target = document.querySelector(`[data-draft-state-for="${CSS.escape(textarea.id)}"]`);
+  if (target) target.remove();
+  const currency = state.boot?.session?.currency || state.participant?.session?.currency || "EUR";
+  const buttonId = textarea.id === "participantNotebook" ? "participantSyncButton" : "treasurerSubmitNotebookButton";
+  refreshNotebookSubmitTotal($(buttonId), textarea.value, currency);
+}
+
+function autosizeNotebookTextarea(textarea) {
+  if (!(textarea instanceof HTMLTextAreaElement)) return;
+  const shell = textarea.closest(".shipcashbox-notebook-shell");
+  const shellHeight = shell?.clientHeight || 0;
+  const minimum = Math.max(138, shellHeight - 4);
+  textarea.style.height = "auto";
+  textarea.style.height = `${Math.max(minimum, textarea.scrollHeight + 2)}px`;
 }
 
 function currentAttachmentByProof(commit) {
@@ -1565,6 +1780,7 @@ async function deleteNotebookProofAttachment(attachmentId = "", attachmentPath =
 
 function bindNotebookAssistant(textarea) {
   if (!(textarea instanceof HTMLTextAreaElement)) return;
+  if (!$(`${textarea.id}Assistant`)) return;
   const update = () => updateNotebookAssistant(textarea);
   textarea.addEventListener("input", update);
   textarea.addEventListener("keyup", update);
@@ -1623,28 +1839,146 @@ function notebookBatchTotal(batch) {
   return Number(batch?.total_expenses || 0);
 }
 
-function renderNotebookBatches(batches = [], currency = "EUR", owner = "participant") {
+function notebookBatchNet(batch) {
+  const entries = Array.isArray(batch?.entries) ? batch.entries : [];
+  const net = entries.reduce((sum, entry) => {
+    const amount = Math.abs(Number(entry?.amount || 0));
+    if (!amount) return sum;
+    return String(entry?.entry_kind || "") === "contribution" ? sum + amount : sum - amount;
+  }, 0);
+  return moneyRound(net || -Math.abs(notebookBatchTotal(batch)));
+}
+
+function renderNotebookBatchCards(batches = [], currency = "EUR", owner = "participant") {
+  if (!Array.isArray(batches) || !batches.length) return "";
+  return batches.slice().reverse().map((batch) => `
+    <article class="shipcashbox-submitted-record">
+      <div class="shipcashbox-submitted-record__swipe">
+        <button class="shipcashbox-submitted-record__trash trash-notebook-batch-btn" type="button" data-owner="${escapeHtml(owner)}" data-batch-id="${escapeHtml(batch.id)}" title="${escapeHtml(tx("trashReadyRecord", "В корзину"))}" aria-label="${escapeHtml(tx("trashReadyRecord", "В корзину"))}">
+          <span aria-hidden="true">🗑</span>
+          <strong>${escapeHtml(tx("trashReadyRecord", "В корзину"))}</strong>
+        </button>
+        <button class="shipcashbox-submitted-record__button restore-notebook-batch-btn" type="button" data-owner="${escapeHtml(owner)}" data-batch-id="${escapeHtml(batch.id)}" title="${escapeHtml(tx("openReadyRecordHelp", "Открыть готовую запись в ЖЗ."))}" aria-label="${escapeHtml(tx("openReadyRecordHelp", "Открыть готовую запись в ЖЗ."))}">
+          <span>
+            <strong>${escapeHtml(tx("readyRecord", "Готовая запись"))}</strong>
+            <small>${escapeHtml(formatDateTime(batch.submitted_at))}</small>
+          </span>
+          <span class="shipcashbox-submitted-record__sum">${escapeHtml(money(notebookBatchNet(batch), currency, true))}</span>
+        </button>
+      </div>
+    </article>
+  `).join("");
+}
+
+function renderNotebookBatches(batches = [], currency = "EUR", owner = "participant", { compact = false } = {}) {
   if (!Array.isArray(batches) || !batches.length) return "";
   return `
-    <div class="shipcashbox-submitted-records" aria-label="${escapeHtml(t("submittedRecordsTitle"))}">
+    <div class="shipcashbox-submitted-records ${compact ? "shipcashbox-submitted-records--compact" : ""}" aria-label="${escapeHtml(tx("readyRecordsTitle", "Готовые записи"))}">
       <div class="shipcashbox-submitted-records__head">
-        <strong>${escapeHtml(t("submittedRecordsTitle"))}</strong>
+        <strong>${escapeHtml(tx("readyRecordsTitle", "Готовые записи"))}</strong>
         <span>${escapeHtml(tt("submittedRecordsCount", { count: batches.length }))}</span>
       </div>
       <div class="shipcashbox-submitted-records__grid">
-        ${batches.slice().reverse().map((batch) => `
-          <article class="shipcashbox-submitted-record">
-            <button class="shipcashbox-submitted-record__button restore-notebook-batch-btn" type="button" data-owner="${escapeHtml(owner)}" data-batch-id="${escapeHtml(batch.id)}" title="${escapeHtml(t("restoreNotebookBatchHelp"))}" aria-label="${escapeHtml(t("restoreNotebookBatchHelp"))}">
-              <span>
-                <strong>${escapeHtml(t("submittedRecord"))}</strong>
-                <small>${escapeHtml(formatDateTime(batch.submitted_at))}</small>
-              </span>
-              <span class="shipcashbox-submitted-record__sum">${escapeHtml(money(notebookBatchTotal(batch), currency))}</span>
-            </button>
-          </article>
-        `).join("")}
+        ${renderNotebookBatchCards(batches, currency, owner)}
       </div>
     </div>
+  `;
+}
+
+function renderActiveNotebookDraftCard(text = "", currency = "EUR") {
+  const draft = normalizedText(text);
+  if (!draft.trim()) return "";
+  const summary = notebookDraftSummary(draft);
+  const modeLabel = isPersonalSession() ? tx("modePersonalLabel", "Личный") : tx("cashboxTeamHeaderTitle", "Касса команды");
+  const savedLabel = tx("activeDraftSavedShort", "сохранено фоном");
+  return `
+    <article class="shipcashbox-submitted-record shipcashbox-submitted-record--active">
+      <button class="shipcashbox-submitted-record__button shipcashbox-submitted-record__button--active open-active-draft-btn" type="button" id="openActiveDraftButton" title="${escapeHtml(tx("activeDraftOpenHelp", "Открыть активную запись в ЖЗ."))}" aria-label="${escapeHtml(tx("activeDraftOpenHelp", "Открыть активную запись в ЖЗ."))}">
+        <span>
+          <strong>${escapeHtml(tx("activeDraftRecord", "Активная запись"))}</strong>
+          <small>${escapeHtml(`${modeLabel} · ${currency || "EUR"} · ${savedLabel}`)}</small>
+        </span>
+        <span class="shipcashbox-submitted-record__sum">${escapeHtml(money(summary.net || 0, currency, true))}</span>
+      </button>
+    </article>
+  `;
+}
+
+function findNotebookBatch(owner, batchId) {
+  const id = String(batchId || "");
+  if (!id) return null;
+  if (owner === "treasurer") {
+    const session = state.boot?.session;
+    const treasurer = (session?.participants || []).find((participant) => participant.id === session?.treasurer_participant_id);
+    return (treasurer?.notebook_batches || []).find((batch) => String(batch?.id || "") === id) || null;
+  }
+  if (owner === "participant" || owner === "readonly") {
+    const participant = state.participant?.participant?.viewing || state.participant?.participant;
+    return (participant?.notebook_batches || []).find((batch) => String(batch?.id || "") === id) || null;
+  }
+  return null;
+}
+
+function activeReadyRecordBatch() {
+  const record = state.activeReadyRecord || null;
+  if (!record) return null;
+  return findNotebookBatch(record.owner || "treasurer", record.batchId || "");
+}
+
+function renderReadyRecordLayer(batch, currency = "EUR") {
+  if (!batch) return "";
+  return `
+    <button class="shipcashbox-ready-layer" type="button" id="readyRecordLayer" data-owner="${escapeHtml(state.activeReadyRecord?.owner || "treasurer")}" data-batch-id="${escapeHtml(batch.id)}" title="${escapeHtml(tx("readyRecordEditHelp", "Нажмите, чтобы запросить редактирование готовой записи."))}">
+      <span class="shipcashbox-ready-layer__text">${escapeHtml(normalizedText(batch.raw_text || "") || tx("readyRecordEmpty", "Готовая запись без текста."))}</span>
+    </button>
+  `;
+}
+
+function renderNotebookSheetMeta(text = "", currency = "EUR", batch = null) {
+  const date = batch?.submitted_at || state.boot?.session?.updated_at || state.participant?.session?.updated_at || new Date().toISOString();
+  const value = normalizedText(text).trim()
+    ? notebookDraftNetText(text, currency)
+    : batch
+      ? money(notebookBatchNet(batch), currency, true)
+      : notebookDraftNetText(text, currency);
+  return `
+    <div class="shipcashbox-notebook-sheet-meta" id="treasurerNotebookSheetMeta">
+      <span>${escapeHtml(formatDateTime(date))}</span>
+      <strong data-notebook-sheet-total>${escapeHtml(value)}</strong>
+    </div>
+  `;
+}
+
+function renderCashboxReadyRecordsPanel(session, treasurer) {
+  const batches = treasurer?.notebook_batches || [];
+  const activeDraft = normalizedText(state.treasurerDraft || treasurer?.notebook_text || "");
+  const personal = isPersonalSession(session);
+  const title = personal ? tx("personalReadyRecordsTitle", "Готовые записи") : tx("readyRecordsTitle", "Готовые записи");
+  const empty = personal
+    ? tx("personalReadyRecordsEmpty", "Готовых записей пока нет. Создайте новую запись в ЖЗ.")
+    : tx("readyRecordsEmpty", "Готовых записей пока нет. Создайте новую запись в ЖЗ.");
+  return `
+    <section class="shipcashbox-card shipcashbox-card--ready-records">
+      <div class="shipcashbox-ready-records-flow">
+        <button class="shipcashbox-ready-create-card shipcashbox-create-record-btn" type="button" id="createReadyRecordButton" aria-label="${escapeHtml(tx("createReadyRecord", "Создать запись"))}">
+          <span aria-hidden="true">+</span>
+          <strong>${escapeHtml(tx("createReadyRecord", "Создать запись"))}</strong>
+        </button>
+        <div class="shipcashbox-ready-records-flow__list" aria-label="${escapeHtml(title)}">
+          <p class="shipcashbox-ready-records-flow__label">${escapeHtml(title)}</p>
+          ${activeDraft.trim() || batches.length
+            ? `
+                <div class="shipcashbox-submitted-records shipcashbox-submitted-records--compact" aria-label="${escapeHtml(title)}">
+                  <div class="shipcashbox-submitted-records__grid">
+                    ${renderActiveNotebookDraftCard(activeDraft, session.currency)}
+                    ${renderNotebookBatchCards(batches, session.currency, "treasurer")}
+                  </div>
+                </div>
+              `
+            : `<p class="shipcashbox-empty shipcashbox-empty--ready">${escapeHtml(empty)}</p>`}
+        </div>
+      </div>
+    </section>
   `;
 }
 
@@ -1916,7 +2250,7 @@ function renderEqualizerTool() {
       </section>
 
       <section class="shipcashbox-equalizer-board">
-        <div class="shipcashbox-equalizer-board__input">
+        <div class="shipcashbox-card shipcashbox-card--equalizer-input shipcashbox-equalizer-board__input">
           <div class="shipcashbox-card__head">
             <div>
               <p class="section-heading__eyebrow">${escapeHtml(tx("equalizerKicker", "Быстрый расчет"))}</p>
@@ -1939,9 +2273,9 @@ function renderEqualizerTool() {
             <p class="shipcashbox-note">${escapeHtml(tx("equalizerSaveText", "Сохранение локальное: расчет останется на этом устройстве и не создаст групповую кассу."))}</p>
           </div>
         </div>
-        <div class="shipcashbox-equalizer-board__result">
+        <div class="shipcashbox-card shipcashbox-card--equalizer-result shipcashbox-equalizer-board__result">
           <div id="equalizerResult" class="shipcashbox-equalizer-output" aria-live="polite"></div>
-          <section>
+          <section class="shipcashbox-equalizer-history-card">
             <div class="shipcashbox-card__head">
               <div>
                 <p class="section-heading__eyebrow">${escapeHtml(tx("equalizerSavedKicker", "Сохранено"))}</p>
@@ -1971,10 +2305,7 @@ function renderEqualizerTool() {
 }
 
 function renderEntryHeroText() {
-  let text = escapeHtml(tx("entryText", "Деньги исчезают тихо. + получил-сохрани, - потратил-запиши!"));
-  text = text.replace(/(^|[\s(])\+(?=\s)/, '$1<span class="shipcashbox-entry-sign shipcashbox-entry-sign--plus">+</span>');
-  text = text.replace(/([,.!]\s*)-(?=\s)/, '$1<span class="shipcashbox-entry-sign shipcashbox-entry-sign--minus">-</span>');
-  return text;
+  return escapeHtml(tx("entryText", "Деньги исчезают тихо. Получил, сохрани. Потратил, запиши."));
 }
 
 async function hasCashboxOwnerAccess() {
@@ -2018,6 +2349,13 @@ async function startEntryMode(mode = "group") {
       boot.session?.id,
       (boot.session?.participants || []).find((participant) => participant.id === boot.session?.treasurer_participant_id)?.notebook_text || ""
     );
+    if (hasActiveTreasurerDraft()) {
+      state.activeReadyRecord = null;
+      state.cashboxWorkspaceView = "cashbox";
+      saveWorkspaceView("cashbox", boot.session?.id);
+    } else {
+      state.cashboxWorkspaceView = readWorkspaceView(boot.session?.id);
+    }
     saveCache(BOOT_CACHE_KEY, boot);
     render();
     return;
@@ -2145,9 +2483,11 @@ function renderAppMenuLanguage() {
   $("cashboxLanguageCurrent") && ($("cashboxLanguageCurrent").textContent = languageName(state.lang));
   list.innerHTML = options.map((option) => {
     const active = option.code === state.lang;
+    const code = option.code.toUpperCase();
     return `
       <button type="button" class="site-menu-language__option${active ? " is-active" : ""}${option.isAvailable ? "" : " is-unavailable"}" data-cashbox-lang="${escapeHtml(option.code)}" aria-pressed="${active ? "true" : "false"}"${option.isAvailable ? "" : " aria-disabled=\"true\" disabled"}>
-        <span class="site-menu-language__name">${escapeHtml(option.name)}</span>
+        <span class="site-menu-language__name">${escapeHtml(code)}</span>
+        <span class="site-menu-language__full">${escapeHtml(option.name)}</span>
         <span class="site-menu-language__current">${escapeHtml(t("site_menu_language_current"))}</span>
         <span class="site-menu-language__pending">${escapeHtml(t("site_menu_language_pending"))}</span>
       </button>
@@ -2201,9 +2541,11 @@ function renderAppMenuGroup() {
 function openAppMenu() {
   const modal = $("cashboxAppMenuModal");
   if (!modal) return;
+  modal.hidden = false;
   renderAppMenuLanguage();
   renderAppMenuAccount();
   renderAppMenuGroup();
+  if ($("cashboxAccountPanel")) $("cashboxAccountPanel").hidden = true;
   applyTheme();
   lockModalScroll();
   modal.classList.add("is-open");
@@ -2215,7 +2557,107 @@ function closeAppMenu() {
   if (!modal) return;
   modal.classList.remove("is-open");
   modal.setAttribute("aria-hidden", "true");
+  modal.hidden = true;
   unlockModalScroll();
+}
+
+function openLanguageModal() {
+  closeAppMenu();
+  const modal = $("cashboxLanguageModal");
+  if (!modal) return;
+  renderAppMenuLanguage();
+  lockModalScroll();
+  modal.hidden = false;
+  modal.setAttribute("aria-hidden", "false");
+}
+
+function closeLanguageModal() {
+  const modal = $("cashboxLanguageModal");
+  if (!modal) return;
+  modal.hidden = true;
+  modal.setAttribute("aria-hidden", "true");
+  unlockModalScroll();
+}
+
+function ensureSoftNoticeModal() {
+  let modal = $("cashboxSoftNoticeModal");
+  if (modal) return modal;
+  modal = document.createElement("div");
+  modal.id = "cashboxSoftNoticeModal";
+  modal.className = "shipcashbox-modal shipcashbox-soft-notice";
+  modal.hidden = true;
+  modal.innerHTML = `
+    <div class="shipcashbox-modal__backdrop" data-close-soft-notice="1"></div>
+    <section class="shipcashbox-modal__card section--paper" role="dialog" aria-modal="true" aria-labelledby="cashboxSoftNoticeTitle">
+      <div class="shipcashbox-modal__head">
+        <div>
+          <p class="section-heading__eyebrow" id="cashboxSoftNoticeEyebrow">${escapeHtml(t("heroTitle"))}</p>
+          <h2 id="cashboxSoftNoticeTitle"></h2>
+        </div>
+        <button type="button" class="management-modal__close shipcashbox-modal-x" data-close-soft-notice="1" aria-label="${escapeHtml(t("close"))}">×</button>
+      </div>
+      <p class="shipcashbox-note" id="cashboxSoftNoticeText"></p>
+    </section>
+  `;
+  document.body.appendChild(modal);
+  modal.querySelectorAll("[data-close-soft-notice]").forEach((button) => {
+    button.addEventListener("click", closeSoftNoticeModal);
+  });
+  return modal;
+}
+
+function showSoftNoticeModal(title, text) {
+  const modal = ensureSoftNoticeModal();
+  $("cashboxSoftNoticeTitle").textContent = title;
+  $("cashboxSoftNoticeText").textContent = text;
+  lockModalScroll();
+  modal.hidden = false;
+}
+
+function closeSoftNoticeModal() {
+  const modal = $("cashboxSoftNoticeModal");
+  if (!modal) return;
+  modal.hidden = true;
+  unlockModalScroll();
+}
+
+function toggleAccountPanel() {
+  const panel = $("cashboxAccountPanel");
+  if (!panel) return;
+  panel.hidden = !panel.hidden;
+}
+
+async function openActiveJournal() {
+  closeAppMenu();
+  const cachedMode = normalizeEntryMode(loadCache(BOOT_CACHE_KEY)?.session?.session_mode);
+  const preferredMode = normalizeEntryMode(activeSession()?.session_mode) || lastExplicitMode() || cachedMode;
+  if (!preferredMode) {
+    renderStartChoice();
+    showSoftNoticeModal(
+      tx("activeJournalEmptyTitle", "Активного журнала пока нет"),
+      tx("activeJournalEmptyText", "Начните работу в личном журнале, кассе команды или ручном расчете. После этого пункт «Активный журнал» будет сразу возвращать вас в последнюю рабочую сессию.")
+    );
+    return;
+  }
+  try {
+    const payload = await api(`boot&mode=${encodeURIComponent(preferredMode)}`);
+    if (payload.session) {
+      applyTreasurerBootPayload(payload);
+      return;
+    }
+  } catch (error) {
+    const cached = loadCache(BOOT_CACHE_KEY);
+    if (cached?.session?.status === "active" && normalizeEntryMode(cached.session.session_mode) === preferredMode) {
+      applyTreasurerBootPayload(cached);
+      setFlash(t("offlineCache"), true);
+      return;
+    }
+  }
+  renderStartChoice();
+  showSoftNoticeModal(
+    tx("activeJournalEmptyTitle", "Активного журнала пока нет"),
+    tx("activeJournalEmptyText", "Начните работу в личном журнале, кассе команды или ручном расчете. После этого пункт «Активный журнал» будет сразу возвращать вас в последнюю рабочую сессию.")
+  );
 }
 
 async function handleAppAccountAction() {
@@ -2258,6 +2700,7 @@ async function handleAppRefreshAction() {
   closeAppMenu();
   setFlash(tx("cacheResetWorking", "Обновляем приложение и очищаем старый кэш..."), true);
   await resetShipCashboxShell();
+  resetShellVersionCounter();
   reloadWithCurrentShell();
 }
 
@@ -2316,8 +2759,17 @@ async function performTreasurerNotebookSave({ preserveFocus = false, silent = fa
     state.boot = payload;
     saveCache(BOOT_CACHE_KEY, payload);
     localStorage.setItem(ENGAGED_KEY, "1");
+    if (submit) {
+      state.activeReadyRecord = null;
+      saveWorkspaceView("cashbox", payload.session?.id);
+    }
     const treasurer = (payload.session?.participants || []).find((participant) => participant.id === payload.session?.treasurer_participant_id);
     const serverDraft = normalizedText(treasurer?.notebook_text || "");
+    appendRecoveryLog(submit ? "treasurer-record-finalized" : "treasurer-autosaved", {
+      text: draft,
+      hash: hashText(draft),
+      batchCount: Array.isArray(treasurer?.notebook_batches) ? treasurer.notebook_batches.length : 0,
+    }, payload.session?.id);
     const localDraftChangedDuringSave = !submit && normalizedText(state.treasurerDraft || "") !== draft;
     state.treasurerDraft = localDraftChangedDuringSave ? normalizedText(state.treasurerDraft || "") : serverDraft;
     try {
@@ -2404,10 +2856,12 @@ function renderParticipant() {
   const viewing = participant.viewing || participant;
   const readOnly = !!viewing.read_only || (viewing.is_self && state.editorLocked);
   const syncMeta = participantSyncSummary();
+  const participantNotebookText = viewing.is_self ? state.participantDraft : (viewing.notebook_text || "");
+  const fixLabel = tx("fixNotebookRecords", "Зафиксировать записи");
   const footerAction = viewing.is_self && !viewing.read_only
     ? `
         <button class="btn btn--secondary shipcashbox-notebook-action shipcashbox-notebook-action--save notebook-keep-focus" type="button" id="participantSaveButton" title="${escapeHtml(t("saveNotebookHelp"))}" aria-label="${escapeHtml(t("saveNotebookHelp"))}">${escapeHtml(t("saveNotebook"))}</button>
-        <button class="btn btn--primary shipcashbox-notebook-action shipcashbox-notebook-action--submit notebook-keep-focus" type="button" id="participantSyncButton" title="${escapeHtml(t("syncNowHelp"))}" aria-label="${escapeHtml(t("syncNowHelp"))}">${escapeHtml(t("syncNow"))}</button>
+        <button class="btn btn--primary shipcashbox-notebook-action shipcashbox-notebook-action--submit notebook-keep-focus" type="button" id="participantSyncButton" title="${escapeHtml(fixLabel)}" aria-label="${escapeHtml(fixLabel)}">${renderNotebookSubmitLabel(participantNotebookText, session.currency)}</button>
       `
     : (viewing.is_self ? "" : `<a class="btn btn--secondary" href="?invite=${encodeURIComponent(participant.invite_token)}">${escapeHtml(t("backToMyNotebook"))}</a>`);
   $("participantView").innerHTML = `
@@ -2423,9 +2877,9 @@ function renderParticipant() {
       </div>
       ${!viewing.is_self ? `<p class="shipcashbox-note">${escapeHtml(t("currentView"))}: ${escapeHtml(viewing.display_name)}</p>` : ""}
       <div class="shipcashbox-notebook-shell">
-        <textarea id="participantNotebook" class="shipcashbox-notebook-textarea" placeholder="${escapeHtml(t("notebookPlaceholder"))}" aria-label="${escapeHtml(t("participantNotebookTitle"))}" ${readOnly ? "readonly" : ""}>${escapeHtml(viewing.is_self ? state.participantDraft : (viewing.notebook_text || ""))}</textarea>
+        ${renderNotebookSheetMeta(participantNotebookText, session.currency)}
+        <textarea id="participantNotebook" class="shipcashbox-notebook-textarea" placeholder="${escapeHtml(t("notebookPlaceholder"))}" aria-label="${escapeHtml(t("participantNotebookTitle"))}" ${readOnly ? "readonly" : ""}>${escapeHtml(participantNotebookText)}</textarea>
         ${renderNotebookLockOverlay()}
-        ${renderNotebookAssistant("participantNotebook", session.currency, readOnly || !viewing.is_self)}
       </div>
       ${renderNotebookBatches(viewing.notebook_batches || [], session.currency, viewing.is_self ? "participant" : "readonly")}
       ${readOnly && viewing.is_self && !state.editorLocked ? `<p class="shipcashbox-note">${escapeHtml(t("participantReadonly"))}</p>` : ""}
@@ -2443,6 +2897,8 @@ function renderParticipant() {
   $("participantNotebook")?.addEventListener("input", () => {
     if (!viewing.is_self) return;
     saveParticipantDraft($("participantNotebook").value);
+    autosizeNotebookTextarea($("participantNotebook"));
+    refreshJournalDraftState($("participantNotebook"));
     $("participantSyncMeta").textContent = participantSyncSummary();
   });
   $("participantSaveButton")?.addEventListener("click", (event) => {
@@ -2456,6 +2912,7 @@ function renderParticipant() {
   bindRestoreNotebookButtons();
   $("openWorkspaceMenuButton")?.addEventListener("click", () => openWorkspaceModal("menu"));
   bindNotebookKeyboardTarget($("participantNotebook"));
+  window.requestAnimationFrame(() => autosizeNotebookTextarea($("participantNotebook")));
   bindNotebookAssistant($("participantNotebook"));
   bindNotebookKeepFocus($("participantNotebook"));
   $("unlockNotebookButton")?.addEventListener("click", unlockNotebookEditor);
@@ -3075,14 +3532,17 @@ function renderCashboxCommandDeck(session, treasurer) {
   const totals = session.totals || {};
   const participants = session.participants || [];
   const personal = isPersonalSession(session);
-  const activeParticipants = participants.filter((participant) => participant.active !== false);
+  const crewParticipants = participants.filter((participant) => participant.id !== session.treasurer_participant_id && participant.role !== "treasurer");
+  const activeParticipants = crewParticipants.filter((participant) => participant.active !== false);
   const activeCount = activeParticipants.length;
-  const syncedCount = activeParticipants.filter((participant) => participant.authorized_at || participant.role === "treasurer").length;
+  const syncedCount = activeParticipants.filter((participant) => participant.authorized_at).length;
   const transferCount = (session.settlement_preview?.lines || []).length;
   const cashboxBalance = Number(totals.cashbox_balance || 0);
   const balanceTone = cashboxBalance < -0.009 ? "negative" : cashboxBalance > 0.009 ? "positive" : "neutral";
   if (personal) {
-    const recordCount = (treasurer?.entries || []).filter((entry) => entry.entry_kind === "expense" || entry.entry_kind === "contribution").length;
+    const readyRecordCount = Array.isArray(treasurer?.notebook_batches) ? treasurer.notebook_batches.length : 0;
+    const activeDraftCount = normalizedText(state.treasurerDraft || treasurer?.notebook_text || "").trim() ? 1 : 0;
+    const recordCount = readyRecordCount + activeDraftCount;
     return `
       <section class="shipcashbox-personal-quiet" aria-label="${escapeHtml(tx("personalSummaryTitle", "Личный отчет"))}">
         <div class="shipcashbox-personal-quiet__balance shipcashbox-personal-quiet__balance--${balanceTone}">
@@ -3105,27 +3565,15 @@ function renderCashboxCommandDeck(session, treasurer) {
             <span>${escapeHtml(tx("personalRecordsLabel", "Записи"))}</span>
             <strong>${escapeHtml(String(recordCount))}</strong>
           </span>
-          <span>
-            <span>${escapeHtml(tx("modePersonalLabel", "Личный"))}</span>
-            <strong>${escapeHtml(session.currency || "EUR")}</strong>
-          </span>
         </div>
       </section>
     `;
   }
-  const participantChips = activeParticipants.slice(0, 7).map((participant, index) => `
-    <span class="shipcashbox-command-avatar" title="${escapeHtml(participant.display_name || "")}">
-      <span class="debt-avatar debt-avatar--${index % 8}">${escapeHtml(participantInitials(participant.display_name, index))}</span>
-      <b>${escapeHtml(participant.display_name || "-")}</b>
-    </span>
-  `).join("");
-  const extraParticipants = Math.max(0, activeParticipants.length - 7);
-
   return `
     <section class="shipcashbox-command-deck" aria-label="${escapeHtml(t("summaryTitle"))}">
       <div class="shipcashbox-command-deck__hero shipcashbox-command-deck__hero--${balanceTone}">
         <div>
-          <p>${escapeHtml(session.title || t("summaryTitle"))}</p>
+          <p>${escapeHtml(session.title || tx("cashboxTeamHeaderTitle", "Касса команды"))}</p>
           <strong>${escapeHtml(money(totals.cashbox_balance, session.currency, true))}</strong>
           <span>${escapeHtml(t("summaryCash"))}</span>
         </div>
@@ -3135,32 +3583,24 @@ function renderCashboxCommandDeck(session, treasurer) {
         </button>
       </div>
       <div class="shipcashbox-command-metrics">
-        <button type="button" data-workspace-window="snapshot">
-          <span>${escapeHtml(t("summaryExpenses"))}</span>
-          <strong>${escapeHtml(money(totals.total_expenses, session.currency))}</strong>
-        </button>
-        <button type="button" data-workspace-window="snapshot">
-          <span>${escapeHtml(t("summaryShare"))}</span>
-          <strong>${escapeHtml(money(totals.share, session.currency))}</strong>
+        <button class="shipcashbox-command-metric--split" type="button" data-workspace-window="snapshot">
+          <span>
+            <span>${escapeHtml(t("summaryExpenses"))}</span>
+            <strong>${escapeHtml(money(totals.total_expenses, session.currency))}</strong>
+          </span>
+          <span>
+            <span>${escapeHtml(t("summaryShare"))}</span>
+            <strong>${escapeHtml(money(totals.share, session.currency))}</strong>
+          </span>
         </button>
         <button type="button" data-workspace-window="team">
           <span>${escapeHtml(t("participantsTitle"))}</span>
-          <strong>${escapeHtml(`${syncedCount}/${activeCount || participants.length}`)}</strong>
+          <strong>${escapeHtml(`${syncedCount}/${activeCount}`)}</strong>
         </button>
         <button type="button" data-workspace-window="reports">
           <span>${escapeHtml(t("summaryContributions"))}</span>
           <strong>${escapeHtml(money(totals.total_contributions, session.currency))}</strong>
         </button>
-      </div>
-      <div class="shipcashbox-command-strip">
-        <div class="shipcashbox-command-strip__crew">
-          ${participantChips}
-          ${extraParticipants ? `<span class="shipcashbox-command-avatar shipcashbox-command-avatar--more">+${escapeHtml(String(extraParticipants))}</span>` : ""}
-        </div>
-        <div class="shipcashbox-command-strip__spent">
-          <span>${escapeHtml(t("spentFooterLabel"))}</span>
-          <strong>${escapeHtml(money(treasurer?.expenses || 0, session.currency))}</strong>
-        </div>
       </div>
     </section>
   `;
@@ -3437,9 +3877,10 @@ function renderCrewDirectory(directory = []) {
   `;
 }
 
-function renderWindowMenuButton(windowName, label, note = "") {
+function renderWindowMenuButton(windowName, label, note = "", options = {}) {
+  const disabled = Boolean(options.disabled);
   return `
-    <button class="shipcashbox-window-link" type="button" data-workspace-window="${escapeHtml(windowName)}" title="${escapeHtml(note || label)}" aria-label="${escapeHtml(note || label)}">
+    <button class="shipcashbox-window-link${disabled ? " is-disabled" : ""}" type="button" data-workspace-window="${escapeHtml(windowName)}" title="${escapeHtml(note || label)}" aria-label="${escapeHtml(note || label)}"${disabled ? " disabled aria-disabled=\"true\"" : ""}>
       <strong>${escapeHtml(label)}</strong>
       ${note ? `<span>${escapeHtml(note)}</span>` : ""}
     </button>
@@ -3451,8 +3892,8 @@ function renderWorkspaceMenu() {
     if (!state.boot?.session) {
       return `
         <div class="shipcashbox-window-menu">
-          ${renderWindowMenuButton("archive", t("archiveTitle"), t("workspaceArchiveText"))}
-          ${renderWindowMenuButton("service", t("workspaceServiceTitle"), t("workspaceServiceText"))}
+          ${renderWindowMenuButton("archive", tx("cashboxMenuArchive", "Архив"), t("workspaceArchiveText"))}
+          ${renderWindowMenuButton("service", tx("cashboxMenuShareInstall", "Поделиться / Установить"), t("workspaceServiceText"))}
         </div>
       `;
     }
@@ -3469,13 +3910,13 @@ function renderWorkspaceMenu() {
     }
     return `
       <div class="shipcashbox-window-menu">
-        ${renderWindowMenuButton("snapshot", t("summaryTitle"), t("workspaceSnapshotText"))}
-        ${renderWindowMenuButton("team", t("participantsTitle"), t("workspaceTeamText"))}
-        ${renderWindowMenuButton("crew-rotation", tx("crewRotationTitle", "Ротация экипажа"), tx("crewRotationMenuText", "Уход, приход и смена казначея без закрытия всей кассы."))}
-        ${renderWindowMenuButton("settlement", t("settlementTitle"), t("workspaceSettlementText"))}
-        ${renderWindowMenuButton("reports", t("workspaceReportsTitle"), t("workspaceReportsText"))}
-        ${renderWindowMenuButton("archive", t("archiveTitle"), t("workspaceArchiveText"))}
-        ${renderWindowMenuButton("service", t("workspaceServiceTitle"), t("workspaceServiceText"))}
+        ${renderWindowMenuButton("snapshot", tx("cashboxMenuInCashbox", "В кассе"), t("workspaceSnapshotText"))}
+        ${renderWindowMenuButton("team", tx("cashboxMenuCrewContrib", "Экипаж и взносы"), t("workspaceTeamText"))}
+        ${renderWindowMenuButton("crew-rotation", tx("cashboxMenuCrewRotation", "Ротация экипажа"), tx("crewRotationMenuText", "Уход, приход и смена казначея без закрытия всей кассы."))}
+        ${renderWindowMenuButton("settlement", tx("cashboxMenuCrewSettlement", "Расчет экипажа"), t("workspaceSettlementText"))}
+        ${renderWindowMenuButton("reports", tx("cashboxMenuAnalytics", "Аналитика"), t("workspaceReportsText"))}
+        ${renderWindowMenuButton("archive", tx("cashboxMenuArchive", "Архив"), t("workspaceArchiveText"))}
+        ${renderWindowMenuButton("service", tx("cashboxMenuShareInstall", "Поделиться / Установить"), t("workspaceServiceText"))}
       </div>
     `;
   }
@@ -3489,7 +3930,17 @@ function renderWorkspaceMenu() {
     `;
   }
 
-  return "";
+  return `
+    <div class="shipcashbox-window-menu">
+      ${renderWindowMenuButton("snapshot", tx("cashboxMenuInCashbox", "В кассе"), tx("cashboxMenuDisabledStart", "Сначала откройте или создайте кассу."), { disabled: true })}
+      ${renderWindowMenuButton("team", tx("cashboxMenuCrewContrib", "Экипаж и взносы"), tx("cashboxMenuDisabledStart", "Сначала откройте или создайте кассу."), { disabled: true })}
+      ${renderWindowMenuButton("crew-rotation", tx("cashboxMenuCrewRotation", "Ротация экипажа"), tx("cashboxMenuDisabledStart", "Сначала откройте или создайте кассу."), { disabled: true })}
+      ${renderWindowMenuButton("settlement", tx("cashboxMenuCrewSettlement", "Расчет экипажа"), tx("cashboxMenuDisabledStart", "Сначала откройте или создайте кассу."), { disabled: true })}
+      ${renderWindowMenuButton("reports", tx("cashboxMenuAnalytics", "Аналитика"), tx("cashboxMenuDisabledStart", "Сначала откройте или создайте кассу."), { disabled: true })}
+      ${renderWindowMenuButton("archive", tx("cashboxMenuArchive", "Архив"), tx("cashboxMenuDisabledStart", "Сначала откройте или создайте кассу."), { disabled: true })}
+      ${renderWindowMenuButton("service", tx("cashboxMenuShareInstall", "Поделиться / Установить"), tx("cashboxMenuDisabledStart", "Сначала откройте или создайте кассу."), { disabled: true })}
+    </div>
+  `;
 }
 
 function renderTreasurerReportsWindow(session) {
@@ -3865,11 +4316,12 @@ function renderServiceWindow() {
       <section class="shipcashbox-card shipcashbox-card--window shipcashbox-card--service-reset">
         <div class="shipcashbox-card__head">
           <div>
-            <p class="section-heading__eyebrow">${escapeHtml(tx("cacheResetEyebrow", "Версия"))}</p>
+            <p class="section-heading__eyebrow">${escapeHtml(tx("cacheResetEyebrow", "Обновление"))}</p>
             <h2>${escapeHtml(tx("cacheResetTitle", "Обновить приложение"))}</h2>
           </div>
         </div>
-        <p class="shipcashbox-note">${escapeHtml(txf("cacheResetText", "Если экран выглядит старым, очистите кэш приложения и откройте текущую сборку {version}. Записи и черновики не удаляются.", { version: SHELL_VERSION }))}</p>
+        <p class="shipcashbox-note">${escapeHtml(txf("cacheResetText", "Доступна свежая версия судового журнала. Данные учетной записи сохранены на защищенном сервере и восстановятся после первого входа в обновленной версии.", { version: SHELL_VERSION }))}</p>
+        <p class="shipcashbox-note shipcashbox-note--update">${escapeHtml(personal ? tx("personalCacheResetChangelog", "Что обновлено: личный учет, готовые записи и переход в ЖЗ.") : tx("cacheResetChangelog", "Что обновлено: ЖЗ, готовые записи и экран Кассы команды."))}</p>
         <div class="shipcashbox-actions">
           <button class="btn btn--secondary" type="button" id="workspaceCacheResetButton">${escapeHtml(tx("cacheResetAction", "Обновить приложение"))}</button>
         </div>
@@ -4078,40 +4530,52 @@ function renderTreasurer() {
   const personal = isPersonalSession(session);
   const notebookText = normalizedText(state.treasurerDraft);
   const totals = session.totals || {};
+  const selectedReadyRecord = activeReadyRecordBatch();
+  const workspaceView = selectedReadyRecord || state.cashboxWorkspaceView === "journal" ? "journal" : "cashbox";
   const readOnly = session.status !== "active" || state.editorLocked;
+  if (workspaceView !== "journal") {
+    state.activeReadyRecord = null;
+    state.editingReadyRecord = null;
+    $("treasurerView").innerHTML = `
+      <div class="shipcashbox-stack shipcashbox-stack--cashbox-home">
+        ${renderCashboxCommandDeck(session, treasurer)}
+        ${renderCashboxReadyRecordsPanel(session, treasurer)}
+      </div>
+    `;
+    bindTreasurerUi();
+    return;
+  }
   const attachmentAction = session.status === "active"
-    ? `<button class="btn btn--secondary shipcashbox-notebook-action shipcashbox-notebook-action--attach" type="button" id="attachReceiptButton" title="${escapeHtml(t("attachPhoto"))}" aria-label="${escapeHtml(t("attachPhoto"))}"><span aria-hidden="true">📎</span><span class="shipcashbox-sr-only">${escapeHtml(t("attachPhoto"))}</span></button>`
+    ? `<button class="shipcashbox-notebook-attach-inline shipcashbox-notebook-action shipcashbox-notebook-action--attach notebook-keep-focus" type="button" id="attachReceiptButton" title="${escapeHtml(t("attachPhoto"))}" aria-label="${escapeHtml(t("attachPhoto"))}"><span aria-hidden="true">📎</span><span class="shipcashbox-sr-only">${escapeHtml(t("attachPhoto"))}</span></button>`
     : "";
   const notebookAction = session.status === "active"
     ? `
-        <button class="btn btn--secondary shipcashbox-notebook-action shipcashbox-notebook-action--save notebook-keep-focus" type="button" id="treasurerSaveButton" title="${escapeHtml(t("saveNotebookHelp"))}" aria-label="${escapeHtml(t("saveNotebookHelp"))}">${escapeHtml(t("saveNotebook"))}</button>
-        <button class="btn btn--primary shipcashbox-notebook-action shipcashbox-notebook-action--submit notebook-keep-focus" type="button" id="treasurerSubmitNotebookButton" title="${escapeHtml(t("submitNotebookHelp"))}" aria-label="${escapeHtml(t("submitNotebookHelp"))}">${escapeHtml(t("submitNotebook"))}</button>
+        <button class="btn btn--primary shipcashbox-notebook-action shipcashbox-notebook-action--submit notebook-keep-focus" type="button" id="treasurerSubmitNotebookButton" title="${escapeHtml(tx("fixNotebookRecords", "Зафиксировать записи"))}" aria-label="${escapeHtml(tx("fixNotebookRecords", "Зафиксировать записи"))}">${renderNotebookSubmitLabel(notebookText, session.currency)}</button>
         ${attachmentAction}
       `
     : "";
   $("treasurerView").innerHTML = `
-    <div class="shipcashbox-stack">
-      ${renderCashboxCommandDeck(session, treasurer)}
+    <div class="shipcashbox-stack shipcashbox-stack--journal">
       <section class="shipcashbox-card shipcashbox-card--sticky shipcashbox-card--notebook">
         <div class="shipcashbox-card__head shipcashbox-workhead">
           <div>
-            <p class="section-heading__eyebrow">${escapeHtml(session.title)}</p>
-            <h2 class="shipcashbox-work-title">${escapeHtml(personal ? tx("personalNotebookTitle", "Личный блокнот") : t("treasurerNotebookTitle"))}</h2>
+            <p class="section-heading__eyebrow">${escapeHtml(personal ? tx("modePersonalLabel", "Личный") : tx("cashboxTeamHeaderTitle", "Касса команды"))}</p>
+            <h2 class="shipcashbox-work-title shipcashbox-work-title--ledger">${escapeHtml(tx("expenseFeedTitle", "Лента учета расходов"))} <span aria-hidden="true">+ / -</span></h2>
           </div>
           <div class="shipcashbox-inline-actions">
-            <button class="btn btn--secondary" type="button" id="openWorkspaceMenuButton" title="${escapeHtml(personal ? tx("personalWorkspaceMenuHelp", "Открывает отчет, настройки, архив и сервис личного журнала.") : t("workspaceMenuHelp"))}" aria-label="${escapeHtml(personal ? tx("personalWorkspaceMenuHelp", "Открывает отчет, настройки, архив и сервис личного журнала.") : t("workspaceMenuHelp"))}">${escapeHtml(workspaceMenuActionLabel())}</button>
+            <button class="btn btn--secondary shipcashbox-back-to-cashbox" type="button" id="backToCashboxButton">${escapeHtml(personal ? tx("backToPersonalAccounting", "К личному учету") : tx("backToCashbox", "К кассе команды"))}</button>
           </div>
         </div>
         <div class="shipcashbox-notebook-shell">
+          ${renderNotebookSheetMeta(notebookText, session.currency, selectedReadyRecord)}
+          ${selectedReadyRecord ? renderReadyRecordLayer(selectedReadyRecord, session.currency) : ""}
           <textarea id="treasurerNotebook" class="shipcashbox-notebook-textarea" placeholder="${escapeHtml(personal ? tx("personalNotebookPlaceholder", "+500 аванс / 40 топливо / 15 кофе") : t("notebookPlaceholder"))}" aria-label="${escapeHtml(personal ? tx("personalNotebookTitle", "Личный блокнот") : t("treasurerNotebookTitle"))}" ${readOnly ? "readonly" : ""}>${escapeHtml(notebookText)}</textarea>
           <div class="shipcashbox-notebook-proof-rail" id="treasurerNotebookProofRail" aria-label="${escapeHtml(t("lineProofAction"))}" hidden></div>
           ${renderNotebookLockOverlay()}
-          ${renderNotebookAssistant("treasurerNotebook", session.currency, readOnly)}
         </div>
-        ${renderNotebookBatches(treasurer?.notebook_batches || [], session.currency, "treasurer")}
         ${session.status !== "active" && !state.editorLocked ? `<p class="shipcashbox-note">${escapeHtml(t("participantReadonly"))}</p>` : ""}
         ${renderNotebookFooter({
-          label: personal ? tx("personalSpentFooterLabel", "Расходы") : t("spentFooterLabel"),
+          label: selectedReadyRecord ? tx("readyRecordFooterLabel", "Готовая запись") : tx("activeRecordFooterLabel", "Текущая запись"),
           value: money(treasurer?.expenses || 0, session.currency),
           actionHtml: notebookAction,
           statusId: "treasurerSaveMeta",
@@ -5373,13 +5837,353 @@ async function restoreNotebookBatch(owner, batchId) {
   return payload;
 }
 
-function bindRestoreNotebookButtons() {
-  document.querySelectorAll(".restore-notebook-batch-btn").forEach((button) => {
-    button.addEventListener("click", () => {
-      restoreNotebookBatch(button.dataset.owner || "", button.dataset.batchId || "")
-        .catch((error) => setFlash(error.message || t("loadFailed"), true));
+function openNotebookBatch(owner, batchId) {
+  const normalizedOwner = owner === "participant" || owner === "readonly" ? owner : "treasurer";
+  const batch = findNotebookBatch(normalizedOwner, batchId);
+  if (!batch) {
+    setFlash(tx("readyRecordMissing", "Готовая запись не найдена."), true);
+    return;
+  }
+  state.editingReadyRecord = null;
+  state.activeReadyRecord = { owner: normalizedOwner, batchId: String(batch.id || batchId || "") };
+  saveWorkspaceView("journal", activeSession()?.id);
+  appendRecoveryLog("ready-record-opened", {
+    owner: normalizedOwner,
+    batchId: state.activeReadyRecord.batchId,
+    hash: hashText(batch.raw_text || ""),
+  });
+  render();
+  window.requestAnimationFrame(() => $("readyRecordLayer")?.scrollIntoView({ block: "start", behavior: "smooth" }));
+}
+
+function requestReadyRecordEdit() {
+  const batch = activeReadyRecordBatch();
+  if (!batch) return;
+  showReadyRecordEditModal(batch);
+}
+
+function confirmReadyRecordEdit(batch) {
+  if (!batch) return;
+  appendRecoveryLog("ready-record-edit-request", {
+    batchId: batch.id,
+    confirmed: true,
+    hash: hashText(batch.raw_text || ""),
+  });
+  state.activeReadyRecord = null;
+  state.editingReadyRecord = {
+    batchId: String(batch.id || ""),
+    rawText: normalizedText(batch.raw_text || ""),
+    hash: hashText(batch.raw_text || ""),
+  };
+  saveTreasurerDraft(batch.raw_text || "");
+  render();
+  window.requestAnimationFrame(() => {
+    const field = $("treasurerNotebook");
+    if (field instanceof HTMLTextAreaElement) {
+      field.focus({ preventScroll: true });
+      field.selectionStart = field.value.length;
+      field.selectionEnd = field.value.length;
+    }
+  });
+}
+
+function ensureReadyRecordEditModal() {
+  let modal = $("readyRecordEditModal");
+  if (modal) return modal;
+  modal = document.createElement("div");
+  modal.id = "readyRecordEditModal";
+  modal.className = "shipcashbox-modal shipcashbox-ready-edit-modal";
+  modal.hidden = true;
+  modal.innerHTML = `
+    <div class="shipcashbox-modal__backdrop" data-close-ready-edit="1"></div>
+    <section class="shipcashbox-modal__card section--paper" role="dialog" aria-modal="true" aria-labelledby="readyRecordEditTitle">
+      <div class="shipcashbox-modal__head">
+        <div>
+          <p class="section-heading__eyebrow">${escapeHtml(tx("readyRecordEditEyebrow", "Готовая запись"))}</p>
+          <h2 id="readyRecordEditTitle">${escapeHtml(tx("readyRecordEditTitle", "Редактировать запись?"))}</h2>
+        </div>
+        <button type="button" class="management-modal__close shipcashbox-modal-x" data-close-ready-edit="1" aria-label="${escapeHtml(t("close"))}">×</button>
+      </div>
+      <p class="shipcashbox-note" id="readyRecordEditText"></p>
+      <div class="shipcashbox-ready-edit-modal__actions">
+        <button class="btn btn--secondary" type="button" data-close-ready-edit="1">${escapeHtml(tx("readyRecordEditNo", "Нет"))}</button>
+        <button class="btn btn--primary" type="button" id="readyRecordEditConfirmButton">${escapeHtml(tx("readyRecordEditYes", "Да, редактировать"))}</button>
+      </div>
+    </section>
+  `;
+  document.body.appendChild(modal);
+  modal.querySelectorAll("[data-close-ready-edit]").forEach((button) => {
+    button.addEventListener("click", closeReadyRecordEditModal);
+  });
+  return modal;
+}
+
+function showReadyRecordEditModal(batch) {
+  const modal = ensureReadyRecordEditModal();
+  modal.dataset.batchId = String(batch?.id || "");
+  $("readyRecordEditText").textContent = tx("readyRecordEditConfirm", "Текст будет перенесен в активное окно ЖЗ. Готовая карточка останется в кассе до повторной фиксации.");
+  $("readyRecordEditConfirmButton").onclick = () => {
+    const current = activeReadyRecordBatch();
+    closeReadyRecordEditModal({ logCancel: false });
+    confirmReadyRecordEdit(current || batch);
+  };
+  modal.hidden = false;
+  modal.setAttribute("aria-hidden", "false");
+  lockModalScroll();
+}
+
+function closeReadyRecordEditModal({ logCancel = true } = {}) {
+  const modal = $("readyRecordEditModal");
+  if (!modal) return;
+  if (logCancel) {
+    const batch = activeReadyRecordBatch();
+    if (batch) {
+      appendRecoveryLog("ready-record-edit-request", {
+        batchId: batch.id,
+        confirmed: false,
+        hash: hashText(batch.raw_text || ""),
+      });
+    }
+  }
+  modal.hidden = true;
+  modal.setAttribute("aria-hidden", "true");
+  modal.dataset.batchId = "";
+  unlockModalScroll();
+}
+
+function returnFromTreasurerJournalToCashbox({ source = "journal-fixation-return" } = {}) {
+  state.activeReadyRecord = null;
+  state.editingReadyRecord = null;
+  saveWorkspaceView("cashbox", state.boot?.session?.id);
+  appendRecoveryLog("cashbox-home-opened", { source }, state.boot?.session?.id);
+  render();
+}
+
+async function handleTreasurerNotebookPrimaryAction() {
+  const draft = normalizedText(state.treasurerDraft || "");
+  if (state.activeReadyRecord && !draft.trim()) {
+    returnFromTreasurerJournalToCashbox({ source: "ready-record-view-return" });
+    return null;
+  }
+  if (state.editingReadyRecord && draft === normalizedText(state.editingReadyRecord.rawText || "")) {
+    clearTreasurerDraft(state.boot?.session?.id);
+    returnFromTreasurerJournalToCashbox({ source: "ready-record-unchanged-return" });
+    return null;
+  }
+  state.editingReadyRecord = null;
+  return saveTreasurerNotebook({ preserveFocus: false, silent: false, submit: true });
+}
+
+function ensureReadyRecordTrashModal() {
+  let modal = $("readyRecordTrashModal");
+  if (modal) return modal;
+  modal = document.createElement("div");
+  modal.id = "readyRecordTrashModal";
+  modal.className = "shipcashbox-modal shipcashbox-ready-trash-modal";
+  modal.hidden = true;
+  modal.innerHTML = `
+    <div class="shipcashbox-modal__backdrop" data-close-ready-trash="1"></div>
+    <section class="shipcashbox-modal__card section--paper" role="dialog" aria-modal="true" aria-labelledby="readyRecordTrashTitle">
+      <div class="shipcashbox-modal__head">
+        <div>
+          <p class="section-heading__eyebrow">${escapeHtml(tx("readyRecordTrashEyebrow", "Корзина ЖЗ"))}</p>
+          <h2 id="readyRecordTrashTitle">${escapeHtml(tx("readyRecordTrashTitle", "Переместить запись в корзину?"))}</h2>
+        </div>
+        <button type="button" class="management-modal__close shipcashbox-modal-x" data-close-ready-trash="1" aria-label="${escapeHtml(t("close"))}">×</button>
+      </div>
+      <p class="shipcashbox-note" id="readyRecordTrashText">${escapeHtml(tx("readyRecordTrashText", "Запись будет перемещена в корзину и автоматически удалена через 60 дней. До очистки она хранится в резервной корзине."))}</p>
+      <div class="shipcashbox-ready-trash-modal__actions">
+        <button class="btn btn--secondary" type="button" data-close-ready-trash="1">${escapeHtml(tx("readyRecordTrashCancel", "Отмена"))}</button>
+        <button class="btn btn--primary shipcashbox-danger-action" type="button" id="readyRecordTrashConfirmButton">${escapeHtml(tx("readyRecordTrashConfirm", "В корзину"))}</button>
+      </div>
+    </section>
+  `;
+  document.body.appendChild(modal);
+  modal.querySelectorAll("[data-close-ready-trash]").forEach((button) => {
+    button.addEventListener("click", closeReadyRecordTrashModal);
+  });
+  return modal;
+}
+
+function showReadyRecordTrashModal(owner, batchId) {
+  const normalizedOwner = owner === "participant" ? "participant" : owner === "readonly" ? "readonly" : "treasurer";
+  if (normalizedOwner === "readonly") {
+    setFlash(tx("readyRecordTrashReadonly", "Эта запись открыта только для просмотра."), true);
+    return;
+  }
+  const batch = findNotebookBatch(normalizedOwner, batchId);
+  if (!batch) {
+    setFlash(tx("readyRecordMissing", "Готовая запись не найдена."), true);
+    return;
+  }
+  const modal = ensureReadyRecordTrashModal();
+  modal.dataset.owner = normalizedOwner;
+  modal.dataset.batchId = String(batch.id || batchId || "");
+  $("readyRecordTrashConfirmButton").onclick = () => {
+    trashReadyRecord(modal.dataset.owner || "", modal.dataset.batchId || "")
+      .catch((error) => setFlash(error.message || t("loadFailed"), true));
+  };
+  modal.hidden = false;
+  modal.setAttribute("aria-hidden", "false");
+  lockModalScroll();
+}
+
+function closeReadyRecordTrashModal({ deferUnlock = false } = {}) {
+  const modal = $("readyRecordTrashModal");
+  if (!modal) return;
+  modal.hidden = true;
+  modal.setAttribute("aria-hidden", "true");
+  modal.dataset.owner = "";
+  modal.dataset.batchId = "";
+  if (deferUnlock) return;
+  unlockModalScroll();
+}
+
+async function trashReadyRecord(owner, batchId) {
+  const normalizedOwner = owner === "participant" ? "participant" : "treasurer";
+  const id = String(batchId || "");
+  if (!id) return;
+  const button = $("readyRecordTrashConfirmButton");
+  if (button) button.setAttribute("aria-busy", "true");
+  try {
+    if (normalizedOwner === "participant") {
+      const participant = state.participant?.participant;
+      const token = participant?.invite_token || "";
+      const payload = await api("participant-trash-batch", {
+        method: "POST",
+        body: JSON.stringify({ token, batch_id: id }),
+      });
+      state.participant = payload;
+      state.participantDraft = normalizedText(payload.participant?.notebook_text || "");
+      if (token) {
+        try {
+          localStorage.setItem(participantDraftKey(token), state.participantDraft);
+        } catch (error) {}
+        saveCache(`${PARTICIPANT_CACHE_PREFIX}${token}`, payload);
+      }
+    } else {
+      const payload = await api("trash-treasurer-batch", {
+        method: "POST",
+        body: JSON.stringify({ id: state.boot?.session?.id, batch_id: id }),
+      });
+      state.boot = payload;
+      saveCache(BOOT_CACHE_KEY, payload);
+    }
+    if (state.activeReadyRecord?.batchId === id) {
+      state.activeReadyRecord = null;
+      saveWorkspaceView("cashbox", state.boot?.session?.id);
+    }
+    render();
+    closeReadyRecordTrashModal({ deferUnlock: true });
+    window.requestAnimationFrame(() => {
+      unlockModalScroll();
+      setFlash(tx("readyRecordTrashed", "Запись перемещена в корзину. Автоудаление через 60 дней."));
+    });
+  } finally {
+    if (button) button.removeAttribute("aria-busy");
+  }
+}
+
+function bindNotebookTrashGestures() {
+  document.querySelectorAll(".shipcashbox-submitted-record__swipe").forEach((item) => {
+    if (item.dataset.trashGestureBound === "1") return;
+    item.dataset.trashGestureBound = "1";
+    let startX = 0;
+    let startY = 0;
+    let tracking = false;
+    let moved = false;
+    const maxShift = 76;
+    const closeOpenItems = () => {
+      document.querySelectorAll(".shipcashbox-submitted-record__swipe.is-trash-open").forEach((openItem) => {
+        if (openItem !== item) {
+          openItem.classList.remove("is-trash-open");
+          openItem.style.removeProperty("--trash-shift");
+        }
+      });
+    };
+    const resetDrag = () => {
+      tracking = false;
+      item.classList.remove("is-trash-dragging");
+      item.style.removeProperty("--trash-shift");
+    };
+    item.addEventListener("pointerdown", (event) => {
+      if (event.button != null && event.button !== 0) return;
+      if (event.target.closest(".shipcashbox-submitted-record__trash")) return;
+      startX = event.clientX;
+      startY = event.clientY;
+      tracking = true;
+      moved = false;
+      item.dataset.trashDragMoved = "";
+      closeOpenItems();
+    });
+    item.addEventListener("pointermove", (event) => {
+      if (!tracking) return;
+      const dx = event.clientX - startX;
+      const dy = event.clientY - startY;
+      if (!moved && Math.abs(dx) < 8) return;
+      if (Math.abs(dx) < Math.abs(dy)) return;
+      if (!moved) {
+        item.classList.add("is-trash-dragging");
+        try {
+          item.setPointerCapture(event.pointerId);
+        } catch (error) {}
+      }
+      moved = true;
+      item.dataset.trashDragMoved = "1";
+      event.preventDefault();
+      const shift = Math.min(maxShift, Math.abs(dx));
+      item.style.setProperty("--trash-shift", `${-shift}px`);
+    });
+    item.addEventListener("pointerup", (event) => {
+      if (!tracking) return;
+      const dx = event.clientX - startX;
+      const dy = event.clientY - startY;
+      const shouldOpen = Math.abs(dx) >= 28 && Math.abs(dx) >= Math.abs(dy);
+      resetDrag();
+      if (shouldOpen) item.classList.add("is-trash-open");
+      if (moved) {
+        try {
+          item.releasePointerCapture(event.pointerId);
+        } catch (error) {}
+      }
+      if (moved) {
+        window.setTimeout(() => {
+          item.dataset.trashDragMoved = "";
+        }, 80);
+      }
+    });
+    item.addEventListener("pointercancel", () => {
+      resetDrag();
+      window.setTimeout(() => {
+        item.dataset.trashDragMoved = "";
+      }, 0);
     });
   });
+  document.querySelectorAll(".trash-notebook-batch-btn").forEach((button) => {
+    if (button.dataset.trashButtonBound === "1") return;
+    button.dataset.trashButtonBound = "1";
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      showReadyRecordTrashModal(button.dataset.owner || "", button.dataset.batchId || "");
+    });
+  });
+}
+
+function bindRestoreNotebookButtons() {
+  document.querySelectorAll(".restore-notebook-batch-btn").forEach((button) => {
+    if (button.dataset.restoreButtonBound === "1") return;
+    button.dataset.restoreButtonBound = "1";
+    button.addEventListener("click", (event) => {
+      if (button.closest(".shipcashbox-submitted-record__swipe")?.dataset.trashDragMoved === "1") {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
+      openNotebookBatch(button.dataset.owner || "", button.dataset.batchId || "");
+    });
+  });
+  bindNotebookTrashGestures();
 }
 
 function bindTreasurerUi() {
@@ -5405,6 +6209,30 @@ function bindTreasurerUi() {
   $("saveSessionButton")?.addEventListener("click", () => saveSessionMeta().catch((error) => setFlash(error.message || t("loadFailed"))));
   $("shareToolButton")?.addEventListener("click", () => shareToolLink().catch((error) => setFlash(error.message || t("loadFailed"))));
   $("openWorkspaceMenuButton")?.addEventListener("click", () => openWorkspaceModal("menu"));
+  $("createReadyRecordButton")?.addEventListener("click", () => {
+    state.activeReadyRecord = null;
+    saveWorkspaceView("journal", state.boot?.session?.id);
+    appendRecoveryLog("journal-create-opened", { source: "cashbox-home" }, state.boot?.session?.id);
+    render();
+    window.requestAnimationFrame(() => $("treasurerNotebook")?.focus({ preventScroll: true }));
+  });
+  $("openActiveDraftButton")?.addEventListener("click", () => {
+    state.activeReadyRecord = null;
+    saveWorkspaceView("journal", state.boot?.session?.id);
+    appendRecoveryLog("journal-active-draft-opened", { source: "cashbox-home" }, state.boot?.session?.id);
+    render();
+    window.requestAnimationFrame(() => $("treasurerNotebook")?.focus({ preventScroll: true }));
+  });
+  $("backToCashboxButton")?.addEventListener("click", () => {
+    if (state.viewer === "treasurer" && state.boot?.session) {
+      const serverText = normalizedText((state.boot.session.participants || []).find((participant) => participant.id === state.boot.session.treasurer_participant_id)?.notebook_text || "");
+      if (normalizedText(state.treasurerDraft || "") !== serverText) {
+        saveTreasurerNotebook({ preserveFocus: false, silent: true }).catch(() => {});
+      }
+    }
+    returnFromTreasurerJournalToCashbox({ source: "journal-back" });
+  });
+  $("readyRecordLayer")?.addEventListener("click", requestReadyRecordEdit);
   document.querySelectorAll("#treasurerView [data-workspace-window]").forEach((button) => {
     button.addEventListener("click", () => openWorkspaceModal(button.dataset.workspaceWindow || "menu"));
   });
@@ -5415,12 +6243,14 @@ function bindTreasurerUi() {
       .catch((error) => setFlash(error.message || t("loadFailed"), true));
   });
   $("treasurerSubmitNotebookButton")?.addEventListener("click", (event) => {
-    runButtonAction(event.currentTarget, t("submitNotebookBusy"), () => saveTreasurerNotebook({ preserveFocus: false, silent: false, submit: true }))
+    runButtonAction(event.currentTarget, t("submitNotebookBusy"), () => handleTreasurerNotebookPrimaryAction())
       .catch((error) => setFlash(error.message || t("loadFailed"), true));
   });
   $("addParticipantButton")?.addEventListener("click", () => addParticipantDraftRow());
   $("treasurerNotebook")?.addEventListener("input", () => {
     saveTreasurerDraft($("treasurerNotebook").value);
+    autosizeNotebookTextarea($("treasurerNotebook"));
+    refreshJournalDraftState($("treasurerNotebook"));
     setNotebookMeta("treasurerSaveMeta", t("autosavePending"));
     scheduleTreasurerAutosave();
   });
@@ -5433,6 +6263,7 @@ function bindTreasurerUi() {
     saveTreasurerNotebook({ preserveFocus: false, silent: true }).catch(() => {});
   });
   bindNotebookKeyboardTarget($("treasurerNotebook"));
+  window.requestAnimationFrame(() => autosizeNotebookTextarea($("treasurerNotebook")));
   bindNotebookAssistant($("treasurerNotebook"));
   bindNotebookProofRail($("treasurerNotebook"));
   bindNotebookKeepFocus($("treasurerNotebook"));
@@ -5669,13 +6500,13 @@ function openWorkspaceModal(windowName = "menu", options = {}) {
   $("workspaceModal").hidden = false;
   $("workspaceModal").dataset.window = windowName;
   $("workspaceModal").classList.toggle("shipcashbox-modal--workscreen", windowName !== "menu");
-  $("workspaceModalMenuButton").textContent = workspaceMenuActionLabel();
-  $("workspaceCloseButton").textContent = t("close");
+  if ($("workspaceModalMenuButton")) $("workspaceModalMenuButton").textContent = workspaceMenuActionLabel();
+  if ($("workspaceCloseButton")) $("workspaceCloseButton").textContent = "×";
   $("workspaceModalEyebrow").textContent = payload.eyebrow;
   $("workspaceModalTitle").textContent = payload.title;
   $("workspaceModalBody").innerHTML = payload.body;
   $("workspaceModalBody").scrollTop = Number(options.scrollTop || 0);
-  $("workspaceModalMenuButton").hidden = windowName === "menu";
+  if ($("workspaceModalMenuButton")) $("workspaceModalMenuButton").hidden = windowName === "menu";
   bindWorkspaceModalUi();
   bindInstallUi();
 }
@@ -6116,6 +6947,12 @@ async function performParticipantSync(syncSource = "manual", { silent = false, s
 
   state.participant = response;
   const serverDraft = normalizedText(response.participant.notebook_text || "");
+  appendRecoveryLog(submit ? "participant-record-finalized" : "participant-autosaved", {
+    token: participant.invite_token,
+    text: notebookText,
+    hash: hashText(notebookText),
+    batchCount: Array.isArray(response.participant?.notebook_batches) ? response.participant.notebook_batches.length : 0,
+  }, response.session?.id);
   state.participantDraft = localDraftChangedDuringSync ? normalizedText(state.participantDraft || "") : serverDraft;
   try {
     localStorage.setItem(participantDraftKey(participant.invite_token), state.participantDraft);
@@ -6203,6 +7040,11 @@ function applyTreasurerBootPayload(payload) {
     payload.session?.id,
     (payload.session?.participants || []).find((participant) => participant.id === payload.session?.treasurer_participant_id)?.notebook_text || ""
   );
+  state.cashboxWorkspaceView = hasActiveTreasurerDraft() ? "cashbox" : readWorkspaceView(payload.session?.id);
+  state.activeReadyRecord = null;
+  if (hasActiveTreasurerDraft()) {
+    saveWorkspaceView("cashbox", payload.session?.id);
+  }
   saveCache(BOOT_CACHE_KEY, payload);
   render();
 }
@@ -6213,8 +7055,10 @@ function renderStartChoice(message = "") {
   state.participant = null;
   state.participantDraft = "";
   state.treasurerDraft = "";
+  state.cashboxWorkspaceView = "cashbox";
+  state.activeReadyRecord = null;
   render();
-  if (message) setFlash(message);
+  if (message && message !== tx("entryChooseWorkspace", "Выберите, с чем работаете сейчас.")) setFlash(message);
 }
 
 async function loadTreasurerBoot(mode = "") {
@@ -6461,8 +7305,22 @@ function registerServiceWorker() {
   navigator.serviceWorker.register("./sw.js").then((registration) => {
     registration.update().catch(() => {});
     if (registration.waiting) {
+      state.shellUpdateAvailable = true;
       registration.waiting.postMessage({ type: "SKIP_WAITING" });
+      updateTopbarText();
     }
+    registration.addEventListener("updatefound", () => {
+      const installing = registration.installing;
+      if (!installing) return;
+      installing.addEventListener("statechange", () => {
+        if (installing.state !== "installed" || !navigator.serviceWorker.controller) return;
+        state.shellUpdateAvailable = true;
+        state.shellVersionChanges = Math.max(1, Number(state.shellVersionChanges || 0));
+        writeShellReleaseState({ version: SHELL_VERSION, pendingCount: state.shellVersionChanges, checkedAt: new Date().toISOString() });
+        updateTopbarText();
+        maybeSuggestShellUpdate();
+      });
+    });
   }).catch(() => {});
 }
 
@@ -6561,6 +7419,8 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
     closeHelpPopovers();
     closeAppMenu();
+    closeLanguageModal();
+    closeSoftNoticeModal();
     closeScanReviewModal();
   }
 });
@@ -6570,9 +7430,13 @@ document.addEventListener("brkovicToolAuthChanged", () => {
 });
 
 document.addEventListener("DOMContentLoaded", async () => {
+  trackShellVersionState();
   syncChromeVisibility();
   document.querySelectorAll("#cashboxGuestMenuButton, #cashboxAppMenuButton, #cashboxMobileMenuButton").forEach((button) => {
     button.addEventListener("click", openAppMenu);
+  });
+  document.querySelectorAll("#cashboxGuestCashMenuButton, #cashboxWorkspaceCashMenuButton, #cashboxMobileCashMenuButton").forEach((button) => {
+    button.addEventListener("click", () => openWorkspaceModal("menu"));
   });
   document.querySelectorAll("#cashboxStartButton, #cashboxMobileStartButton").forEach((button) => {
     button.addEventListener("click", openStartScreen);
@@ -6581,19 +7445,27 @@ document.addEventListener("DOMContentLoaded", async () => {
     closeAppMenu();
     openStartScreen();
   });
-  $("workspaceStartButton")?.addEventListener("click", openStartScreen);
-  $("cashboxMenuWorkspace")?.addEventListener("click", () => {
-    closeAppMenu();
-    openWorkspaceModal("menu");
+  $("cashboxMenuJournal")?.addEventListener("click", () => {
+    openActiveJournal().catch((error) => {
+      renderStartChoice();
+      showSoftNoticeModal(tx("activeJournalEmptyTitle", "Активного журнала пока нет"), error.message || tx("loadFailed", "Не удалось загрузить данные."));
+    });
   });
-  $("cashboxMenuGroup")?.addEventListener("click", () => {
+  $("workspaceStartButton")?.addEventListener("click", openStartScreen);
+  $("cashboxMenuMainSite")?.addEventListener("click", (event) => {
+    event.preventDefault();
     closeAppMenu();
-    openWorkspaceModal(groupWindowForViewer());
+    openExitModal(event.currentTarget?.dataset.href || "/index.html#hero");
   });
   $("cashboxMenuNavdesk")?.addEventListener("click", (event) => {
     event.preventDefault();
     closeAppMenu();
-    openExitModal($("cashboxMenuNavdesk")?.getAttribute("href") || "../navdesk.html");
+    openExitModal(event.currentTarget?.dataset.href || "/navdesk.html");
+  });
+  $("cashboxMenuLanguageOpen")?.addEventListener("click", openLanguageModal);
+  $("cashboxMenuAccountToggle")?.addEventListener("click", () => {
+    renderAppMenuAccount();
+    toggleAccountPanel();
   });
   $("cashboxMenuInstall")?.addEventListener("click", () => {
     handleAppInstallAction().catch((error) => setFlash(error.message || t("loadFailed"), true));
@@ -6611,9 +7483,24 @@ document.addEventListener("DOMContentLoaded", async () => {
       await api.setLanguage(button.dataset.cashboxLang);
       syncLanguageState(button.dataset.cashboxLang);
       updateTopbarText();
+      closeLanguageModal();
     } finally {
       button.disabled = false;
     }
+  });
+  document.querySelectorAll("[data-close-language]").forEach((button) => {
+    button.addEventListener("click", closeLanguageModal);
+  });
+  $("cashboxLanguageModal")?.addEventListener("click", (event) => {
+    if (event.target === $("cashboxLanguageModal")) closeLanguageModal();
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && isModalOpen("cashboxLanguageModal")) closeLanguageModal();
+  });
+  document.addEventListener("click", (event) => {
+    const hint = document.querySelector("#cashboxGuestTopbar .language-hint");
+    if (!hint || hint.contains(event.target)) return;
+    hint.remove();
   });
   document.addEventListener("click", (event) => {
     const button = event.target.closest?.("[data-cashbox-theme]");
