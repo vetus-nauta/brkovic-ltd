@@ -64,11 +64,27 @@ The old process was:
 php -S 127.0.0.1:18090 -t .
 ```
 
-Start local runtime from the source copy:
+Start local runtime from the WebStorm/test copy when checking the local browser:
 
 ```bash
-cd /home/alexey/GitHub/Revoyacht/brkovic-ltd
+cd /home/alexey/WebstormProjects/brkovic-ltd
 php -S 127.0.0.1:18090 -t .
+```
+
+The local Plank launcher is wired to the same real local copy:
+
+```text
+launcher script: /home/alexey/.local/bin/brkovic-ltd-local
+desktop file: /home/alexey/.local/share/applications/brkovic-ltd-local.desktop
+plank item: /home/alexey/.config/plank/dock1/launchers/brkovic-ltd-local.dockitem
+site dir: /home/alexey/WebstormProjects/brkovic-ltd
+default path: http://127.0.0.1:18090/ship-cashbox/index.html
+```
+
+The previous launcher script backup is local only:
+
+```text
+/home/alexey/.local/bin/brkovic-ltd-local.bak-20260604-atlas-local
 ```
 
 Private env file, not committed:
