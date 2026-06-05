@@ -1467,6 +1467,8 @@
   "navdesk_instruments_copy": "Kopiraj koordinate",
   "navdesk_instruments_format": "Format koordinata",
   "navdesk_instruments_refresh_weather": "Osvezi vreme",
+  "navdesk_instruments_refresh_weather_loading": "Osvezavam vreme...",
+  "navdesk_instruments_weather_needs_gps_short": "WX · prvo GPS",
   "navdesk_instruments_pause_gps": "Pauziraj GPS",
   "navdesk_instruments_resume_gps": "Nastavi GPS",
   "navdesk_instruments_warning": "Referentni podaci. Ne koristiti kao jedini izvor za navigacionu odluku.",

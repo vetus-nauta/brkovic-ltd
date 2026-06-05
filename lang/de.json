@@ -1467,6 +1467,8 @@
   "navdesk_instruments_copy": "Koordinaten kopieren",
   "navdesk_instruments_format": "Koordinatenformat",
   "navdesk_instruments_refresh_weather": "Wetter aktualisieren",
+  "navdesk_instruments_refresh_weather_loading": "Wetter wird aktualisiert...",
+  "navdesk_instruments_weather_needs_gps_short": "WX · zuerst GPS",
   "navdesk_instruments_pause_gps": "GPS pausieren",
   "navdesk_instruments_resume_gps": "GPS fortsetzen",
   "navdesk_instruments_warning": "Referenzdaten. Nicht als einzige Grundlage für Navigationsentscheidungen verwenden.",

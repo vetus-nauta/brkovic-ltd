@@ -41,6 +41,16 @@
     if (el) el.textContent = value;
   }
 
+  function renderWeatherRefreshButton() {
+    const button = $("instrumentsRefreshWeather");
+    if (!button) return;
+    button.disabled = state.weatherLoading;
+    button.setAttribute("aria-busy", state.weatherLoading ? "true" : "false");
+    button.textContent = state.weatherLoading
+      ? t("navdesk_instruments_refresh_weather_loading", "Updating...")
+      : t("navdesk_instruments_refresh_weather", "Refresh weather");
+  }
+
   function formatTime(date, options = {}) {
     if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "—";
     return date.toLocaleTimeString([], {
@@ -577,6 +587,7 @@
     }
     const newest = [state.gps?.timestamp, state.weather?.updated].filter(Boolean).sort().pop();
     setPill(updatedEl, newest ? `${t("navdesk_instruments_updated", "Updated")} ${formatTime(new Date(newest))}` : `${t("navdesk_instruments_updated", "Updated")} —`, newest ? "active" : "waiting");
+    renderWeatherRefreshButton();
   }
 
   function scenarioForecast(level) {
@@ -651,7 +662,11 @@
 
   async function fetchWeather(force = false) {
     if (state.scenario) return;
-    if (!state.gps || state.weatherLoading) return;
+    if (!state.gps) {
+      setText("weatherNote", t("navdesk_instruments_weather_needs_gps_short", "WX · GPS first"));
+      return;
+    }
+    if (state.weatherLoading) return;
     const now = Date.now();
     const cached = readCache(WEATHER_CACHE_KEY);
     const cachedHasForecast = Array.isArray(cached?.weather?.forecast);

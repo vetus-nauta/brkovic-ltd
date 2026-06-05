@@ -1488,6 +1488,8 @@
   "navdesk_instruments_copy": "Copy coordinates",
   "navdesk_instruments_format": "Coordinate format",
   "navdesk_instruments_refresh_weather": "Refresh weather",
+  "navdesk_instruments_refresh_weather_loading": "Updating weather...",
+  "navdesk_instruments_weather_needs_gps_short": "WX · GPS first",
   "navdesk_instruments_pause_gps": "Pause GPS",
   "navdesk_instruments_resume_gps": "Resume GPS",
   "navdesk_instruments_warning": "Reference data. Do not use as the sole source for a navigation decision.",

@@ -1467,6 +1467,8 @@
   "navdesk_instruments_copy": "Copia coordinate",
   "navdesk_instruments_format": "Formato coordinate",
   "navdesk_instruments_refresh_weather": "Aggiorna meteo",
+  "navdesk_instruments_refresh_weather_loading": "Aggiorno meteo...",
+  "navdesk_instruments_weather_needs_gps_short": "WX · prima GPS",
   "navdesk_instruments_pause_gps": "Pausa GPS",
   "navdesk_instruments_resume_gps": "Riprendi GPS",
   "navdesk_instruments_warning": "Dati di riferimento. Non usare come unica fonte per decisioni di navigazione.",

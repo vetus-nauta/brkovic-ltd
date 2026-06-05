@@ -1488,6 +1488,8 @@
   "navdesk_instruments_copy": "Скопировать координаты",
   "navdesk_instruments_format": "Формат координат",
   "navdesk_instruments_refresh_weather": "Обновить погоду",
+  "navdesk_instruments_refresh_weather_loading": "Обновляем погоду...",
+  "navdesk_instruments_weather_needs_gps_short": "WX · сначала GPS",
   "navdesk_instruments_pause_gps": "Пауза GPS",
   "navdesk_instruments_resume_gps": "Включить GPS",
   "navdesk_instruments_warning": "Справочные данные. Не использовать как единственный источник для навигационного решения.",
