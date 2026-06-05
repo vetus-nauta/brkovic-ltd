@@ -3,7 +3,7 @@
   "short_name": "Плоттер",
   "description": "Компактная панель NavDesk для GPS-позиции, движения, погоды, моря и времени.",
   "id": "/navdesk-instruments",
-  "scope": "/",
+  "scope": "/ru/navdesk-instruments.html",
   "display": "standalone",
   "background_color": "#071014",
   "theme_color": "#10243a",

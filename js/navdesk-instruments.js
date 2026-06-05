@@ -375,7 +375,8 @@
 
   function isNavdeskEntry() {
     const params = new URLSearchParams(window.location.search || "");
-    if (params.get("from") === "navdesk") return true;
+    const from = params.get("from");
+    if (from === "navdesk" || from === "pwa") return true;
     try {
       if (!document.referrer) return false;
       const referrer = new URL(document.referrer);
@@ -384,6 +385,21 @@
     } catch (error) {
       return false;
     }
+  }
+
+  function isStandalonePwa() {
+    return window.matchMedia?.("(display-mode: standalone)")?.matches ||
+      window.matchMedia?.("(display-mode: fullscreen)")?.matches ||
+      window.navigator.standalone === true;
+  }
+
+  function updatePwaInstallVisibility() {
+    const button = $("instrumentsInstallPwa");
+    if (!button) return;
+    const installed = isStandalonePwa();
+    button.hidden = installed;
+    button.setAttribute("aria-hidden", installed ? "true" : "false");
+    document.body?.classList.toggle("is-instruments-pwa-installed", installed);
   }
 
   function refreshAccessUi() {
@@ -1351,6 +1367,10 @@
 
   function returnToNavDesk() {
     const href = navdeskUrl();
+    if (isStandalonePwa()) {
+      window.open(href, "_blank", "noopener");
+      return;
+    }
     if (window.opener && !window.opener.closed) {
       window.opener.focus();
       window.close();
@@ -1398,6 +1418,9 @@
 
   function bind() {
     ensureMenuThemeControl();
+    updatePwaInstallVisibility();
+    window.matchMedia?.("(display-mode: standalone)")?.addEventListener?.("change", updatePwaInstallVisibility);
+    window.addEventListener("appinstalled", updatePwaInstallVisibility);
     $("instrumentsStartButton")?.addEventListener("click", openPanel);
     $("instrumentsAuthButton")?.addEventListener("click", requestAuth);
     document.querySelectorAll("[data-instruments-return]").forEach((button) => {

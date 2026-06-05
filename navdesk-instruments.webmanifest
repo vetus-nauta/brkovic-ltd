@@ -3,7 +3,7 @@
   "short_name": "Location Plotter",
   "description": "Compact NavDesk panel for GPS position, movement, weather, sea state and time.",
   "id": "/navdesk-instruments",
-  "scope": "/",
+  "scope": "/navdesk-instruments.html",
   "display": "standalone",
   "background_color": "#071014",
   "theme_color": "#10243a",

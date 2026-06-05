@@ -115,6 +115,14 @@ indexing and for the start screen.
 - The page family must not use the root `/site.webmanifest`. Each language page
   uses its own `navdesk-instruments.webmanifest` so browser/PWA installation
   starts the plotter, not the main website.
+- Each `navdesk-instruments.webmanifest` must keep a narrow page scope
+  (`/navdesk-instruments.html`, `/ru/navdesk-instruments.html`, etc.). Do not
+  broaden it to `/`, because same-origin links such as NavDesk would then open
+  inside the installed plotter PWA instead of leaving the app.
+- The install button is hidden when the page runs in installed PWA display mode.
+- In installed PWA mode, any intentional departure from the plotter ecosystem
+  must open the regular browser context. Do not navigate the standalone PWA
+  through the main site sections.
 - Weather/marine data is informational only, not a certified navigation
   forecast.
 - Weather alert V1 requires live panel session, notification permission, fresh
