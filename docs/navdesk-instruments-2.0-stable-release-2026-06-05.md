@@ -25,6 +25,11 @@ Final 2.0 decisions:
 - registered-user weather alerts are V1 browser/PWA alerts: they work from a
   live panel session, require notification permission, require marine data at
   the GPS point, and must not send if the last GPS point is older than 4 hours.
+- visual site header/footer stay in the HTML for indexing and the launch
+  screen, but are hidden inside the live instrument runtime.
+- live runtime keeps a modest attribution/back-reference link:
+  `brkovic.ltd - NavDesk instruments`, opening the localized NavDesk page in a
+  new browser tab.
 
 Deployment package:
 

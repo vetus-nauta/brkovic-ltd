@@ -55,7 +55,7 @@
   <link rel="stylesheet" href="/css/main.css?v=20260601-auth-modal-01" />
   <link rel="stylesheet" href="/css/responsive.css?v=20260531-site-menu-button-01" />
   <link rel="stylesheet" href="/css/navdesk.css?v=20260603-instruments-card-01" />
-  <link rel="stylesheet" href="/css/navdesk-instruments.css?v=20260605-instruments-2-stable-03" />
+  <link rel="stylesheet" href="/css/navdesk-instruments.css?v=20260605-instruments-2-stable-06" />
   <link rel="icon" type="image/png" href="/favicons/favicon-clean.png?v=2" />
   <link rel="apple-touch-icon" href="/favicons/apple-touch-icon-clean.png?v=2" />
   <meta name="rights" content="© BRKOVIC / VETUS NAUTA. All rights reserved." />
@@ -184,7 +184,9 @@
               <div class="bridge-divider" aria-hidden="true"></div>
 
               <section class="weather-watch weather-watch--unknown" id="weatherWatch" aria-labelledby="weatherWatchTitle">
-                <div class="weather-watch__image" aria-hidden="true"></div>
+                <button type="button" class="weather-watch__image" id="weatherWatchDetailsOpen" aria-haspopup="dialog" aria-controls="weatherTrendModal" aria-label="Open 48 hour weather picture" data-i18n-aria-label="navdesk_instruments_trend_open_label">
+                  <span class="weather-watch__image-label">48h</span>
+                </button>
                 <div class="weather-watch__content">
                   <div class="weather-watch__head">
                     <p class="bridge-card__kicker" data-i18n="navdesk_instruments_watch_kicker">Weather watch</p>
@@ -277,6 +279,8 @@
           </div>
 
           <p class="bridge-warning" data-i18n="navdesk_instruments_warning">Reference data. Do not use as the sole source for a navigation decision.</p>
+
+          <p class="bridge-page-mark"><a href="/it/navdesk.html" target="_blank" rel="noopener" data-i18n="navdesk_instruments_page_mark">brkovic.ltd - NavDesk instruments</a></p>
         </div>
       </section>
 
@@ -311,6 +315,25 @@
               <li data-i18n="navdesk_instruments_watch_help_purple">Purple: severe gusts from 40 kn or a sharp pressure fall with other worsening signals.</li>
             </ul>
             <p data-i18n="navdesk_instruments_watch_help_footer">Use official forecasts, local notices and seamanship before every decision.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="weather-trend-modal" id="weatherTrendModal" hidden>
+        <div class="weather-trend-modal__backdrop" data-weather-trend-close></div>
+        <div class="weather-trend-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="weatherTrendModalTitle">
+          <div class="weather-trend-modal__head">
+            <div>
+              <p class="bridge-card__kicker" data-i18n="navdesk_instruments_trend_kicker">48h picture</p>
+              <h3 id="weatherTrendModalTitle" data-i18n="navdesk_instruments_trend_title">Weather picture for 48 hours</h3>
+              <p id="weatherTrendMeta" class="weather-trend-modal__meta">—</p>
+            </div>
+            <button type="button" class="weather-trend-modal__close" data-weather-trend-close aria-label="Close" data-i18n-aria-label="a11y_close">×</button>
+          </div>
+          <div class="weather-trend-modal__body">
+            <div class="weather-trend-chart" id="weatherTrendChart" aria-live="polite"></div>
+            <div class="weather-trend-summary" id="weatherTrendSummary"></div>
+            <p class="weather-trend-modal__note" data-i18n="navdesk_instruments_trend_note">Reference view from the current observation point. Use official forecasts before making navigation decisions.</p>
           </div>
         </div>
       </div>
@@ -351,6 +374,6 @@
   <script src="/js/seo.js?v=20260531-clarity-01"></script>
   <script src="/js/main.js?v=20260605-weather-watch-09"></script>
   <script src="/js/navdesk.js?v=20260601-runtime-i18n-01"></script>
-  <script src="/js/navdesk-instruments.js?v=20260605-instruments-2-stable-03"></script>
+  <script src="/js/navdesk-instruments.js?v=20260605-instruments-2-stable-06"></script>
 </body>
 </html>

@@ -14,6 +14,7 @@
   const WEATHER_ALERT_LAST_KEY = "navdesk_instruments_weather_alert_last_v1";
   const AUTH_GRACE_MS = 2 * 60 * 1000;
   const AUTH_CACHE_KEY = "brkovic_tool_auth_session_v1";
+  const AUTH_GRACE_STATE_KEY = "navdesk_instruments_auth_gate_v1";
 
   const state = {
     gpsWatchId: null,
@@ -21,6 +22,7 @@
     gpsPaused: false,
     started: false,
     authGraceActive: false,
+    authGraceDeadline: 0,
     authGraceTimer: 0,
     authPrompted: false,
     points: [],
@@ -43,6 +45,16 @@
   function setText(id, value) {
     const el = $(id);
     if (el) el.textContent = value;
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      "\"": "&quot;",
+      "'": "&#39;",
+    }[char]));
   }
 
   function renderWeatherRefreshButton() {
@@ -191,6 +203,27 @@
 
   function hasToolAuth() {
     return Boolean(readAuthProfile()?.authenticated);
+  }
+
+  function readAuthGraceState() {
+    try {
+      const value = JSON.parse(sessionStorage.getItem(AUTH_GRACE_STATE_KEY) || "null");
+      return value && typeof value === "object" ? value : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function writeAuthGraceState(value) {
+    try {
+      sessionStorage.setItem(AUTH_GRACE_STATE_KEY, JSON.stringify(value));
+    } catch (error) {}
+  }
+
+  function clearAuthGraceState() {
+    try {
+      sessionStorage.removeItem(AUTH_GRACE_STATE_KEY);
+    } catch (error) {}
   }
 
   function notificationPermission() {
@@ -664,6 +697,196 @@
     };
   }
 
+  function trendForecastPoints() {
+    const points = Array.isArray(state.weather?.forecast) ? state.weather.forecast : [];
+    const now = Date.now();
+    const end = now + WEATHER_WATCH_HOURS * 60 * 60 * 1000;
+    return points
+      .map((item) => ({
+        time: Date.parse(item.time),
+        wind: Number.isFinite(Number(item.wind)) ? Number(item.wind) : Number(state.weather?.windSpeed),
+        gust: Number(item.gust),
+        rain: Number(item.rain),
+        pressure: Number(item.pressure),
+        air: Number.isFinite(Number(item.air)) ? Number(item.air) : Number(state.weather?.temperature),
+        water: Number.isFinite(Number(item.water)) ? Number(item.water) : Number(state.weather?.waterTemperature),
+        wave: Number.isFinite(Number(item.wave)) ? Number(item.wave) : Number(state.weather?.waveHeight),
+        wavePeriod: Number.isFinite(Number(item.wavePeriod)) ? Number(item.wavePeriod) : Number(state.weather?.wavePeriod),
+      }))
+      .filter((item) => Number.isFinite(item.time) && item.time >= now - 60 * 60 * 1000 && item.time <= end)
+      .slice(0, WEATHER_WATCH_HOURS + 1);
+  }
+
+  function finiteValues(points, key) {
+    return points.map((point) => Number(point[key])).filter(Number.isFinite);
+  }
+
+  function nextScaleStep(value, steps, fallback) {
+    const number = Number(value);
+    if (!Number.isFinite(number)) return fallback;
+    return steps.find((step) => number <= step) || steps[steps.length - 1] || fallback;
+  }
+
+  function pressureScale(values) {
+    if (!values.length) return { min: 998, max: 1018 };
+    const rawMin = Math.min(...values);
+    const rawMax = Math.max(...values);
+    const paddedMin = Math.floor(rawMin - 1);
+    const paddedMax = Math.ceil(rawMax + 1);
+    if (paddedMax - paddedMin < 6) {
+      const center = Math.round((rawMin + rawMax) / 2);
+      return { min: center - 3, max: center + 3 };
+    }
+    return {
+      min: Math.floor(paddedMin / 2) * 2,
+      max: Math.ceil(paddedMax / 2) * 2,
+    };
+  }
+
+  function seriesPath(points, getter, bounds, minValue, maxValue) {
+    if (!points.length) return "";
+    const { x1, x2, y1, y2 } = bounds;
+    const span = Math.max(1, maxValue - minValue);
+    const xStep = points.length > 1 ? (x2 - x1) / (points.length - 1) : 0;
+    return points.map((point, index) => {
+      const raw = Number(getter(point));
+      const value = Number.isFinite(raw) ? raw : minValue;
+      const ratio = Math.max(0, Math.min(1, (value - minValue) / span));
+      const x = x1 + xStep * index;
+      const y = y2 - (y2 - y1) * ratio;
+      return `${index === 0 ? "M" : "L"}${x.toFixed(1)} ${y.toFixed(1)}`;
+    }).join(" ");
+  }
+
+  function trendScale({ x, xLine = 322, yTop, yBottom, min, max, unit = "", decimals = 0 }) {
+    const mid = (min + max) / 2;
+    const rows = [
+      [max, yTop],
+      [mid, (yTop + yBottom) / 2],
+      [min, yBottom],
+    ];
+    return rows.map(([value, y], index) => {
+      const label = `${Number(value).toFixed(decimals)}${unit}`;
+      const line = index === 1
+        ? `<line x1="48" y1="${y.toFixed(1)}" x2="${xLine}" y2="${y.toFixed(1)}" stroke="rgba(237,248,248,.07)" stroke-width="1"/>`
+        : "";
+      return `${line}<text class="trend-scale" x="${x}" y="${y.toFixed(1)}" text-anchor="end">${escapeHtml(label)}</text>`;
+    }).join("");
+  }
+
+  function renderWeatherTrendModal() {
+    const chart = $("weatherTrendChart");
+    const summaryEl = $("weatherTrendSummary");
+    const meta = $("weatherTrendMeta");
+    if (!chart || !summaryEl || !meta) return;
+    const points = trendForecastPoints();
+    const summary = summarizeForecast(state.weather?.forecast);
+    const place = state.place?.label || t("navdesk_instruments_watch_place_default", "current position");
+    meta.textContent = `${place} · ${t("navdesk_instruments_trend_period", "now to +48h")}`;
+    summaryEl.innerHTML = "";
+
+    if (!points.length || !summary) {
+      chart.innerHTML = `<div class="weather-trend-empty">${escapeHtml(t("navdesk_instruments_trend_empty", "The 48 hour picture will appear after GPS and weather forecast are available."))}</div>`;
+      return;
+    }
+
+    const width = 390;
+    const height = 400;
+    const x1 = 48;
+    const x2 = 322;
+    const pressureValues = points.map((point) => point.pressure).filter(Number.isFinite);
+    const pressureRange = pressureScale(pressureValues);
+    const pressureMin = pressureRange.min;
+    const pressureMax = pressureRange.max;
+    const gustMax = nextScaleStep(summary.maxGust, [20, 30, 40, 50, 60, 75], 30);
+    const windValues = finiteValues(points, "wind");
+    const waveValues = finiteValues(points, "wave");
+    const wavePeriodValues = finiteValues(points, "wavePeriod");
+    const airValues = finiteValues(points, "air");
+    const maxWind = windValues.length ? Math.max(...windValues) : 0;
+    const maxWave = waveValues.length ? Math.max(...waveValues) : 0;
+    const airMin = airValues.length ? Math.min(...airValues) : Number(state.weather?.temperature);
+    const airMax = airValues.length ? Math.max(...airValues) : Number(state.weather?.temperature);
+    const waveValue = Number.isFinite(maxWave) && maxWave > 0 ? maxWave : Number(state.weather?.waveHeight);
+    const wavePeriodAvg = wavePeriodValues.length ? wavePeriodValues.reduce((sum, value) => sum + value, 0) / wavePeriodValues.length : Number(state.weather?.wavePeriod);
+    const waveMax = nextScaleStep(maxWave, [0.5, 1, 1.5, 2, 3, 4, 5, 6], 1);
+    const rainMax = 100;
+    const windPath = seriesPath(points, (point) => point.wind, { x1, x2, y1: 48, y2: 130 }, 0, gustMax);
+    const gustPath = seriesPath(points, (point) => point.gust, { x1, x2, y1: 48, y2: 130 }, 0, gustMax);
+    const rainBars = points.map((point, index) => {
+      const value = Math.max(0, Math.min(100, Number(point.rain) || 0));
+      const x = x1 + ((x2 - x1) / Math.max(1, points.length - 1)) * index;
+      const h = 62 * (value / rainMax);
+      return `<rect x="${(x - 1.8).toFixed(1)}" y="${(222 - h).toFixed(1)}" width="3.6" height="${h.toFixed(1)}" rx="1.8" fill="rgba(132, 168, 255, 0.72)"/>`;
+    }).join("");
+    const pressurePath = seriesPath(points, (point) => point.pressure, { x1, x2, y1: 246, y2: 306 }, pressureMin, pressureMax);
+    const wavePath = seriesPath(points, (point) => point.wave, { x1, x2, y1: 330, y2: 366 }, 0, waveMax);
+    const timeMarks = [0, 12, 24, 36, 48].map((hour) => {
+      const x = x1 + (x2 - x1) * (hour / 48);
+      return `<line x1="${x.toFixed(1)}" y1="32" x2="${x.toFixed(1)}" y2="372" stroke="rgba(237,248,248,.08)" stroke-width="1"/><text x="${x.toFixed(1)}" y="390" text-anchor="middle">${hour === 0 ? t("navdesk_instruments_trend_now", "now") : `+${hour}`}</text>`;
+    }).join("");
+    const scales = [
+      trendScale({ x: 362, yTop: 52, yBottom: 126, min: 0, max: gustMax, unit: "kn", decimals: 0 }),
+      trendScale({ x: 362, yTop: 170, yBottom: 222, min: 0, max: rainMax, unit: "%", decimals: 0 }),
+      trendScale({ x: 362, yTop: 250, yBottom: 306, min: pressureMin, max: pressureMax, unit: "", decimals: 0 }),
+      trendScale({ x: 362, yTop: 332, yBottom: 366, min: 0, max: waveMax, unit: "m", decimals: 1 }),
+    ].join("");
+    const wavePeriodLabel = Number.isFinite(wavePeriodAvg)
+      ? `${escapeHtml(t("navdesk_instruments_trend_wave_period", "period"))} ${wavePeriodAvg.toFixed(0)} s`
+      : "";
+
+    chart.innerHTML = `
+      <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml(t("navdesk_instruments_trend_title", "Weather picture for 48 hours"))}">
+        <defs>
+          <linearGradient id="trendWind" x1="0" x2="1"><stop offset="0" stop-color="#54d6c7"/><stop offset="1" stop-color="#8cf3e9"/></linearGradient>
+          <linearGradient id="trendGust" x1="0" x2="1"><stop offset="0" stop-color="#f29d6d"/><stop offset="1" stop-color="#ffd18b"/></linearGradient>
+          <linearGradient id="trendPressure" x1="0" x2="1"><stop offset="0" stop-color="#f2bd65"/><stop offset="1" stop-color="#ffdf9c"/></linearGradient>
+          <linearGradient id="trendWave" x1="0" x2="1"><stop offset="0" stop-color="#73c7ff"/><stop offset="1" stop-color="#a0f0ff"/></linearGradient>
+        </defs>
+        <rect x="10" y="12" width="370" height="376" rx="18" fill="rgba(5,14,20,.46)"/>
+        <rect x="18" y="28" width="354" height="116" rx="14" fill="rgba(84,214,199,.055)"/>
+        <rect x="18" y="160" width="354" height="72" rx="14" fill="rgba(116,168,255,.06)"/>
+        <rect x="18" y="242" width="354" height="76" rx="14" fill="rgba(242,189,101,.052)"/>
+        <rect x="18" y="326" width="354" height="52" rx="14" fill="rgba(115,199,255,.052)"/>
+        ${timeMarks}
+        ${scales}
+        <text x="28" y="48" class="trend-label">${escapeHtml(t("navdesk_instruments_trend_wind", "wind"))}</text>
+        <text x="28" y="172" class="trend-label">${escapeHtml(t("navdesk_instruments_trend_rain", "rain"))}</text>
+        <text x="28" y="254" class="trend-label">${escapeHtml(t("navdesk_instruments_trend_pressure", "pressure"))}</text>
+        <text x="28" y="338" class="trend-label">${escapeHtml(t("navdesk_instruments_trend_wave", "wave"))}</text>
+        <path d="${windPath}" fill="none" stroke="url(#trendWind)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="${gustPath}" fill="none" stroke="url(#trendGust)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7 6"/>
+        ${rainBars}
+        <path d="${pressurePath}" fill="none" stroke="url(#trendPressure)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="${wavePath}" fill="none" stroke="url(#trendWave)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        <rect x="176" y="335" width="92" height="18" rx="9" fill="rgba(5,14,20,.58)" stroke="rgba(115,199,255,.16)"/>
+        <text x="222" y="347" class="trend-wave-period" text-anchor="middle">${wavePeriodLabel}</text>
+        <g class="trend-legend">
+          <circle cx="184" cy="42" r="4" fill="#54d6c7"/><text x="194" y="45">${escapeHtml(t("navdesk_instruments_trend_wind", "wind"))}</text>
+          <circle cx="254" cy="42" r="4" fill="#f29d6d"/><text x="264" y="45">${escapeHtml(t("navdesk_instruments_trend_gust", "gust"))}</text>
+        </g>
+      </svg>
+    `;
+
+    const pressureStart = Number(points[0]?.pressure);
+    const pressureEnd = Number(points[points.length - 1]?.pressure);
+    const pressureDelta = Number.isFinite(pressureStart) && Number.isFinite(pressureEnd) ? pressureEnd - pressureStart : 0;
+    const items = [
+      [t("navdesk_instruments_trend_wind", "wind"), `${Math.round(maxWind)} kn`],
+      [t("navdesk_instruments_trend_gust", "gust"), `+${Math.round(summary.maxGust)} kn`],
+      [t("navdesk_instruments_trend_rain", "rain"), `${Math.round(summary.maxRain)}%`],
+      [t("navdesk_instruments_trend_pressure_drop", "pressure drop"), `${pressureDelta > 0 ? "+" : ""}${pressureDelta.toFixed(0)} hPa`],
+      [t("navdesk_instruments_trend_wave", "wave"), Number.isFinite(waveValue) ? `${waveValue.toFixed(1)} m` : "—"],
+      [t("navdesk_instruments_trend_air", "air"), `${Math.round(airMin)}-${Math.round(airMax)}°C`],
+    ];
+    summaryEl.innerHTML = items.map(([label, value]) => `
+      <div class="weather-trend-summary__item">
+        <span>${escapeHtml(label)}</span>
+        <strong>${escapeHtml(value)}</strong>
+      </div>
+    `).join("");
+  }
+
   function renderWeatherWatch() {
     const watch = $("weatherWatch");
     if (!watch) return;
@@ -757,23 +980,31 @@
   function scenarioForecast(level) {
     const base = Date.now();
     const settings = {
-      green: { gust: 8, rain: 8, pressureStart: 1016, pressureEnd: 1015, code: 0, wind: 7, water: 23 },
-      yellow: { gust: 20, rain: 18, pressureStart: 1015, pressureEnd: 1010, code: 2, wind: 15, water: 22 },
-      "yellow-rain": { gust: 12, rain: 84, pressureStart: 1015, pressureEnd: 1013, code: 61, wind: 10, water: 22 },
-      red: { gust: 33, rain: 20, pressureStart: 1014, pressureEnd: 1005, code: 3, wind: 24, water: 21 },
-      "red-rain": { gust: 33, rain: 82, pressureStart: 1014, pressureEnd: 1005, code: 63, wind: 24, water: 21 },
-      purple: { gust: 45, rain: 24, pressureStart: 1012, pressureEnd: 996, code: 3, wind: 35, water: 20 },
-      "purple-rain": { gust: 45, rain: 100, pressureStart: 1012, pressureEnd: 996, code: 95, wind: 35, water: 20 },
+      green: { wind: 6, gust: 8, rain: 8, pressureStart: 1016, pressureEnd: 1015, air: 24, water: 23, wave: 0.3, wavePeriod: 3 },
+      yellow: { wind: 14, gust: 20, rain: 18, pressureStart: 1015, pressureEnd: 1010, air: 23, water: 22, wave: 0.7, wavePeriod: 4 },
+      "yellow-rain": { wind: 9, gust: 12, rain: 84, pressureStart: 1015, pressureEnd: 1013, air: 22, water: 22, wave: 0.5, wavePeriod: 4 },
+      red: { wind: 24, gust: 33, rain: 20, pressureStart: 1014, pressureEnd: 1005, air: 21, water: 21, wave: 1.3, wavePeriod: 6 },
+      "red-rain": { wind: 24, gust: 33, rain: 82, pressureStart: 1014, pressureEnd: 1005, air: 21, water: 21, wave: 1.4, wavePeriod: 6 },
+      purple: { wind: 35, gust: 45, rain: 24, pressureStart: 1012, pressureEnd: 996, air: 19, water: 20, wave: 2.1, wavePeriod: 8 },
+      "purple-rain": { wind: 35, gust: 45, rain: 100, pressureStart: 1012, pressureEnd: 996, air: 19, water: 20, wave: 2.4, wavePeriod: 8 },
     }[level] || {};
     return Array.from({ length: WEATHER_WATCH_HOURS + 1 }, (_, index) => {
       const ratio = index / WEATHER_WATCH_HOURS;
+      const windSwing = Math.sin(index / 6) * 1.6;
       const gustSwing = Math.sin(index / 5) * 1.4;
       const rainSwing = Math.max(0, Math.sin((index - 8) / 7) * 8);
+      const waveSwing = Math.max(0, Math.sin((index - 4) / 9) * 0.18);
+      const airSwing = Math.sin(index / 10) * 0.9;
       return {
         time: new Date(base + index * 60 * 60 * 1000).toISOString(),
+        wind: Math.max(0, Number(settings.wind || 0) + windSwing),
         gust: Math.max(0, Number(settings.gust || 0) + gustSwing),
         rain: Math.min(100, Math.max(0, Number(settings.rain || 0) + rainSwing)),
         pressure: Number(settings.pressureStart || 1015) + (Number(settings.pressureEnd || 1015) - Number(settings.pressureStart || 1015)) * ratio,
+        air: Number(settings.air || 0) + airSwing,
+        water: Number(settings.water || 0),
+        wave: Math.max(0, Number(settings.wave || 0) + waveSwing),
+        wavePeriod: Math.max(0, Number(settings.wavePeriod || 0) + Math.sin(index / 8) * 0.35),
       };
     });
   }
@@ -783,13 +1014,13 @@
     const scenario = String(params.get("wxScenario") || "").toLowerCase();
     if (!WEATHER_SCENARIOS.has(scenario)) return false;
     const data = {
-      green: { code: 0, temperature: 24, pressure: 1016, windSpeed: 7, windDirection: 205, waterTemperature: 23, waveHeight: 0.3, waveDirection: 210 },
-      yellow: { code: 2, temperature: 23, pressure: 1012, windSpeed: 15, windDirection: 218, waterTemperature: 22, waveHeight: 0.7, waveDirection: 220 },
-      "yellow-rain": { code: 61, temperature: 22, pressure: 1013, windSpeed: 10, windDirection: 190, waterTemperature: 22, waveHeight: 0.5, waveDirection: 195 },
-      red: { code: 3, temperature: 21, pressure: 1007, windSpeed: 24, windDirection: 232, waterTemperature: 21, waveHeight: 1.3, waveDirection: 235 },
-      "red-rain": { code: 63, temperature: 21, pressure: 1007, windSpeed: 24, windDirection: 232, waterTemperature: 21, waveHeight: 1.4, waveDirection: 235 },
-      purple: { code: 3, temperature: 19, pressure: 998, windSpeed: 35, windDirection: 248, waterTemperature: 20, waveHeight: 2.1, waveDirection: 250 },
-      "purple-rain": { code: 95, temperature: 19, pressure: 998, windSpeed: 35, windDirection: 248, waterTemperature: 20, waveHeight: 2.4, waveDirection: 250 },
+      green: { code: 0, temperature: 24, pressure: 1016, windSpeed: 7, windDirection: 205, waterTemperature: 23, waveHeight: 0.3, waveDirection: 210, wavePeriod: 3 },
+      yellow: { code: 2, temperature: 23, pressure: 1012, windSpeed: 15, windDirection: 218, waterTemperature: 22, waveHeight: 0.7, waveDirection: 220, wavePeriod: 4 },
+      "yellow-rain": { code: 61, temperature: 22, pressure: 1013, windSpeed: 10, windDirection: 190, waterTemperature: 22, waveHeight: 0.5, waveDirection: 195, wavePeriod: 4 },
+      red: { code: 3, temperature: 21, pressure: 1007, windSpeed: 24, windDirection: 232, waterTemperature: 21, waveHeight: 1.3, waveDirection: 235, wavePeriod: 6 },
+      "red-rain": { code: 63, temperature: 21, pressure: 1007, windSpeed: 24, windDirection: 232, waterTemperature: 21, waveHeight: 1.4, waveDirection: 235, wavePeriod: 6 },
+      purple: { code: 3, temperature: 19, pressure: 998, windSpeed: 35, windDirection: 248, waterTemperature: 20, waveHeight: 2.1, waveDirection: 250, wavePeriod: 8 },
+      "purple-rain": { code: 95, temperature: 19, pressure: 998, windSpeed: 35, windDirection: 248, waterTemperature: 20, waveHeight: 2.4, waveDirection: 250, wavePeriod: 8 },
     }[scenario];
     state.scenario = scenario;
     state.started = true;
@@ -847,14 +1078,15 @@
       url.searchParams.set("latitude", state.gps.lat.toFixed(6));
       url.searchParams.set("longitude", state.gps.lon.toFixed(6));
       url.searchParams.set("current", "temperature_2m,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m");
-      url.searchParams.set("hourly", "wind_gusts_10m,precipitation_probability,surface_pressure");
+      url.searchParams.set("hourly", "temperature_2m,wind_speed_10m,wind_gusts_10m,precipitation_probability,surface_pressure");
       url.searchParams.set("wind_speed_unit", "kn");
       url.searchParams.set("forecast_days", "3");
       url.searchParams.set("timezone", "auto");
       const marineUrl = new URL("https://marine-api.open-meteo.com/v1/marine");
       marineUrl.searchParams.set("latitude", state.gps.lat.toFixed(6));
       marineUrl.searchParams.set("longitude", state.gps.lon.toFixed(6));
-      marineUrl.searchParams.set("current", "sea_surface_temperature,wave_height,wave_direction");
+      marineUrl.searchParams.set("current", "sea_surface_temperature,wave_height,wave_direction,wave_period");
+      marineUrl.searchParams.set("hourly", "wave_height,wave_direction,wave_period");
       marineUrl.searchParams.set("timezone", "auto");
       const [response, marineResponse] = await Promise.all([
         fetch(url.href, { cache: "no-store" }),
@@ -865,12 +1097,19 @@
       const marinePayload = marineResponse?.ok ? await marineResponse.json().catch(() => null) : null;
       const current = payload.current || {};
       const hourly = payload.hourly || {};
+      const marineHourly = marinePayload?.hourly || {};
       const times = Array.isArray(hourly.time) ? hourly.time : [];
       const forecast = times.map((time, index) => ({
         time,
+        wind: Number(hourly.wind_speed_10m?.[index]),
         gust: Number(hourly.wind_gusts_10m?.[index]),
         rain: Number(hourly.precipitation_probability?.[index]),
         pressure: Number(hourly.surface_pressure?.[index]),
+        air: Number(hourly.temperature_2m?.[index]),
+        water: Number(marinePayload?.current?.sea_surface_temperature),
+        wave: Number(marineHourly.wave_height?.[index]),
+        waveDirection: Number(marineHourly.wave_direction?.[index]),
+        wavePeriod: Number(marineHourly.wave_period?.[index]),
       }));
       state.weather = {
         temperature: Number(current.temperature_2m),
@@ -881,6 +1120,7 @@
         waterTemperature: Number(marinePayload?.current?.sea_surface_temperature),
         waveHeight: Number(marinePayload?.current?.wave_height),
         waveDirection: Number(marinePayload?.current?.wave_direction),
+        wavePeriod: Number(marinePayload?.current?.wave_period),
         updated: current.time ? new Date(current.time).toISOString() : new Date().toISOString(),
         source: "Open-Meteo",
         forecast,
@@ -1016,7 +1256,9 @@
   async function expireAuthGrace() {
     if (!state.authGraceActive || hasToolAuth()) return;
     state.authGraceActive = false;
+    state.authGraceDeadline = 0;
     state.authPrompted = true;
+    writeAuthGraceState({ prompted: true, deadline: 0 });
     if (state.authGraceTimer) {
       window.clearTimeout(state.authGraceTimer);
       state.authGraceTimer = 0;
@@ -1032,16 +1274,41 @@
 
   function revealPanel(options = {}) {
     const shouldScroll = options.scroll !== false;
+    document.body.classList.add("is-instruments-running");
     setHidden("instrumentsLaunch", true);
     setHidden("instrumentsShell", false);
     if (shouldScroll) $("instrumentsShell")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   function startAuthGrace() {
-    if (hasToolAuth() || state.authGraceActive || state.authPrompted) return;
+    if (hasToolAuth()) {
+      clearAuthGraceState();
+      return;
+    }
+    if (state.authGraceActive || state.authPrompted) return;
+    const saved = readAuthGraceState();
+    if (saved?.prompted) {
+      state.authPrompted = true;
+      state.authGraceActive = false;
+      state.authGraceDeadline = 0;
+      refreshAccessUi();
+      return;
+    }
+    const now = Date.now();
+    const savedDeadline = Number(saved?.deadline || 0);
+    if (savedDeadline && savedDeadline <= now) {
+      state.authPrompted = true;
+      state.authGraceActive = false;
+      state.authGraceDeadline = 0;
+      writeAuthGraceState({ prompted: true, deadline: 0 });
+      refreshAccessUi();
+      return;
+    }
     state.authGraceActive = true;
+    state.authGraceDeadline = savedDeadline > now ? savedDeadline : now + AUTH_GRACE_MS;
+    writeAuthGraceState({ prompted: false, deadline: state.authGraceDeadline });
     if (state.authGraceTimer) window.clearTimeout(state.authGraceTimer);
-    state.authGraceTimer = window.setTimeout(expireAuthGrace, AUTH_GRACE_MS);
+    state.authGraceTimer = window.setTimeout(expireAuthGrace, Math.max(0, state.authGraceDeadline - now));
     refreshAccessUi();
   }
 
@@ -1050,6 +1317,9 @@
     revealPanel(options);
     refreshAccessUi();
     startAuthGrace();
+    if (!hasToolAuth() && state.authPrompted && !state.authGraceActive) {
+      window.setTimeout(requestAuth, 0);
+    }
     if (!state.scenario) startGps();
   }
 
@@ -1062,7 +1332,9 @@
     const allowed = await window.ensureToolAccess({ requireLive: false }).catch(() => false);
     if (allowed) {
       state.authGraceActive = false;
+      state.authGraceDeadline = 0;
       state.authPrompted = false;
+      clearAuthGraceState();
       if (state.authGraceTimer) {
         window.clearTimeout(state.authGraceTimer);
         state.authGraceTimer = 0;
@@ -1152,8 +1424,20 @@
       }
     });
     $("weatherWatchHelp")?.addEventListener("click", openWeatherWatchModal);
+    $("weatherWatch")?.addEventListener("click", (event) => {
+      if (event.target.closest?.("#weatherWatchHelp")) return;
+      openWeatherTrendModal();
+    });
+    $("weatherWatchDetailsOpen")?.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      openWeatherTrendModal();
+    });
     document.querySelectorAll("[data-weather-watch-close]").forEach((button) => {
       button.addEventListener("click", closeWeatherWatchModal);
+    });
+    document.querySelectorAll("[data-weather-trend-close]").forEach((button) => {
+      button.addEventListener("click", closeWeatherTrendModal);
     });
     $("instrumentsGpsToggle")?.addEventListener("click", () => {
       if (state.gpsWatchId === null) {
@@ -1190,13 +1474,16 @@
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape") {
         closeWeatherWatchModal();
+        closeWeatherTrendModal();
         closeExitModal();
       }
     });
     document.addEventListener("brkovicToolAuthChanged", () => {
       if (hasToolAuth()) {
         state.authGraceActive = false;
+        state.authGraceDeadline = 0;
         state.authPrompted = false;
+        clearAuthGraceState();
         if (state.authGraceTimer) {
           window.clearTimeout(state.authGraceTimer);
           state.authGraceTimer = 0;
@@ -1222,6 +1509,22 @@
     document.body.classList.remove("weather-watch-modal-open");
   }
 
+  function openWeatherTrendModal() {
+    const modal = $("weatherTrendModal");
+    if (!modal) return;
+    renderWeatherTrendModal();
+    modal.hidden = false;
+    document.body.classList.add("weather-watch-modal-open");
+    setTimeout(() => modal.querySelector("button, [href]")?.focus(), 20);
+  }
+
+  function closeWeatherTrendModal() {
+    const modal = $("weatherTrendModal");
+    if (!modal) return;
+    modal.hidden = true;
+    document.body.classList.remove("weather-watch-modal-open");
+  }
+
   document.addEventListener("DOMContentLoaded", () => {
     const cachedWeather = readCache(WEATHER_CACHE_KEY);
     if (cachedWeather?.weather) state.weather = { ...cachedWeather.weather, cached: true };
@@ -1234,6 +1537,9 @@
     state.timeTimer = window.setInterval(renderTimes, 1000);
     if (!state.scenario && !navigator.geolocation) handleGpsError({ code: 2 });
     if (scenarioApplied || isNavdeskEntry()) openPanel({ scroll: false });
+    if (new URLSearchParams(window.location.search || "").get("trendOpen") === "1") {
+      window.setTimeout(openWeatherTrendModal, 500);
+    }
   });
 
   window.addEventListener("pagehide", () => {
