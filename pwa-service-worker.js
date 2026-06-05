@@ -1,4 +1,4 @@
-const CACHE_NAME = "brkovic-main-shell-v20260601-game-sso-01";
+const CACHE_NAME = "brkovic-main-shell-v20260605-weather-alerts-01";
 const SHELL_ASSETS = [
   "/",
   "/index.html",
@@ -58,6 +58,21 @@ self.addEventListener("fetch", (event) => {
         if (request.mode === "navigate") return caches.match("/index.html");
         return Response.error();
       }))
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const targetUrl = new URL(event.notification.data?.url || "/navdesk-instruments.html", self.location.origin).href;
+  event.waitUntil(
+    clients.matchAll({ type: "window", includeUncontrolled: true })
+      .then((clientList) => {
+        for (const client of clientList) {
+          if (client.url === targetUrl && "focus" in client) return client.focus();
+        }
+        if (clients.openWindow) return clients.openWindow(targetUrl);
+        return null;
+      })
   );
 });
 

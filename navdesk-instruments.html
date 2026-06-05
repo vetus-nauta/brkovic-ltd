@@ -55,7 +55,7 @@
   <link rel="stylesheet" href="/css/main.css?v=20260601-auth-modal-01" />
   <link rel="stylesheet" href="/css/responsive.css?v=20260531-site-menu-button-01" />
   <link rel="stylesheet" href="/css/navdesk.css?v=20260603-instruments-card-01" />
-  <link rel="stylesheet" href="/css/navdesk-instruments.css?v=20260605-instruments-2-stable-02" />
+  <link rel="stylesheet" href="/css/navdesk-instruments.css?v=20260605-instruments-2-stable-03" />
   <link rel="icon" type="image/png" href="/favicons/favicon-clean.png?v=2" />
   <link rel="apple-touch-icon" href="/favicons/apple-touch-icon-clean.png?v=2" />
   <meta name="rights" content="© BRKOVIC / VETUS NAUTA. All rights reserved." />
@@ -145,6 +145,11 @@
           <div class="bridge-panel__auth" id="instrumentsAuthBar" hidden>
             <span data-i18n="navdesk_instruments_auth_required">Sign in to continue working with live tools.</span>
             <button type="button" class="bridge-action bridge-action--small" id="instrumentsAuthButton" data-i18n="navdesk_instruments_sign_in">Sign in</button>
+          </div>
+
+          <div class="bridge-panel__alert" id="weatherAlertBar" hidden>
+            <span id="weatherAlertStatus" data-i18n="navdesk_instruments_alert_ready">Weather alerts are ready for fresh water-position checks.</span>
+            <button type="button" class="bridge-action bridge-action--small" id="weatherAlertButton" data-i18n="navdesk_instruments_alert_enable">Enable alerts</button>
           </div>
 
           <div class="bridge-grid">
@@ -346,6 +351,6 @@
   <script src="/js/seo.js?v=20260531-clarity-01"></script>
   <script src="/js/main.js?v=20260605-weather-watch-09"></script>
   <script src="/js/navdesk.js?v=20260601-runtime-i18n-01"></script>
-  <script src="/js/navdesk-instruments.js?v=20260605-instruments-2-stable-02"></script>
+  <script src="/js/navdesk-instruments.js?v=20260605-instruments-2-stable-03"></script>
 </body>
 </html>

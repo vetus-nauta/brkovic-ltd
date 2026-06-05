@@ -145,6 +145,7 @@
 .bridge-panel__top,
 .bridge-panel__navrow,
 .bridge-panel__auth,
+.bridge-panel__alert,
 .bridge-grid,
 .bridge-actions,
 .bridge-warning {
@@ -216,9 +217,30 @@
 }
 
 .bridge-panel__auth[hidden],
+.bridge-panel__alert[hidden],
 .navdesk-instruments-shell[hidden],
 .instruments-launch[hidden] {
   display: none;
+}
+
+.bridge-panel__alert {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 12px;
+  border: 1px solid rgba(84, 214, 199, 0.24);
+  border-radius: 14px;
+  background: rgba(84, 214, 199, 0.08);
+  color: var(--bridge-muted);
+  padding: 9px 11px;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.bridge-panel__alert .bridge-action {
+  flex: 0 0 auto;
 }
 
 .bridge-panel__top h2 {

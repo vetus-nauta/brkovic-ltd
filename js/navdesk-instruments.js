@@ -8,6 +8,10 @@
   const MIN_MOVE_METERS = 7;
   const MIN_SPEED_KN = 0.25;
   const MAX_ACCURACY_FOR_FALLBACK = 85;
+  const WEATHER_ALERT_FRESH_MS = 4 * 60 * 60 * 1000;
+  const WEATHER_ALERT_REPEAT_MS = 6 * 60 * 60 * 1000;
+  const WEATHER_ALERT_PREF_KEY = "navdesk_instruments_weather_alerts_v1";
+  const WEATHER_ALERT_LAST_KEY = "navdesk_instruments_weather_alert_last_v1";
   const AUTH_GRACE_MS = 2 * 60 * 1000;
   const AUTH_CACHE_KEY = "brkovic_tool_auth_session_v1";
 
@@ -152,6 +156,20 @@
     } catch (error) {}
   }
 
+  function readBool(key) {
+    try {
+      return localStorage.getItem(key) === "1";
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function writeBool(key, value) {
+    try {
+      localStorage.setItem(key, value ? "1" : "0");
+    } catch (error) {}
+  }
+
   function setPill(el, text, mode) {
     if (!el) return;
     el.textContent = text;
@@ -173,6 +191,15 @@
 
   function hasToolAuth() {
     return Boolean(readAuthProfile()?.authenticated);
+  }
+
+  function notificationPermission() {
+    if (!("Notification" in window)) return "unsupported";
+    return Notification.permission;
+  }
+
+  function weatherAlertsEnabled() {
+    return readBool(WEATHER_ALERT_PREF_KEY) || notificationPermission() === "granted";
   }
 
   function setHidden(id, hidden) {
@@ -334,6 +361,7 @@
       else app.removeAttribute("data-tool-auth-public");
     }
     setHidden("instrumentsAuthBar", authenticated || !state.authPrompted || !state.started);
+    renderWeatherAlertUi(weatherWatchLevel(summarizeForecast(state.weather?.forecast)));
   }
 
   function weatherText(code) {
@@ -476,6 +504,140 @@
     return "green";
   }
 
+  function hasMarineContext(weather) {
+    return Boolean(weather)
+      && (
+        Number.isFinite(weather.waterTemperature)
+        || Number.isFinite(weather.waveHeight)
+        || Number.isFinite(weather.waveDirection)
+      );
+  }
+
+  function gpsAgeMs() {
+    return state.gps?.timestamp ? Date.now() - Number(state.gps.timestamp) : Infinity;
+  }
+
+  function isFreshGpsForWeatherAlert() {
+    return Number.isFinite(gpsAgeMs()) && gpsAgeMs() <= WEATHER_ALERT_FRESH_MS;
+  }
+
+  function weatherAlertKey(level) {
+    const lat = Number.isFinite(state.gps?.lat) ? state.gps.lat.toFixed(2) : "na";
+    const lon = Number.isFinite(state.gps?.lon) ? state.gps.lon.toFixed(2) : "na";
+    return `${level}:${lat}:${lon}`;
+  }
+
+  function readLastWeatherAlert() {
+    const data = readCache(WEATHER_ALERT_LAST_KEY);
+    return data && typeof data === "object" ? data : null;
+  }
+
+  function canRepeatWeatherAlert(level) {
+    const last = readLastWeatherAlert();
+    if (!last) return true;
+    if (last.key !== weatherAlertKey(level)) return true;
+    return Date.now() - Number(last.sentAt || 0) > WEATHER_ALERT_REPEAT_MS;
+  }
+
+  function writeLastWeatherAlert(level) {
+    writeCache(WEATHER_ALERT_LAST_KEY, {
+      key: weatherAlertKey(level),
+      sentAt: Date.now(),
+    });
+  }
+
+  function weatherAlertStatusText(level) {
+    if (!hasToolAuth()) return t("navdesk_instruments_alert_auth_required", "Sign in to use weather alerts.");
+    if (notificationPermission() === "unsupported") return t("navdesk_instruments_alert_unsupported", "System notifications are not supported here.");
+    if (!weatherAlertsEnabled()) return t("navdesk_instruments_alert_ready", "Weather alerts are ready for fresh water-position checks.");
+    if (!state.gps) return t("navdesk_instruments_alert_wait_gps", "Alerts are on. Waiting for GPS.");
+    if (!isFreshGpsForWeatherAlert()) return t("navdesk_instruments_alert_stale", "Alerts paused: GPS position is older than 4 hours.");
+    if (!hasMarineContext(state.weather)) return t("navdesk_instruments_alert_land", "Alerts are on. Waiting for marine data at this point.");
+    if (level === "red" || level === "purple") return t("navdesk_instruments_alert_watch", "Alert level detected. Notification will be sent once for this area.");
+    return t("navdesk_instruments_alert_active", "Alerts are on. No red weather signal now.");
+  }
+
+  function renderWeatherAlertUi(level = "unknown") {
+    const bar = $("weatherAlertBar");
+    const button = $("weatherAlertButton");
+    const status = $("weatherAlertStatus");
+    if (!bar || !button || !status) return;
+    const authed = hasToolAuth();
+    bar.hidden = !authed;
+    if (!authed) return;
+    status.textContent = weatherAlertStatusText(level);
+    const permission = notificationPermission();
+    const enabled = weatherAlertsEnabled();
+    button.hidden = permission === "unsupported";
+    button.disabled = permission === "denied";
+    button.textContent = permission === "denied"
+      ? t("navdesk_instruments_alert_denied", "Notifications blocked")
+      : enabled
+        ? t("navdesk_instruments_alert_enabled", "Alerts enabled")
+        : t("navdesk_instruments_alert_enable", "Enable alerts");
+  }
+
+  async function sendWeatherNotification(level, summary) {
+    if (!hasToolAuth() || !weatherAlertsEnabled()) return;
+    if (!state.gps || !isFreshGpsForWeatherAlert()) return;
+    if (!hasMarineContext(state.weather)) return;
+    if (!(level === "red" || level === "purple")) return;
+    if (notificationPermission() !== "granted") return;
+    if (!canRepeatWeatherAlert(level)) return;
+
+    const title = level === "purple"
+      ? t("navdesk_instruments_alert_title_purple", "Severe weather attention")
+      : t("navdesk_instruments_alert_title_red", "Weather attention");
+    const place = state.place?.label || t("navdesk_instruments_watch_place_default", "current position");
+    const body = interpolate(t("navdesk_instruments_alert_body", "Weather around {place} has reached {level} attention for the next 48 hours."), {
+      place,
+      level: level === "purple"
+        ? t("navdesk_instruments_alert_level_purple", "purple")
+        : t("navdesk_instruments_alert_level_red", "red"),
+    });
+    const tag = `navdesk-weather-${weatherAlertKey(level)}`;
+    const options = {
+      body,
+      tag,
+      renotify: false,
+      icon: "/favicons/android-chrome-192x192.png",
+      badge: "/favicons/android-chrome-192x192.png",
+      data: { url: localizedPath("navdesk-instruments.html") },
+    };
+
+    try {
+      if (navigator.serviceWorker?.ready) {
+        const registration = await navigator.serviceWorker.ready;
+        await registration.showNotification(title, options);
+      } else {
+        new Notification(title, options);
+      }
+      writeLastWeatherAlert(level);
+      setText("weatherAlertStatus", t("navdesk_instruments_alert_sent", "Weather alert sent for this area."));
+    } catch (error) {}
+  }
+
+  async function enableWeatherAlerts() {
+    if (!hasToolAuth()) {
+      await requestAuth();
+      renderWeatherAlertUi();
+      return;
+    }
+    if (notificationPermission() === "unsupported") {
+      renderWeatherAlertUi();
+      return;
+    }
+    if (Notification.permission === "default") {
+      await Notification.requestPermission().catch(() => Notification.permission);
+    }
+    if (Notification.permission === "granted") {
+      writeBool(WEATHER_ALERT_PREF_KEY, true);
+      setText("weatherAlertStatus", t("navdesk_instruments_alert_enabled_note", "Weather alerts are enabled for fresh water positions."));
+    }
+    renderWeatherAlertUi(weatherWatchLevel(summarizeForecast(state.weather?.forecast)));
+    if (state.weather?.forecast) sendWeatherNotification(weatherWatchLevel(summarizeForecast(state.weather.forecast)), summarizeForecast(state.weather.forecast));
+  }
+
   function summarizeForecast(forecast) {
     const points = Array.isArray(forecast) ? forecast : [];
     const now = Date.now();
@@ -518,6 +680,8 @@
     watch.className = `weather-watch weather-watch--${level}${rainVisual}`;
     setText("weatherWatchTitle", title);
     setText("weatherWatchText", text);
+    renderWeatherAlertUi(level);
+    if (summary) sendWeatherNotification(level, summary);
     const badges = $("weatherWatchBadges");
     if (!badges) return;
     badges.innerHTML = "";
@@ -979,6 +1143,7 @@
     document.querySelector("[data-instruments-exit-confirm]")?.addEventListener("click", confirmExitModal);
     $("instrumentsCopyCoords")?.addEventListener("click", copyCoordinates);
     $("instrumentsRefreshWeather")?.addEventListener("click", () => fetchWeather(true));
+    $("weatherAlertButton")?.addEventListener("click", enableWeatherAlerts);
     $("instrumentsInstallPwa")?.addEventListener("click", () => {
       if (typeof window.openPwaInstallModal === "function") {
         window.openPwaInstallModal("menu");
@@ -1038,6 +1203,7 @@
         }
       }
       refreshAccessUi();
+      renderWeatherAlertUi(weatherWatchLevel(summarizeForecast(state.weather?.forecast)));
     });
   }
 

@@ -22,6 +22,9 @@ Final 2.0 decisions:
 - weather sources are shown as short abbreviations: `OM · M`;
 - weather and marine data stay informational and must not be positioned as a
   professional navigation forecast.
+- registered-user weather alerts are V1 browser/PWA alerts: they work from a
+  live panel session, require notification permission, require marine data at
+  the GPS point, and must not send if the last GPS point is older than 4 hours.
 
 Deployment package:
 
