@@ -73,6 +73,13 @@ lang/sr.json
 lang/zh.json
 images/navdesk/
 sitemap.xml
+navdesk-instruments.webmanifest
+ru/navdesk-instruments.webmanifest
+de/navdesk-instruments.webmanifest
+es/navdesk-instruments.webmanifest
+it/navdesk-instruments.webmanifest
+sr/navdesk-instruments.webmanifest
+zh/navdesk-instruments.webmanifest
 ```
 
 Shared files such as `css/navdesk.css`, `js/navdesk.js`, `js/main.js`, and
@@ -105,6 +112,9 @@ indexing and for the start screen.
 - Runtime must keep the quiet attribution link:
   `brkovic.ltd - NavDesk instruments`, opening localized `navdesk.html` in a
   new tab.
+- The page family must not use the root `/site.webmanifest`. Each language page
+  uses its own `navdesk-instruments.webmanifest` so browser/PWA installation
+  starts the plotter, not the main website.
 - Weather/marine data is informational only, not a certified navigation
   forecast.
 - Weather alert V1 requires live panel session, notification permission, fresh
