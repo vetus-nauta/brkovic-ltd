@@ -3,6 +3,7 @@
 Date: 2026-06-05
 Status: `instruments-navdesk-2.0 (stable)`
 Scope: `navdesk-instruments.html` and localized route family only.
+Narrow future-work route: `docs/navdesk-instruments-page-route-2026-06-05.md`
 
 ## Closeout Record
 
