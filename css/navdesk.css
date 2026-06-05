@@ -114,6 +114,10 @@
   background: rgba(92, 78, 128, 0.38);
 }
 
+.navdesk-tool-card--instruments::before {
+  background: rgba(38, 143, 155, 0.46);
+}
+
 .navdesk-tool-card:hover,
 .navdesk-tool-card:focus-visible {
   transform: translateY(-2px);
@@ -8328,7 +8332,8 @@ body.navdesk-tides-printing .navdesk-weekly-svg__paper {
 
   .navdesk-tool-card--cashbox,
   .navdesk-tool-card--operations,
-  .navdesk-tool-card--learning {
+  .navdesk-tool-card--learning,
+  .navdesk-tool-card--instruments {
     grid-column: span 4;
     min-height: 142px;
   }
@@ -8339,6 +8344,7 @@ body.navdesk-tides-printing .navdesk-weekly-svg__paper {
   .navdesk-tool-card--route-link { grid-column: 1 / span 4; grid-row: 2; }
   .navdesk-tool-card--operations { grid-column: 5 / span 4; grid-row: 2; }
   .navdesk-tool-card--learning { grid-column: 9 / span 4; grid-row: 2; }
+  .navdesk-tool-card--instruments { grid-column: 1 / span 12; grid-row: 3; }
 }
 
 .navdesk-tool-card--cashbox {
@@ -8382,6 +8388,7 @@ body.navdesk-theme-night .navdesk-tool-card--cashbox .navdesk-tool-card__kicker 
   .navdesk-tool-card--route-link { order: 4; }
   .navdesk-tool-card--operations { order: 5; }
   .navdesk-tool-card--learning { order: 6; }
+  .navdesk-tool-card--instruments { order: 7; }
 
   .navdesk-tool-card {
     min-height: 140px;
@@ -8498,7 +8505,8 @@ body.navdesk-theme-night .navdesk-tool-card--cashbox .navdesk-tool-card__kicker 
   .navdesk-tool-card,
   .navdesk-tool-card--cashbox,
   .navdesk-tool-card--operations,
-  .navdesk-tool-card--learning {
+  .navdesk-tool-card--learning,
+  .navdesk-tool-card--instruments {
     min-height: 142px;
     padding: 18px 20px;
   }
@@ -8511,7 +8519,8 @@ body.navdesk-theme-night .navdesk-tool-card--cashbox .navdesk-tool-card__kicker 
 
   .navdesk-tool-card--cashbox,
   .navdesk-tool-card--operations,
-  .navdesk-tool-card--learning {
+  .navdesk-tool-card--learning,
+  .navdesk-tool-card--instruments {
     grid-column: span 4;
   }
 
@@ -8521,6 +8530,7 @@ body.navdesk-theme-night .navdesk-tool-card--cashbox .navdesk-tool-card__kicker 
   .navdesk-tool-card--cashbox { grid-column: 1 / span 4; grid-row: 2; }
   .navdesk-tool-card--operations { grid-column: 5 / span 4; grid-row: 2; }
   .navdesk-tool-card--learning { grid-column: 9 / span 4; grid-row: 2; }
+  .navdesk-tool-card--instruments { grid-column: 1 / span 12; grid-row: 3; }
 }
 
 .navdesk-layout.navdesk-layout--compact {

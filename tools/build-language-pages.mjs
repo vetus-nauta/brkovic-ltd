@@ -11,6 +11,7 @@ const PAGES = [
   { source: 'index.html', route: '/', priority: '1.0', changefreq: 'weekly', schema: 'home', image: '/images/hero/brkovic-ocean-winner-hero.jpg' },
   { source: 'journal.html', route: '/journal.html', priority: '0.8', changefreq: 'weekly', schema: 'journal', image: '/images/hero/brkovic-ocean-winner-hero.jpg' },
   { source: 'navdesk.html', route: '/navdesk.html', priority: '0.8', changefreq: 'weekly', schema: 'tool', toolName: 'Nav Desk', image: '/brand/logo-header-inline-light.png' },
+  { source: 'navdesk-instruments.html', route: '/navdesk-instruments.html', priority: '0.7', changefreq: 'monthly', schema: 'tool', toolName: 'Nav Desk Location Plotter', image: '/images/navdesk/weather-watch-green.jpg' },
   { source: 'ship-cashbox/index.html', route: '/ship-cashbox/index.html', priority: '0.7', changefreq: 'monthly', schema: 'tool', toolName: 'Ship Cashbox', image: '/brand/logo-header-inline-light.png' },
   { source: 'navdesk-route.html', route: '/navdesk-route.html', priority: '0.7', changefreq: 'monthly', schema: 'tool', toolName: 'Great Circle and Rhumb Line Calculator', image: '/brand/logo-header-inline-light.png' },
   { source: 'navdesk-tides.html', route: '/navdesk-tides.html', priority: '0.7', changefreq: 'monthly', schema: 'tool', toolName: 'Tides and Passage Window', image: '/brand/logo-header-inline-light.png' },
@@ -30,6 +31,44 @@ const translations = Object.fromEntries(LANGS.map((lang) => [
   lang,
   JSON.parse(fs.readFileSync(path.join(ROOT, 'lang', `${lang}.json`), 'utf8')),
 ]));
+
+const NAVDESK_INSTRUMENTS_SCHEMA = {
+  en: {
+    alternateName: 'Location Plotter',
+    browserRequirements: 'Requires browser geolocation permission for live GPS data.',
+    featureList: ['GPS position', 'COG and SOG', 'Weather, wind and wave', 'Sea temperature', 'Local time and UTC', 'Two-day weather watch'],
+  },
+  ru: {
+    alternateName: 'Плоттер локации',
+    browserRequirements: 'Для live GPS-данных требуется разрешение браузера на геолокацию.',
+    featureList: ['GPS-позиция', 'COG и SOG', 'Погода, ветер и волна', 'Температура воды', 'Местное время и UTC', 'Погодное внимание на два дня'],
+  },
+  de: {
+    alternateName: 'Positionsplotter',
+    browserRequirements: 'Für Live-GPS-Daten ist die Geolocation-Freigabe des Browsers erforderlich.',
+    featureList: ['GPS-Position', 'COG und SOG', 'Wetter, Wind und Welle', 'Wassertemperatur', 'Ortszeit und UTC', 'Zwei-Tage-Wetterwache'],
+  },
+  it: {
+    alternateName: 'Plotter di posizione',
+    browserRequirements: 'Per i dati GPS live serve il permesso di geolocalizzazione del browser.',
+    featureList: ['Posizione GPS', 'COG e SOG', 'Meteo, vento e onda', 'Temperatura del mare', 'Ora locale e UTC', 'Controllo meteo a due giorni'],
+  },
+  es: {
+    alternateName: 'Plotter de ubicación',
+    browserRequirements: 'Para datos GPS en vivo se requiere permiso de geolocalización del navegador.',
+    featureList: ['Posición GPS', 'COG y SOG', 'Meteorología y viento', 'Temperatura del mar', 'Hora local y UTC', 'Vigilancia meteorológica de dos días'],
+  },
+  sr: {
+    alternateName: 'Ploter lokacije',
+    browserRequirements: 'Za live GPS podatke potrebna je dozvola browsera za geolokaciju.',
+    featureList: ['GPS pozicija', 'COG i SOG', 'Vreme, vetar i talas', 'Temperatura mora', 'Lokalno vreme i UTC', 'Dvodnevno vremensko upozorenje'],
+  },
+  zh: {
+    alternateName: '位置绘图器',
+    browserRequirements: '实时 GPS 数据需要浏览器地理位置权限。',
+    featureList: ['GPS 位置', 'COG 和 SOG', '天气、风和海浪', '海水温度', '当地时间和 UTC', '未来两天天气关注'],
+  },
+};
 
 const STATIC_TEXT_FALLBACKS = {
   'Авто': 'Auto',
@@ -300,6 +339,7 @@ function jsonLd(page, lang, title, description) {
       description,
       image: absolute(page.image),
       isPartOf: { '@id': websiteId },
+      ...(page.route === '/navdesk-instruments.html' ? { about: { '@id': `${url}#tool` } } : {}),
       publisher: { '@id': orgId },
       copyrightHolder: { '@id': orgId },
       copyrightNotice: '© BRKOVIC / VETUS NAUTA. All rights reserved.',
@@ -319,6 +359,9 @@ function jsonLd(page, lang, title, description) {
     });
   }
   if (page.schema === 'tool') {
+    const instrumentSchema = page.route === '/navdesk-instruments.html'
+      ? NAVDESK_INSTRUMENTS_SCHEMA[lang] || NAVDESK_INSTRUMENTS_SCHEMA.en
+      : null;
     graph.push({
       '@type': 'WebApplication',
       '@id': `${url}#tool`,
@@ -328,6 +371,9 @@ function jsonLd(page, lang, title, description) {
       applicationCategory: 'NavigationApplication',
       operatingSystem: 'Any',
       publisher: { '@id': orgId },
+      isAccessibleForFree: true,
+      offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
+      ...(instrumentSchema || {}),
     });
   }
   if (page.schema === 'journal') {

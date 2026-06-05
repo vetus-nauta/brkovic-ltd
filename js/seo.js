@@ -5,7 +5,53 @@
   const GA4_MEASUREMENT_ID = 'G-22MEK9BBFV';
   const CLARITY_PROJECT_ID = 'wzpd0d4a1d';
   const LANGS = ['en', 'ru', 'de', 'it', 'es', 'sr', 'zh'];
+  const OG_LOCALES = {
+    en: 'en_US',
+    ru: 'ru_RU',
+    de: 'de_DE',
+    it: 'it_IT',
+    es: 'es_ES',
+    sr: 'sr_RS',
+    zh: 'zh_CN',
+  };
   const NON_DEFAULT_LANGS = LANGS.filter((lang) => lang !== 'en');
+  const NAVDESK_INSTRUMENTS_SCHEMA = {
+    en: {
+      alternateName: 'Location Plotter',
+      browserRequirements: 'Requires browser geolocation permission for live GPS data.',
+      featureList: ['GPS position', 'COG and SOG', 'Weather, wind and wave', 'Sea temperature', 'Local time and UTC', 'Two-day weather watch'],
+    },
+    ru: {
+      alternateName: 'Плоттер локации',
+      browserRequirements: 'Для live GPS-данных требуется разрешение браузера на геолокацию.',
+      featureList: ['GPS-позиция', 'COG и SOG', 'Погода, ветер и волна', 'Температура воды', 'Местное время и UTC', 'Погодное внимание на два дня'],
+    },
+    de: {
+      alternateName: 'Positionsplotter',
+      browserRequirements: 'Für Live-GPS-Daten ist die Geolocation-Freigabe des Browsers erforderlich.',
+      featureList: ['GPS-Position', 'COG und SOG', 'Wetter, Wind und Welle', 'Wassertemperatur', 'Ortszeit und UTC', 'Zwei-Tage-Wetterwache'],
+    },
+    it: {
+      alternateName: 'Plotter di posizione',
+      browserRequirements: 'Per i dati GPS live serve il permesso di geolocalizzazione del browser.',
+      featureList: ['Posizione GPS', 'COG e SOG', 'Meteo, vento e onda', 'Temperatura del mare', 'Ora locale e UTC', 'Controllo meteo a due giorni'],
+    },
+    es: {
+      alternateName: 'Plotter de ubicación',
+      browserRequirements: 'Para datos GPS en vivo se requiere permiso de geolocalización del navegador.',
+      featureList: ['Posición GPS', 'COG y SOG', 'Meteorología y viento', 'Temperatura del mar', 'Hora local y UTC', 'Vigilancia meteorológica de dos días'],
+    },
+    sr: {
+      alternateName: 'Ploter lokacije',
+      browserRequirements: 'Za live GPS podatke potrebna je dozvola browsera za geolokaciju.',
+      featureList: ['GPS pozicija', 'COG i SOG', 'Vreme, vetar i talas', 'Temperatura mora', 'Lokalno vreme i UTC', 'Dvodnevno vremensko upozorenje'],
+    },
+    zh: {
+      alternateName: '位置绘图器',
+      browserRequirements: '实时 GPS 数据需要浏览器地理位置权限。',
+      featureList: ['GPS 位置', 'COG 和 SOG', '天气、风和海浪', '海水温度', '当地时间和 UTC', '未来两天天气关注'],
+    },
+  };
 
   const PAGES = {
     '/': {
@@ -40,6 +86,15 @@
       type: 'website',
       schema: 'tool',
       toolName: 'Nav Desk',
+    },
+    '/navdesk-instruments.html': {
+      path: '/navdesk-instruments.html',
+      title: 'Location Plotter | Nav Desk Tools | VETUS NAUTA - Brkovic',
+      description: 'Compact Nav Desk location plotter for yacht crews: GPS position, COG/SOG, wind, wave, pressure, sea temperature, place, local time, UTC and two-day weather watch.',
+      image: '/images/navdesk/weather-watch-green.jpg',
+      type: 'website',
+      schema: 'tool',
+      toolName: 'Nav Desk Location Plotter',
     },
     '/ship-cashbox/index.html': {
       path: '/ship-cashbox/index.html',
@@ -304,15 +359,26 @@
     }
 
     if (page.schema === 'tool') {
+      const toolLanguage = currentLanguage();
+      const instrumentSchema = page.path === '/navdesk-instruments.html'
+        ? NAVDESK_INSTRUMENTS_SCHEMA[toolLanguage] || NAVDESK_INSTRUMENTS_SCHEMA.en
+        : null;
       graph.push({
         '@type': 'WebApplication',
         '@id': `${url}#tool`,
-        name: page.toolName || title,
+        name: title,
         description,
         url,
         applicationCategory: 'NavigationApplication',
         operatingSystem: 'Any',
         publisher: { '@id': organizationId },
+        isAccessibleForFree: true,
+        offers: {
+          '@type': 'Offer',
+          price: '0',
+          priceCurrency: 'EUR',
+        },
+        ...(instrumentSchema || {}),
       });
     }
 
@@ -346,23 +412,47 @@
     }
 
     if (page.path !== '/') {
+      const isNavdeskTool = page.schema === 'tool' && page.path.startsWith('/navdesk-') && page.path !== '/navdesk.html';
+      const navdeskPage = PAGES['/navdesk.html'];
+      const itemListElement = isNavdeskTool
+        ? [
+            {
+              '@type': 'ListItem',
+              position: 1,
+              name: BRAND,
+              item: absolute('/'),
+            },
+            {
+              '@type': 'ListItem',
+              position: 2,
+              name: navdeskPage.toolName || 'Nav Desk',
+              item: canonicalUrl(navdeskPage, currentLanguage()),
+            },
+            {
+              '@type': 'ListItem',
+              position: 3,
+              name: title,
+              item: url,
+            },
+          ]
+        : [
+            {
+              '@type': 'ListItem',
+              position: 1,
+              name: BRAND,
+              item: absolute('/'),
+            },
+            {
+              '@type': 'ListItem',
+              position: 2,
+              name: title.replace(/\s+-\s+BRKOVIC.*$/i, ''),
+              item: url,
+            },
+          ];
       graph.push({
         '@type': 'BreadcrumbList',
         '@id': `${url}#breadcrumb`,
-        itemListElement: [
-          {
-            '@type': 'ListItem',
-            position: 1,
-            name: BRAND,
-            item: absolute('/'),
-          },
-          {
-            '@type': 'ListItem',
-            position: 2,
-            name: title.replace(/\s+-\s+BRKOVIC.*$/i, ''),
-            item: url,
-          },
-        ],
+        itemListElement,
       });
     }
 
@@ -408,7 +498,7 @@
     setMetaProperty('og:description', description);
     setMetaProperty('og:url', url);
     setMetaProperty('og:image', image);
-    setMetaProperty('og:locale', lang === 'en' ? 'en_US' : lang);
+    setMetaProperty('og:locale', OG_LOCALES[lang] || 'en_US');
     updateJsonLd(page, url, title, description, image);
   }
 

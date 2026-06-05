@@ -2015,6 +2015,7 @@
         delete target.dataset.toolAuthReplay;
         return;
       }
+      if (target.closest('[data-tool-auth-public]')) return;
       if (!isToolActionCandidate(target)) return;
       event.preventDefault();
       event.stopImmediatePropagation();
@@ -2072,6 +2073,7 @@
   window.ensureToolAccess = ensureToolAccess;
   window.openToolAuthPrompt = openToolAuthPrompt;
   window.fetchToolAuthStatus = fetchToolAuthStatus;
+  window.openPwaInstallModal = openPwaInstallModal;
 
   document.addEventListener('DOMContentLoaded', () => {
     setupSiteMenu();
