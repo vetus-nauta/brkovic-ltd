@@ -111,15 +111,38 @@ http://127.0.0.1:18091/ship-cashbox/index.html
 
 ## Ship Cashbox Product Map
 
+For active Ship Cashbox handoff, read this file before touching code:
+
+```text
+docs/ship-cashbox-handoff-current.md
+```
+
 Ship Cashbox must follow the locked product map:
 
 ```text
 docs/ship-cashbox-product-map-sprint-01.md
 docs/ship-cashbox-solo-mode-sprint-02.md
 docs/ship-cashbox-visual-polish-sprint-03.md
+docs/ship-cashbox-personal-purity-sprint-04.md
 ```
 
-Do not turn Ship Cashbox back into a set of unrelated cards or admin panels. Preserve the four entry scenarios: personal journal, crew ship cashbox, quick equalizer, and group invitation by code. In personal mode, do not leak group, treasurer, participant, invite, settlement, share, or who-owes-whom language. Personal and group starts are mode-isolated: an active group must not hijack the personal journal entry.
+Current repaired layout and personal-report behavior is documented in:
+
+```text
+docs/ship-cashbox-etalon-2026-06-06-main-records-ledger.md
+docs/ship-cashbox-personal-reports-sprint-28.md
+```
+
+Do not turn Ship Cashbox back into a set of unrelated cards or admin panels. Preserve the four entry scenarios: personal journal, crew ship cashbox, quick equalizer, and group invitation by code. In personal mode, do not leak group, treasurer, participant, invite, settlement, share, or who-owes-whom language. Personal and group starts are mode-isolated: an active group must not hijack the personal journal entry. Personal mode must also use personal service/help/archive wording and must not show group archives.
+
+Ship Cashbox director discipline:
+
+- Work only inside Ship Cashbox unless the user explicitly expands the task.
+- Do not touch Nav Desk, shared site CSS/JS, generated language pages, or main public site files to fix Ship Cashbox.
+- Do not open or print `.ship-cashbox.env`.
+- Do not solve layout regressions by stacking another broad override over old CSS; identify the DOM contract and owning Ship Cashbox CSS scope first.
+- Keep group and personal mode isolation intact.
+- Run `node --check ship-cashbox/assets/app.js` and `sh ship-cashbox/scripts/smoke-local.sh` after each implementation block.
 
 ## Yacht Management Rule
 

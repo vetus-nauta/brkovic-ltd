@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="104" height="86" viewBox="0 0 104 86" role="img" aria-labelledby="title">
+  <title id="title">Документы</title>
+  <defs>
+    <linearGradient id="stroke" x1="28" y1="12" x2="75" y2="64" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#10243a"/>
+      <stop offset="1" stop-color="#5f7182"/>
+    </linearGradient>
+    <filter id="shadow" x="0" y="0" width="104" height="86" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="7" stdDeviation="7" flood-color="#10243a" flood-opacity=".14"/>
+    </filter>
+  </defs>
+  <g filter="url(#shadow)">
+    <path d="M34 14h25l13 13v32c0 4.418-3.582 8-8 8H34c-4.418 0-8-3.582-8-8V22c0-4.418 3.582-8 8-8Z" fill="#f7faf7" stroke="url(#stroke)" stroke-width="2"/>
+    <path d="M59 15v10c0 2.209 1.791 4 4 4h9" fill="none" stroke="#10243a" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M37 37h27M37 47h27M37 57h17" stroke="#10243a" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M34 22h17" stroke="#fff" stroke-width="1.4" stroke-linecap="round" opacity=".8"/>
+    <circle cx="62" cy="58" r="6" fill="#e2bd76" opacity=".9"/>
+    <path d="m59.2 58.2 1.9 1.9 4-4.7" fill="none" stroke="#10243a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <text x="52" y="78" text-anchor="middle" fill="#5f7182" font-family="Verdana, DejaVu Sans, sans-serif" font-size="9" font-weight="800" letter-spacing=".35">ДОКУМЕНТЫ</text>
+</svg>

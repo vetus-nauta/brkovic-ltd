@@ -8,10 +8,11 @@ const THEME_KEY = "navdesk_watch_theme_v1";
 const ENGAGED_KEY = "ship_cashbox_engaged_v1";
 const DISMISSED_INSTALL_KEY = "ship_cashbox_install_dismissed_v1";
 const BOOT_CACHE_KEY = "ship_cashbox_boot_cache_v1";
-const SHELL_VERSION = "20260605-cashbox-structure-repair-26";
+const SHELL_VERSION = "20260606-cashbox-layout-stabilize-104";
 const SHELL_PURGE_KEY = "ship_cashbox_shell_purge_v1";
 const SHELL_RELEASE_STATE_KEY = "ship_cashbox_shell_release_state_v1";
 const LAST_MODE_KEY = "ship_cashbox_last_explicit_mode_v1";
+const ACCOUNT_WORKSPACES_CACHE_KEY = "ship_cashbox_account_workspaces_v1";
 const EQUALIZER_DRAFT_KEY = "ship_cashbox_equalizer_draft_v1";
 const EQUALIZER_HISTORY_KEY = "ship_cashbox_equalizer_history_v1";
 const PARTICIPANT_CACHE_PREFIX = "ship_cashbox_participant_cache_v1_";
@@ -23,6 +24,7 @@ const WORKSPACE_VIEW_PREFIX = "ship_cashbox_workspace_view_v1_";
 const RECOVERY_LOG_PREFIX = "ship_cashbox_recovery_log_v1_";
 const SCAN_INSERT_PREFIX = "ship_cashbox_scan_insert_v1_";
 const RECEIPT_DONE_PREFIX = "ship_cashbox_receipt_done_v1_";
+const PERSONAL_RECORD_SCOPE_UNLINKED = "__unlinked__";
 const API_TIMEOUT_MS = 18000;
 const AUTH_TIMEOUT_MS = 12000;
 const UPLOAD_TIMEOUT_MS = 90000;
@@ -75,10 +77,13 @@ const state = {
   scanOcrStatusCheckedAt: 0,
   shellUpdateAvailable: false,
   shellVersionChanges: 0,
+  accountWorkspaces: null,
   notebookAssistantSuppressedUntil: {},
   cashboxWorkspaceView: "cashbox",
   activeReadyRecord: null,
   editingReadyRecord: null,
+  personalViewedReportId: "",
+  personalRecordFocus: "",
   editorLocked: false,
   hiddenAt: 0,
 };
@@ -141,10 +146,28 @@ function isNotebookTextarea(target) {
   return target instanceof HTMLElement && target.classList.contains("shipcashbox-notebook-textarea");
 }
 
+function isJournalTextarea(target) {
+  return target instanceof HTMLElement && target.classList.contains("shipcashbox-journal-textarea");
+}
+
+function isCashboxEditorTextarea(target) {
+  return isNotebookTextarea(target) || isJournalTextarea(target);
+}
+
 function setNotebookFocusMode(active) {
   window.clearTimeout(notebookBlurTimer);
   if (document.body) {
     document.body.classList.toggle("shipcashbox-notebook-focused", Boolean(active));
+    if (active) document.body.classList.remove("shipcashbox-journal-focused");
+  }
+  updateViewportVars();
+}
+
+function setJournalFocusMode(active) {
+  window.clearTimeout(notebookBlurTimer);
+  if (document.body) {
+    document.body.classList.toggle("shipcashbox-journal-focused", Boolean(active));
+    if (active) document.body.classList.remove("shipcashbox-notebook-focused");
   }
   updateViewportVars();
 }
@@ -152,8 +175,12 @@ function setNotebookFocusMode(active) {
 function scheduleNotebookFocusRelease() {
   window.clearTimeout(notebookBlurTimer);
   notebookBlurTimer = window.setTimeout(() => {
-    if (isNotebookTextarea(document.activeElement)) return;
-    document.body.classList.remove("shipcashbox-notebook-focused");
+    if (!isNotebookTextarea(document.activeElement)) {
+      document.body.classList.remove("shipcashbox-notebook-focused");
+    }
+    if (!isJournalTextarea(document.activeElement)) {
+      document.body.classList.remove("shipcashbox-journal-focused");
+    }
     updateViewportVars();
   }, 180);
 }
@@ -186,12 +213,16 @@ function bindMobileKeyboardViewport() {
   window.visualViewport?.addEventListener("scroll", updateViewportVars);
   window.addEventListener("resize", updateViewportVars);
   document.addEventListener("focusin", (event) => {
-    if (!isNotebookTextarea(event.target)) return;
-    setNotebookFocusMode(true);
+    if (!isCashboxEditorTextarea(event.target)) return;
+    if (isJournalTextarea(event.target)) {
+      setJournalFocusMode(true);
+    } else {
+      setNotebookFocusMode(true);
+    }
     scheduleFocusedNotebookIntoView(event.target);
   });
   document.addEventListener("focusout", (event) => {
-    if (!isNotebookTextarea(event.target)) return;
+    if (!isCashboxEditorTextarea(event.target)) return;
     scheduleNotebookFocusRelease();
   });
 }
@@ -199,7 +230,11 @@ function bindMobileKeyboardViewport() {
 function bindNotebookKeyboardTarget(textarea) {
   if (!(textarea instanceof HTMLElement)) return;
   const activateNotebookKeyboardMode = () => {
-    setNotebookFocusMode(true);
+    if (isJournalTextarea(textarea)) {
+      setJournalFocusMode(true);
+    } else {
+      setNotebookFocusMode(true);
+    }
     scheduleFocusedNotebookIntoView(textarea);
   };
   textarea.addEventListener("pointerdown", activateNotebookKeyboardMode, { passive: true });
@@ -256,6 +291,18 @@ function confirmByWord(messageKey, fallback, wordKey, fallbackWord) {
   return String(value || "").trim().toUpperCase() === String(word || "").trim().toUpperCase();
 }
 
+function confirmArchiveReopenForMode(mode = "") {
+  const personal = String(mode || "") === "personal";
+  return confirmByWord(
+    personal ? "personalReopenArchiveByWord" : "reopenArchiveByWord",
+    personal
+      ? "Чтобы восстановить личную карточку из корзины, введите {word}. Текущий личный журнал должен быть закрыт."
+      : "Чтобы восстановить карточку из корзины, введите {word}. Текущая активная касса должна быть закрыта.",
+    "reopenArchiveWord",
+    "ВОССТАНОВИТЬ"
+  );
+}
+
 function normalizeToolLang(value) {
   const code = String(value || "").trim().toLowerCase().split("-")[0];
   return SUPPORTED_TOOL_LANGS.includes(code) ? code : "";
@@ -284,6 +331,29 @@ function money(value, currency = "EUR", signed = false) {
   }).format(Math.abs(number));
   const prefix = signed ? (number > 0 ? "+" : number < 0 ? "-" : "") : "";
   return `${prefix}${currency} ${formatted}`;
+}
+
+function currencySymbol(currency = "EUR") {
+  const code = String(currency || "").trim().toUpperCase();
+  return {
+    EUR: "€",
+    USD: "$",
+    GBP: "£",
+    JPY: "¥",
+    CNY: "¥",
+    CHF: "Fr",
+  }[code] || "";
+}
+
+function displayMoney(value, currency = "EUR", signed = false) {
+  const number = Number(value || 0);
+  const formatted = new Intl.NumberFormat(MONEY_LOCALES[state.lang] || "en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(Math.abs(number));
+  const prefix = signed ? (number > 0 ? "+" : number < 0 ? "-" : "") : "";
+  const symbol = currencySymbol(currency);
+  return `${prefix}${symbol}${formatted}`;
 }
 
 function moneyRound(value) {
@@ -351,6 +421,13 @@ function saveWorkspaceView(view, sessionId = activeSession()?.id) {
   try {
     localStorage.setItem(workspaceViewKey(sessionId), normalized);
   } catch (error) {}
+}
+
+function syncTreasurerDraftFromMountedTextarea() {
+  const textarea = $("treasurerNotebook");
+  if (!(textarea instanceof HTMLTextAreaElement)) return;
+  state.treasurerDraft = normalizedText(textarea.value || "");
+  saveTreasurerDraft(state.treasurerDraft);
 }
 
 function appendRecoveryLog(eventType, payload = {}, sessionId = activeSession()?.id) {
@@ -464,54 +541,121 @@ function markNotebookLineCommitted(rawLine) {
   return clean ? `✓ ${clean}` : String(rawLine || "");
 }
 
+function normalizeNotebookAccountingLine(rawLine) {
+  return stripNotebookCommitMarker(rawLine)
+    .trim()
+    .replace(/^([+-]) ([0-9])/, "$1$2")
+    .replace(/^([+-]) (€ ?[0-9])/, "$1$2");
+}
+
 function notebookLineHash(rawLine) {
-  return hashText(stripNotebookCommitMarker(rawLine).replace(/\s+/g, " "));
+  return hashText(normalizeNotebookAccountingLine(rawLine).replace(/\s+/g, " "));
 }
 
 function parseNotebookExpenseLine(rawLine) {
-  const raw = stripNotebookCommitMarker(rawLine);
-  const match = raw.match(/^([+-])?\s*(€)?\s*(\d+(?:[.,]\d+)?)\s+(.+)$/u);
+  const raw = normalizeNotebookAccountingLine(rawLine);
+  const match = raw.match(/^([+-])(?:€ ?)?(\d+(?:[.,]\d+)?)\s*(.*)$/u);
   if (!match) return null;
-  const amount = moneyRound(Math.abs(Number(String(match[3] || "0").replace(",", "."))));
-  const note = String(match[4] || "").trim();
-  if (!amount || !note) return null;
+  const amount = moneyRound(Math.abs(Number(String(match[2] || "0").replace(",", "."))));
+  const note = String(match[3] || "").trim();
+  if (!amount) return null;
   return { amount, note, raw };
 }
 
-function parseNotebookJournalLine(rawLine) {
-  const raw = stripNotebookCommitMarker(rawLine);
-  const match = raw.match(/^([+-])?\s*(€)?\s*(\d+(?:[.,]\d+)?)\s*(.*)$/u);
-  if (!match) return null;
-  const amount = moneyRound(Math.abs(Number(String(match[3] || "0").replace(",", "."))));
+function parseNotebookJournalLine(rawLine, mode = activeSession()?.session_mode || "") {
+  const raw = normalizeNotebookAccountingLine(rawLine);
+  const signedMatch = raw.match(/^([+-])(?:€ ?)?(\d+(?:[.,]\d+)?)\s*(.*)$/u);
+  if (signedMatch) {
+    const amount = moneyRound(Math.abs(Number(String(signedMatch[2] || "0").replace(",", "."))));
+    const note = String(signedMatch[3] || "").trim();
+    if (!amount) return null;
+    return {
+      amount,
+      note,
+      raw,
+      kind: signedMatch[1] === "+" ? "contribution" : "expense",
+      accountingState: "free",
+    };
+  }
+  const malformedSignedMatch = raw.match(/^[+-]\s{2,}(?:€\s*)?(\d+(?:[.,]\d+)?)\s*(.*)$/u);
+  if (malformedSignedMatch) {
+    const amount = moneyRound(Math.abs(Number(String(malformedSignedMatch[1] || "0").replace(",", "."))));
+    if (!amount) return null;
+    return {
+      amount,
+      note: String(malformedSignedMatch[2] || "").trim(),
+      raw,
+      kind: "note",
+      accountingState: "disputed",
+    };
+  }
+  const invalidNumberMatch = raw.match(/^(?=.*\d)(?![+-](?: ?)(?:€ ?)?\d)(.*?)(\d+(?:[.,]\d+)?)(.*)$/u);
+  if (invalidNumberMatch) {
+    const amount = moneyRound(Math.abs(Number(String(invalidNumberMatch[2] || "0").replace(",", "."))));
+    if (!amount) return null;
+    return {
+      amount,
+      note: raw,
+      raw,
+      kind: "note",
+      accountingState: "disputed",
+    };
+  }
+  const disputedMatch = raw.match(/^(?:€ ?)?(\d+(?:[.,]\d+)?)\s*(.*)$/u);
+  if (!disputedMatch) return null;
+  const amount = moneyRound(Math.abs(Number(String(disputedMatch[1] || "0").replace(",", "."))));
   if (!amount) return null;
-  const sign = String(match[1] || "");
-  const note = String(match[4] || "").trim();
+  const note = String(disputedMatch[2] || "").trim();
   return {
     amount,
     note,
     raw,
-    kind: sign === "+" ? "contribution" : "expense",
+    kind: "note",
+    accountingState: "disputed",
   };
 }
 
-function notebookDraftSummary(text = "") {
+function notebookOperationSegments(rawLine) {
+  const raw = stripNotebookCommitMarker(rawLine).trim();
+  if (!raw) return [];
+  return raw.split(/\s*,\s*/u).map((item) => item.trim()).filter(Boolean);
+}
+
+function notebookDisputedSegments(text = "") {
+  const rows = String(text || "").replace(/\r/g, "").split("\n").map((line) => line.trim()).filter(Boolean);
+  return rows.flatMap((line) => notebookOperationSegments(line))
+    .map((segment) => parseNotebookJournalLine(segment))
+    .filter((parsed) => parsed?.accountingState === "disputed");
+}
+
+function notebookDraftSummary(text = "", mode = activeSession()?.session_mode || "") {
   const rows = String(text || "").replace(/\r/g, "").split("\n").map((line) => line.trim()).filter(Boolean);
   return rows.reduce((summary, line) => {
-    const parsed = parseNotebookJournalLine(line);
-    if (!parsed) return { ...summary, notes: summary.notes + 1 };
-    if (parsed.kind === "contribution") {
+    const segments = notebookOperationSegments(line);
+    if (!segments.length) return { ...summary, notes: summary.notes + 1 };
+    return segments.reduce((inner, segment) => {
+      const parsed = parseNotebookJournalLine(segment, mode);
+      if (!parsed) return { ...inner, notes: inner.notes + 1 };
+      if (parsed.kind === "note") {
+        if (parsed.accountingState === "disputed") {
+          return { ...inner, disputed: inner.disputed + 1 };
+        }
+        return { ...inner, notes: inner.notes + 1 };
+      }
+      if (parsed.kind === "contribution") {
+        return {
+          ...inner,
+          income: moneyRound(inner.income + parsed.amount),
+          net: moneyRound(inner.net + parsed.amount),
+        };
+      }
       return {
-        ...summary,
-        income: moneyRound(summary.income + parsed.amount),
-        net: moneyRound(summary.net + parsed.amount),
+        ...inner,
+        expense: moneyRound(inner.expense + parsed.amount),
+        net: moneyRound(inner.net - parsed.amount),
       };
-    }
-    return {
-      ...summary,
-      expense: moneyRound(summary.expense + parsed.amount),
-      net: moneyRound(summary.net - parsed.amount),
-    };
-  }, { lines: rows.length, income: 0, expense: 0, net: 0, notes: 0 });
+    }, summary);
+  }, { lines: rows.length, income: 0, expense: 0, net: 0, notes: 0, disputed: 0 });
 }
 
 function textareaLineInfo(textarea) {
@@ -548,16 +692,22 @@ function groupWindowForViewer() {
 }
 
 function workspaceMenuTitleLabel() {
-  return isPersonalSession() ? tx("personalWorkspaceMenuTitle", "Меню журнала") : t("workspaceMenuTitle");
+  return t("workspaceMenuTitle");
 }
 
 function workspaceMenuActionLabel() {
-  return isPersonalSession() ? tx("personalWorkspaceMenuAction", "Меню журнала") : t("workspaceMenuAction");
+  return t("workspaceMenuAction");
 }
 
 function workspaceHeaderTitleLabel() {
   if (!hasActiveGroup()) return tx("cashboxStartHeaderTitle", "Судовой журнал расходов");
   return tx("recordsWorkspaceTitle", "ЗАПИСИ");
+}
+
+function cashboxSessionDisplayTitle(session = null) {
+  const title = normalizedText(session?.title || "").trim();
+  if (!title) return tx("cashboxTeamHeaderTitle", "Касса команды");
+  return title.split(/\s+[—–]\s+/u)[0].trim() || title;
 }
 
 function currentParticipantPayload() {
@@ -617,6 +767,15 @@ function syncChromeVisibility() {
   if ($("cashboxWorkspaceAppbar")) $("cashboxWorkspaceAppbar").hidden = guest;
   if ($("cashboxMobileMasthead")) $("cashboxMobileMasthead").hidden = guest;
   if ($("cashboxSiteHero")) $("cashboxSiteHero").hidden = true;
+}
+
+function markBootRendered() {
+  document.documentElement.classList.remove("is-loading", "shipcashbox-loading", "shipcashbox-boot-loading");
+  document.body?.classList.remove("is-loading", "shipcashbox-loading", "shipcashbox-boot-loading");
+  document.querySelectorAll("[data-cashbox-loading-overlay], #cashboxLoading, #shipCashboxLoading").forEach((element) => {
+    element.hidden = true;
+    element.setAttribute("aria-hidden", "true");
+  });
 }
 
 function isWelcomePreview() {
@@ -1037,6 +1196,80 @@ async function api(action, options = {}) {
   return data;
 }
 
+function accountWorkspaceRequestBody(input = {}) {
+  if (typeof input === "string") return { session_id: input };
+  const workspace = input?.workspace || input || {};
+  return {
+    kind: workspace.kind || workspace.relation || input?.kind || input?.relation || "",
+    session_id: workspace.session_id || workspace.id || input?.session_id || input?.id || "",
+    participant_id: workspace.participant_id || input?.participant_id || "",
+    token: workspace.token || workspace.invite_token || input?.token || input?.invite_token || "",
+  };
+}
+
+function applyAccountWorkspacePayload(payload) {
+  if (!payload) return payload;
+  if (payload.context?.kind === "membership" && payload.participant) {
+    const token = payload.participant?.invite_token || payload.context?.workspace?.token || "";
+    state.viewer = "participant";
+    state.boot = null;
+    state.treasurerDraft = "";
+    state.participant = payload;
+    state.participantDraft = loadParticipantDraft(token, payload.participant.notebook_text, payload.participant.read_only);
+    if (token) saveCache(`${PARTICIPANT_CACHE_PREFIX}${token}`, payload);
+    render();
+    startParticipantSchedule();
+    return payload;
+  }
+  if (payload.session) {
+    applyTreasurerBootPayload(payload);
+  }
+  return payload;
+}
+
+async function loadAccountWorkspaces({ useCache = true } = {}) {
+  try {
+    const payload = await api("account-workspaces");
+    state.accountWorkspaces = payload;
+    saveCache(ACCOUNT_WORKSPACES_CACHE_KEY, payload);
+    return payload;
+  } catch (error) {
+    if (useCache) {
+      const cached = loadCache(ACCOUNT_WORKSPACES_CACHE_KEY);
+      if (cached) {
+        state.accountWorkspaces = cached;
+        return cached;
+      }
+    }
+    throw error;
+  }
+}
+
+async function previewAccountInvite(input = {}) {
+  const body = typeof input === "string" ? { code: input } : input;
+  return await api("account-invite-preview", {
+    method: "POST",
+    body: JSON.stringify(body || {}),
+  });
+}
+
+async function openAccountWorkspace(input = {}, { apply = false } = {}) {
+  const payload = await api("open-workspace", {
+    method: "POST",
+    body: JSON.stringify(accountWorkspaceRequestBody(input)),
+  });
+  return apply ? applyAccountWorkspacePayload(payload) : payload;
+}
+
+async function createParallelAccountWorkspace(input = {}, { apply = false } = {}) {
+  const payload = await api("create-account-workspace", {
+    method: "POST",
+    body: JSON.stringify(input || {}),
+  });
+  await loadAccountWorkspaces({ useCache: false }).catch(() => null);
+  return apply ? applyAccountWorkspacePayload(payload) : payload;
+}
+
 async function apiForm(action, formData, options = {}) {
   const [name, query = ""] = String(action).split(/(?=&)/, 2);
   const { timeoutMs = UPLOAD_TIMEOUT_MS, ...fetchOptions } = options;
@@ -1143,6 +1376,7 @@ async function resetShipCashboxShell() {
   }
   try {
     localStorage.removeItem(SHELL_PURGE_KEY);
+    localStorage.removeItem(SHELL_RELEASE_STATE_KEY);
   } catch (error) {}
 }
 
@@ -1160,7 +1394,16 @@ function writeShellReleaseState(payload) {
   } catch (error) {}
 }
 
+function hasCurrentShellReloadRequest() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("reload") === SHELL_VERSION || params.has("cache-reset");
+}
+
 function trackShellVersionState() {
+  if (hasCurrentShellReloadRequest()) {
+    resetShellVersionCounter();
+    return;
+  }
   const previous = readShellReleaseState();
   let count = Number(previous.pendingCount || 0);
   if (previous.version && previous.version !== SHELL_VERSION) {
@@ -1180,7 +1423,7 @@ function resetShellVersionCounter() {
 function maybeSuggestShellUpdate() {
   if (state.viewer === "guest") return;
   if (!state.shellUpdateAvailable && Number(state.shellVersionChanges || 0) < 5) return;
-  setFlash(tx("cashboxUpdateSuggestion", "Доступна новая версия судового журнала. Данные учетной записи сохранены на защищенном сервере и восстановятся после первого входа."), true);
+  showShellUpdateFlash();
 }
 
 function reloadWithCurrentShell() {
@@ -1203,9 +1446,15 @@ function setFlash(message = "", persist = false) {
   if (!message) {
     box.hidden = true;
     box.textContent = "";
+    box.classList.remove("shipcashbox-flash--update");
+    box.removeAttribute("role");
+    box.removeAttribute("aria-live");
     return;
   }
   box.hidden = false;
+  box.classList.remove("shipcashbox-flash--update");
+  box.removeAttribute("role");
+  box.removeAttribute("aria-live");
   box.textContent = message;
   if (!persist) {
     window.clearTimeout(setFlash._timer);
@@ -1213,6 +1462,23 @@ function setFlash(message = "", persist = false) {
       if ($("flashMessage").textContent === message) setFlash("");
     }, 3200);
   }
+}
+
+function showShellUpdateFlash() {
+  const box = $("flashMessage");
+  if (!box) return;
+  window.clearTimeout(setFlash._timer);
+  box.hidden = false;
+  box.classList.add("shipcashbox-flash--update");
+  box.setAttribute("role", "status");
+  box.setAttribute("aria-live", "polite");
+  box.innerHTML = `
+    <button class="shipcashbox-flash__body" type="button" data-shell-update-open="1">
+      <span>${escapeHtml(tx("cashboxUpdateSuggestion", "Доступна новая версия судового журнала. Данные учетной записи сохранены на защищенном сервере и восстановятся после первого входа."))}</span>
+      <small>${escapeHtml(tx("cacheResetAction", "Обновить приложение"))}</small>
+    </button>
+    <button class="shipcashbox-flash__close" type="button" data-shell-update-dismiss="1" aria-label="${escapeHtml(t("close"))}">×</button>
+  `;
 }
 
 function setNotebookMeta(id, message) {
@@ -1458,6 +1724,67 @@ function renderNotebookFooter({ label, value, actionHtml = "", statusId = "", st
   `;
 }
 
+function renderJournalSubmitLabel(text = "", currency = "EUR") {
+  if (!normalizedText(text).trim()) {
+    return `
+      <span class="shipcashbox-journal-submit__label">${escapeHtml(tx("fixNotebookRecordsEmpty", "К записям"))}</span>
+    `;
+  }
+  return `
+    <span class="shipcashbox-journal-submit__label">${escapeHtml(tx("fixNotebookRecordsShort", "Фиксация"))}</span>
+    <small class="shipcashbox-journal-submit__total">${escapeHtml(tx("fixNotebookRecordsRoute", "К записям"))}</small>
+  `;
+}
+
+function journalNotebookPlaceholder() {
+  return [
+    "-100 продукты",
+    "+50 перевод",
+    "-20 стоянка, -80 марина, -15 вода",
+  ].join("\n");
+}
+
+function renderJournalDisputeNotice(text = "") {
+  const disputed = notebookDisputedSegments(text);
+  return `
+    <div class="shipcashbox-journal-dispute" id="journalDisputeNotice" ${disputed.length ? "" : "hidden"}>
+      ${renderJournalDisputeItems(disputed)}
+    </div>
+  `;
+}
+
+function renderJournalDisputeItems(disputed = []) {
+  return disputed.map((item) => {
+    const raw = String(item?.raw || "");
+    const label = raw
+      ? txf("journalDisputedLine", "Нужен знак + или -: {line}", { line: raw })
+      : tx("journalDisputed", "Есть сумма без знака + или -.");
+    return `
+      <span class="shipcashbox-journal-dispute__item">
+        <strong>?</strong>
+        <em>${escapeHtml(label)}</em>
+      </span>
+    `;
+  }).join("");
+}
+
+function updateJournalDisputeNotice(text = "") {
+  const target = $("journalDisputeNotice");
+  if (!target) return;
+  const disputed = notebookDisputedSegments(text);
+  target.hidden = !disputed.length;
+  target.innerHTML = renderJournalDisputeItems(disputed);
+}
+
+function renderJournalFooter({ actionHtml = "", statusId = "", statusText = "" }) {
+  return `
+    <div class="shipcashbox-journal-footer">
+      <div class="shipcashbox-journal-footer__actions">${actionHtml}</div>
+      ${statusId || statusText ? `<p class="shipcashbox-journal-footer__status" ${statusId ? `id="${escapeHtml(statusId)}"` : ""}>${escapeHtml(statusText)}</p>` : ""}
+    </div>
+  `;
+}
+
 function renderNotebookAssistant(id, currency = "EUR", readOnly = false) {
   if (readOnly) return "";
   return `
@@ -1474,10 +1801,15 @@ function renderNotebookAssistant(id, currency = "EUR", readOnly = false) {
 
 function notebookDraftNetText(text = "", currency = "EUR") {
   const summary = notebookDraftSummary(text);
-  return money(summary.net || 0, currency, true);
+  return displayMoney(summary.net || 0, currency, true);
 }
 
 function renderNotebookSubmitLabel(text = "", currency = "EUR") {
+  if (!normalizedText(text).trim()) {
+    return `
+      <span class="shipcashbox-notebook-action__label">${escapeHtml(tx("fixNotebookRecordsEmpty", "К записям"))}</span>
+    `;
+  }
   const label = tx("fixNotebookRecordsShort", "Фиксация");
   const route = tx("fixNotebookRecordsRoute", "К записям");
   return `
@@ -1504,13 +1836,27 @@ function refreshJournalDraftState(textarea) {
   if (!(textarea instanceof HTMLTextAreaElement)) return;
   const target = document.querySelector(`[data-draft-state-for="${CSS.escape(textarea.id)}"]`);
   if (target) target.remove();
+  updateJournalDisputeNotice(textarea.value);
   const currency = state.boot?.session?.currency || state.participant?.session?.currency || "EUR";
   const buttonId = textarea.id === "participantNotebook" ? "participantSyncButton" : "treasurerSubmitNotebookButton";
+  if (textarea.id === "treasurerNotebook" && $(buttonId)?.classList.contains("shipcashbox-journal-submit")) {
+    const button = $(buttonId);
+    button.innerHTML = renderJournalSubmitLabel(textarea.value, currency);
+    button.dataset.idleHtml = button.innerHTML;
+    button.dataset.idleText = button.textContent || "";
+    const sheetTotal = document.querySelector("[data-notebook-sheet-total]");
+    if (sheetTotal) sheetTotal.textContent = notebookDraftNetText(textarea.value, currency);
+    return;
+  }
   refreshNotebookSubmitTotal($(buttonId), textarea.value, currency);
 }
 
 function autosizeNotebookTextarea(textarea) {
   if (!(textarea instanceof HTMLTextAreaElement)) return;
+  if (textarea.closest(".shipcashbox-journal-screen")) {
+    textarea.style.height = "";
+    return;
+  }
   const shell = textarea.closest(".shipcashbox-notebook-shell");
   const shellHeight = shell?.clientHeight || 0;
   const minimum = Math.max(138, shellHeight - 4);
@@ -1584,7 +1930,7 @@ function clearStaleNotebookCommitMarker(textarea) {
   const cleanLine = info.raw.replace(/^\s*[✓✔]\s*/u, "");
   const parsed = parseNotebookExpenseLine(cleanLine);
   const commits = loadNotebookCommits(currentNotebookOwnerKey());
-  if (parsed && commits[notebookLineHash(cleanLine)]) return false;
+  if (parsed && commits[notebookLineHash(parsed.raw)]) return false;
 
   const prefixMatch = info.raw.match(/^\s*[✓✔]\s*/u);
   const removedLength = prefixMatch ? prefixMatch[0].length : 0;
@@ -1640,12 +1986,12 @@ function updateNotebookAssistant(textarea) {
 
   clearStaleNotebookCommitMarker(textarea);
   const info = textareaLineInfo(textarea);
-  const parsed = parseNotebookExpenseLine(info?.raw || "");
+  const parsed = parseNotebookJournalLine(info?.raw || "");
   if (!parsed) {
     const reserveSpace = document.activeElement === textarea;
     assistant.hidden = !reserveSpace;
     assistant.setAttribute("aria-hidden", reserveSpace ? "true" : "false");
-    assistant.classList.remove("is-committed", "is-flashing");
+    assistant.classList.remove("is-committed", "is-disputed", "is-flashing");
     assistant.classList.toggle("is-idle", reserveSpace);
     preview.textContent = "\u00a0";
     stateLabel.textContent = t("lineAssistantReady");
@@ -1665,6 +2011,7 @@ function updateNotebookAssistant(textarea) {
   const proofPath = String(commit?.attachment_path || "");
   const proofAttachment = currentAttachmentByProof(commit);
   const currency = button.dataset.currency || "EUR";
+  const disputed = parsed.accountingState === "disputed";
   assistant.hidden = false;
   assistant.setAttribute("aria-hidden", "false");
   assistant.dataset.lineHash = lineHash;
@@ -1672,14 +2019,21 @@ function updateNotebookAssistant(textarea) {
   assistant.dataset.lineStart = String(info.start);
   assistant.dataset.lineEnd = String(info.end);
   assistant.classList.remove("is-idle");
+  assistant.classList.toggle("is-disputed", disputed);
   assistant.classList.toggle("is-committed", committed);
-  preview.textContent = `${money(parsed.amount, currency)} · ${parsed.note}`;
-  stateLabel.textContent = committed ? t("lineCommittedState") : t("lineAssistantReady");
-  button.textContent = committed ? t("lineCommittedAction") : t("lineCommitAction");
-  button.disabled = false;
+  preview.textContent = disputed
+    ? `? ${parsed.raw}`
+    : `${money(parsed.amount, currency)}${parsed.note ? ` · ${parsed.note}` : ""}`;
+  stateLabel.textContent = disputed
+    ? tx("lineDisputedState", "НУЖЕН ЗНАК")
+    : (committed ? t("lineCommittedState") : t("lineAssistantReady"));
+  button.textContent = disputed
+    ? tx("lineDisputedAction", "+ / -")
+    : (committed ? t("lineCommittedAction") : t("lineCommitAction"));
+  button.disabled = disputed;
   if (proofLink instanceof HTMLAnchorElement) {
-    proofLink.hidden = !(committed && proofPath && proofAttachment);
-    if (committed && proofPath && proofAttachment) {
+    proofLink.hidden = disputed || !(committed && proofPath && proofAttachment);
+    if (!disputed && committed && proofPath && proofAttachment) {
       proofLink.href = resolveAdminAssetUrl(proofPath);
     } else {
       proofLink.removeAttribute("href");
@@ -1707,7 +2061,7 @@ function commitCurrentNotebookLine(textarea) {
   };
   saveNotebookCommits(commits, ownerKey);
   if (info && !/^\s*[✓✔]\s*/u.test(info.raw)) {
-    const markedLine = markNotebookLineCommitted(info.raw);
+    const markedLine = markNotebookLineCommitted(parsed.raw);
     const nextValue = `${info.value.slice(0, info.start)}${markedLine}${info.value.slice(info.end)}`;
     const nextCursor = info.start + markedLine.length;
     textarea.value = nextValue;
@@ -1851,23 +2205,65 @@ function notebookBatchNet(batch) {
 
 function renderNotebookBatchCards(batches = [], currency = "EUR", owner = "participant") {
   if (!Array.isArray(batches) || !batches.length) return "";
-  return batches.slice().reverse().map((batch) => `
-    <article class="shipcashbox-submitted-record">
+  const session = state.boot?.session;
+  const personalOwner = owner === "treasurer" && isPersonalSession(session);
+  const focus = personalRecordFocus(session);
+  const focusedReportId = focus.type === "report" ? focus.id : "";
+  return batches.slice().reverse().map((batch) => {
+    const batchReportId = String(batch?.report_id || "");
+    const stateClass = personalOwner
+      ? batchReportId
+        ? (batchReportId === focusedReportId ? " shipcashbox-record-state--active-report" : " shipcashbox-record-state--other-report")
+        : (focus.type === "unlinked" ? " shipcashbox-record-state--active-report" : " shipcashbox-record-state--unlinked")
+      : "";
+    const activeReportId = session?.active_personal_report_id || "";
+    const attachAction = personalOwner && activeReportId && !batchReportId
+      ? `<button class="shipcashbox-submitted-record__attach attach-personal-record-btn" type="button" data-batch-id="${escapeHtml(batch.id)}" title="${escapeHtml(tx("personalAttachRecordHelp", "Подключить эту запись к выбранному отчету."))}" aria-label="${escapeHtml(tx("personalAttachRecordHelp", "Подключить эту запись к выбранному отчету."))}">${escapeHtml(tx("personalAttachRecord", "В отчет"))}</button>`
+      : "";
+    return `
+    <article class="shipcashbox-submitted-record shipcashbox-record-state${stateClass}">
       <div class="shipcashbox-submitted-record__swipe">
         <button class="shipcashbox-submitted-record__trash trash-notebook-batch-btn" type="button" data-owner="${escapeHtml(owner)}" data-batch-id="${escapeHtml(batch.id)}" title="${escapeHtml(tx("trashReadyRecord", "В корзину"))}" aria-label="${escapeHtml(tx("trashReadyRecord", "В корзину"))}">
           <span aria-hidden="true">🗑</span>
           <strong>${escapeHtml(tx("trashReadyRecord", "В корзину"))}</strong>
         </button>
+        ${attachAction}
         <button class="shipcashbox-submitted-record__button restore-notebook-batch-btn" type="button" data-owner="${escapeHtml(owner)}" data-batch-id="${escapeHtml(batch.id)}" title="${escapeHtml(tx("openReadyRecordHelp", "Открыть готовую запись в ЖЗ."))}" aria-label="${escapeHtml(tx("openReadyRecordHelp", "Открыть готовую запись в ЖЗ."))}">
           <span>
-            <strong>${escapeHtml(tx("readyRecord", "Готовая запись"))}</strong>
+            <strong>${escapeHtml(batchReportId ? tx("personalReportRecord", "Запись отчета") : tx("readyRecord", "Готовая запись"))}</strong>
             <small>${escapeHtml(formatDateTime(batch.submitted_at))}</small>
           </span>
-          <span class="shipcashbox-submitted-record__sum">${escapeHtml(money(notebookBatchNet(batch), currency, true))}</span>
+          <span class="shipcashbox-submitted-record__sum">${escapeHtml(displayMoney(notebookBatchNet(batch), currency, true))}</span>
         </button>
       </div>
     </article>
-  `).join("");
+  `;
+  }).join("");
+}
+
+function currentNotebookTrashRows() {
+  const session = state.boot?.session;
+  if (!session || !Array.isArray(session.participants)) return [];
+  const currency = session.currency || "EUR";
+  return session.participants.flatMap((participant) => {
+    const trash = Array.isArray(participant.notebook_trash) ? participant.notebook_trash : [];
+    return trash.map((item) => {
+      const batch = item?.batch || {};
+      return {
+        id: String(item?.id || batch.id || ""),
+        batchId: String(batch.id || ""),
+        participantId: String(participant.id || ""),
+        participantName: String(participant.display_name || ""),
+        title: String(batch.raw_text || "").split("\n").map((line) => line.trim()).filter(Boolean)[0] || tx("trashRecordFallbackTitle", "Удаленная запись"),
+        rawText: String(batch.raw_text || ""),
+        entries: Array.isArray(batch.entries) ? batch.entries : [],
+        total: notebookBatchNet(batch),
+        currency,
+        trashedAt: item?.trashed_at || "",
+        deleteAfter: item?.delete_after || "",
+      };
+    });
+  }).sort((a, b) => String(b.trashedAt).localeCompare(String(a.trashedAt)));
 }
 
 function renderNotebookBatches(batches = [], currency = "EUR", owner = "participant", { compact = false } = {}) {
@@ -1889,16 +2285,18 @@ function renderActiveNotebookDraftCard(text = "", currency = "EUR") {
   const draft = normalizedText(text);
   if (!draft.trim()) return "";
   const summary = notebookDraftSummary(draft);
-  const modeLabel = isPersonalSession() ? tx("modePersonalLabel", "Личный") : tx("cashboxTeamHeaderTitle", "Касса команды");
+  const session = activeSession();
+  const modeLabel = isPersonalSession(session) ? tx("modePersonalLabel", "Личный") : tx("cashboxTeamHeaderTitle", "Касса команды");
+  const activeTitle = normalizedText(session?.title || "") || modeLabel;
   const savedLabel = tx("activeDraftSavedShort", "сохранено фоном");
   return `
     <article class="shipcashbox-submitted-record shipcashbox-submitted-record--active">
       <button class="shipcashbox-submitted-record__button shipcashbox-submitted-record__button--active open-active-draft-btn" type="button" id="openActiveDraftButton" title="${escapeHtml(tx("activeDraftOpenHelp", "Открыть активную запись в ЖЗ."))}" aria-label="${escapeHtml(tx("activeDraftOpenHelp", "Открыть активную запись в ЖЗ."))}">
         <span>
           <strong>${escapeHtml(tx("activeDraftRecord", "Активная запись"))}</strong>
-          <small>${escapeHtml(`${modeLabel} · ${currency || "EUR"} · ${savedLabel}`)}</small>
+          <small>${escapeHtml(`${tx("activeDraftLinkedTo", "Активная")}: ${activeTitle} · ${savedLabel}`)}</small>
         </span>
-        <span class="shipcashbox-submitted-record__sum">${escapeHtml(money(summary.net || 0, currency, true))}</span>
+        <span class="shipcashbox-submitted-record__sum">${escapeHtml(displayMoney(summary.net || 0, currency, true))}</span>
       </button>
     </article>
   `;
@@ -1925,6 +2323,12 @@ function activeReadyRecordBatch() {
   return findNotebookBatch(record.owner || "treasurer", record.batchId || "");
 }
 
+function latestNotebookBatch(batches = []) {
+  if (!Array.isArray(batches) || !batches.length) return null;
+  return batches.map((batch, index) => ({ batch, index, time: Date.parse(batch?.submitted_at || batch?.updated_at || "") || 0 }))
+    .sort((left, right) => (right.time - left.time) || (right.index - left.index))[0]?.batch || null;
+}
+
 function renderReadyRecordLayer(batch, currency = "EUR") {
   if (!batch) return "";
   return `
@@ -1939,7 +2343,7 @@ function renderNotebookSheetMeta(text = "", currency = "EUR", batch = null) {
   const value = normalizedText(text).trim()
     ? notebookDraftNetText(text, currency)
     : batch
-      ? money(notebookBatchNet(batch), currency, true)
+      ? displayMoney(notebookBatchNet(batch), currency, true)
       : notebookDraftNetText(text, currency);
   return `
     <div class="shipcashbox-notebook-sheet-meta" id="treasurerNotebookSheetMeta">
@@ -1949,22 +2353,37 @@ function renderNotebookSheetMeta(text = "", currency = "EUR", batch = null) {
   `;
 }
 
+function renderJournalSheetMeta(text = "", currency = "EUR", batch = null) {
+  const date = batch?.submitted_at || state.boot?.session?.updated_at || new Date().toISOString();
+  const value = normalizedText(text).trim()
+    ? notebookDraftNetText(text, currency)
+    : batch
+      ? displayMoney(notebookBatchNet(batch), currency, true)
+      : notebookDraftNetText(text, currency);
+  return `
+    <div class="shipcashbox-journal-sheet-meta" id="treasurerNotebookSheetMeta">
+      <span>${escapeHtml(formatDateTime(date))}</span>
+      <strong data-notebook-sheet-total>${escapeHtml(value)}</strong>
+    </div>
+  `;
+}
+
 function renderCashboxReadyRecordsPanel(session, treasurer) {
-  const batches = treasurer?.notebook_batches || [];
+  const batches = visibleNotebookBatchesForActiveList(treasurer?.notebook_batches || [], session);
   const activeDraft = normalizedText(state.treasurerDraft || treasurer?.notebook_text || "");
   const personal = isPersonalSession(session);
-  const title = personal ? tx("personalReadyRecordsTitle", "Готовые записи") : tx("readyRecordsTitle", "Готовые записи");
+  const title = personal ? tx("personalReadyRecordsTitle", "Записи") : tx("readyRecordsTitle", "Готовые записи");
   const empty = personal
-    ? tx("personalReadyRecordsEmpty", "Готовых записей пока нет. Создайте новую запись в ЖЗ.")
+    ? tx("personalReadyRecordsEmpty", "Записей пока нет. Создайте новую личную запись.")
     : tx("readyRecordsEmpty", "Готовых записей пока нет. Создайте новую запись в ЖЗ.");
   return `
-    <section class="shipcashbox-card shipcashbox-card--ready-records">
-      <div class="shipcashbox-ready-records-flow">
+    <section class="shipcashbox-card shipcashbox-card--ready-records" data-records-contract="ready-records" data-session-mode="${escapeHtml(personal ? "personal" : "group")}">
+      <div class="shipcashbox-ready-records-flow ${personal ? "shipcashbox-ready-records-flow--personal" : "shipcashbox-ready-records-flow--group"}">
         <button class="shipcashbox-ready-create-card shipcashbox-create-record-btn" type="button" id="createReadyRecordButton" aria-label="${escapeHtml(tx("createReadyRecord", "Создать запись"))}">
           <span aria-hidden="true">+</span>
           <strong>${escapeHtml(tx("createReadyRecord", "Создать запись"))}</strong>
         </button>
-        <div class="shipcashbox-ready-records-flow__list" aria-label="${escapeHtml(title)}">
+        <div class="shipcashbox-ready-records-flow__list" data-records-list="ready" aria-label="${escapeHtml(title)}">
           <p class="shipcashbox-ready-records-flow__label">${escapeHtml(title)}</p>
           ${activeDraft.trim() || batches.length
             ? `
@@ -2077,8 +2496,8 @@ function renderEqualizerResult(settlement, currency = "EUR") {
     return `
       <div class="shipcashbox-equalizer-person shipcashbox-equalizer-person--${tone}">
         <span><i class="debt-avatar debt-avatar--${index % 8}">${escapeHtml(participantInitials(person.name, index))}</i>${escapeHtml(person.name)}</span>
-        <strong>${escapeHtml(money(person.amount, currency))}</strong>
-        <em>${escapeHtml(money(balance, currency, true))}</em>
+        <strong>${escapeHtml(displayMoney(person.amount, currency))}</strong>
+        <em>${escapeHtml(displayMoney(balance, currency, true))}</em>
       </div>
     `;
   }).join("");
@@ -2088,7 +2507,7 @@ function renderEqualizerResult(settlement, currency = "EUR") {
         <b>${escapeHtml(line.fromName)}</b>
         <span aria-hidden="true">→</span>
         <b>${escapeHtml(line.toName)}</b>
-        <strong>${escapeHtml(money(line.amount, currency))}</strong>
+        <strong>${escapeHtml(displayMoney(line.amount, currency))}</strong>
       </article>
     `).join("")
     : `<div class="shipcashbox-equalizer-empty">${escapeHtml(t("noTransfers"))}</div>`;
@@ -2096,8 +2515,8 @@ function renderEqualizerResult(settlement, currency = "EUR") {
     <div class="shipcashbox-equalizer-result">
       <div class="shipcashbox-equalizer-summary">
         <span><b>${escapeHtml(String(settlement.people.length))}</b>${escapeHtml(tx("equalizerPeople", "людей"))}</span>
-        <span><b>${escapeHtml(money(settlement.total, currency))}</b>${escapeHtml(tx("equalizerTotal", "всего"))}</span>
-        <span><b>${escapeHtml(money(settlement.share, currency))}</b>${escapeHtml(tx("equalizerShare", "доля"))}</span>
+        <span><b>${escapeHtml(displayMoney(settlement.total, currency))}</b>${escapeHtml(tx("equalizerTotal", "всего"))}</span>
+        <span><b>${escapeHtml(displayMoney(settlement.share, currency))}</b>${escapeHtml(tx("equalizerShare", "доля"))}</span>
       </div>
       <div class="shipcashbox-equalizer-grid">
         <section>
@@ -2165,13 +2584,13 @@ function renderEqualizerHistory() {
               <span>${escapeHtml(formatDateTime(item.savedAt || ""))}</span>
             </div>
             <div>
-              <b>${escapeHtml(money(item.total || 0, item.currency || "EUR"))}</b>
-              <span>${escapeHtml(tx("equalizerShare", "доля"))}: ${escapeHtml(money(item.share || 0, item.currency || "EUR"))}</span>
+              <b>${escapeHtml(displayMoney(item.total || 0, item.currency || "EUR"))}</b>
+              <span>${escapeHtml(tx("equalizerShare", "доля"))}: ${escapeHtml(displayMoney(item.share || 0, item.currency || "EUR"))}</span>
             </div>
           </div>
           <div class="shipcashbox-equalizer-saved__transfers">
             ${(item.transfers || []).length
-              ? item.transfers.map((line) => `<span>${escapeHtml(line.fromName || "-")} → ${escapeHtml(line.toName || "-")} <b>${escapeHtml(money(line.amount || 0, item.currency || "EUR"))}</b></span>`).join("")
+              ? item.transfers.map((line) => `<span>${escapeHtml(line.fromName || "-")} → ${escapeHtml(line.toName || "-")} <b>${escapeHtml(displayMoney(line.amount || 0, item.currency || "EUR"))}</b></span>`).join("")
               : `<span>${escapeHtml(t("noTransfers"))}</span>`}
           </div>
         </article>
@@ -2319,6 +2738,7 @@ async function hasCashboxOwnerAccess() {
 
 async function ensureCashboxOwnerAccess() {
   if (await hasCashboxOwnerAccess()) return true;
+  if (IS_LOCAL) return true;
 
   if (typeof window.ensureToolAccess === "function") {
     const allowed = await window.ensureToolAccess({ requireLive: !IS_LOCAL });
@@ -2627,6 +3047,65 @@ function toggleAccountPanel() {
   panel.hidden = !panel.hidden;
 }
 
+function openJournalFromActiveSession(source = "active-journal-menu") {
+  const session = state.boot?.session;
+  if (!session) return false;
+  const treasurer = (session.participants || []).find((participant) => participant.id === session.treasurer_participant_id) || null;
+  const draft = normalizedText(state.treasurerDraft || treasurer?.notebook_text || "");
+  const latestBatch = latestNotebookBatch(treasurer?.notebook_batches || []);
+  state.editingReadyRecord = null;
+  if (draft.trim()) {
+    state.activeReadyRecord = null;
+  } else if (latestBatch?.id) {
+    state.activeReadyRecord = { owner: "treasurer", batchId: String(latestBatch.id) };
+  } else {
+    state.activeReadyRecord = null;
+  }
+  saveWorkspaceView("journal", session.id);
+  appendRecoveryLog("active-journal-opened", {
+    source,
+    hasDraft: Boolean(draft.trim()),
+    batchId: state.activeReadyRecord?.batchId || "",
+  }, session.id);
+  render();
+  window.requestAnimationFrame(() => {
+    const target = state.activeReadyRecord ? $("readyRecordLayer") : $("treasurerNotebook");
+    target?.focus?.({ preventScroll: true });
+  });
+  return true;
+}
+
+async function createEmptyJournalFromMenu() {
+  const hasAccess = await ensureCashboxOwnerAccess();
+  if (!hasAccess) {
+    setFlash(tx("authRequired", "Нужно войти, чтобы открыть журнал."), true);
+    return false;
+  }
+  rememberExplicitMode("personal");
+  const payload = await api("create-session", {
+    method: "POST",
+    body: JSON.stringify({
+      mode: "personal",
+      title: tx("personalDefaultTitle", "Личный журнал расходов"),
+      opening_balance: "0",
+    }),
+  });
+  state.viewer = "treasurer";
+  state.participant = null;
+  state.participantDraft = "";
+  state.boot = payload;
+  state.editingReadyRecord = null;
+  state.activeReadyRecord = null;
+  clearTreasurerDraft(payload.session?.id);
+  saveCache(BOOT_CACHE_KEY, payload);
+  localStorage.setItem(ENGAGED_KEY, "1");
+  saveWorkspaceView("journal", payload.session?.id);
+  appendRecoveryLog("active-journal-created-empty", { source: "active-journal-menu" }, payload.session?.id);
+  render();
+  window.requestAnimationFrame(() => $("treasurerNotebook")?.focus({ preventScroll: true }));
+  return true;
+}
+
 async function openActiveJournal() {
   closeAppMenu();
   const cachedMode = normalizeEntryMode(loadCache(BOOT_CACHE_KEY)?.session?.session_mode);
@@ -2642,6 +3121,7 @@ async function openActiveJournal() {
       const payload = await api(`boot&mode=${encodeURIComponent(mode)}`);
       if (payload.session) {
         applyTreasurerBootPayload(payload);
+        openJournalFromActiveSession("active-journal-menu");
         return;
       }
     }
@@ -2649,9 +3129,15 @@ async function openActiveJournal() {
     const cached = loadCache(BOOT_CACHE_KEY);
     if (cached?.session?.status === "active") {
       applyTreasurerBootPayload(cached);
+      openJournalFromActiveSession("active-journal-menu-cache");
       setFlash(t("offlineCache"), true);
       return;
     }
+  }
+  try {
+    if (await createEmptyJournalFromMenu()) return;
+  } catch (error) {
+    setFlash(error.message || t("loadFailed"), true);
   }
   renderStartChoice();
   showSoftNoticeModal(
@@ -2748,12 +3234,15 @@ async function performTreasurerNotebookSave({ preserveFocus = false, silent = fa
   }
   setNotebookMeta("treasurerSaveMeta", t("autosaveSaving"));
   try {
+    const reportId = activePersonalReportIdForNotebook(state.boot.session);
     const payload = await api("save-treasurer-notebook", {
       method: "POST",
       body: JSON.stringify({
         id: state.boot.session.id,
         notebook_text: draft,
         submit,
+        report_id: reportId,
+        record_scope: reportId ? "report" : "free",
       }),
     });
     state.boot = payload;
@@ -2989,10 +3478,10 @@ function renderSummaryCards(participants, currency) {
   return participants.map((participant) => {
     const cashboxExpenses = participantCashboxExpenses(participant);
     const expenseRows = [
-      { label: t("contributionShort"), value: money(participant.contributions, currency) },
-      { label: t("personalExpenseShort"), value: money(participantPersonalExpenses(participant), currency) },
-      ...(cashboxExpenses > 0 ? [{ label: t("cashboxExpenseShort"), value: money(cashboxExpenses, currency) }] : []),
-      { label: t("balanceShort"), value: money(participant.balance, currency, true), tone: "balance" },
+      { label: t("contributionShort"), value: displayMoney(participant.contributions, currency) },
+      { label: t("personalExpenseShort"), value: displayMoney(participantPersonalExpenses(participant), currency) },
+      ...(cashboxExpenses > 0 ? [{ label: t("cashboxExpenseShort"), value: displayMoney(cashboxExpenses, currency) }] : []),
+      { label: t("balanceShort"), value: displayMoney(participant.balance, currency, true), tone: "balance" },
     ];
     return `
       <article class="shipcashbox-summary-card">
@@ -3088,7 +3577,7 @@ function renderExpenseDiagram(participants, currency, { print = false } = {}) {
                 <div class="${metricClass}">
                   <div class="${metaClass}">
                     <span>${escapeHtml(metric.label)}</span>
-                    <strong>${escapeHtml(money(value, currency, metric.signed))}</strong>
+                    <strong>${escapeHtml(print ? money(value, currency, metric.signed) : displayMoney(value, currency, metric.signed))}</strong>
                   </div>
                   <div class="${trackClass}">
                     <span class="${fillClass} ${fillClass}--${tone}" style="width:${chartMetricWidth(value, maxValue).toFixed(2)}%"></span>
@@ -3284,7 +3773,6 @@ function buildCloseAudit(session) {
     warnings,
     participants,
     missingEmail,
-    draftOwners,
     emailReady,
     exportCount,
     transferCount: lines.length,
@@ -3319,7 +3807,7 @@ function renderCloseAudit(session) {
         <article><span>${escapeHtml(tx("closeAuditOpenTextCount", "Открытые"))}</span><strong>${escapeHtml(String(audit.openTextCount))}</strong></article>
       </div>
       <ul class="shipcashbox-close-audit__warnings">${warningItems}</ul>
-      <p>${escapeHtml(tx("closeAuditAfterClose", "После закрытия архив и письма создаются автоматически, а следующая касса откроется пустой."))}</p>
+      <p>${escapeHtml(tx("closeAuditAfterClose", "После закрытия карточка уйдет в корзину, письма создаются автоматически, а следующая касса откроется пустой."))}</p>
     </section>
   `;
 }
@@ -3501,6 +3989,11 @@ function renderTreasurerRotationCard(session) {
 }
 
 function renderCrewRotationWindow(session) {
+  const participants = session.participants || [];
+  const activeCount = participants.filter((participant) => participant.active !== false).length;
+  const settledCount = Array.isArray(session.participant_settlements) ? session.participant_settlements.length : 0;
+  const periodCount = Array.isArray(session.treasurer_periods) ? session.treasurer_periods.length : 0;
+  const currentTreasurer = participants.find((participant) => participant.id === session.treasurer_participant_id) || null;
   return `
     <div class="shipcashbox-settlement-board shipcashbox-rotation-board">
       <section class="shipcashbox-card shipcashbox-card--window">
@@ -3511,6 +4004,12 @@ function renderCrewRotationWindow(session) {
           </div>
         </div>
         <p class="shipcashbox-note">${escapeHtml(tx("crewRotationText", "Рабочий раздел для ухода, прихода и смены роли без закрытия всей судовой кассы."))}</p>
+        <div class="shipcashbox-metrics shipcashbox-metrics--compact shipcashbox-metrics--rotation">
+          <div class="shipcashbox-metric"><span>${escapeHtml(tx("crewRotationCrewMetric", "Экипаж"))}</span><strong>${escapeHtml(`${activeCount}/${participants.length}`)}</strong></div>
+          <div class="shipcashbox-metric"><span>${escapeHtml(tx("crewRotationSettledMetric", "Списаны"))}</span><strong>${escapeHtml(String(settledCount))}</strong></div>
+          <div class="shipcashbox-metric"><span>${escapeHtml(tx("crewRotationPeriodsMetric", "Периоды"))}</span><strong>${escapeHtml(String(periodCount || 1))}</strong></div>
+          <div class="shipcashbox-metric"><span>${escapeHtml(tx("crewRotationTreasurerMetric", "Казначей"))}</span><strong>${escapeHtml(currentTreasurer?.display_name || "-")}</strong></div>
+        </div>
       </section>
       ${renderSingleParticipantSettlementCard(session)}
       ${renderTreasurerRotationCard(session)}
@@ -3528,6 +4027,184 @@ function renderCrewRotationWindow(session) {
   `;
 }
 
+function personalReportSummary(session) {
+  const summary = session?.personal_report_summary && typeof session.personal_report_summary === "object"
+    ? session.personal_report_summary
+    : {};
+  return {
+    active_report_id: summary.active_report_id || session?.active_personal_report_id || null,
+    active_report: summary.active_report || null,
+    active_report_totals: summary.active_report_totals || {
+      opening_balance: 0,
+      incoming_balance: 0,
+      income_total: 0,
+      expense_total: 0,
+      current_balance: 0,
+      record_count: 0,
+      entry_count: 0,
+      entries: [],
+    },
+    reports: Array.isArray(summary.reports) ? summary.reports : (Array.isArray(session?.personal_reports) ? session.personal_reports : []),
+    active_reports: Array.isArray(summary.active_reports) ? summary.active_reports : [],
+    fixed_reports: Array.isArray(summary.fixed_reports) ? summary.fixed_reports : [],
+    unlinked: summary.unlinked || {
+      opening_balance: 0,
+      incoming_balance: 0,
+      income_total: 0,
+      expense_total: 0,
+      current_balance: 0,
+      record_count: 0,
+      entry_count: 0,
+      entries: [],
+    },
+  };
+}
+
+function personalReportPeriodLabel(report) {
+  const start = report?.period_start || report?.opened_at || report?.created_at || "";
+  const end = report?.period_end || report?.closed_at || "";
+  if (!start && !end) return "";
+  return end ? `${formatDateTime(start)} - ${formatDateTime(end)}` : formatDateTime(start);
+}
+
+function personalReportStatusMap(session) {
+  const reports = Array.isArray(session?.personal_reports) ? session.personal_reports : [];
+  return reports.reduce((map, report) => {
+    if (report?.id) map.set(String(report.id), String(report.status || "active"));
+    return map;
+  }, new Map());
+}
+
+function visibleNotebookBatchesForActiveList(batches = [], session = state.boot?.session) {
+  const list = Array.isArray(batches) ? batches : [];
+  if (!isPersonalSession(session)) return list;
+  const statusByReport = personalReportStatusMap(session);
+  return list.filter((batch) => {
+    const reportId = String(batch?.report_id || "");
+    return !reportId || statusByReport.get(reportId) !== "fixed";
+  });
+}
+
+function personalReportById(summary, reportId) {
+  const id = String(reportId || "").trim();
+  if (!id) return null;
+  return (Array.isArray(summary?.reports) ? summary.reports : []).find((report) => String(report?.id || "") === id) || null;
+}
+
+function currentPersonalReportView(summary) {
+  const viewedReport = personalReportById(summary, state.personalViewedReportId);
+  if (viewedReport) {
+    return {
+      report: viewedReport,
+      totals: viewedReport,
+      fixed: String(viewedReport.status || "") === "fixed",
+    };
+  }
+  return {
+    report: summary.active_report || null,
+    totals: summary.active_report_totals || {},
+    fixed: false,
+  };
+}
+
+function personalRecordFocus(session, summary = personalReportSummary(session)) {
+  if (!isPersonalSession(session)) return { type: "none", id: "" };
+  if (state.personalRecordFocus === PERSONAL_RECORD_SCOPE_UNLINKED || !summary.active_report_id) {
+    return { type: "unlinked", id: "" };
+  }
+  const requested = personalReportById(summary, state.personalRecordFocus);
+  if (requested && String(requested.status || "") !== "fixed") {
+    return { type: "report", id: String(requested.id || "") };
+  }
+  return { type: "report", id: String(summary.active_report_id || "") };
+}
+
+function setPersonalRecordFocus(scope = "") {
+  const normalized = String(scope || "").trim();
+  state.personalRecordFocus = normalized || "";
+  render({ preserveWorkspace: true });
+}
+
+function activePersonalReportTitle(session) {
+  const summary = personalReportSummary(session);
+  return summary.active_report?.title || "";
+}
+
+function activePersonalReportIdForNotebook(session = state.boot?.session) {
+  if (!isPersonalSession(session)) return "";
+  const summary = personalReportSummary(session);
+  return String(summary.active_report_id || session?.active_personal_report_id || "");
+}
+
+function treasurerServerNotebookText(session = state.boot?.session) {
+  const treasurer = (session?.participants || []).find((participant) => participant.id === session?.treasurer_participant_id);
+  return normalizedText(treasurer?.notebook_text || "");
+}
+
+function renderPersonalReportSwitcher(session, summary) {
+  const activeId = summary.active_report_id || "";
+  const activeReports = Array.isArray(summary.active_reports) ? summary.active_reports : [];
+  const fixedReports = Array.isArray(summary.fixed_reports) ? summary.fixed_reports : [];
+  const unlinkedCount = Number(summary.unlinked?.record_count || 0);
+  const focus = personalRecordFocus(session, summary);
+  const reportCards = activeReports.length ? activeReports.map((report) => {
+    const isActive = report.id === activeId;
+    const isFocused = focus.type === "report" && report.id === focus.id;
+    const hasReportEntries = Number(report.record_count || 0) > 0 || Number(report.entry_count || 0) > 0;
+    const stateClass = isFocused ? "active-report" : "other-report";
+    return `
+      <div class="shipcashbox-report-card shipcashbox-record-state shipcashbox-record-state--${stateClass}"${isFocused ? " aria-current=\"true\"" : ""}>
+        <button class="shipcashbox-report-card__main" type="button" data-personal-report-id="${escapeHtml(report.id)}">
+          <span class="shipcashbox-report-card__chip">${escapeHtml(isActive ? tx("personalActiveReportLabel", "Активный") : tx("personalOtherReportLabel", "Другой отчет"))}</span>
+          <strong>${escapeHtml(report.title || tx("personalReportTitle", "Текущий отчет"))}</strong>
+          <small>${escapeHtml(personalReportPeriodLabel(report) || tx("personalReportNoPeriod", "Период не задан"))}</small>
+          <span>${escapeHtml(displayMoney(report.current_balance || 0, session.currency, true))} · ${escapeHtml(txf("personalReportRecordsCount", "{count} записей", { count: String(report.record_count || 0) }))}</span>
+        </button>
+        ${hasReportEntries ? `
+          <span class="shipcashbox-report-card__actions">
+            <button class="shipcashbox-report-card__icon" type="button" data-fix-personal-report="${escapeHtml(report.id)}" title="${escapeHtml(tx("personalFixReport", "Закрепить отчет"))}" aria-label="${escapeHtml(tx("personalFixReport", "Закрепить отчет"))}">✓</button>
+          </span>
+        ` : ""}
+      </div>
+    `;
+  }).join("") : `<p class="shipcashbox-note">${escapeHtml(tx("personalReportsEmpty", "Активных отчетов пока нет."))}</p>`;
+  const fixedBlock = fixedReports.length ? `
+    <div class="shipcashbox-report-list shipcashbox-report-list--fixed">
+      ${fixedReports.map((report) => `
+        <div class="shipcashbox-report-card shipcashbox-record-state shipcashbox-record-state--closed-report">
+          <span class="shipcashbox-report-card__chip">${escapeHtml(tx("personalFixedReportLabel", "Закреплен"))}</span>
+          <strong>${escapeHtml(report.title || tx("personalReportTitle", "Текущий отчет"))}</strong>
+          <small>${escapeHtml(personalReportPeriodLabel(report) || tx("personalReportNoPeriod", "Период не задан"))}</small>
+          <span>${escapeHtml(displayMoney(report.current_balance || 0, session.currency, true))} · ${escapeHtml(txf("personalReportRecordsCount", "{count} записей", { count: String(report.record_count || 0) }))}</span>
+          <span class="shipcashbox-report-card__actions">
+            <button class="shipcashbox-report-card__icon" type="button" data-view-fixed-personal-report="${escapeHtml(report.id)}" title="${escapeHtml(tx("personalViewFixedReport", "Посмотреть отчет"))}" aria-label="${escapeHtml(tx("personalViewFixedReport", "Посмотреть отчет"))}">↗</button>
+            <button class="shipcashbox-report-card__icon" type="button" data-restore-personal-report="${escapeHtml(report.id)}" title="${escapeHtml(tx("personalRestoreReport", "Вернуть в активные"))}" aria-label="${escapeHtml(tx("personalRestoreReport", "Вернуть в активные"))}">↺</button>
+          </span>
+        </div>
+      `).join("")}
+    </div>
+  ` : "";
+  return `
+    <section class="shipcashbox-card shipcashbox-card--window shipcashbox-report-switcher" data-personal-report-switcher="1">
+      <div class="shipcashbox-card__head">
+        <div>
+          <p class="section-heading__eyebrow">${escapeHtml(tx("personalReportsWorkspaceTitle", "Создание отчетов"))}</p>
+          <h2>${escapeHtml(tx("personalActiveReportsTitle", "Активные отчеты"))}</h2>
+        </div>
+        <button class="btn btn--secondary" type="button" data-start-personal-report="1">${escapeHtml(tx("personalStartReport", "Начать отчет"))}</button>
+      </div>
+      <div class="shipcashbox-report-list">${reportCards}</div>
+      <button class="shipcashbox-report-card shipcashbox-record-state shipcashbox-record-state--${focus.type === "unlinked" ? "active-report" : "unlinked"}" type="button" data-personal-record-scope="${PERSONAL_RECORD_SCOPE_UNLINKED}"${focus.type === "unlinked" ? " aria-current=\"true\"" : ""}>
+        <span class="shipcashbox-report-card__chip">${escapeHtml(tx("personalUnlinkedRecordsLabel", "Самостоятельные записи"))}</span>
+        <strong>${escapeHtml(tx("personalNoReportScope", "Без отчета"))}</strong>
+        <small>${escapeHtml(tx("personalUnlinkedRecordsHint", "Не участвуют в балансе выбранного отчета."))}</small>
+        <span>${escapeHtml(txf("personalUnlinkedRecordsCount", "{count} вне отчета", { count: String(unlinkedCount) }))}</span>
+      </button>
+      ${fixedBlock}
+    </section>
+  `;
+}
+
 function renderCashboxCommandDeck(session, treasurer) {
   const totals = session.totals || {};
   const participants = session.participants || [];
@@ -3540,31 +4217,34 @@ function renderCashboxCommandDeck(session, treasurer) {
   const cashboxBalance = Number(totals.cashbox_balance || 0);
   const balanceTone = cashboxBalance < -0.009 ? "negative" : cashboxBalance > 0.009 ? "positive" : "neutral";
   if (personal) {
-    const readyRecordCount = Array.isArray(treasurer?.notebook_batches) ? treasurer.notebook_batches.length : 0;
-    const activeDraftCount = normalizedText(state.treasurerDraft || treasurer?.notebook_text || "").trim() ? 1 : 0;
-    const recordCount = readyRecordCount + activeDraftCount;
+    const reportSummary = personalReportSummary(session);
+    const activeTotals = reportSummary.active_report_totals || {};
+    const activeReport = reportSummary.active_report || null;
+    const reportBalance = Number(activeTotals.current_balance || 0);
+    const reportBalanceTone = reportBalance < -0.009 ? "negative" : reportBalance > 0.009 ? "positive" : "neutral";
+    const activeReportCount = Array.isArray(reportSummary.active_reports) ? reportSummary.active_reports.length : 0;
     return `
       <section class="shipcashbox-personal-quiet" aria-label="${escapeHtml(tx("personalSummaryTitle", "Личный отчет"))}">
-        <div class="shipcashbox-personal-quiet__balance shipcashbox-personal-quiet__balance--${balanceTone}">
+        <button class="shipcashbox-personal-quiet__balance shipcashbox-personal-quiet__balance--${reportBalanceTone}" type="button" data-workspace-window="snapshot">
           <div>
-            <span>${escapeHtml(tx("personalBalanceLabel", "Остаток"))}</span>
-            <strong>${escapeHtml(money(totals.cashbox_balance, session.currency, true))}</strong>
+            <span>${escapeHtml(tx("personalBalanceLabel", "Текущий баланс"))}</span>
+            <strong>${escapeHtml(displayMoney(activeTotals.current_balance || 0, session.currency, true))}</strong>
           </div>
-          <p>${escapeHtml(tx("autosaveLocal", "Записи сохраняются локально сразу, как в заметках."))}</p>
-        </div>
+          <p>${escapeHtml(activeReport ? (activeReport.title || tx("personalReportTitle", "Текущий отчет")) : tx("personalNoActiveReportText", "Начните отчет, чтобы привязывать записи и видеть баланс."))}</p>
+        </button>
         <div class="shipcashbox-personal-quiet__stats">
-          <span>
-            <span>${escapeHtml(tx("personalIncomeLabel", "Приходы"))}</span>
-            <strong>${escapeHtml(money(totals.total_contributions, session.currency))}</strong>
-          </span>
-          <span>
-            <span>${escapeHtml(t("summaryExpenses"))}</span>
-            <strong>${escapeHtml(money(totals.total_expenses, session.currency))}</strong>
-          </span>
-          <span>
-            <span>${escapeHtml(tx("personalRecordsLabel", "Записи"))}</span>
-            <strong>${escapeHtml(String(recordCount))}</strong>
-          </span>
+          <button type="button" data-workspace-window="reports">
+            <span>${escapeHtml(tx("personalIncomeLabel", "Поступления"))}</span>
+            <strong>${escapeHtml(displayMoney(activeTotals.income_total || 0, session.currency))}</strong>
+          </button>
+          <button type="button" data-workspace-window="reports">
+            <span>${escapeHtml(tx("personalExpenseLabel", "Расходы"))}</span>
+            <strong>${escapeHtml(displayMoney(activeTotals.expense_total || 0, session.currency))}</strong>
+          </button>
+          <button type="button" data-workspace-window="reports">
+            <span>${escapeHtml(tx("personalActiveReportsTitle", "Активные отчеты"))}</span>
+            <strong>${escapeHtml(String(activeReportCount))}</strong>
+          </button>
         </div>
       </section>
     `;
@@ -3573,11 +4253,11 @@ function renderCashboxCommandDeck(session, treasurer) {
     <section class="shipcashbox-command-deck" aria-label="${escapeHtml(t("summaryTitle"))}">
       <div class="shipcashbox-command-deck__hero shipcashbox-command-deck__hero--${balanceTone}">
         <div>
-          <p>${escapeHtml(session.title || tx("cashboxTeamHeaderTitle", "Касса команды"))}</p>
-          <strong>${escapeHtml(money(totals.cashbox_balance, session.currency, true))}</strong>
+          <p title="${escapeHtml(session.title || "")}">${escapeHtml(cashboxSessionDisplayTitle(session))}</p>
+          <strong>${escapeHtml(displayMoney(totals.cashbox_balance, session.currency, true))}</strong>
           <span>${escapeHtml(t("summaryCash"))}</span>
         </div>
-        <button class="shipcashbox-command-deck__primary" type="button" data-workspace-window="settlement">
+        <button class="shipcashbox-command-deck__primary" type="button" data-workspace-action="settlement">
           <b>${escapeHtml(String(transferCount))}</b>
           <span>${escapeHtml(t("settlementTitle"))}</span>
         </button>
@@ -3586,21 +4266,23 @@ function renderCashboxCommandDeck(session, treasurer) {
         <button class="shipcashbox-command-metric--split" type="button" data-workspace-window="snapshot">
           <span>
             <span>${escapeHtml(t("summaryExpenses"))}</span>
-            <strong>${escapeHtml(money(totals.total_expenses, session.currency))}</strong>
+            <strong>${escapeHtml(displayMoney(totals.total_expenses, session.currency))}</strong>
           </span>
           <span>
             <span>${escapeHtml(t("summaryShare"))}</span>
-            <strong>${escapeHtml(money(totals.share, session.currency))}</strong>
+            <strong>${escapeHtml(displayMoney(totals.share, session.currency))}</strong>
           </span>
         </button>
-        <button type="button" data-workspace-window="team">
-          <span>${escapeHtml(t("participantsTitle"))}</span>
-          <strong>${escapeHtml(`${syncedCount}/${activeCount}`)}</strong>
-        </button>
-        <button type="button" data-workspace-window="reports">
-          <span>${escapeHtml(t("summaryContributions"))}</span>
-          <strong>${escapeHtml(money(totals.total_contributions, session.currency))}</strong>
-        </button>
+        <div class="shipcashbox-command-metric-pair shipcashbox-command-metric-pair--crew-contrib" role="group" aria-label="${escapeHtml(`${t("participantsTitle")} / ${t("summaryContributions")}`)}">
+          <button class="shipcashbox-command-metric--crew" type="button" data-workspace-window="team">
+            <span>${escapeHtml(t("participantsTitle"))}</span>
+            <strong>${escapeHtml(`${syncedCount}/${activeCount}`)}</strong>
+          </button>
+          <button class="shipcashbox-command-metric--contributions" type="button" data-workspace-window="reports">
+            <span>${escapeHtml(t("summaryContributions"))}</span>
+            <strong>${escapeHtml(displayMoney(totals.total_contributions, session.currency))}</strong>
+          </button>
+        </div>
       </div>
     </section>
   `;
@@ -3836,21 +4518,123 @@ function renderArchiveRows(archive = [], canReopen = false) {
   }
   return archive.map((item) => {
     const personal = item.session_mode === "personal";
+    const deleted = item.status === "deleted";
     const meta = personal
       ? `${tx("personalArchiveMeta", "Личный журнал")} · ${money(item.cashbox_balance, item.currency, true)}`
       : `${item.participants} · ${money(item.cashbox_balance, item.currency, true)}`;
+    const dateLabel = deleted
+      ? tx("trashDeletedAt", "Удалено")
+      : t("archivedOn");
+    const dateValue = deleted ? (item.deleted_at || item.closed_at || "") : (item.closed_at || "");
+    const retention = item.purge_after
+      ? `<div class="shipcashbox-archive__meta">${escapeHtml(tx("trashStoredUntil", "Хранится до"))}: ${escapeHtml(formatDateTime(item.purge_after))}</div>`
+      : "";
     return `
-      <article class="shipcashbox-archive__row shipcashbox-archive__row--selectable">
-        <div class="shipcashbox-card__row">
+      <article class="shipcashbox-archive__row shipcashbox-archive__row--selectable shipcashbox-trash-session">
+        <div class="shipcashbox-trash-record__main">
           <strong>${escapeHtml(item.title)}</strong>
-          <span class="shipcashbox-archive__status">${escapeHtml(personal ? tx("personalArchiveStatus", "Закрыт") : t("archiveStatus"))}</span>
+          <span>${escapeHtml(money(item.cashbox_balance, item.currency, true))}</span>
+          <small>${escapeHtml(deleted ? tx("trashDeletedStatus", "В корзине") : (personal ? tx("personalArchiveStatus", "В корзине") : t("archiveStatus")))} · ${escapeHtml(dateLabel)}: ${escapeHtml(dateValue)}${item.purge_after ? ` · ${escapeHtml(tx("trashStoredUntilShort", "до"))} ${escapeHtml(formatDateTime(item.purge_after))}` : ""}</small>
         </div>
-        <div class="shipcashbox-archive__meta">${escapeHtml(t("archivedOn"))}: ${escapeHtml(item.closed_at || "")}</div>
-        <div class="shipcashbox-archive__meta">${escapeHtml(meta)}</div>
-        <button class="shipcashbox-archive__cover open-archive-session-btn" type="button" data-id="${escapeHtml(item.id)}" data-can-reopen="${canReopen ? "1" : "0"}" title="${escapeHtml(t("openArchiveSnapshot"))}" aria-label="${escapeHtml(t("openArchiveSnapshot"))}"></button>
+        <button class="shipcashbox-trash-record__restore open-archive-session-btn" type="button" data-id="${escapeHtml(item.id)}" data-can-reopen="${canReopen ? "1" : "0"}" title="${escapeHtml(t("openArchiveSnapshot"))}" aria-label="${escapeHtml(t("openArchiveSnapshot"))}">
+          <span aria-hidden="true">›</span>
+        </button>
       </article>
     `;
   }).join("");
+}
+
+function findTrashRecord(trashId) {
+  const id = String(trashId || "");
+  if (!id) return null;
+  return currentNotebookTrashRows().find((record) => record.id === id || record.batchId === id) || null;
+}
+
+function renderTrashRecordLog(record) {
+  if (!record) {
+    return `<section class="shipcashbox-card shipcashbox-card--window"><p class="shipcashbox-empty">${escapeHtml(tx("trashRecordMissing", "Удаленная запись не найдена."))}</p></section>`;
+  }
+  const entries = Array.isArray(record.entries) ? record.entries : [];
+  const parsed = entries.length ? `
+    <div class="shipcashbox-trash-log__entries">
+      ${entries.map((entry) => `
+        <div class="shipcashbox-trash-log__entry">
+          <span>${escapeHtml(entry.raw_text || entry.note || "-")}</span>
+          <strong>${escapeHtml(displayMoney(entry.amount || 0, record.currency, true))}</strong>
+        </div>
+      `).join("")}
+    </div>
+  ` : "";
+  return `
+    <section class="shipcashbox-card shipcashbox-card--window shipcashbox-trash-log">
+      <div class="shipcashbox-card__head">
+        <div>
+          <p class="section-heading__eyebrow">${escapeHtml(tx("trashRecordLogEyebrow", "Удаленная запись"))}</p>
+          <h2>${escapeHtml(record.title)}</h2>
+          <p class="shipcashbox-note">${escapeHtml(record.participantName || "-")} · ${escapeHtml(formatDateTime(record.trashedAt))} · ${escapeHtml(tx("trashStoredUntil", "Хранится до"))}: ${escapeHtml(formatDateTime(record.deleteAfter))}</p>
+        </div>
+      </div>
+      <div class="shipcashbox-trash-log__summary">
+        <span>${escapeHtml(tx("trashRecordSum", "Итог"))}</span>
+        <strong>${escapeHtml(displayMoney(record.total, record.currency, true))}</strong>
+      </div>
+      <pre class="shipcashbox-trash-log__raw">${escapeHtml(record.rawText || "")}</pre>
+      ${parsed}
+      <div class="shipcashbox-actions">
+        <button class="btn btn--secondary" type="button" data-workspace-window="archive">${escapeHtml(tx("trashBackToList", "К корзине"))}</button>
+        <button class="btn btn--primary restore-trash-record-btn" type="button" data-trash-id="${escapeHtml(record.id)}" data-batch-id="${escapeHtml(record.batchId)}" data-participant-id="${escapeHtml(record.participantId)}">${escapeHtml(tx("trashRestoreRecord", "Восстановить запись"))}</button>
+      </div>
+    </section>
+  `;
+}
+
+function renderTrashRecordRows(records = []) {
+  if (!records.length) return "";
+  return `
+    <section class="shipcashbox-trash-section">
+      <div class="shipcashbox-trash-section__head">
+        <strong>${escapeHtml(tx("trashRecordsTitle", "Удаленные записи"))}</strong>
+        <span>${escapeHtml(txf("trashRecordsCount", "{count} шт.", { count: records.length }))}</span>
+      </div>
+      ${records.map((record) => `
+        <article class="shipcashbox-archive__row shipcashbox-trash-record">
+          <div class="shipcashbox-trash-record__main">
+            <strong>${escapeHtml(record.title)}</strong>
+            <span>${escapeHtml(displayMoney(record.total, record.currency, true))}</span>
+            <small>${escapeHtml(record.participantName || "-")} · ${escapeHtml(formatDateTime(record.trashedAt))} · ${escapeHtml(tx("trashStoredUntilShort", "до"))} ${escapeHtml(formatDateTime(record.deleteAfter))}</small>
+          </div>
+          <div class="shipcashbox-trash-record__actions">
+            <button class="shipcashbox-trash-record__restore open-trash-record-btn" type="button" data-trash-id="${escapeHtml(record.id)}" title="${escapeHtml(tx("trashOpenRecordLog", "Посмотреть лог"))}" aria-label="${escapeHtml(tx("trashOpenRecordLog", "Посмотреть лог"))}">
+              <span aria-hidden="true">≡</span>
+            </button>
+            <button class="shipcashbox-trash-record__restore restore-trash-record-btn" type="button" data-trash-id="${escapeHtml(record.id)}" data-batch-id="${escapeHtml(record.batchId)}" data-participant-id="${escapeHtml(record.participantId)}" title="${escapeHtml(tx("trashRestoreRecord", "Восстановить запись"))}" aria-label="${escapeHtml(tx("trashRestoreRecord", "Восстановить запись"))}">
+              <span aria-hidden="true">↩</span>
+            </button>
+          </div>
+        </article>
+      `).join("")}
+    </section>
+  `;
+}
+
+function renderTrashRows(archive = [], canReopen = false) {
+  const records = currentNotebookTrashRows();
+  const sessionsHtml = renderArchiveRows(archive, canReopen);
+  if (!records.length && !archive.length) {
+    return `<div class="shipcashbox-empty">${escapeHtml(t("archiveEmpty"))}</div>`;
+  }
+  return `
+    ${renderTrashRecordRows(records)}
+    ${archive.length ? `
+      <section class="shipcashbox-trash-section">
+        <div class="shipcashbox-trash-section__head">
+          <strong>${escapeHtml(tx("trashSessionsTitle", "Карточки и сессии"))}</strong>
+          <span>${escapeHtml(txf("trashSessionsCount", "{count} шт.", { count: archive.length }))}</span>
+        </div>
+        ${sessionsHtml}
+      </section>
+    ` : ""}
+  `;
 }
 
 function archiveRowsForCurrentMode(archive = []) {
@@ -3887,42 +4671,78 @@ function renderWindowMenuButton(windowName, label, note = "", options = {}) {
   `;
 }
 
+function renderWorkspaceActionButton(action, label, note = "", options = {}) {
+  const disabled = Boolean(options.disabled);
+  return `
+    <button class="shipcashbox-window-link shipcashbox-window-link--action${disabled ? " is-disabled" : ""}" type="button" data-workspace-action="${escapeHtml(action)}" title="${escapeHtml(note || label)}" aria-label="${escapeHtml(note || label)}"${disabled ? " disabled aria-disabled=\"true\"" : ""}>
+      <strong>${escapeHtml(label)}</strong>
+      ${note ? `<span>${escapeHtml(note)}</span>` : ""}
+    </button>
+  `;
+}
+
+function renderWorkspaceQuickActions() {
+  const hasSession = Boolean(activeSession());
+  const personal = isPersonalSession();
+  return `
+    <div class="shipcashbox-window-menu shipcashbox-window-menu--quick">
+      ${renderWorkspaceActionButton("records", tx("cashboxMenuRecords", "К записям"), tx("cashboxMenuRecordsHelp", "Открыть список готовых записей."), { disabled: !hasSession })}
+      ${renderWorkspaceActionButton("journal", tx("cashboxMenuActiveRecord", "К активной"), tx("cashboxMenuActiveRecordHelp", "Открыть активное окно ЖЗ."), { disabled: !hasSession })}
+      ${renderWorkspaceActionButton("cashbox", personal ? tx("backToPersonalCashbox", "К кассе") : tx("backToCashbox", "К кассе команды"), tx("cashboxMenuCashboxHelp", "Вернуться на рабочий экран кассы."), { disabled: !hasSession })}
+    </div>
+  `;
+}
+
+function renderWorkspaceModalNav(windowName = "menu") {
+  if (windowName === "menu") return "";
+  return `
+    <div class="shipcashbox-workspace-return">
+      ${renderWindowMenuButton("menu", workspaceMenuActionLabel(), tx("cashboxMenuWorkspaceChoiceHelp", "Показать список окон кассы."))}
+      ${renderWorkspaceActionButton("records", tx("cashboxMenuRecords", "К записям"), tx("cashboxMenuRecordsHelp", "Открыть список готовых записей."))}
+    </div>
+  `;
+}
+
 function renderWorkspaceMenu() {
   if (state.viewer === "treasurer") {
     if (!state.boot?.session) {
       return `
+        ${renderWorkspaceQuickActions()}
         <div class="shipcashbox-window-menu">
-          ${renderWindowMenuButton("archive", tx("cashboxMenuArchive", "Архив"), t("workspaceArchiveText"))}
           ${renderWindowMenuButton("service", tx("cashboxMenuShareInstall", "Поделиться / Установить"), t("workspaceServiceText"))}
+          ${renderWindowMenuButton("archive", tx("cashboxMenuArchive", "Корзина"), t("workspaceArchiveText"))}
         </div>
       `;
     }
     if (isPersonalSession(state.boot.session)) {
       return `
+        ${renderWorkspaceQuickActions()}
         <div class="shipcashbox-window-menu">
-          ${renderWindowMenuButton("snapshot", tx("personalSummaryTitle", "Личный отчет"), tx("personalSnapshotText", "Остаток, приходы, расходы и число записей."))}
-          ${renderWindowMenuButton("reports", tx("personalReportAction", "Отчет"), tx("personalReportText", "Приходы, расходы, остаток и список записей."))}
-          ${renderWindowMenuButton("team", tx("personalSettingsLabel", "Настройки"), tx("personalSettingsText", "Название, валюта и начальный остаток личного журнала."))}
-          ${renderWindowMenuButton("archive", tx("personalArchiveTitle", "Архив личного журнала"), tx("personalArchiveText", "Закрытые личные журналы и сохраненные отчеты."))}
-          ${renderWindowMenuButton("service", tx("personalServiceTitle", "Сервис журнала"), tx("personalServiceText", "Ссылка, установка и обновление приложения."))}
+          ${renderWindowMenuButton("snapshot", tx("cashboxMenuInCashbox", "В кассе"), tx("personalSnapshotText", "Входящий баланс, поступления, расходы и записи выбранного отчета."))}
+          ${renderWindowMenuButton("reports", tx("personalReportsWorkspaceTitle", "Создание отчетов"), tx("personalReportText", "Активные отчеты, входящий баланс, поступления, расходы и текущий баланс."))}
+          ${renderWindowMenuButton("team", tx("personalSettingsLabel", "Настройки"), tx("personalSettingsText", "Название и валюта личного журнала. Входящий баланс задается при начале отчета."))}
+          ${renderWindowMenuButton("service", tx("cashboxMenuShareInstall", "Поделиться / Установить"), tx("personalServiceText", "Ссылка, установка и обновление приложения."))}
+          ${renderWindowMenuButton("archive", tx("cashboxMenuArchive", "Корзина"), tx("personalArchiveText", "Закрытые личные карточки и восстановление. Документы хранятся в записи."))}
         </div>
       `;
     }
     return `
+      ${renderWorkspaceQuickActions()}
       <div class="shipcashbox-window-menu">
         ${renderWindowMenuButton("snapshot", tx("cashboxMenuInCashbox", "В кассе"), t("workspaceSnapshotText"))}
         ${renderWindowMenuButton("team", tx("cashboxMenuCrewContrib", "Экипаж и взносы"), t("workspaceTeamText"))}
         ${renderWindowMenuButton("crew-rotation", tx("cashboxMenuCrewRotation", "Ротация экипажа"), tx("crewRotationMenuText", "Уход, приход и смена казначея без закрытия всей кассы."))}
         ${renderWindowMenuButton("settlement", tx("cashboxMenuCrewSettlement", "Расчет экипажа"), t("workspaceSettlementText"))}
         ${renderWindowMenuButton("reports", tx("cashboxMenuAnalytics", "Аналитика"), t("workspaceReportsText"))}
-        ${renderWindowMenuButton("archive", tx("cashboxMenuArchive", "Архив"), t("workspaceArchiveText"))}
         ${renderWindowMenuButton("service", tx("cashboxMenuShareInstall", "Поделиться / Установить"), t("workspaceServiceText"))}
+        ${renderWindowMenuButton("archive", tx("cashboxMenuArchive", "Корзина"), t("workspaceArchiveText"))}
       </div>
     `;
   }
 
   if (state.viewer === "participant") {
     return `
+      ${renderWorkspaceQuickActions()}
       <div class="shipcashbox-window-menu">
         ${renderWindowMenuButton("participant-settlement", t("settlementTitle"), t("workspaceParticipantSettlementText"))}
         ${renderWindowMenuButton("service", t("workspaceServiceTitle"), t("workspaceServiceText"))}
@@ -3931,14 +4751,15 @@ function renderWorkspaceMenu() {
   }
 
   return `
+    ${renderWorkspaceQuickActions()}
     <div class="shipcashbox-window-menu">
       ${renderWindowMenuButton("snapshot", tx("cashboxMenuInCashbox", "В кассе"), tx("cashboxMenuDisabledStart", "Сначала откройте или создайте кассу."), { disabled: true })}
       ${renderWindowMenuButton("team", tx("cashboxMenuCrewContrib", "Экипаж и взносы"), tx("cashboxMenuDisabledStart", "Сначала откройте или создайте кассу."), { disabled: true })}
       ${renderWindowMenuButton("crew-rotation", tx("cashboxMenuCrewRotation", "Ротация экипажа"), tx("cashboxMenuDisabledStart", "Сначала откройте или создайте кассу."), { disabled: true })}
       ${renderWindowMenuButton("settlement", tx("cashboxMenuCrewSettlement", "Расчет экипажа"), tx("cashboxMenuDisabledStart", "Сначала откройте или создайте кассу."), { disabled: true })}
       ${renderWindowMenuButton("reports", tx("cashboxMenuAnalytics", "Аналитика"), tx("cashboxMenuDisabledStart", "Сначала откройте или создайте кассу."), { disabled: true })}
-      ${renderWindowMenuButton("archive", tx("cashboxMenuArchive", "Архив"), tx("cashboxMenuDisabledStart", "Сначала откройте или создайте кассу."), { disabled: true })}
       ${renderWindowMenuButton("service", tx("cashboxMenuShareInstall", "Поделиться / Установить"), tx("cashboxMenuDisabledStart", "Сначала откройте или создайте кассу."), { disabled: true })}
+      ${renderWindowMenuButton("archive", tx("cashboxMenuArchive", "Корзина"), tx("cashboxMenuDisabledStart", "Сначала откройте или создайте кассу."), { disabled: true })}
     </div>
   `;
 }
@@ -3948,14 +4769,22 @@ function renderTreasurerReportsWindow(session) {
     return renderPersonalReportsWindow(session);
   }
   const participants = session.participants || [];
+  const totals = session.totals || {};
   return `
     <div class="shipcashbox-stack">
+      ${renderPersonalReportSwitcher(session, summary)}
       <section class="shipcashbox-card shipcashbox-card--window">
         <div class="shipcashbox-card__head">
           <div>
-            <p class="section-heading__eyebrow">${escapeHtml(t("participantOverviewTitle"))}</p>
-            <h2>${escapeHtml(t("participantOverviewTitle"))}</h2>
+            <p class="section-heading__eyebrow">${escapeHtml(t("workspaceReportsTitle"))}</p>
+            <h2>${escapeHtml(tx("groupReportTitle", "Сводка группы"))}</h2>
           </div>
+        </div>
+        <div class="shipcashbox-metrics shipcashbox-metrics--compact">
+          <div class="shipcashbox-metric"><span>${escapeHtml(t("summaryContributions"))}</span><strong>${escapeHtml(displayMoney(totals.total_contributions, session.currency))}</strong></div>
+          <div class="shipcashbox-metric"><span>${escapeHtml(t("summaryExpenses"))}</span><strong>${escapeHtml(displayMoney(totals.total_expenses, session.currency))}</strong></div>
+          <div class="shipcashbox-metric"><span>${escapeHtml(t("summaryCash"))}</span><strong>${escapeHtml(displayMoney(totals.cashbox_balance, session.currency, true))}</strong></div>
+          <div class="shipcashbox-metric"><span>${escapeHtml(t("summaryShare"))}</span><strong>${escapeHtml(displayMoney(totals.share, session.currency))}</strong></div>
         </div>
         <div class="shipcashbox-summary">${renderSummaryCards(participants, session.currency)}</div>
         <div class="shipcashbox-window-actions">
@@ -3972,35 +4801,75 @@ function renderTreasurerReportsWindow(session) {
 }
 
 function renderPersonalReportsWindow(session) {
-  const treasurer = (session.participants || []).find((participant) => participant.id === session.treasurer_participant_id) || (session.participants || [])[0] || {};
-  const totals = session.totals || {};
-  const entries = (treasurer.entries || []).filter((entry) => entry.entry_kind === "expense" || entry.entry_kind === "contribution");
+  const summary = personalReportSummary(session);
+  const reportView = currentPersonalReportView(summary);
+  const activeReport = reportView.report || null;
+  const activeTotals = reportView.totals || {};
+  const viewingFixedReport = reportView.fixed;
+  const entries = Array.isArray(activeTotals.entries) ? activeTotals.entries : [];
+  const unlinkedCount = Number(summary.unlinked?.record_count || 0);
   const rows = entries.length ? entries.map((entry) => {
-    const income = entry.entry_kind === "contribution";
     return `
-      <div class="shipcashbox-personal-report-row shipcashbox-personal-report-row--${income ? "income" : "expense"}">
+      <div class="shipcashbox-personal-report-row shipcashbox-personal-report-row--${entry.entry_kind === "contribution" ? "income" : "expense"}">
         <span>${escapeHtml(entry.note || entry.raw_text || "-")}</span>
-        <strong>${escapeHtml(money(Math.abs(Number(entry.amount || 0)), session.currency, income))}</strong>
+        <strong>${escapeHtml(displayMoney(Number(entry.amount || 0), session.currency, true))}</strong>
       </div>
     `;
-  }).join("") : `<p class="shipcashbox-note">${escapeHtml(tx("personalReportEmpty", "Пока нет сохраненных приходов или расходов."))}</p>`;
+  }).join("") : `<p class="shipcashbox-note">${escapeHtml(activeReport ? tx("personalReportEmpty", "В выбранном отчете пока нет операций.") : tx("personalNoActiveReportText", "Начните отчет, чтобы привязывать записи и видеть баланс."))}</p>`;
+  const startReportBlock = `
+    <section class="shipcashbox-card shipcashbox-card--window">
+      <div class="shipcashbox-card__head">
+        <div>
+          <p class="section-heading__eyebrow">${escapeHtml(tx("personalReportsWorkspaceTitle", "Создание отчетов"))}</p>
+          <h2>${escapeHtml(tx("personalStartReport", "Начать отчет"))}</h2>
+        </div>
+      </div>
+      <p class="shipcashbox-note">${escapeHtml(tx("personalStartReportText", "Откройте отчетный период, чтобы выбранные записи считались в его балансе."))}</p>
+      <div class="shipcashbox-form__grid shipcashbox-form__grid--compact">
+        <label class="shipcashbox-field">
+          <span>${escapeHtml(tx("personalReportTitleLabel", "Название отчета"))}</span>
+          <input type="text" id="personalReportTitleInput" value="" placeholder="${escapeHtml(tx("personalReportTitlePlaceholder", "Например: Марина Будва"))}">
+        </label>
+        <label class="shipcashbox-field">
+          <span>${escapeHtml(tx("personalOpeningBalance", "Входящий баланс"))}</span>
+          <input type="text" id="personalReportOpeningBalanceInput" value="" inputmode="decimal" placeholder="0">
+        </label>
+      </div>
+      <div class="shipcashbox-actions">
+        <button class="btn btn--primary" type="button" data-start-personal-report="1">${escapeHtml(tx("personalStartReport", "Начать отчет"))}</button>
+      </div>
+    </section>
+  `;
   return `
     <div class="shipcashbox-stack">
       <section class="shipcashbox-card shipcashbox-card--window">
         <div class="shipcashbox-card__head">
           <div>
-            <p class="section-heading__eyebrow">${escapeHtml(tx("personalSummaryTitle", "Личный отчет"))}</p>
-            <h2>${escapeHtml(tx("personalReportTitle", "Приходы и расходы"))}</h2>
+            <p class="section-heading__eyebrow">${escapeHtml(tx("personalReportsWorkspaceTitle", "Создание отчетов"))}</p>
+          <h2>${escapeHtml(activeReport ? (activeReport.title || tx("personalReportTitle", "Текущий отчет")) : tx("personalReportTitle", "Текущий отчет"))}</h2>
+          ${viewingFixedReport ? `<p class="shipcashbox-note">${escapeHtml(tx("personalViewingFixedReport", "Просмотр закрепленного отчета. Он не участвует в активной работе, пока вы не вернете его в активные."))}</p>` : ""}
           </div>
         </div>
         <div class="shipcashbox-metrics shipcashbox-metrics--compact">
-          <div class="shipcashbox-metric"><span>${escapeHtml(tx("personalIncomeLabel", "Приходы"))}</span><strong>${escapeHtml(money(totals.total_contributions, session.currency))}</strong></div>
-          <div class="shipcashbox-metric"><span>${escapeHtml(t("summaryExpenses"))}</span><strong>${escapeHtml(money(totals.total_expenses, session.currency))}</strong></div>
-          <div class="shipcashbox-metric"><span>${escapeHtml(tx("personalBalanceLabel", "Остаток"))}</span><strong>${escapeHtml(money(totals.cashbox_balance, session.currency, true))}</strong></div>
+          <div class="shipcashbox-metric"><span>${escapeHtml(tx("personalOpeningBalance", "Входящий баланс"))}</span><strong>${escapeHtml(displayMoney(activeTotals.opening_balance || 0, session.currency, true))}</strong></div>
+          <div class="shipcashbox-metric"><span>${escapeHtml(tx("personalIncomeLabel", "Поступления"))}</span><strong>${escapeHtml(displayMoney(activeTotals.income_total || 0, session.currency))}</strong></div>
+          <div class="shipcashbox-metric"><span>${escapeHtml(t("summaryExpenses"))}</span><strong>${escapeHtml(displayMoney(activeTotals.expense_total || 0, session.currency))}</strong></div>
+          <div class="shipcashbox-metric"><span>${escapeHtml(tx("personalBalanceLabel", "Текущий баланс"))}</span><strong>${escapeHtml(displayMoney(activeTotals.current_balance || 0, session.currency, true))}</strong></div>
         </div>
         <div class="shipcashbox-personal-report">${rows}</div>
-        <p class="shipcashbox-note">${escapeHtml(tx("personalReportHint", "Пишите приходы со знаком плюс: +500 аванс. Расходы можно писать обычной строкой: 40 топливо."))}</p>
+        <p class="shipcashbox-note">${escapeHtml(tx("personalUnlinkedRecordsText", "Самостоятельные записи вне отчета"))}: ${escapeHtml(String(unlinkedCount))}</p>
+        <p class="shipcashbox-note">${escapeHtml(tx("personalReportHint", "Пишите каждую сумму со знаком: +500 аванс, -40 топливо. Можно - 100: один пробел после знака убирается. Суммы без знака остаются спорными и не входят в итог."))}</p>
       </section>
+      ${activeReport && !viewingFixedReport ? `
+        <div class="shipcashbox-actions">
+          <button class="btn btn--secondary" type="button" data-start-personal-report="1">${escapeHtml(tx("personalStartReport", "Начать отчет"))}</button>
+        </div>
+      ` : viewingFixedReport ? `
+        <div class="shipcashbox-actions">
+          <button class="btn btn--secondary" type="button" data-start-personal-report="1">${escapeHtml(tx("personalStartReport", "Начать отчет"))}</button>
+          <button class="btn btn--primary" type="button" data-restore-personal-report="${escapeHtml(activeReport.id)}">${escapeHtml(tx("personalRestoreReport", "Вернуть в активные"))}</button>
+        </div>
+      ` : startReportBlock}
     </div>
   `;
 }
@@ -4043,22 +4912,22 @@ function renderTreasurerLogTreeWindow(session) {
 
 function renderTreasurerSnapshotWindow(session) {
   if (isPersonalSession(session)) {
-    const totals = session.totals || {};
-    const treasurer = (session.participants || []).find((participant) => participant.id === session.treasurer_participant_id) || (session.participants || [])[0] || {};
-    const recordCount = (treasurer.entries || []).filter((entry) => entry.entry_kind === "expense" || entry.entry_kind === "contribution").length;
+    const summary = personalReportSummary(session);
+    const activeTotals = summary.active_report_totals || {};
+    const recordCount = summary.active_report ? Number(activeTotals.record_count || 0) : Number(summary.unlinked?.record_count || 0);
     return `
       <section class="shipcashbox-card shipcashbox-card--window">
         <div class="shipcashbox-card__head">
           <div>
-            <p class="section-heading__eyebrow">${escapeHtml(tx("personalSummaryTitle", "Личный отчет"))}</p>
-            <h2>${escapeHtml(tx("personalSummaryTitle", "Личный отчет"))}</h2>
+            <p class="section-heading__eyebrow">${escapeHtml(tx("personalSnapshotTitle", "Сейчас в журнале"))}</p>
+            <h2>${escapeHtml(tx("personalSnapshotTitle", "Сейчас в журнале"))}</h2>
           </div>
         </div>
-        <div class="shipcashbox-metrics">
-          <div class="shipcashbox-metric"><span>${escapeHtml(tx("personalBalanceLabel", "Остаток"))}</span><strong>${escapeHtml(money(totals.cashbox_balance, session.currency, true))}</strong></div>
-          <div class="shipcashbox-metric"><span>${escapeHtml(tx("personalIncomeLabel", "Приходы"))}</span><strong>${escapeHtml(money(totals.total_contributions, session.currency))}</strong></div>
-          <div class="shipcashbox-metric"><span>${escapeHtml(t("summaryExpenses"))}</span><strong>${escapeHtml(money(totals.total_expenses, session.currency))}</strong></div>
-          <div class="shipcashbox-metric"><span>${escapeHtml(tx("personalRecordsLabel", "Записи"))}</span><strong>${escapeHtml(String(recordCount))}</strong></div>
+        <div class="shipcashbox-metrics shipcashbox-metrics--compact">
+          <div class="shipcashbox-metric"><span>${escapeHtml(tx("personalOpeningBalance", "Входящий баланс"))}</span><strong>${escapeHtml(displayMoney(activeTotals.opening_balance || 0, session.currency, true))}</strong></div>
+          <div class="shipcashbox-metric"><span>${escapeHtml(tx("personalIncomeLabel", "Поступления"))}</span><strong>${escapeHtml(displayMoney(activeTotals.income_total || 0, session.currency))}</strong></div>
+          <div class="shipcashbox-metric"><span>${escapeHtml(t("summaryExpenses"))}</span><strong>${escapeHtml(displayMoney(activeTotals.expense_total || 0, session.currency))}</strong></div>
+          <div class="shipcashbox-metric"><span>${escapeHtml(summary.active_report ? tx("personalRecordsLabel", "Записи") : tx("personalUnlinkedRecordsLabel", "Самостоятельные записи"))}</span><strong>${escapeHtml(String(recordCount))}</strong></div>
         </div>
       </section>
     `;
@@ -4072,11 +4941,11 @@ function renderTreasurerSnapshotWindow(session) {
           <h2>${escapeHtml(t("summaryTitle"))}</h2>
         </div>
       </div>
-      <div class="shipcashbox-metrics">
-        <div class="shipcashbox-metric"><span>${escapeHtml(t("summaryCash"))}</span><strong>${escapeHtml(money(totals.cashbox_balance, session.currency, true))}</strong></div>
-        <div class="shipcashbox-metric"><span>${escapeHtml(t("summaryContributions"))}</span><strong>${escapeHtml(money(totals.total_contributions, session.currency))}</strong></div>
-        <div class="shipcashbox-metric"><span>${escapeHtml(t("summaryExpenses"))}</span><strong>${escapeHtml(money(totals.total_expenses, session.currency))}</strong></div>
-        <div class="shipcashbox-metric"><span>${escapeHtml(t("summaryShare"))}</span><strong>${escapeHtml(money(totals.share, session.currency))}</strong></div>
+      <div class="shipcashbox-metrics shipcashbox-metrics--compact">
+        <div class="shipcashbox-metric"><span>${escapeHtml(t("summaryCash"))}</span><strong>${escapeHtml(displayMoney(totals.cashbox_balance, session.currency, true))}</strong></div>
+        <div class="shipcashbox-metric"><span>${escapeHtml(t("summaryContributions"))}</span><strong>${escapeHtml(displayMoney(totals.total_contributions, session.currency))}</strong></div>
+        <div class="shipcashbox-metric"><span>${escapeHtml(t("summaryExpenses"))}</span><strong>${escapeHtml(displayMoney(totals.total_expenses, session.currency))}</strong></div>
+        <div class="shipcashbox-metric"><span>${escapeHtml(t("summaryShare"))}</span><strong>${escapeHtml(displayMoney(totals.share, session.currency))}</strong></div>
       </div>
     </section>
   `;
@@ -4093,23 +4962,19 @@ function renderTreasurerTeamWindow(session) {
             <h2>${escapeHtml(tx("personalSettingsTitle", "Личный журнал"))}</h2>
           </div>
         </div>
-        <p class="shipcashbox-note">${escapeHtml(tx("personalSettingsText", "Название, валюта и начальный остаток личного журнала."))}</p>
-        <div class="shipcashbox-form__grid">
+        <p class="shipcashbox-note">${escapeHtml(tx("personalSettingsText", "Название и валюта личного журнала. Входящий баланс задается при начале отчета."))}</p>
+        <div class="shipcashbox-form__grid shipcashbox-form__grid--compact shipcashbox-form__grid--personal-settings">
           <label class="shipcashbox-field">
-            <span>${escapeHtml(t("sessionTitle"))}</span>
+            <span>${escapeHtml(tx("personalJournalTitleLabel", "Название журнала"))}</span>
             <input type="text" id="sessionTitleInput" value="${escapeHtml(session.title)}">
           </label>
           <label class="shipcashbox-field">
             <span>${escapeHtml(t("sessionCurrency"))}</span>
             <input type="text" id="sessionCurrencyInput" value="${escapeHtml(session.currency)}" maxlength="6">
           </label>
-          <label class="shipcashbox-field">
-            <span>${escapeHtml(tx("personalOpeningBalance", "Сколько денег было"))}</span>
-            <input type="text" id="personalOpeningBalanceInput" value="${escapeHtml(String(treasurer.cashbox_contribution ?? 0))}" inputmode="decimal">
-          </label>
         </div>
         <div class="shipcashbox-actions shipcashbox-actions--team">
-          <button class="btn btn--primary" type="button" id="saveSessionButton" title="${escapeHtml(tx("personalSaveJournalHelp", "Сохранить название, валюту и начальный остаток."))}" aria-label="${escapeHtml(tx("personalSaveJournalHelp", "Сохранить название, валюту и начальный остаток."))}">${escapeHtml(tx("personalSaveJournal", "Сохранить журнал"))}</button>
+          <button class="btn btn--primary" type="button" id="saveSessionButton" title="${escapeHtml(tx("personalSaveJournalHelp", "Сохранить название и валюту журнала."))}" aria-label="${escapeHtml(tx("personalSaveJournalHelp", "Сохранить название и валюту журнала."))}">${escapeHtml(tx("personalSaveJournal", "Сохранить журнал"))}</button>
         </div>
       </section>
     `;
@@ -4117,33 +4982,38 @@ function renderTreasurerTeamWindow(session) {
   const activeCount = (session.participants || []).filter((participant) => participant.authorized_at).length;
   const invitedCount = (session.participants || []).filter((participant) => participant.role !== "treasurer" && participant.invite_sent_at).length;
   return `
-    <section class="shipcashbox-card shipcashbox-card--window">
-      <div class="shipcashbox-teambar">
-        <div class="shipcashbox-teambar__copy">
-          <p class="section-heading__eyebrow">${escapeHtml(t("cashboxFlowTitle"))}</p>
-          <p class="shipcashbox-note">${escapeHtml(t("teamContributionsText"))}</p>
-          <div class="shipcashbox-metrics shipcashbox-metrics--compact shipcashbox-metrics--team">
-            <div class="shipcashbox-metric"><span>${escapeHtml(t("participantsTitle"))}</span><strong>${escapeHtml(String((session.participants || []).length))}</strong></div>
-            <div class="shipcashbox-metric"><span>${escapeHtml(t("inviteEmailSentAt"))}</span><strong>${escapeHtml(String(invitedCount))}</strong></div>
-            <div class="shipcashbox-metric"><span>${escapeHtml(t("authConfirmed"))}</span><strong>${escapeHtml(String(activeCount))}</strong></div>
+    <section class="shipcashbox-card shipcashbox-card--window shipcashbox-card--crew-compact">
+      <div class="shipcashbox-crew-compact">
+        <div class="shipcashbox-crew-compact__summary">
+          <div class="shipcashbox-teambar__copy">
+            <p class="section-heading__eyebrow">${escapeHtml(t("cashboxFlowTitle"))}</p>
+            <p class="shipcashbox-note">${escapeHtml(t("teamContributionsText"))}</p>
+            <div class="shipcashbox-metrics shipcashbox-metrics--compact shipcashbox-metrics--team">
+              <div class="shipcashbox-metric"><span>${escapeHtml(t("participantsTitle"))}</span><strong>${escapeHtml(String((session.participants || []).length))}</strong></div>
+              <div class="shipcashbox-metric"><span>${escapeHtml(t("inviteEmailSentAt"))}</span><strong>${escapeHtml(String(invitedCount))}</strong></div>
+              <div class="shipcashbox-metric"><span>${escapeHtml(t("authConfirmed"))}</span><strong>${escapeHtml(String(activeCount))}</strong></div>
+            </div>
+          </div>
+          <div class="shipcashbox-actions shipcashbox-actions--team">
+            <button class="btn btn--secondary" type="button" id="addParticipantButton" title="${escapeHtml(t("addParticipantHelp"))}" aria-label="${escapeHtml(t("addParticipantHelp"))}">${escapeHtml(t("inviteParticipant"))}</button>
+            <button class="btn btn--primary" type="button" id="saveSessionButton" title="${escapeHtml(t("saveSessionHelp"))}" aria-label="${escapeHtml(t("saveSessionHelp"))}">${escapeHtml(t("saveSession"))}</button>
           </div>
         </div>
-        <div class="shipcashbox-actions shipcashbox-actions--team">
-          <button class="btn btn--secondary" type="button" id="addParticipantButton" title="${escapeHtml(t("addParticipantHelp"))}" aria-label="${escapeHtml(t("addParticipantHelp"))}">${escapeHtml(t("inviteParticipant"))}</button>
-          <button class="btn btn--primary" type="button" id="saveSessionButton" title="${escapeHtml(t("saveSessionHelp"))}" aria-label="${escapeHtml(t("saveSessionHelp"))}">${escapeHtml(t("saveSession"))}</button>
+        <div class="shipcashbox-crew-compact__divider" role="separator" aria-hidden="true"></div>
+        <div class="shipcashbox-crew-compact__body">
+          <div class="shipcashbox-form__grid shipcashbox-form__grid--compact">
+            <label class="shipcashbox-field">
+              <span>${escapeHtml(t("sessionTitle"))}</span>
+              <input type="text" id="sessionTitleInput" value="${escapeHtml(session.title)}">
+            </label>
+            <label class="shipcashbox-field">
+              <span>${escapeHtml(t("sessionCurrency"))}</span>
+              <input type="text" id="sessionCurrencyInput" value="${escapeHtml(session.currency)}" maxlength="6">
+            </label>
+          </div>
+          <div class="shipcashbox-participants shipcashbox-participants--compact" id="participantsEditor">${renderParticipantRows(session.participants || [])}</div>
         </div>
       </div>
-      <div class="shipcashbox-form__grid">
-        <label class="shipcashbox-field">
-          <span>${escapeHtml(t("sessionTitle"))}</span>
-          <input type="text" id="sessionTitleInput" value="${escapeHtml(session.title)}">
-        </label>
-        <label class="shipcashbox-field">
-          <span>${escapeHtml(t("sessionCurrency"))}</span>
-          <input type="text" id="sessionCurrencyInput" value="${escapeHtml(session.currency)}" maxlength="6">
-        </label>
-      </div>
-      <div class="shipcashbox-participants" id="participantsEditor">${renderParticipantRows(session.participants || [])}</div>
     </section>
   `;
 }
@@ -4181,14 +5051,14 @@ function renderPersonalArchiveDetailWindow(session) {
       <section class="shipcashbox-card shipcashbox-card--window shipcashbox-card--archive-detail">
         <div class="shipcashbox-card__head">
           <div>
-            <p class="section-heading__eyebrow">${escapeHtml(tx("personalArchiveStatus", "Закрыт"))}</p>
-            <h2>${escapeHtml(session.title || tx("personalArchiveTitle", "Архив личного журнала"))}</h2>
+            <p class="section-heading__eyebrow">${escapeHtml(tx("personalArchiveStatus", "В корзине"))}</p>
+            <h2>${escapeHtml(session.title || tx("personalArchiveTitle", "Корзина личного журнала"))}</h2>
             <p class="shipcashbox-note">${escapeHtml(t("archivedOn"))}: ${escapeHtml(session.closed_at || "")}</p>
           </div>
         </div>
         <div class="shipcashbox-actions">
           ${renderExports(session.exports || [], { personal: true })}
-          <button class="btn btn--primary reopen-session-btn" type="button" data-id="${escapeHtml(session.id)}" title="${escapeHtml(tx("personalReopenJournalHelp", "Снова открыть личный журнал, чтобы внести забытые записи."))}" aria-label="${escapeHtml(tx("personalReopenJournalHelp", "Снова открыть личный журнал, чтобы внести забытые записи."))}">${escapeHtml(tx("personalReopenJournal", "Открыть журнал"))}</button>
+          <button class="btn btn--primary reopen-session-btn" type="button" data-id="${escapeHtml(session.id)}" data-session-mode="personal" title="${escapeHtml(tx("personalReopenJournalHelp", "Снова открыть личный журнал, чтобы внести забытые записи."))}" aria-label="${escapeHtml(tx("personalReopenJournalHelp", "Снова открыть личный журнал, чтобы внести забытые записи."))}">${escapeHtml(tx("personalReopenJournal", "Открыть журнал"))}</button>
           <button class="btn btn--secondary delete-archive-session-btn" type="button" data-id="${escapeHtml(session.id)}" title="${escapeHtml(t("deleteArchiveHelp"))}" aria-label="${escapeHtml(t("deleteArchiveHelp"))}">${escapeHtml(t("deleteArchive"))}</button>
         </div>
       </section>
@@ -4214,15 +5084,15 @@ function renderArchiveDetailWindow(session) {
           </div>
         </div>
         <div class="shipcashbox-metrics shipcashbox-metrics--compact">
-          <div class="shipcashbox-metric"><span>${escapeHtml(t("summaryCash"))}</span><strong>${escapeHtml(money(totals.cashbox_balance, session.currency, true))}</strong></div>
-          <div class="shipcashbox-metric"><span>${escapeHtml(t("summaryExpenses"))}</span><strong>${escapeHtml(money(totals.total_expenses, session.currency))}</strong></div>
-          <div class="shipcashbox-metric"><span>${escapeHtml(t("summaryContributions"))}</span><strong>${escapeHtml(money(totals.total_contributions, session.currency))}</strong></div>
-          <div class="shipcashbox-metric"><span>${escapeHtml(t("summaryShare"))}</span><strong>${escapeHtml(money(totals.share, session.currency))}</strong></div>
+          <div class="shipcashbox-metric"><span>${escapeHtml(t("summaryCash"))}</span><strong>${escapeHtml(displayMoney(totals.cashbox_balance, session.currency, true))}</strong></div>
+          <div class="shipcashbox-metric"><span>${escapeHtml(t("summaryExpenses"))}</span><strong>${escapeHtml(displayMoney(totals.total_expenses, session.currency))}</strong></div>
+          <div class="shipcashbox-metric"><span>${escapeHtml(t("summaryContributions"))}</span><strong>${escapeHtml(displayMoney(totals.total_contributions, session.currency))}</strong></div>
+          <div class="shipcashbox-metric"><span>${escapeHtml(t("summaryShare"))}</span><strong>${escapeHtml(displayMoney(totals.share, session.currency))}</strong></div>
         </div>
         <div class="shipcashbox-actions">
           ${renderExports(session.exports || [])}
           <button class="btn btn--secondary print-archive-settlement-pdf-btn" type="button" data-id="${escapeHtml(session.id)}" title="${escapeHtml(tx("debtMatrixPdfHelp", "Открыть альбомный отчет для печати или сохранения в PDF."))}" aria-label="${escapeHtml(tx("debtMatrixPdfHelp", "Открыть альбомный отчет для печати или сохранения в PDF."))}">${escapeHtml(tx("debtMatrixPdfButton", "Сохранить PDF"))}</button>
-          <button class="btn btn--primary reopen-session-btn" type="button" data-id="${escapeHtml(session.id)}" title="${escapeHtml(t("reopenCashboxHelp"))}" aria-label="${escapeHtml(t("reopenCashboxHelp"))}">${escapeHtml(t("reopenCashbox"))}</button>
+          <button class="btn btn--primary reopen-session-btn" type="button" data-id="${escapeHtml(session.id)}" data-session-mode="${escapeHtml(session.session_mode || "group")}" title="${escapeHtml(t("reopenCashboxHelp"))}" aria-label="${escapeHtml(t("reopenCashboxHelp"))}">${escapeHtml(t("reopenCashbox"))}</button>
           <button class="btn btn--secondary delete-archive-session-btn" type="button" data-id="${escapeHtml(session.id)}" title="${escapeHtml(t("deleteArchiveHelp"))}" aria-label="${escapeHtml(t("deleteArchiveHelp"))}">${escapeHtml(t("deleteArchive"))}</button>
         </div>
       </section>
@@ -4288,6 +5158,10 @@ function renderServiceWindow() {
     : [t("guideStep1"), t("guideStep2"), t("guideStep3"), t("guideStep4")];
   const serviceTitle = personal ? tx("personalServiceTitle", "Сервис журнала") : t("workspaceServiceTitle");
   const serviceText = personal ? tx("personalServiceText", "Ссылка, установка и обновление приложения.") : t("workspaceServiceText");
+  const serviceEyebrow = personal ? tx("personalServiceEyebrow", "Инструменты журнала") : t("shareTool");
+  const serviceAction = personal ? tx("personalServiceLinkAction", "Скопировать ссылку") : t("shareTool");
+  const serviceHelp = personal ? tx("personalServiceLinkHelp", "Скопировать ссылку на сервис журнала.") : t("shareToolHelp");
+  const serviceEmpty = personal ? tx("personalWorkspaceServiceEmpty", "Инструкции по установке появятся после первого запуска приложения на этом устройстве.") : t("workspaceServiceEmpty");
   return `
     <div class="shipcashbox-stack">
       <section class="shipcashbox-card shipcashbox-card--window">
@@ -4304,13 +5178,13 @@ function renderServiceWindow() {
       <section class="shipcashbox-card shipcashbox-card--window">
         <div class="shipcashbox-card__head">
           <div>
-            <p class="section-heading__eyebrow">${escapeHtml(t("shareTool"))}</p>
+            <p class="section-heading__eyebrow">${escapeHtml(serviceEyebrow)}</p>
             <h2>${escapeHtml(serviceTitle)}</h2>
           </div>
         </div>
         <p class="shipcashbox-note">${escapeHtml(serviceText)}</p>
         <div class="shipcashbox-actions">
-          <button class="btn btn--primary" type="button" id="workspaceShareToolButton" title="${escapeHtml(personal ? tx("personalShareToolHelp", "Отправить ссылку на этот инструмент.") : t("shareToolHelp"))}" aria-label="${escapeHtml(personal ? tx("personalShareToolHelp", "Отправить ссылку на этот инструмент.") : t("shareToolHelp"))}">${escapeHtml(t("shareTool"))}</button>
+          <button class="btn btn--primary" type="button" id="workspaceShareToolButton" title="${escapeHtml(serviceHelp)}" aria-label="${escapeHtml(serviceHelp)}">${escapeHtml(serviceAction)}</button>
         </div>
       </section>
       <section class="shipcashbox-card shipcashbox-card--window shipcashbox-card--service-reset">
@@ -4326,7 +5200,7 @@ function renderServiceWindow() {
           <button class="btn btn--secondary" type="button" id="workspaceCacheResetButton">${escapeHtml(tx("cacheResetAction", "Обновить приложение"))}</button>
         </div>
       </section>
-      ${installBox ? installBox : `<section class="shipcashbox-card shipcashbox-card--window"><p class="shipcashbox-empty">${escapeHtml(t("workspaceServiceEmpty"))}</p></section>`}
+      ${installBox ? installBox : `<section class="shipcashbox-card shipcashbox-card--window"><p class="shipcashbox-empty">${escapeHtml(serviceEmpty)}</p></section>`}
     </div>
   `;
 }
@@ -4370,10 +5244,20 @@ function renderTreasurerAttachments(session, currency = "EUR") {
   `;
 }
 
+function renderTreasurerDocumentsWindow(session) {
+  const content = renderTreasurerAttachments(session, session.currency || "EUR");
+  return `
+    <section class="shipcashbox-card shipcashbox-card--window shipcashbox-card--documents">
+      ${content || `<p class="shipcashbox-empty">${escapeHtml(tx("documentsEmpty", "Документы этой записи пока не добавлены."))}</p>`}
+      <p class="shipcashbox-note shipcashbox-note--storage">${escapeHtml(tx("documentsRetentionNote", "Фото чеков облегчаются перед сохранением. Для сданных отчетов нужен срок хранения или внешнее файловое хранилище; Atlas должен хранить метаданные, а не тяжелые фото."))}</p>
+    </section>
+  `;
+}
+
 function workspaceWindowPayload(windowName) {
   if (windowName === "menu") {
     return {
-      eyebrow: isPersonalSession() ? tx("personalModeBadge", "Личный режим") : t("workspaceMenuEyebrow"),
+      eyebrow: t("workspaceMenuEyebrow"),
       title: workspaceMenuTitleLabel(),
       body: renderWorkspaceMenu(),
     };
@@ -4382,9 +5266,9 @@ function workspaceWindowPayload(windowName) {
   if (state.viewer === "treasurer" && state.boot && windowName === "archive") {
     const personal = isPersonalSession(state.boot.session);
     return {
-      eyebrow: personal ? tx("personalArchiveTitle", "Архив личного журнала") : t("archiveTitle"),
-      title: personal ? tx("personalArchiveTitle", "Архив личного журнала") : t("archiveTitle"),
-      body: `<section class="shipcashbox-card shipcashbox-card--window"><div class="shipcashbox-archive">${renderArchiveRows(archiveRowsForCurrentMode(state.boot.archive || []), false)}</div></section>`,
+      eyebrow: personal ? tx("personalArchiveTitle", "Корзина личного журнала") : t("archiveTitle"),
+      title: personal ? tx("personalArchiveTitle", "Корзина личного журнала") : t("archiveTitle"),
+      body: `<section class="shipcashbox-card shipcashbox-card--window"><div class="shipcashbox-archive">${renderTrashRows(archiveRowsForCurrentMode(state.boot.archive || []), false)}</div></section>`,
     };
   }
 
@@ -4402,8 +5286,8 @@ function workspaceWindowPayload(windowName) {
     const personal = isPersonalSession(session);
     if (windowName === "snapshot") {
       return {
-        eyebrow: personal ? tx("personalSummaryTitle", "Личный отчет") : t("summaryTitle"),
-        title: personal ? tx("personalSummaryTitle", "Личный отчет") : t("summaryTitle"),
+        eyebrow: personal ? tx("personalSnapshotTitle", "Сейчас в журнале") : t("summaryTitle"),
+        title: personal ? tx("personalSnapshotTitle", "Сейчас в журнале") : tx("cashboxMenuInCashbox", "В кассе"),
         body: renderTreasurerSnapshotWindow(session),
       };
     }
@@ -4423,8 +5307,8 @@ function workspaceWindowPayload(windowName) {
     }
     if (personal && ["settlement", "log-diagram", "log-tree"].includes(windowName)) {
       return {
-        eyebrow: tx("personalSummaryTitle", "Личный отчет"),
-        title: tx("personalReportTitle", "Приходы и расходы"),
+        eyebrow: tx("personalReportsWorkspaceTitle", "Создание отчетов"),
+        title: tx("personalReportTitle", "Текущий отчет"),
         body: renderPersonalReportsWindow(session),
       };
     }
@@ -4437,9 +5321,16 @@ function workspaceWindowPayload(windowName) {
     }
     if (windowName === "reports") {
       return {
-        eyebrow: personal ? tx("personalSummaryTitle", "Личный отчет") : t("workspaceReportsTitle"),
-        title: personal ? tx("personalReportTitle", "Приходы и расходы") : t("workspaceReportsTitle"),
+        eyebrow: personal ? tx("personalReportsWorkspaceTitle", "Создание отчетов") : t("workspaceReportsTitle"),
+        title: personal ? tx("personalReportTitle", "Текущий отчет") : t("workspaceReportsTitle"),
         body: renderTreasurerReportsWindow(session),
+      };
+    }
+    if (windowName === "documents") {
+      return {
+        eyebrow: tx("documentsEyebrow", "Вложения"),
+        title: tx("documentsTitle", "Документы записи"),
+        body: renderTreasurerDocumentsWindow(session),
       };
     }
     if (windowName === "log-diagram") {
@@ -4497,7 +5388,7 @@ function renderTreasurer() {
             <input type="text" id="newSessionTitleInput" value="" placeholder="${escapeHtml(t("groupNamePlaceholder"))}">
           </label>
           <label class="shipcashbox-field">
-            <span>${escapeHtml(tx("personalOpeningBalance", "Сколько денег было"))}</span>
+            <span>${escapeHtml(tx("personalOpeningBalance", "Входящий баланс"))}</span>
             <input type="text" id="newSessionOpeningInput" value="" inputmode="decimal" placeholder="0">
           </label>
           <div class="shipcashbox-actions">
@@ -4514,7 +5405,7 @@ function renderTreasurer() {
               <h2>${escapeHtml(t("archiveTitle"))}</h2>
             </div>
           </div>
-          <div class="shipcashbox-archive">${renderArchiveRows(archive, true)}</div>
+          <div class="shipcashbox-archive">${renderTrashRows(archive, true)}</div>
         </section>
 
         ${renderInstallBox()}
@@ -4546,42 +5437,41 @@ function renderTreasurer() {
     return;
   }
   const attachmentAction = session.status === "active"
-    ? `<button class="shipcashbox-notebook-attach-inline shipcashbox-notebook-action shipcashbox-notebook-action--attach notebook-keep-focus" type="button" id="attachReceiptButton" title="${escapeHtml(t("attachPhoto"))}" aria-label="${escapeHtml(t("attachPhoto"))}"><span aria-hidden="true">📎</span><span class="shipcashbox-sr-only">${escapeHtml(t("attachPhoto"))}</span></button>`
+    ? `<button class="shipcashbox-journal-attach notebook-keep-focus" type="button" id="journalAttachReceiptButton" title="${escapeHtml(t("attachPhoto"))}" aria-label="${escapeHtml(t("attachPhoto"))}"><span class="shipcashbox-journal-attach__glyph" aria-hidden="true">📎</span><span class="shipcashbox-sr-only">${escapeHtml(t("attachPhoto"))}</span></button>`
     : "";
+  const journalPlaceholder = selectedReadyRecord ? "" : journalNotebookPlaceholder();
+  const activeReportTitle = personal ? activePersonalReportTitle(session) : "";
+  const journalTitle = personal && activeReportTitle
+    ? activeReportTitle
+    : tx("expenseFeedTitle", "Лента учета расходов");
   const notebookAction = session.status === "active"
     ? `
-        <button class="btn btn--primary shipcashbox-notebook-action shipcashbox-notebook-action--submit notebook-keep-focus" type="button" id="treasurerSubmitNotebookButton" title="${escapeHtml(tx("fixNotebookRecords", "Зафиксировать записи"))}" aria-label="${escapeHtml(tx("fixNotebookRecords", "Зафиксировать записи"))}">${renderNotebookSubmitLabel(notebookText, session.currency)}</button>
+        <button class="shipcashbox-journal-submit notebook-keep-focus" type="button" id="treasurerSubmitNotebookButton" title="${escapeHtml(tx("fixNotebookRecords", "Зафиксировать записи"))}" aria-label="${escapeHtml(tx("fixNotebookRecords", "Зафиксировать записи"))}">${renderJournalSubmitLabel(notebookText, session.currency)}</button>
         ${attachmentAction}
       `
     : "";
   $("treasurerView").innerHTML = `
-    <div class="shipcashbox-stack shipcashbox-stack--journal">
-      <section class="shipcashbox-card shipcashbox-card--sticky shipcashbox-card--notebook">
-        <div class="shipcashbox-card__head shipcashbox-workhead">
-          <div>
-            <p class="section-heading__eyebrow">${escapeHtml(personal ? tx("modePersonalLabel", "Личный") : tx("cashboxTeamHeaderTitle", "Касса команды"))}</p>
-            <h2 class="shipcashbox-work-title shipcashbox-work-title--ledger">${escapeHtml(tx("expenseFeedTitle", "Лента учета расходов"))} <span aria-hidden="true">+ / -</span></h2>
-          </div>
-          <div class="shipcashbox-inline-actions">
-            <button class="btn btn--secondary shipcashbox-back-to-cashbox" type="button" id="backToCashboxButton">${escapeHtml(personal ? tx("backToPersonalAccounting", "К личному учету") : tx("backToCashbox", "К кассе команды"))}</button>
-          </div>
+    <div class="shipcashbox-journal-screen">
+      <div class="shipcashbox-journal-head">
+        <div>
+          <h2 class="shipcashbox-work-title shipcashbox-work-title--ledger">${escapeHtml(journalTitle)} <span aria-hidden="true">+ / -</span></h2>
+          ${personal && activeReportTitle ? `<p class="shipcashbox-note">${escapeHtml(tx("personalReportRecordInputHint", "Запись будет привязана к этому отчету после фиксации."))}</p>` : ""}
         </div>
-        <div class="shipcashbox-notebook-shell">
-          ${renderNotebookSheetMeta(notebookText, session.currency, selectedReadyRecord)}
-          ${selectedReadyRecord ? renderReadyRecordLayer(selectedReadyRecord, session.currency) : ""}
-          <textarea id="treasurerNotebook" class="shipcashbox-notebook-textarea" placeholder="${escapeHtml(personal ? tx("personalNotebookPlaceholder", "Введите строки учета: сумма и пояснение.") : t("notebookPlaceholder"))}" aria-label="${escapeHtml(personal ? tx("personalNotebookTitle", "Личный блокнот") : t("treasurerNotebookTitle"))}" ${readOnly ? "readonly" : ""}>${escapeHtml(notebookText)}</textarea>
-          <div class="shipcashbox-notebook-proof-rail" id="treasurerNotebookProofRail" aria-label="${escapeHtml(t("lineProofAction"))}" hidden></div>
-          ${renderNotebookLockOverlay()}
-        </div>
-        ${session.status !== "active" && !state.editorLocked ? `<p class="shipcashbox-note">${escapeHtml(t("participantReadonly"))}</p>` : ""}
-        ${renderNotebookFooter({
-          label: selectedReadyRecord ? tx("readyRecordFooterLabel", "Готовая запись") : tx("activeRecordFooterLabel", "Текущая запись"),
-          value: money(treasurer?.expenses || 0, session.currency),
-          actionHtml: notebookAction,
-          statusId: "treasurerSaveMeta",
-          statusText: treasurerNotebookSummary(),
-        })}
-      </section>
+      </div>
+      <div class="shipcashbox-journal-input-shell">
+        ${renderJournalSheetMeta(notebookText, session.currency, selectedReadyRecord)}
+        ${selectedReadyRecord ? renderReadyRecordLayer(selectedReadyRecord, session.currency) : ""}
+        <textarea id="treasurerNotebook" class="shipcashbox-journal-textarea" placeholder="${escapeHtml(journalPlaceholder)}" aria-label="${escapeHtml(personal ? tx("personalNotebookTitle", "Личный блокнот") : t("treasurerNotebookTitle"))}" ${readOnly ? "readonly" : ""}>${escapeHtml(notebookText)}</textarea>
+        ${renderJournalDisputeNotice(notebookText)}
+        <div class="shipcashbox-notebook-proof-rail" id="treasurerNotebookProofRail" aria-label="${escapeHtml(t("lineProofAction"))}" hidden></div>
+        ${renderNotebookLockOverlay()}
+      </div>
+      ${session.status !== "active" && !state.editorLocked ? `<p class="shipcashbox-note">${escapeHtml(t("participantReadonly"))}</p>` : ""}
+      ${renderJournalFooter({
+        actionHtml: notebookAction,
+        statusId: "treasurerSaveMeta",
+        statusText: treasurerNotebookSummary(),
+      })}
     </div>
   `;
 
@@ -4657,6 +5547,185 @@ async function saveSessionMeta(extra = {}, options = {}) {
   localStorage.setItem(ENGAGED_KEY, "1");
   render({ preserveWorkspace: true });
   if (!options.silent) setFlash(t("saved"));
+  return payload;
+}
+
+async function startPersonalReport() {
+  const session = state.boot?.session;
+  if (!session || !isPersonalSession(session)) {
+    throw new Error(tx("personalStartReportRequiresPersonal", "Сначала откройте личный журнал."));
+  }
+  const titleInput = $("personalReportTitleInput")?.value.trim() || "";
+  const openingInput = $("personalReportOpeningBalanceInput")?.value.trim() || "0";
+  const existingDraft = normalizedText(state.treasurerDraft || treasurerServerNotebookText(session));
+  if (existingDraft.trim()) {
+    const preservedPayload = await api("save-treasurer-notebook", {
+      method: "POST",
+      body: JSON.stringify({
+        id: session.id,
+        notebook_text: existingDraft,
+        submit: true,
+        record_scope: "free",
+      }),
+    });
+    state.boot = preservedPayload;
+    clearTreasurerDraft(preservedPayload.session?.id);
+    saveCache(BOOT_CACHE_KEY, preservedPayload);
+  }
+  const payload = await api("start-personal-report", {
+    method: "POST",
+    body: JSON.stringify({
+      id: (state.boot?.session || session).id,
+      title: titleInput,
+      opening_balance: openingInput,
+      period_start: new Date().toISOString(),
+    }),
+  });
+  state.boot = payload;
+  state.personalViewedReportId = "";
+  state.personalRecordFocus = payload.session?.active_personal_report_id || "";
+  clearTreasurerDraft(payload.session?.id);
+  saveCache(BOOT_CACHE_KEY, payload);
+  localStorage.setItem(ENGAGED_KEY, "1");
+  closeWorkspaceModal();
+  state.activeReadyRecord = null;
+  state.editingReadyRecord = null;
+  saveWorkspaceView("journal", payload.session?.id);
+  render();
+  window.requestAnimationFrame(() => $("treasurerNotebook")?.focus({ preventScroll: true }));
+  setFlash(tx("personalStartReportSaved", "Отчет начат."));
+  return payload;
+}
+
+async function selectPersonalReport(reportId) {
+  const session = state.boot?.session;
+  const id = String(reportId || "").trim();
+  if (!session || !isPersonalSession(session)) {
+    throw new Error(tx("personalStartReportRequiresPersonal", "Сначала откройте личный журнал."));
+  }
+  if (!id || id === session.active_personal_report_id) {
+    return state.boot;
+  }
+  const payload = await api("select-personal-report", {
+    method: "POST",
+    body: JSON.stringify({
+      id: session.id,
+      report_id: id,
+    }),
+  });
+  state.boot = payload;
+  state.personalViewedReportId = "";
+  state.personalRecordFocus = id;
+  saveCache(BOOT_CACHE_KEY, payload);
+  localStorage.setItem(ENGAGED_KEY, "1");
+  render({ preserveWorkspace: true });
+  openWorkspaceModal("reports");
+  setFlash(tx("personalReportSelected", "Отчет выбран."));
+  return payload;
+}
+
+function viewFixedPersonalReport(reportId) {
+  const summary = personalReportSummary(state.boot?.session);
+  const report = personalReportById(summary, reportId);
+  if (!report || String(report.status || "") !== "fixed") {
+    throw new Error(tx("personalFixedReportMissing", "Закрепленный отчет не найден."));
+  }
+  state.personalViewedReportId = String(report.id || "");
+  render({ preserveWorkspace: true });
+  openWorkspaceModal("reports");
+  setFlash(tx("personalFixedReportOpened", "Закрепленный отчет открыт для просмотра."));
+}
+
+async function restorePersonalReport(reportId) {
+  const session = state.boot?.session;
+  const id = String(reportId || "").trim();
+  if (!session || !isPersonalSession(session)) {
+    throw new Error(tx("personalStartReportRequiresPersonal", "Сначала откройте личный журнал."));
+  }
+  if (!id) {
+    throw new Error(tx("personalFixedReportMissing", "Закрепленный отчет не найден."));
+  }
+  if (!window.confirm(tx("personalRestoreReportConfirm", "Вернуть закрепленный отчет в активные? Его записи снова появятся в активном списке."))) {
+    return state.boot;
+  }
+  const payload = await api("restore-personal-report", {
+    method: "POST",
+    body: JSON.stringify({
+      id: session.id,
+      report_id: id,
+    }),
+  });
+  state.boot = payload;
+  state.personalViewedReportId = "";
+  state.personalRecordFocus = reportId;
+  saveCache(BOOT_CACHE_KEY, payload);
+  localStorage.setItem(ENGAGED_KEY, "1");
+  render({ preserveWorkspace: true });
+  openWorkspaceModal("reports");
+  setFlash(tx("personalRestoreReportDone", "Отчет возвращен в активные."));
+  return payload;
+}
+
+async function attachPersonalRecordToReport(batchId) {
+  const session = state.boot?.session;
+  const id = String(batchId || "").trim();
+  const reportId = session?.active_personal_report_id || "";
+  if (!session || !isPersonalSession(session)) {
+    throw new Error(tx("personalStartReportRequiresPersonal", "Сначала откройте личный журнал."));
+  }
+  if (!reportId) {
+    throw new Error(tx("personalAttachRequiresReport", "Сначала начните или выберите отчет."));
+  }
+  if (!id) {
+    throw new Error(tx("personalAttachRequiresRecord", "Выберите запись."));
+  }
+  const payload = await api("attach-personal-record", {
+    method: "POST",
+    body: JSON.stringify({
+      id: session.id,
+      batch_id: id,
+      report_id: reportId,
+    }),
+  });
+  state.boot = payload;
+  state.personalViewedReportId = "";
+  state.personalRecordFocus = id;
+  saveCache(BOOT_CACHE_KEY, payload);
+  localStorage.setItem(ENGAGED_KEY, "1");
+  render({ preserveWorkspace: true });
+  openWorkspaceModal("reports");
+  setFlash(tx("personalAttachRecordDone", "Запись подключена к отчету."));
+  return payload;
+}
+
+async function fixPersonalReport(reportIdInput = "") {
+  const session = state.boot?.session;
+  const reportId = String(reportIdInput || session?.active_personal_report_id || "").trim();
+  if (!session || !isPersonalSession(session)) {
+    throw new Error(tx("personalStartReportRequiresPersonal", "Сначала откройте личный журнал."));
+  }
+  if (!reportId) {
+    throw new Error(tx("personalFixReportRequiresReport", "Сначала выберите активный отчет."));
+  }
+  if (!window.confirm(tx("personalFixReportConfirm", "Закрепить выбранный отчет? Его записи останутся в логе отчета и уйдут из активного списка."))) {
+    return state.boot;
+  }
+  const payload = await api("fix-personal-report", {
+    method: "POST",
+    body: JSON.stringify({
+      id: session.id,
+      report_id: reportId,
+      period_end: new Date().toISOString(),
+    }),
+  });
+  state.boot = payload;
+  state.personalViewedReportId = reportId;
+  state.personalRecordFocus = reportId;
+  saveCache(BOOT_CACHE_KEY, payload);
+  localStorage.setItem(ENGAGED_KEY, "1");
+  render({ preserveWorkspace: true });
+  openWorkspaceModal("reports");
+  setFlash(tx("personalFixReportDone", "Отчет закреплен."));
   return payload;
 }
 
@@ -4860,7 +5929,7 @@ async function createLightPdfFile(file) {
 }
 
 async function createLightReceiptImageFile(file) {
-  const rasterized = await rasterizeImageForPdf(file, { maxLongSide: 1800, quality: 0.74 });
+  const rasterized = await rasterizeImageForPdf(file, { maxLongSide: 1400, quality: 0.64 });
   const baseName = slugify(String(file.name || "").replace(/\.[^.]+$/, "")) || "receipt-photo";
   const blob = new Blob([rasterized.jpegBytes], { type: "image/jpeg" });
   return new File([blob], `${baseName}.jpg`, {
@@ -4877,9 +5946,10 @@ function todayInputValue() {
 
 function normalizeScanAmount(value) {
   const normalized = String(value || "").trim().replace(/\s+/g, "").replace(",", ".");
-  const amount = Number.parseFloat(normalized);
+  const sign = normalized.startsWith("+") ? "+" : normalized.startsWith("-") ? "-" : "";
+  const amount = Number.parseFloat(normalized.replace(/^[+-]/, ""));
   if (!Number.isFinite(amount) || amount <= 0) return "";
-  return String(moneyRound(amount)).replace(/\.00$/, "");
+  return `${sign}${String(moneyRound(amount)).replace(/\.00$/, "")}`;
 }
 
 function scanEngineApi() {
@@ -5524,7 +6594,8 @@ function buildScanNotebookLine({ amount, date, description }) {
   const parts = [];
   if (date) parts.push(date);
   parts.push(description || t("scanReviewDefaultDescription"));
-  return `${amount} ${parts.join(" ")}`.trim();
+  const signedAmount = /^[+-]/.test(String(amount || "")) ? String(amount || "") : `-${amount}`;
+  return `${signedAmount} ${parts.join(" ")}`.trim();
 }
 
 function appendScanLineToTreasurerNotebook(rawLine, scanId, attachment = null) {
@@ -5710,6 +6781,10 @@ function bindAttachmentSheetUi() {
   bindScanReviewZoom();
   $("attachmentGalleryButton")?.addEventListener("click", () => $("cashboxAttachmentGalleryInput")?.click());
   $("attachmentCameraButton")?.addEventListener("click", () => $("cashboxAttachmentCameraInput")?.click());
+  $("attachmentDocumentsButton")?.addEventListener("click", () => {
+    closeAttachmentSheet();
+    window.requestAnimationFrame(() => openWorkspaceModal("documents"));
+  });
   $("scanReviewInsertButton")?.addEventListener("click", insertScanDraftToNotebook);
   $("scanReviewCancelButton")?.addEventListener("click", skipScanReviewItem);
   [
@@ -5778,12 +6853,16 @@ async function openArchiveSession(id) {
   if (!id || !$("workspaceModalBody")) return;
   const previousTitle = $("workspaceModalTitle")?.textContent || "";
   const previousBody = $("workspaceModalBody").innerHTML;
-  if ($("workspaceModalEyebrow")) $("workspaceModalEyebrow").textContent = t("archiveTitle");
+  const loadingPersonal = isPersonalSession();
+  if ($("workspaceModalEyebrow")) $("workspaceModalEyebrow").textContent = loadingPersonal ? tx("personalArchiveTitle", "Корзина личного журнала") : t("archiveTitle");
   if ($("workspaceModalTitle")) $("workspaceModalTitle").textContent = t("archiveSnapshotTitle");
   $("workspaceModalBody").innerHTML = `<section class="shipcashbox-card shipcashbox-card--window"><p class="shipcashbox-empty">${escapeHtml(t("loading"))}</p></section>`;
   try {
     const payload = await api(`archive-session&id=${encodeURIComponent(id)}`);
     if (!payload.session) throw new Error(t("archiveEmpty"));
+    const personal = isPersonalSession(payload.session);
+    if ($("workspaceModalEyebrow")) $("workspaceModalEyebrow").textContent = personal ? tx("personalArchiveTitle", "Корзина личного журнала") : t("archiveTitle");
+    if ($("workspaceModalTitle")) $("workspaceModalTitle").textContent = t("archiveSnapshotTitle");
     $("workspaceModal").dataset.window = "archive-detail";
     $("workspaceModalBody").innerHTML = renderArchiveDetailWindow(payload.session);
     bindWorkspaceModalUi();
@@ -5899,7 +6978,7 @@ function ensureReadyRecordEditModal() {
     <section class="shipcashbox-modal__card section--paper" role="dialog" aria-modal="true" aria-labelledby="readyRecordEditTitle">
       <div class="shipcashbox-modal__head">
         <div>
-          <p class="section-heading__eyebrow">${escapeHtml(tx("readyRecordEditEyebrow", "Готовая запись"))}</p>
+          <p class="section-heading__eyebrow" id="readyRecordEditEyebrow">${escapeHtml(tx("readyRecordEditEyebrow", "Готовая запись"))}</p>
           <h2 id="readyRecordEditTitle">${escapeHtml(tx("readyRecordEditTitle", "Редактировать запись?"))}</h2>
         </div>
         <button type="button" class="management-modal__close shipcashbox-modal-x" data-close-ready-edit="1" aria-label="${escapeHtml(t("close"))}">×</button>
@@ -5920,8 +6999,13 @@ function ensureReadyRecordEditModal() {
 
 function showReadyRecordEditModal(batch) {
   const modal = ensureReadyRecordEditModal();
+  const personal = isPersonalSession();
   modal.dataset.batchId = String(batch?.id || "");
-  $("readyRecordEditText").textContent = tx("readyRecordEditConfirm", "Текст будет перенесен в активное окно ЖЗ. Готовая карточка останется в кассе до повторной фиксации.");
+  if ($("readyRecordEditEyebrow")) $("readyRecordEditEyebrow").textContent = personal ? tx("personalReadyRecordEditEyebrow", "Готовая запись журнала") : tx("readyRecordEditEyebrow", "Готовая запись");
+  if ($("readyRecordEditTitle")) $("readyRecordEditTitle").textContent = personal ? tx("personalReadyRecordEditTitle", "Редактировать запись?") : tx("readyRecordEditTitle", "Редактировать запись?");
+  $("readyRecordEditText").textContent = personal
+    ? tx("personalReadyRecordEditConfirm", "Текст будет перенесен в активное окно ЖЗ. Готовая запись останется в списке готовых записей до повторной фиксации.")
+    : tx("readyRecordEditConfirm", "Текст будет перенесен в активное окно ЖЗ. Готовая карточка останется в кассе до повторной фиксации.");
   $("readyRecordEditConfirmButton").onclick = () => {
     const current = activeReadyRecordBatch();
     closeReadyRecordEditModal({ logCancel: false });
@@ -5952,6 +7036,7 @@ function closeReadyRecordEditModal({ logCancel = true } = {}) {
 }
 
 function returnFromTreasurerJournalToCashbox({ source = "journal-fixation-return" } = {}) {
+  syncTreasurerDraftFromMountedTextarea();
   state.activeReadyRecord = null;
   state.editingReadyRecord = null;
   saveWorkspaceView("cashbox", state.boot?.session?.id);
@@ -5959,8 +7044,22 @@ function returnFromTreasurerJournalToCashbox({ source = "journal-fixation-return
   render();
 }
 
+function openCashboxRecordsList({ source = "records-list-opened" } = {}) {
+  syncTreasurerDraftFromMountedTextarea();
+  state.activeReadyRecord = null;
+  state.editingReadyRecord = null;
+  saveWorkspaceView("cashbox", state.boot?.session?.id);
+  appendRecoveryLog("cashbox-records-list-opened", { source }, state.boot?.session?.id);
+  render();
+}
+
 async function handleTreasurerNotebookPrimaryAction() {
   const draft = normalizedText(state.treasurerDraft || "");
+  if (!draft.trim()) {
+    clearTreasurerDraft(state.boot?.session?.id);
+    openCashboxRecordsList({ source: "empty-journal-return" });
+    return null;
+  }
   if (state.activeReadyRecord && !draft.trim()) {
     returnFromTreasurerJournalToCashbox({ source: "ready-record-view-return" });
     return null;
@@ -6082,6 +7181,64 @@ async function trashReadyRecord(owner, batchId) {
   } finally {
     if (button) button.removeAttribute("aria-busy");
   }
+}
+
+async function restoreTrashRecord(button) {
+  const trashId = button?.dataset?.trashId || button?.dataset?.batchId || "";
+  if (!trashId || !state.boot?.session?.id) return;
+  try {
+    button.disabled = true;
+    button.setAttribute("aria-busy", "true");
+    const payload = await api("restore-trash-batch", {
+      method: "POST",
+      body: JSON.stringify({
+        id: state.boot.session.id,
+        participant_id: button.dataset.participantId || "",
+        trash_id: trashId,
+      }),
+    });
+    state.boot = payload;
+    saveCache(BOOT_CACHE_KEY, payload);
+    render({ preserveWorkspace: true });
+    openWorkspaceModal("archive");
+    setFlash(tx("trashRecordRestored", "Запись восстановлена из корзины."));
+  } catch (error) {
+    setFlash(error.message || t("loadFailed"), true);
+  } finally {
+    button.disabled = false;
+    button.setAttribute("aria-busy", "false");
+  }
+}
+
+function openTrashRecordLog(button) {
+  const record = findTrashRecord(button?.dataset?.trashId || "");
+  if (!$("workspaceModalBody")) return;
+  if ($("workspaceModalEyebrow")) $("workspaceModalEyebrow").textContent = t("archiveTitle");
+  if ($("workspaceModalTitle")) $("workspaceModalTitle").textContent = tx("trashRecordLogTitle", "Лог удаленной записи");
+  $("workspaceModal").dataset.window = "trash-record-detail";
+  $("workspaceModalBody").innerHTML = renderTrashRecordLog(record);
+  bindWorkspaceModalUi();
+}
+
+function bindTrashRecordButtons() {
+  document.querySelectorAll(".open-trash-record-btn").forEach((button) => {
+    if (button.dataset.trashOpenBound === "1") return;
+    button.dataset.trashOpenBound = "1";
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      openTrashRecordLog(button);
+    });
+  });
+  document.querySelectorAll(".restore-trash-record-btn").forEach((button) => {
+    if (button.dataset.trashRestoreBound === "1") return;
+    button.dataset.trashRestoreBound = "1";
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      restoreTrashRecord(button);
+    });
+  });
 }
 
 function bindNotebookTrashGestures() {
@@ -6207,6 +7364,37 @@ function bindTreasurerUi() {
     }
   }));
   $("saveSessionButton")?.addEventListener("click", () => saveSessionMeta().catch((error) => setFlash(error.message || t("loadFailed"))));
+  document.querySelectorAll("[data-start-personal-report]").forEach((button) => {
+    button.addEventListener("click", () => startPersonalReport().catch((error) => setFlash(error.message || t("loadFailed"), true)));
+  });
+  document.querySelectorAll("[data-fix-personal-report]").forEach((button) => {
+    button.addEventListener("click", () => fixPersonalReport(button.dataset.fixPersonalReport || "").catch((error) => setFlash(error.message || t("loadFailed"), true)));
+  });
+  document.querySelectorAll("[data-personal-record-scope]").forEach((button) => {
+    button.addEventListener("click", () => setPersonalRecordFocus(button.dataset.personalRecordScope || ""));
+  });
+  document.querySelectorAll("[data-view-fixed-personal-report]").forEach((button) => {
+    button.addEventListener("click", () => {
+      try {
+        viewFixedPersonalReport(button.dataset.viewFixedPersonalReport || "");
+      } catch (error) {
+        setFlash(error.message || t("loadFailed"), true);
+      }
+    });
+  });
+  document.querySelectorAll("[data-restore-personal-report]").forEach((button) => {
+    button.addEventListener("click", () => restorePersonalReport(button.dataset.restorePersonalReport || "").catch((error) => setFlash(error.message || t("loadFailed"), true)));
+  });
+  document.querySelectorAll("[data-personal-report-id]").forEach((button) => {
+    button.addEventListener("click", () => selectPersonalReport(button.dataset.personalReportId || "").catch((error) => setFlash(error.message || t("loadFailed"), true)));
+  });
+  document.querySelectorAll(".attach-personal-record-btn").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      attachPersonalRecordToReport(button.dataset.batchId || "").catch((error) => setFlash(error.message || t("loadFailed"), true));
+    });
+  });
   $("shareToolButton")?.addEventListener("click", () => shareToolLink().catch((error) => setFlash(error.message || t("loadFailed"))));
   $("openWorkspaceMenuButton")?.addEventListener("click", () => openWorkspaceModal("menu"));
   $("createReadyRecordButton")?.addEventListener("click", () => {
@@ -6236,8 +7424,11 @@ function bindTreasurerUi() {
   document.querySelectorAll("#treasurerView [data-workspace-window]").forEach((button) => {
     button.addEventListener("click", () => openWorkspaceModal(button.dataset.workspaceWindow || "menu"));
   });
+  document.querySelectorAll("#treasurerView [data-workspace-action]").forEach((button) => {
+    button.addEventListener("click", () => handleWorkspaceAction(button.dataset.workspaceAction || ""));
+  });
   $("quickInviteParticipantButton")?.addEventListener("click", openTeamInviteDraft);
-  $("attachReceiptButton")?.addEventListener("click", openAttachmentSheet);
+  $("journalAttachReceiptButton")?.addEventListener("click", openAttachmentSheet);
   $("treasurerSaveButton")?.addEventListener("click", (event) => {
     runButtonAction(event.currentTarget, t("autosaveSaving"), () => saveTreasurerNotebook({ preserveFocus: true, silent: false }))
       .catch((error) => setFlash(error.message || t("loadFailed"), true));
@@ -6284,7 +7475,7 @@ function bindTreasurerUi() {
     });
   });
   $("confirmSettlementButton")?.addEventListener("click", async () => {
-    if (!confirmByWord("confirmSettlementByWord", "Чтобы закрыть кассу, введите {word}. Архив и письма будут созданы автоматически.", "confirmSettlementWord", "ЗАКРЫТЬ")) return;
+    if (!confirmByWord("confirmSettlementByWord", "Чтобы закрыть кассу, введите {word}. Карточка уйдет в корзину, письма будут созданы автоматически.", "confirmSettlementWord", "ЗАКРЫТЬ")) return;
     try {
       const payload = await api("confirm-settlement", {
         method: "POST",
@@ -6301,7 +7492,7 @@ function bindTreasurerUi() {
   });
   document.querySelectorAll(".reopen-session-btn").forEach((button) => {
     button.addEventListener("click", async () => {
-      if (!confirmByWord("reopenArchiveByWord", "Чтобы восстановить архив, введите {word}. Текущая активная касса должна быть закрыта.", "reopenArchiveWord", "ВОССТАНОВИТЬ")) return;
+      if (!confirmArchiveReopenForMode(button.dataset.sessionMode || state.boot?.session?.session_mode || "")) return;
       try {
         const payload = await api("reopen-session", {
           method: "POST",
@@ -6320,7 +7511,7 @@ function bindTreasurerUi() {
   });
   document.querySelectorAll(".delete-archive-session-btn").forEach((button) => {
     button.addEventListener("click", async () => {
-      if (!confirmByWord("deleteArchiveByWord", "Чтобы удалить карточку архива, введите {word}. На сервере она будет храниться еще 10 дней.", "deleteArchiveWord", "УДАЛИТЬ")) return;
+      if (!confirmByWord("deleteArchiveByWord", "Чтобы удалить карточку из корзины, введите {word}. На сервере она будет храниться еще 60 дней.", "deleteArchiveWord", "УДАЛИТЬ")) return;
       try {
         const payload = await api("delete-archive-session", {
           method: "POST",
@@ -6345,6 +7536,7 @@ function bindTreasurerUi() {
       window.requestAnimationFrame(() => openArchiveSession(button.dataset.id || ""));
     });
   });
+  bindTrashRecordButtons();
   bindParticipantRowActions();
 }
 
@@ -6504,7 +7696,7 @@ function openWorkspaceModal(windowName = "menu", options = {}) {
   if ($("workspaceCloseButton")) $("workspaceCloseButton").textContent = "×";
   $("workspaceModalEyebrow").textContent = payload.eyebrow;
   $("workspaceModalTitle").textContent = payload.title;
-  $("workspaceModalBody").innerHTML = payload.body;
+  $("workspaceModalBody").innerHTML = `${renderWorkspaceModalNav(windowName)}${payload.body}`;
   $("workspaceModalBody").scrollTop = Number(options.scrollTop || 0);
   if ($("workspaceModalMenuButton")) $("workspaceModalMenuButton").hidden = windowName === "menu";
   bindWorkspaceModalUi();
@@ -6517,6 +7709,33 @@ function closeWorkspaceModal() {
   $("workspaceModal").classList.remove("shipcashbox-modal--workscreen");
   $("workspaceModalBody").innerHTML = "";
   unlockModalScroll();
+}
+
+function handleWorkspaceAction(action = "") {
+  const normalized = String(action || "");
+  if (normalized === "records") {
+    closeWorkspaceModal();
+    openCashboxRecordsList({ source: "workspace-menu" });
+    return;
+  }
+  if (normalized === "journal") {
+    closeWorkspaceModal();
+    if (state.viewer === "treasurer" && state.boot?.session && openJournalFromActiveSession("workspace-menu")) return;
+    openActiveJournal().catch((error) => {
+      renderStartChoice();
+      showSoftNoticeModal(tx("activeJournalEmptyTitle", "Активного журнала пока нет"), error.message || tx("loadFailed", "Не удалось загрузить данные."));
+    });
+    return;
+  }
+  if (normalized === "cashbox") {
+    closeWorkspaceModal();
+    returnFromTreasurerJournalToCashbox({ source: "workspace-menu" });
+    return;
+  }
+  if (normalized === "settlement") {
+    closeWorkspaceModal();
+    openWorkspaceModal("settlement");
+  }
 }
 
 let pendingExitHref = "";
@@ -6687,9 +7906,40 @@ function bindWorkspaceModalUi() {
     window.setTimeout(() => addParticipantDraftRow(), 80);
   });
   $("saveSessionButton") && ($("saveSessionButton").onclick = () => saveSessionMeta().catch((error) => setFlash(error.message || t("loadFailed"))));
+  document.querySelectorAll("[data-start-personal-report]").forEach((button) => {
+    button.addEventListener("click", () => startPersonalReport().catch((error) => setFlash(error.message || t("loadFailed"), true)));
+  });
+  document.querySelectorAll("[data-fix-personal-report]").forEach((button) => {
+    button.addEventListener("click", () => fixPersonalReport(button.dataset.fixPersonalReport || "").catch((error) => setFlash(error.message || t("loadFailed"), true)));
+  });
+  document.querySelectorAll("[data-personal-record-scope]").forEach((button) => {
+    button.addEventListener("click", () => setPersonalRecordFocus(button.dataset.personalRecordScope || ""));
+  });
+  document.querySelectorAll("[data-view-fixed-personal-report]").forEach((button) => {
+    button.addEventListener("click", () => {
+      try {
+        viewFixedPersonalReport(button.dataset.viewFixedPersonalReport || "");
+      } catch (error) {
+        setFlash(error.message || t("loadFailed"), true);
+      }
+    });
+  });
+  document.querySelectorAll("[data-restore-personal-report]").forEach((button) => {
+    button.addEventListener("click", () => restorePersonalReport(button.dataset.restorePersonalReport || "").catch((error) => setFlash(error.message || t("loadFailed"), true)));
+  });
+  document.querySelectorAll("[data-personal-report-id]").forEach((button) => {
+    button.addEventListener("click", () => selectPersonalReport(button.dataset.personalReportId || "").catch((error) => setFlash(error.message || t("loadFailed"), true)));
+  });
+  document.querySelectorAll(".attach-personal-record-btn").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      attachPersonalRecordToReport(button.dataset.batchId || "").catch((error) => setFlash(error.message || t("loadFailed"), true));
+    });
+  });
   $("addParticipantButton") && ($("addParticipantButton").onclick = () => addParticipantDraftRow());
   $("confirmSettlementButton") && ($("confirmSettlementButton").onclick = async () => {
-    if (!confirmByWord("confirmSettlementByWord", "Чтобы закрыть кассу, введите {word}. Архив и письма будут созданы автоматически.", "confirmSettlementWord", "ЗАКРЫТЬ")) return;
+    if (!confirmByWord("confirmSettlementByWord", "Чтобы закрыть кассу, введите {word}. Карточка уйдет в корзину, письма будут созданы автоматически.", "confirmSettlementWord", "ЗАКРЫТЬ")) return;
     try {
       const payload = await api("confirm-settlement", {
         method: "POST",
@@ -6706,7 +7956,7 @@ function bindWorkspaceModalUi() {
   });
   document.querySelectorAll(".reopen-session-btn").forEach((button) => {
     button.onclick = async () => {
-      if (!confirmByWord("reopenArchiveByWord", "Чтобы восстановить архив, введите {word}. Текущая активная касса должна быть закрыта.", "reopenArchiveWord", "ВОССТАНОВИТЬ")) return;
+      if (!confirmArchiveReopenForMode(button.dataset.sessionMode || state.boot?.session?.session_mode || "")) return;
       try {
         const payload = await api("reopen-session", {
           method: "POST",
@@ -6722,7 +7972,7 @@ function bindWorkspaceModalUi() {
   });
   document.querySelectorAll(".delete-archive-session-btn").forEach((button) => {
     button.onclick = async () => {
-      if (!confirmByWord("deleteArchiveByWord", "Чтобы удалить карточку архива, введите {word}. На сервере она будет храниться еще 10 дней.", "deleteArchiveWord", "УДАЛИТЬ")) return;
+      if (!confirmByWord("deleteArchiveByWord", "Чтобы удалить карточку из корзины, введите {word}. На сервере она будет храниться еще 60 дней.", "deleteArchiveWord", "УДАЛИТЬ")) return;
       try {
         const payload = await api("delete-archive-session", {
           method: "POST",
@@ -6740,11 +7990,15 @@ function bindWorkspaceModalUi() {
   document.querySelectorAll(".open-archive-session-btn").forEach((button) => {
     button.onclick = () => openArchiveSession(button.dataset.id || "");
   });
+  bindTrashRecordButtons();
   if ($("participantsEditor")) {
     bindParticipantRowActions();
   }
   document.querySelectorAll("[data-workspace-window]").forEach((button) => {
     button.addEventListener("click", () => openWorkspaceModal(button.dataset.workspaceWindow || "menu"));
+  });
+  document.querySelectorAll("[data-workspace-action]").forEach((button) => {
+    button.addEventListener("click", () => handleWorkspaceAction(button.dataset.workspaceAction || ""));
   });
 }
 
@@ -7292,6 +8546,7 @@ function render(options = {}) {
       openWorkspaceModal(preservedWorkspaceWindow, { scrollTop: preservedWorkspaceScroll });
     });
   }
+  markBootRendered();
 }
 
 function registerServiceWorker() {
@@ -7305,6 +8560,11 @@ function registerServiceWorker() {
   navigator.serviceWorker.register("./sw.js").then((registration) => {
     registration.update().catch(() => {});
     if (registration.waiting) {
+      if (hasCurrentShellReloadRequest()) {
+        resetShellVersionCounter();
+        registration.waiting.postMessage({ type: "SKIP_WAITING" });
+        return;
+      }
       state.shellUpdateAvailable = true;
       registration.waiting.postMessage({ type: "SKIP_WAITING" });
       updateTopbarText();
@@ -7314,6 +8574,10 @@ function registerServiceWorker() {
       if (!installing) return;
       installing.addEventListener("statechange", () => {
         if (installing.state !== "installed" || !navigator.serviceWorker.controller) return;
+        if (hasCurrentShellReloadRequest()) {
+          resetShellVersionCounter();
+          return;
+        }
         state.shellUpdateAvailable = true;
         state.shellVersionChanges = Math.max(1, Number(state.shellVersionChanges || 0));
         writeShellReleaseState({ version: SHELL_VERSION, pendingCount: state.shellVersionChanges, checkedAt: new Date().toISOString() });
@@ -7353,6 +8617,20 @@ function waitForSiteTranslations() {
   });
 }
 
+window.shipCashboxAccountFoundation = Object.freeze({
+  loadWorkspaces: loadAccountWorkspaces,
+  previewInvite: previewAccountInvite,
+  openWorkspace: openAccountWorkspace,
+  createWorkspace: createParallelAccountWorkspace,
+  applyWorkspacePayload: applyAccountWorkspacePayload,
+  routes: Object.freeze({
+    list: "account-workspaces",
+    open: "open-workspace",
+    invitePreview: "account-invite-preview",
+    createParallelOwnerWorkspace: "create-account-workspace",
+  }),
+});
+
 window.addEventListener("beforeinstallprompt", (event) => {
   event.preventDefault();
   state.installPrompt = event;
@@ -7367,6 +8645,7 @@ window.addEventListener("offline", () => render());
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "hidden") {
     document.body.classList.remove("shipcashbox-notebook-focused");
+    document.body.classList.remove("shipcashbox-journal-focused");
     state.hiddenAt = Date.now();
     return;
   }
@@ -7404,6 +8683,23 @@ document.addEventListener("click", (event) => {
   if (target instanceof HTMLElement && target.dataset.closeScanReview === "1") {
     closeScanReviewModal();
   }
+  if (target instanceof HTMLElement) {
+    const updateDismiss = target.closest("[data-shell-update-dismiss]");
+    if (updateDismiss instanceof HTMLElement) {
+      event.preventDefault();
+      event.stopPropagation();
+      setFlash("");
+      return;
+    }
+    const updateOpen = target.closest("[data-shell-update-open]");
+    if (updateOpen instanceof HTMLElement) {
+      event.preventDefault();
+      event.stopPropagation();
+      setFlash("");
+      openWorkspaceModal("service");
+      return;
+    }
+  }
   if (target instanceof HTMLElement && target.dataset.closeWorkspace === "1") {
     closeWorkspaceModal();
   }
@@ -7431,6 +8727,9 @@ document.addEventListener("brkovicToolAuthChanged", () => {
 
 document.addEventListener("DOMContentLoaded", async () => {
   trackShellVersionState();
+  markBootRendered();
+  window.setTimeout(markBootRendered, 250);
+  window.setTimeout(markBootRendered, 1200);
   syncChromeVisibility();
   document.querySelectorAll("#cashboxGuestMenuButton, #cashboxAppMenuButton, #cashboxMobileMenuButton").forEach((button) => {
     button.addEventListener("click", openAppMenu);
@@ -7468,6 +8767,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     toggleAccountPanel();
   });
   $("cashboxMenuInstall")?.addEventListener("click", () => {
+    if (state.viewer === "treasurer" && state.boot?.session?.status === "active") {
+      closeAppMenu();
+      openWorkspaceModal("service");
+      return;
+    }
     handleAppInstallAction().catch((error) => setFlash(error.message || t("loadFailed"), true));
   });
   $("cashboxMenuRefresh")?.addEventListener("click", () => {
@@ -7533,8 +8837,21 @@ document.addEventListener("DOMContentLoaded", async () => {
   bindAttachmentSheetUi();
   bindMobileKeyboardViewport();
   initLanguage();
-  await waitForSiteTranslations();
-  await purgeLegacyShellCaches();
+  render();
+  try {
+    await waitForSiteTranslations();
+    render();
+  } catch (error) {
+    render();
+  }
+  await withTimeout(purgeLegacyShellCaches(), 2500, tx("cacheResetTimeout", "Не удалось быстро очистить старый кэш.")).catch(() => {});
   registerServiceWorker();
-  await checkViewer();
+  try {
+    await checkViewer();
+  } catch (error) {
+    renderStartChoice();
+    setFlash(error.message || t("loadFailed"), true);
+  } finally {
+    markBootRendered();
+  }
 });

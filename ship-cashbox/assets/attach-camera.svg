@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="104" height="86" viewBox="0 0 104 86" role="img" aria-labelledby="title">
+  <title id="title">Камера</title>
+  <defs>
+    <linearGradient id="stroke" x1="21" y1="13" x2="81" y2="62" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#10243a"/>
+      <stop offset="1" stop-color="#5f7182"/>
+    </linearGradient>
+    <linearGradient id="lens" x1="39" y1="29" x2="58" y2="49" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#10243a"/>
+      <stop offset="1" stop-color="#e2bd76"/>
+    </linearGradient>
+    <filter id="shadow" x="0" y="0" width="104" height="86" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="7" stdDeviation="7" flood-color="#10243a" flood-opacity=".14"/>
+    </filter>
+  </defs>
+  <g filter="url(#shadow)">
+    <path d="M31 27h9.6l3.5-6h15.8l3.5 6H73c4.418 0 8 3.582 8 8v16c0 4.418-3.582 8-8 8H31c-4.418 0-8-3.582-8-8V35c0-4.418 3.582-8 8-8Z" fill="#f7faf7" stroke="url(#stroke)" stroke-width="2"/>
+    <circle cx="52" cy="43" r="11" fill="url(#lens)" opacity=".96"/>
+    <circle cx="52" cy="43" r="5.8" fill="#f7faf7" opacity=".92"/>
+    <circle cx="69" cy="36" r="3" fill="#e2bd76" stroke="#10243a" stroke-width="1.5"/>
+    <path d="M35 33h8" stroke="#fff" stroke-width="1.5" stroke-linecap="round" opacity=".85"/>
+  </g>
+  <text x="52" y="78" text-anchor="middle" fill="#5f7182" font-family="Verdana, DejaVu Sans, sans-serif" font-size="9" font-weight="800" letter-spacing=".7">КАМЕРА</text>
+</svg>

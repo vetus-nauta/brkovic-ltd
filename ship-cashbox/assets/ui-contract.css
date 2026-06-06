@@ -29,6 +29,28 @@
   color: var(--cashbox-text-day);
 }
 
+html.shipcashbox-loading body.shipcashbox-body,
+html.shipcashbox-boot-loading body.shipcashbox-body,
+html.is-loading body.shipcashbox-body,
+body.shipcashbox-body.shipcashbox-loading,
+body.shipcashbox-body.shipcashbox-boot-loading,
+body.shipcashbox-body.is-loading {
+  cursor: auto !important;
+}
+
+body.shipcashbox-body [data-cashbox-loading-overlay],
+body.shipcashbox-body #cashboxLoading,
+body.shipcashbox-body #shipCashboxLoading,
+body.shipcashbox-body progress:not([data-keep-progress]),
+body.shipcashbox-body .shipcashbox-loading-bar,
+body.shipcashbox-body .shipcashbox-loader,
+body.shipcashbox-body .navdesk-loader {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
 body.navdesk-theme-night.shipcashbox-body {
   background:
     radial-gradient(circle at 16% 8%, rgba(72, 125, 150, 0.12), transparent 30rem),
@@ -409,8 +431,7 @@ body.navdesk-theme-night.shipcashbox-body .shipcashbox-field span {
 }
 
 /* Workspace and modal mobile comfort. */
-.shipcashbox-body .shipcashbox-appbar,
-.shipcashbox-body .shipcashbox-mobile-masthead {
+.shipcashbox-body .shipcashbox-appbar {
   width: min(100%, 1040px) !important;
   margin-inline: auto !important;
 }
@@ -645,10 +666,95 @@ body.shipcashbox-body:not(.shipcashbox-viewer-guest).shipcashbox-has-active-grou
   box-shadow: 0 14px 42px rgba(16, 36, 58, 0.16) !important;
 }
 
+.shipcashbox-body .shipcashbox-flash--update {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 42px !important;
+  align-items: stretch !important;
+  gap: 4px !important;
+  padding: 5px !important;
+  pointer-events: auto !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest).shipcashbox-has-active-group .shipcashbox-flash--update {
+  pointer-events: auto !important;
+}
+
+.shipcashbox-body .shipcashbox-flash__body,
+.shipcashbox-body .shipcashbox-flash__close {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: inherit !important;
+  font: inherit !important;
+  box-shadow: none !important;
+}
+
+.shipcashbox-body .shipcashbox-flash__body {
+  display: grid !important;
+  align-content: center !important;
+  justify-items: start !important;
+  min-width: 0 !important;
+  min-height: 44px !important;
+  padding: 7px 9px !important;
+  border-radius: 12px !important;
+  text-align: left !important;
+  cursor: pointer !important;
+}
+
+.shipcashbox-body .shipcashbox-flash__body span,
+.shipcashbox-body .shipcashbox-flash__body small {
+  display: block !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.shipcashbox-body .shipcashbox-flash__body span {
+  line-height: 1.18 !important;
+}
+
+.shipcashbox-body .shipcashbox-flash__body small {
+  margin-top: 3px !important;
+  color: var(--cashbox-text-day) !important;
+  font-size: 0.68rem !important;
+  font-weight: 850 !important;
+  letter-spacing: 0.04em !important;
+  line-height: 1 !important;
+  text-transform: uppercase !important;
+}
+
+.shipcashbox-body .shipcashbox-flash__close {
+  display: grid !important;
+  place-items: center !important;
+  width: 42px !important;
+  min-width: 42px !important;
+  min-height: 42px !important;
+  padding: 0 !important;
+  border-radius: 12px !important;
+  color: var(--cashbox-text-day) !important;
+  font-size: 1.35rem !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  cursor: pointer !important;
+  touch-action: manipulation !important;
+}
+
+.shipcashbox-body .shipcashbox-flash__close:focus-visible,
+.shipcashbox-body .shipcashbox-flash__body:focus-visible {
+  outline: 2px solid rgba(47, 104, 71, 0.45) !important;
+  outline-offset: 2px !important;
+}
+
 body.navdesk-theme-night.shipcashbox-body .shipcashbox-flash {
   border-color: var(--cashbox-line-night) !important;
   background: rgba(16, 25, 30, 0.92) !important;
   color: var(--cashbox-muted-night) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-flash__body small,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-flash__close {
+  color: var(--cashbox-text-night) !important;
 }
 
 .shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-card__media {
@@ -689,13 +795,11 @@ body.navdesk-theme-night.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-
   display: none !important;
 }
 
-.shipcashbox-body .shipcashbox-appbar .shipcashbox-mode-chip,
-.shipcashbox-body .shipcashbox-mobile-masthead .shipcashbox-mode-chip {
+.shipcashbox-body .shipcashbox-appbar .shipcashbox-mode-chip {
   display: none !important;
 }
 
-.shipcashbox-body .shipcashbox-appbar__actions,
-.shipcashbox-body .shipcashbox-mobile-masthead {
+.shipcashbox-body .shipcashbox-appbar__actions {
   gap: 6px !important;
 }
 
@@ -857,6 +961,72 @@ body.navdesk-theme-night.shipcashbox-body .shipcashbox-soft-notice .shipcashbox-
   background: rgba(16, 25, 30, 0.82) !important;
 }
 
+.shipcashbox-body .shipcashbox-attachment-sheet {
+  align-items: end !important;
+  padding: 14px var(--cashbox-work-gutter) max(14px, env(safe-area-inset-bottom)) !important;
+}
+
+.shipcashbox-body .shipcashbox-attachment-sheet .shipcashbox-modal__card {
+  width: min(360px, var(--cashbox-work-width)) !important;
+  max-width: min(360px, var(--cashbox-work-width)) !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  margin: 0 auto !important;
+  padding: 10px !important;
+  border-radius: 22px !important;
+  background: rgba(249, 251, 249, 0.92) !important;
+  box-shadow: 0 20px 45px rgba(16, 36, 58, 0.22) !important;
+  overflow: visible !important;
+}
+
+.shipcashbox-body .shipcashbox-attachment-sheet .shipcashbox-modal__head,
+.shipcashbox-body .shipcashbox-attachment-sheet .shipcashbox-note {
+  display: none !important;
+}
+
+.shipcashbox-body .shipcashbox-attachment-sheet .shipcashbox-sheet-actions {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+  margin: 0 !important;
+}
+
+.shipcashbox-body .shipcashbox-attachment-sheet .shipcashbox-window-link {
+  display: grid !important;
+  justify-items: center !important;
+  align-content: center !important;
+  gap: 7px !important;
+  min-height: 72px !important;
+  padding: 9px 6px !important;
+  border-radius: 16px !important;
+  text-align: center !important;
+}
+
+.shipcashbox-body .shipcashbox-attachment-sheet .shipcashbox-window-link strong {
+  display: grid !important;
+  place-items: center !important;
+  width: 28px !important;
+  height: 28px !important;
+  color: var(--cashbox-text-day) !important;
+  font-size: 1.16rem !important;
+  line-height: 1 !important;
+}
+
+.shipcashbox-body .shipcashbox-attachment-sheet .shipcashbox-window-link span {
+  display: block !important;
+  color: var(--cashbox-muted-day) !important;
+  font-size: 0.64rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.05em !important;
+  line-height: 1.05 !important;
+  text-transform: uppercase !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-attachment-sheet .shipcashbox-modal__card {
+  background: rgba(20, 31, 36, 0.94) !important;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.35) !important;
+}
+
 .shipcashbox-body .shipcashbox-command-deck__hero--positive,
 .shipcashbox-body .shipcashbox-command-deck__hero {
   background:
@@ -923,6 +1093,27 @@ body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-screen {
   min-width: 0 !important;
   margin-left: auto !important;
   margin-right: auto !important;
+}
+
+html:has(body.shipcashbox-body.shipcashbox-viewer-guest),
+body.shipcashbox-body.shipcashbox-viewer-guest,
+body.shipcashbox-body.shipcashbox-viewer-guest .navdesk-page,
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-page,
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-shell,
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-screen {
+  scrollbar-gutter: auto !important;
+  scrollbar-width: none !important;
+}
+
+html:has(body.shipcashbox-body.shipcashbox-viewer-guest)::-webkit-scrollbar,
+body.shipcashbox-body.shipcashbox-viewer-guest::-webkit-scrollbar,
+body.shipcashbox-body.shipcashbox-viewer-guest .navdesk-page::-webkit-scrollbar,
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-page::-webkit-scrollbar,
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-shell::-webkit-scrollbar,
+body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-screen::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 body.shipcashbox-body.shipcashbox-viewer-guest #cashboxGuestTopbar {
@@ -1113,131 +1304,7 @@ body.shipcashbox-body.shipcashbox-viewer-guest .shipcashbox-entry-invite {
   }
 }
 
-/* Ship Cashbox workspace fullscreen contract.
-   The entry screen is solved above; active journals must not fall back into the old nested card shell. */
-body.shipcashbox-body:not(.shipcashbox-viewer-guest) {
-  --cashbox-work-gutter: clamp(6px, 2.1vw, 10px);
-  --cashbox-work-width: 100%;
-}
-
-body.shipcashbox-body:not(.shipcashbox-viewer-guest) .site-shell {
-  box-sizing: border-box !important;
-  width: 100% !important;
-  max-width: none !important;
-  min-width: 0 !important;
-  margin: 0 !important;
-  padding: max(6px, env(safe-area-inset-top)) var(--cashbox-work-gutter) max(10px, env(safe-area-inset-bottom)) !important;
-}
-
-html:has(body.shipcashbox-body:not(.shipcashbox-viewer-guest)) {
-  overflow-x: hidden !important;
-  scrollbar-gutter: auto !important;
-}
-
-body.shipcashbox-body:not(.shipcashbox-viewer-guest) {
-  overflow-x: hidden !important;
-}
-
-body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(.shipcashbox-stack--cashbox-home) {
-  overflow: hidden !important;
-}
-
-body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(.shipcashbox-stack--cashbox-home) .site-shell {
-  display: grid !important;
-  grid-template-rows: minmax(0, 1fr) !important;
-  height: var(--cashbox-vvh, 100svh) !important;
-  max-height: var(--cashbox-vvh, 100svh) !important;
-  overflow: hidden !important;
-}
-
-body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(.shipcashbox-stack--cashbox-home) .shipcashbox-page {
-  display: grid !important;
-  grid-template-rows: auto minmax(0, 1fr) !important;
-  height: 100% !important;
-  min-height: 0 !important;
-  overflow: hidden !important;
-}
-
-body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(.shipcashbox-stack--cashbox-home) .shipcashbox-workspace-section,
-body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(.shipcashbox-stack--cashbox-home) .shipcashbox-workspace-card,
-body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(.shipcashbox-stack--cashbox-home) .shipcashbox-shell,
-body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(.shipcashbox-stack--cashbox-home) .shipcashbox-panel {
-  height: 100% !important;
-  min-height: 0 !important;
-  overflow: hidden !important;
-}
-
-body.shipcashbox-body:not(.shipcashbox-viewer-guest) .navdesk-page,
-body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-page {
-  width: 100% !important;
-  max-width: none !important;
-  min-width: 0 !important;
-  align-content: start !important;
-  padding: 0 !important;
-}
-
-body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-appbar,
-body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-mobile-masthead,
-body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-workspace-section,
-body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-workspace-card,
-body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-shell,
-body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-panel,
-body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-panel > .shipcashbox-stack {
-  width: var(--cashbox-work-width) !important;
-  max-width: none !important;
-  min-width: 0 !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
-  box-sizing: border-box !important;
-}
-
-body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-workspace-card,
-body.shipcashbox-body:not(.shipcashbox-viewer-guest).shipcashbox-has-active-group .shipcashbox-workspace-card {
-  padding: 0 !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  backdrop-filter: none !important;
-}
-
-body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-shell,
-body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-panel,
-body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-grid,
-body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-grid--treasurer,
-body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-stack,
-body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-card,
-body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-command-deck,
-body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-personal-quiet,
-body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-form__grid,
-body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-actions,
-body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-notebook-footer,
-body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-notebook-shell {
-  width: 100% !important;
-  max-width: 100% !important;
-  min-width: 0 !important;
-  box-sizing: border-box !important;
-}
-
-body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-card img,
-body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-panel img,
-body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-modal__card img {
-  max-width: 100% !important;
-  height: auto !important;
-}
-
-body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-card--notebook {
-  min-width: 0 !important;
-  overflow: hidden !important;
-}
-
-body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-notebook-textarea {
-  width: 100% !important;
-  max-width: 100% !important;
-  min-width: 0 !important;
-  box-sizing: border-box !important;
-}
-
+/* Ship Cashbox active modal sizing: kept outside the active screen geometry contract. */
 body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-modal {
   padding: max(8px, env(safe-area-inset-top)) var(--cashbox-work-gutter) max(8px, env(safe-area-inset-bottom)) !important;
 }
@@ -1254,55 +1321,6 @@ body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-app-menu .mana
 }
 
 @media (max-width: 860px) {
-  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-page {
-    gap: clamp(7px, 2.2vw, 10px) !important;
-    padding-bottom: max(10px, env(safe-area-inset-bottom)) !important;
-  }
-
-  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-mobile-masthead {
-    top: max(6px, env(safe-area-inset-top)) !important;
-    min-height: 42px !important;
-    padding: 8px 10px !important;
-    border-radius: clamp(14px, 4vw, 18px) !important;
-    box-shadow: none !important;
-  }
-
-  body.shipcashbox-body:not(.shipcashbox-viewer-guest).shipcashbox-has-active-group .shipcashbox-workspace-card {
-    min-height: calc(var(--cashbox-vvh, 100svh) - 58px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
-  }
-
-  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-shell,
-  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-panel,
-  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-panel > .shipcashbox-stack,
-  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-grid,
-  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-stack {
-    gap: clamp(7px, 2.2vw, 10px) !important;
-  }
-
-  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-card {
-    padding: clamp(11px, 3.4vw, 14px) !important;
-    border-radius: clamp(14px, 4.2vw, 18px) !important;
-  }
-
-  body.shipcashbox-body:not(.shipcashbox-viewer-guest).shipcashbox-has-active-group .shipcashbox-card--notebook {
-    min-height: calc(var(--cashbox-vvh, 100svh) - 76px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
-    grid-template-rows: auto minmax(190px, 1fr) auto auto !important;
-  }
-
-  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-notebook-textarea {
-    min-height: clamp(220px, 48svh, 520px) !important;
-    padding: 13px 14px 76px !important;
-    resize: none !important;
-  }
-
-  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-actions,
-  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-notebook-footer,
-  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-notebook-footer__actions,
-  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-window-actions {
-    display: grid !important;
-    grid-template-columns: 1fr !important;
-  }
-
   body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-modal__card,
   body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-modal__card--workspace,
   body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-modal--workscreen .shipcashbox-modal__card--workspace,
@@ -1310,31 +1328,7 @@ body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-app-menu .mana
   body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-app-menu .management-modal__dialog {
     width: var(--cashbox-work-width) !important;
     max-width: var(--cashbox-work-width) !important;
-    max-height: calc(100svh - (var(--cashbox-work-gutter) * 2)) !important;
-  }
-}
-
-@media (min-width: 861px) {
-  body.shipcashbox-body:not(.shipcashbox-viewer-guest) {
-    --cashbox-work-gutter: clamp(18px, 3vw, 40px);
-    --cashbox-work-width: min(1120px, calc(100vw - (var(--cashbox-work-gutter) * 2)));
-  }
-
-  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .site-shell {
-    padding-block: clamp(12px, 2dvh, 20px) max(20px, env(safe-area-inset-bottom)) !important;
-  }
-
-  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-appbar,
-  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-workspace-section,
-  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-workspace-card,
-  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-shell,
-  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-panel {
-    width: var(--cashbox-work-width) !important;
-  }
-
-  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-workspace-card {
-    padding: clamp(10px, 1.2vw, 14px) !important;
-    border-radius: var(--cashbox-radius) !important;
+    max-height: calc(var(--cashbox-vvh, 100svh) - (var(--cashbox-work-gutter) * 2)) !important;
   }
 }
 
@@ -2065,19 +2059,6 @@ body.navdesk-theme-night.shipcashbox-body .shipcashbox-journal-draft-state--nega
   color: #e6a096;
 }
 
-/* Live journal final contract: one feed, bounded active scroll, polished edit sheet. */
-body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-stack--journal {
-  min-height: 0 !important;
-  overflow: hidden !important;
-}
-
-body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-card--notebook {
-  display: grid !important;
-  grid-template-rows: auto minmax(0, 1fr) auto auto !important;
-  min-height: 0 !important;
-  overflow: hidden !important;
-}
-
 body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-card--notebook .shipcashbox-workhead {
   flex: 0 0 auto !important;
 }
@@ -2203,44 +2184,7 @@ body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-ready-edit-mod
   margin-top: 16px !important;
 }
 
-@media (max-width: 860px) {
-  body.shipcashbox-body:not(.shipcashbox-viewer-guest).shipcashbox-has-active-group .shipcashbox-workspace-card,
-  body.shipcashbox-body:not(.shipcashbox-viewer-guest).shipcashbox-has-active-group .shipcashbox-shell,
-  body.shipcashbox-body:not(.shipcashbox-viewer-guest).shipcashbox-has-active-group .shipcashbox-panel,
-  body.shipcashbox-body:not(.shipcashbox-viewer-guest).shipcashbox-has-active-group .shipcashbox-panel > .shipcashbox-stack {
-    min-height: 0 !important;
-    overflow: hidden !important;
-  }
-
-  body.shipcashbox-body:not(.shipcashbox-viewer-guest).shipcashbox-has-active-group .shipcashbox-card--notebook {
-    height: calc(var(--cashbox-vvh, 100svh) - 74px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
-    max-height: calc(var(--cashbox-vvh, 100svh) - 74px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
-    grid-template-rows: auto minmax(0, 1fr) auto auto !important;
-  }
-
-  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-notebook-shell {
-    display: block !important;
-  }
-
-  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-ready-layer {
-    max-height: none !important;
-  }
-
-  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-notebook-textarea {
-    min-height: 118px !important;
-    padding: 13px 46px 52px 14px !important;
-  }
-}
-
 /* Cashbox home alignment: personal and group screens share one compact rhythm. */
-body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-stack--cashbox-home {
-  display: grid !important;
-  grid-template-rows: auto minmax(0, 1fr) !important;
-  height: 100% !important;
-  min-height: 0 !important;
-  max-height: 100% !important;
-}
-
 .shipcashbox-body .shipcashbox-personal-quiet {
   grid-template-columns: 1fr !important;
   gap: 8px !important;
@@ -2297,43 +2241,26 @@ body.navdesk-theme-night.shipcashbox-body .shipcashbox-personal-quiet__stats > s
   background: rgba(16, 25, 30, 0.72) !important;
 }
 
-/* Ready records: create card first, accumulated records scroll inside the same screen. */
-.shipcashbox-body .shipcashbox-card--ready-records {
-  display: grid !important;
-  align-content: stretch !important;
-  align-self: stretch !important;
-  height: 100% !important;
-  min-height: 0 !important;
-  padding: clamp(8px, 2.4vw, 12px) !important;
-}
-
-.shipcashbox-body .shipcashbox-ready-records-flow {
-  display: grid !important;
-  grid-template-columns: minmax(118px, 0.44fr) minmax(0, 1fr) !important;
-  align-items: start !important;
-  gap: 8px !important;
-  height: 100% !important;
-  min-height: 0 !important;
-}
-
 .shipcashbox-body .shipcashbox-ready-create-card {
   display: grid !important;
-  place-items: center !important;
+  grid-template-columns: 34px minmax(0, 1fr) !important;
+  place-items: center start !important;
   align-content: center !important;
-  align-self: start !important;
-  gap: 6px !important;
+  align-self: stretch !important;
+  gap: 10px !important;
+  width: 100% !important;
   height: auto !important;
-  min-height: 104px !important;
-  max-height: 112px !important;
-  padding: 12px !important;
+  min-height: 58px !important;
+  max-height: none !important;
+  padding: 10px 12px !important;
   border: 1px dashed rgba(36, 55, 72, 0.26) !important;
   border-radius: 18px !important;
-  background: transparent !important;
+  background: rgba(249, 251, 249, 0.68) !important;
   color: var(--cashbox-text-day) !important;
   box-shadow: none !important;
   cursor: pointer !important;
   font: inherit !important;
-  text-align: center !important;
+  text-align: left !important;
 }
 
 .shipcashbox-body .shipcashbox-ready-create-card span {
@@ -2349,21 +2276,13 @@ body.navdesk-theme-night.shipcashbox-body .shipcashbox-personal-quiet__stats > s
 }
 
 .shipcashbox-body .shipcashbox-ready-create-card strong {
-  max-width: 11ch !important;
+  max-width: 100% !important;
   color: var(--cashbox-muted-day) !important;
   font-size: 0.72rem !important;
   font-weight: 850 !important;
   letter-spacing: 0.03em !important;
   line-height: 1.08 !important;
   text-transform: uppercase !important;
-}
-
-.shipcashbox-body .shipcashbox-ready-records-flow__list {
-  display: grid !important;
-  grid-template-rows: auto minmax(0, 1fr) !important;
-  gap: 7px !important;
-  height: 100% !important;
-  min-height: 0 !important;
 }
 
 .shipcashbox-body .shipcashbox-ready-records-flow__label {
@@ -2380,31 +2299,6 @@ body.navdesk-theme-night.shipcashbox-body .shipcashbox-personal-quiet__stats > s
   align-self: stretch !important;
   min-height: 78px !important;
   margin: 0 !important;
-}
-
-.shipcashbox-body .shipcashbox-submitted-records--compact {
-  display: grid !important;
-  grid-template-rows: minmax(0, 1fr) !important;
-  height: 100% !important;
-  min-height: 0 !important;
-  overflow: hidden !important;
-}
-
-.shipcashbox-body .shipcashbox-submitted-records--compact .shipcashbox-submitted-records__grid {
-  align-content: start !important;
-  align-items: start !important;
-  grid-auto-rows: max-content !important;
-  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)) !important;
-  height: 100% !important;
-  max-height: none !important;
-  overflow: auto !important;
-  padding-right: 0 !important;
-  scrollbar-width: none !important;
-  -webkit-overflow-scrolling: touch !important;
-}
-
-.shipcashbox-body .shipcashbox-submitted-records--compact .shipcashbox-submitted-records__grid::-webkit-scrollbar {
-  display: none !important;
 }
 
 .shipcashbox-body .shipcashbox-submitted-record__button {
@@ -2439,6 +2333,7 @@ body.navdesk-theme-night.shipcashbox-body .shipcashbox-personal-quiet__stats > s
 
 body.navdesk-theme-night.shipcashbox-body .shipcashbox-ready-create-card {
   border-color: rgba(211, 191, 150, 0.24) !important;
+  background: rgba(16, 25, 30, 0.68) !important;
   color: var(--cashbox-text-night) !important;
 }
 
@@ -2489,81 +2384,6 @@ body.shipcashbox-body:not(.shipcashbox-viewer-guest) #cashboxWorkspaceCashMenuBu
 body.shipcashbox-body:not(.shipcashbox-viewer-guest) #cashboxAppMenuButton {
   grid-column: 3 !important;
   justify-self: end !important;
-}
-
-@media (max-width: 860px) {
-  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-appbar {
-    display: none !important;
-  }
-
-  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-mobile-masthead {
-    display: grid !important;
-    grid-template-columns: auto minmax(0, 1fr) auto !important;
-    align-items: center !important;
-  }
-
-  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-cash-menu-button--mobile {
-    order: 1 !important;
-    justify-self: start !important;
-  }
-
-  body.shipcashbox-body:not(.shipcashbox-viewer-guest) #mobileMastheadTitle {
-    order: 2 !important;
-    justify-self: start !important;
-  }
-
-  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-mobile-masthead > strong {
-    display: none !important;
-  }
-
-  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-menu-button--mobile {
-    order: 3 !important;
-    justify-self: end !important;
-  }
-
-  .shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-stack--cashbox-home {
-    height: 100% !important;
-    min-height: 0 !important;
-    max-height: 100% !important;
-    gap: 7px !important;
-  }
-
-  .shipcashbox-body .shipcashbox-ready-records-flow {
-    grid-template-columns: 1fr !important;
-    grid-template-rows: auto minmax(0, 1fr) !important;
-    align-items: stretch !important;
-  }
-
-  .shipcashbox-body .shipcashbox-ready-create-card {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: flex-start !important;
-    width: 100% !important;
-    min-height: 56px !important;
-    max-height: 62px !important;
-    padding: 9px 12px !important;
-    border-radius: 16px !important;
-    text-align: left !important;
-  }
-
-  .shipcashbox-body .shipcashbox-ready-create-card span {
-    flex: 0 0 auto !important;
-    width: 30px !important;
-    height: 30px !important;
-    font-size: 1.42rem !important;
-  }
-
-  .shipcashbox-body .shipcashbox-ready-create-card strong {
-    max-width: none !important;
-    font-size: 0.68rem !important;
-    white-space: nowrap !important;
-  }
-
-  .shipcashbox-body .shipcashbox-submitted-records--compact .shipcashbox-submitted-records__grid {
-    grid-template-columns: 1fr !important;
-    height: 100% !important;
-    max-height: none !important;
-  }
 }
 
 body.shipcashbox-body .shipcashbox-appbar[hidden],
@@ -2792,55 +2612,6 @@ body.navdesk-theme-night.shipcashbox-body .shipcashbox-stack--journal .shipcashb
   color: rgba(248, 232, 199, 0.76) !important;
 }
 
-/* Final journal header/footer polish: active workspaces use centered Records chrome and no body scrollbar. */
-html:has(body.shipcashbox-body:not(.shipcashbox-viewer-guest)),
-body.shipcashbox-body:not(.shipcashbox-viewer-guest) {
-  scrollbar-width: none !important;
-}
-
-html:has(body.shipcashbox-body:not(.shipcashbox-viewer-guest))::-webkit-scrollbar,
-body.shipcashbox-body:not(.shipcashbox-viewer-guest)::-webkit-scrollbar {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
-}
-
-body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(.shipcashbox-stack--journal) {
-  overflow: hidden !important;
-}
-
-body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(.shipcashbox-stack--journal) .site-shell {
-  display: grid !important;
-  grid-template-rows: minmax(0, 1fr) !important;
-  height: var(--cashbox-vvh, 100svh) !important;
-  max-height: var(--cashbox-vvh, 100svh) !important;
-  overflow: hidden !important;
-}
-
-body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(.shipcashbox-stack--journal) .shipcashbox-page {
-  display: grid !important;
-  grid-template-rows: auto minmax(0, 1fr) !important;
-  height: 100% !important;
-  min-height: 0 !important;
-  overflow: hidden !important;
-}
-
-@media (max-width: 860px) {
-  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-mobile-masthead {
-    grid-template-columns: minmax(64px, auto) minmax(0, 1fr) minmax(44px, auto) !important;
-  }
-
-  body.shipcashbox-body:not(.shipcashbox-viewer-guest) #mobileMastheadTitle {
-    justify-self: center !important;
-    text-align: center !important;
-    font-size: 0.82rem !important;
-    font-weight: 900 !important;
-    letter-spacing: 0.1em !important;
-    line-height: 1 !important;
-    text-transform: uppercase !important;
-  }
-}
-
 .shipcashbox-body .shipcashbox-card--notebook .shipcashbox-notebook-action__label,
 .shipcashbox-body .shipcashbox-stack--journal .shipcashbox-notebook-action__label {
   display: block !important;
@@ -2987,4 +2758,4070 @@ body.navdesk-theme-night.shipcashbox-body .shipcashbox-ready-layer {
 
 body.navdesk-theme-night.shipcashbox-body .shipcashbox-notebook-sheet-meta strong {
   color: rgba(248, 232, 199, 0.86) !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #toolAuthPromptModal.management-modal {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483000 !important;
+  display: none !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom)) !important;
+  background: transparent !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #toolAuthPromptModal.management-modal.is-open {
+  display: flex !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #toolAuthPromptModal .management-modal__backdrop {
+  position: absolute !important;
+  inset: 0 !important;
+  background: rgba(16, 24, 32, 0.26) !important;
+  backdrop-filter: blur(10px) saturate(125%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(125%) !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #toolAuthPromptModal .management-modal__dialog {
+  position: relative !important;
+  z-index: 1 !important;
+  width: min(430px, calc(100vw - 24px)) !important;
+  max-height: min(86svh, 620px) !important;
+  overflow: auto !important;
+  display: grid !important;
+  gap: 14px !important;
+  padding: 18px !important;
+  border-radius: 24px !important;
+  border: 1px solid rgba(255, 255, 255, 0.42) !important;
+  background: rgba(249, 251, 249, 0.88) !important;
+  color: var(--cashbox-text-day) !important;
+  box-shadow: 0 24px 70px rgba(16, 36, 58, 0.24) !important;
+  backdrop-filter: blur(18px) saturate(135%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(135%) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body:not(.shipcashbox-viewer-guest) #toolAuthPromptModal .management-modal__dialog {
+  border-color: rgba(226, 189, 118, 0.18) !important;
+  background: rgba(16, 25, 30, 0.9) !important;
+  color: var(--cashbox-text-night) !important;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.38) !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #toolAuthPromptModal .tool-auth-google__icon,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #toolAuthPromptModal .tool-auth-google__icon svg {
+  width: 22px !important;
+  height: 22px !important;
+}
+
+/* Transfer repair 2026-06-05 / pass 2:
+   the desktop appbar and mobile masthead are mutually exclusive. */
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #cashboxMobileMasthead {
+  display: none !important;
+}
+
+body.shipcashbox-body .shipcashbox-app-menu .management-modal__dialog,
+body.shipcashbox-body #toolAuthPromptModal .management-modal__dialog {
+  scrollbar-width: none !important;
+}
+
+body.shipcashbox-body .shipcashbox-app-menu .management-modal__dialog::-webkit-scrollbar,
+body.shipcashbox-body #toolAuthPromptModal .management-modal__dialog::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+body.shipcashbox-body .shipcashbox-app-menu .management-modal__close,
+body.shipcashbox-body #toolAuthPromptModal .management-modal__close {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  min-height: 32px !important;
+  padding: 0 !important;
+  border: 1px solid rgba(16, 36, 58, 0.10) !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.34) !important;
+  color: rgba(16, 36, 58, 0.78) !important;
+  font-size: 1.08rem !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  box-shadow: none !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-app-menu .management-modal__close,
+body.navdesk-theme-night.shipcashbox-body #toolAuthPromptModal .management-modal__close {
+  border-color: rgba(226, 189, 118, 0.16) !important;
+  background: rgba(226, 189, 118, 0.08) !important;
+  color: rgba(248, 232, 199, 0.86) !important;
+}
+
+body.shipcashbox-body #toolAuthPromptModal .tool-auth-google {
+  min-height: 34px !important;
+  justify-content: center !important;
+  padding: 0 12px !important;
+  border-radius: 8px !important;
+  font-size: 0.82rem !important;
+}
+
+body.shipcashbox-body #toolAuthPromptModal .tool-auth-step {
+  gap: 8px !important;
+}
+
+body.shipcashbox-body #toolAuthPromptModal .tool-auth-prompt__label {
+  gap: 4px !important;
+}
+
+body.shipcashbox-body #toolAuthPromptModal .tool-auth-prompt__input {
+  min-height: 36px !important;
+  border-radius: 10px !important;
+}
+
+body.shipcashbox-body .shipcashbox-app-menu.management-modal {
+  align-items: flex-start !important;
+  justify-content: center !important;
+  padding: max(16px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom)) !important;
+}
+
+body.shipcashbox-body .shipcashbox-app-menu .management-modal__dialog {
+  width: min(330px, calc(100vw - 28px), var(--cashbox-work-width, 100vw)) !important;
+  max-width: min(330px, calc(100vw - 28px), var(--cashbox-work-width, 100vw)) !important;
+  max-height: calc(var(--cashbox-vvh, 100svh) - 32px) !important;
+  gap: 8px !important;
+  padding: 14px !important;
+  border-radius: 18px !important;
+  overflow: auto !important;
+}
+
+body.shipcashbox-body .shipcashbox-app-menu .management-modal__header {
+  min-height: 0 !important;
+  margin: 0 0 4px !important;
+  padding: 0 !important;
+  align-items: start !important;
+}
+
+body.shipcashbox-body .shipcashbox-app-menu .management-modal__header h3 {
+  margin: 4px 0 0 !important;
+  font-size: clamp(1.62rem, 7vw, 2rem) !important;
+  line-height: 0.98 !important;
+}
+
+body.shipcashbox-body .shipcashbox-app-menu__settings--top {
+  min-height: 44px !important;
+  margin: 0 0 6px !important;
+  padding: 7px 8px 7px 12px !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 10px !important;
+  border: 1px solid rgba(185, 150, 94, 0.18) !important;
+  border-radius: 15px !important;
+  background: linear-gradient(135deg, rgba(255, 250, 238, 0.76), rgba(244, 236, 219, 0.62)) !important;
+}
+
+body.shipcashbox-body .shipcashbox-app-menu__settings--top .site-menu-settings__label {
+  color: var(--cashbox-muted-day) !important;
+  font-size: 0.68rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.06em !important;
+  line-height: 1 !important;
+}
+
+body.shipcashbox-body .shipcashbox-app-menu__theme.navdesk-theme-switch {
+  width: auto !important;
+  min-width: 0 !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  padding: 3px !important;
+  display: grid !important;
+  grid-template-columns: repeat(2, 28px) !important;
+  gap: 3px !important;
+  border-radius: 999px !important;
+  border: 1px solid rgba(16, 36, 58, 0.10) !important;
+  background: rgba(255, 255, 255, 0.48) !important;
+  box-shadow: none !important;
+}
+
+body.shipcashbox-body .shipcashbox-app-menu__theme .navdesk-theme-switch__btn {
+  width: 28px !important;
+  height: 28px !important;
+  min-width: 28px !important;
+  min-height: 28px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  display: grid !important;
+  place-items: center !important;
+  font-size: 0.88rem !important;
+  line-height: 1 !important;
+}
+
+body.shipcashbox-body .shipcashbox-app-menu .management-modal-nav {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 7px !important;
+}
+
+body.shipcashbox-body .shipcashbox-app-menu .management-modal-nav__button {
+  min-height: 44px !important;
+  padding: 0 14px !important;
+  border-radius: 14px !important;
+  font-size: 0.9rem !important;
+  line-height: 1.05 !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-app-menu__settings--top {
+  border-color: rgba(226, 189, 118, 0.16) !important;
+  background: linear-gradient(135deg, rgba(226, 189, 118, 0.09), rgba(0, 0, 0, 0.14)) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-app-menu__settings--top .site-menu-settings__label {
+  color: var(--cashbox-muted-night) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-app-menu__theme.navdesk-theme-switch {
+  border-color: rgba(226, 189, 118, 0.15) !important;
+  background: rgba(0, 0, 0, 0.16) !important;
+}
+
+body.shipcashbox-body .shipcashbox-app-menu__settings--top {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+}
+
+body.shipcashbox-body .shipcashbox-app-menu__theme.navdesk-theme-switch {
+  flex: 0 0 auto !important;
+  inline-size: 67px !important;
+  width: 67px !important;
+  max-width: 67px !important;
+  min-width: 67px !important;
+  block-size: 34px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  display: grid !important;
+  grid-template-columns: repeat(2, 28px) !important;
+  gap: 3px !important;
+  padding: 3px !important;
+  align-self: center !important;
+  justify-self: end !important;
+}
+
+body.shipcashbox-body .shipcashbox-app-menu__theme .navdesk-theme-switch__btn {
+  inline-size: 28px !important;
+  width: 28px !important;
+  max-width: 28px !important;
+  min-width: 28px !important;
+  block-size: 28px !important;
+  height: 28px !important;
+  min-height: 28px !important;
+  padding: 0 !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal__card--workspace {
+  display: grid !important;
+  grid-template-rows: auto minmax(0, 1fr) !important;
+  gap: 8px !important;
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal__card--workspace .shipcashbox-modal__head {
+  min-height: 42px !important;
+  padding: 0 0 7px !important;
+  border-bottom: 1px solid rgba(16, 36, 58, 0.08) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal__card--workspace .shipcashbox-modal__head {
+  border-bottom-color: rgba(226, 189, 118, 0.14) !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal__card--workspace .shipcashbox-modal__head .section-heading__eyebrow {
+  margin: 0 0 2px !important;
+  font-size: 0.62rem !important;
+  line-height: 1 !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal__card--workspace .shipcashbox-modal__head h2 {
+  max-width: min(245px, calc(100vw - 118px)) !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  color: var(--cashbox-text-day) !important;
+  font-size: clamp(1.16rem, 6vw, 1.46rem) !important;
+  letter-spacing: -0.035em !important;
+  line-height: 1.02 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal__card--workspace .shipcashbox-modal__head h2 {
+  color: var(--cashbox-text-night) !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal__body {
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal__body::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+body.shipcashbox-body .shipcashbox-window-menu--quick,
+body.shipcashbox-body .shipcashbox-workspace-return {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 7px !important;
+  margin: 0 0 9px !important;
+}
+
+body.shipcashbox-body .shipcashbox-workspace-return {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+body.shipcashbox-body .shipcashbox-window-menu--quick .shipcashbox-window-link,
+body.shipcashbox-body .shipcashbox-workspace-return .shipcashbox-window-link {
+  min-height: 42px !important;
+  padding: 8px 10px !important;
+  border-radius: 14px !important;
+  background: rgba(250, 248, 242, 0.74) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-window-menu--quick .shipcashbox-window-link,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-workspace-return .shipcashbox-window-link {
+  background: rgba(226, 189, 118, 0.08) !important;
+}
+
+body.shipcashbox-body .shipcashbox-window-menu--quick .shipcashbox-window-link strong,
+body.shipcashbox-body .shipcashbox-workspace-return .shipcashbox-window-link strong {
+  font-size: 0.78rem !important;
+  line-height: 1.04 !important;
+}
+
+body.shipcashbox-body .shipcashbox-window-menu--quick .shipcashbox-window-link span,
+body.shipcashbox-body .shipcashbox-workspace-return .shipcashbox-window-link span {
+  display: none !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-modal__body > .shipcashbox-card--window:first-of-type > .shipcashbox-card__head:first-child,
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-modal__body > .shipcashbox-stack:first-child > .shipcashbox-card--window:first-child > .shipcashbox-card__head:first-child {
+  display: none !important;
+}
+
+/* Layout stabilize 2026-06-05 / pass 34.
+   Active screens must not render guest/header/media leftovers. */
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #cashboxGuestTopbar,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-entry-screen,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-entry-hero,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-entry-grid,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-entry-card__media,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-entry-illustration {
+  display: none !important;
+  height: 0 !important;
+  max-height: 0 !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-personal-quiet {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  align-self: start !important;
+  gap: 7px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 7px !important;
+  border: 1px solid var(--cashbox-line-day) !important;
+  border-radius: 17px !important;
+  background: var(--cashbox-surface-soft-day) !important;
+  box-shadow: none !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-personal-quiet__balance,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-personal-quiet__stats > button {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  display: grid !important;
+  min-width: 0 !important;
+  border: 1px solid var(--cashbox-line-day) !important;
+  color: inherit !important;
+  font: inherit !important;
+  text-align: left !important;
+  cursor: pointer !important;
+  box-shadow: none !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-personal-quiet__balance {
+  grid-template-columns: minmax(0, 1fr) !important;
+  min-height: 74px !important;
+  padding: 10px 11px !important;
+  border-radius: 16px !important;
+  background: rgba(249, 251, 249, 0.82) !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-personal-quiet__balance span,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-personal-quiet__stats > button span {
+  display: block !important;
+  overflow: hidden !important;
+  color: var(--cashbox-muted-day) !important;
+  font-size: 0.62rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.075em !important;
+  line-height: 1.1 !important;
+  text-transform: uppercase !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-personal-quiet__balance strong {
+  display: block !important;
+  margin-top: 2px !important;
+  color: var(--cashbox-text-day) !important;
+  font-size: clamp(1.22rem, 5.8vw, 1.74rem) !important;
+  letter-spacing: -0.045em !important;
+  line-height: 0.98 !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-personal-quiet__balance p {
+  margin: 4px 0 0 !important;
+  max-width: 37ch !important;
+  color: var(--cashbox-muted-day) !important;
+  font-size: 0.71rem !important;
+  font-weight: 780 !important;
+  line-height: 1.18 !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-personal-quiet__stats {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 7px !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-personal-quiet__stats > button {
+  align-content: center !important;
+  min-height: 50px !important;
+  padding: 8px 9px !important;
+  border-radius: 14px !important;
+  background: rgba(249, 251, 249, 0.72) !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-personal-quiet__stats > button strong {
+  display: block !important;
+  overflow: hidden !important;
+  margin-top: 3px !important;
+  color: var(--cashbox-text-day) !important;
+  font-size: clamp(0.82rem, 3.6vw, 0.98rem) !important;
+  font-weight: 920 !important;
+  letter-spacing: -0.025em !important;
+  line-height: 1.04 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-personal-quiet__balance:focus-visible,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-personal-quiet__stats > button:focus-visible {
+  outline: 2px solid rgba(179, 137, 78, 0.42) !important;
+  outline-offset: 2px !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-personal-quiet {
+  border-color: var(--cashbox-line-night) !important;
+  background: var(--cashbox-surface-soft-night) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-personal-quiet__balance,
+body.navdesk-theme-night.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-personal-quiet__stats > button {
+  border-color: var(--cashbox-line-night) !important;
+  background: rgba(16, 25, 30, 0.72) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-personal-quiet__balance span,
+body.navdesk-theme-night.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-personal-quiet__stats > button span,
+body.navdesk-theme-night.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-personal-quiet__balance p {
+  color: var(--cashbox-muted-night) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-personal-quiet__balance strong,
+body.navdesk-theme-night.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-personal-quiet__stats > button strong {
+  color: var(--cashbox-text-night) !important;
+}
+
+body.shipcashbox-body.shipcashbox-session-personal .shipcashbox-report-switcher {
+  gap: 10px !important;
+}
+
+body.shipcashbox-body.shipcashbox-session-personal .shipcashbox-report-list {
+  display: grid !important;
+  gap: 9px !important;
+  width: 100% !important;
+}
+
+body.shipcashbox-body.shipcashbox-session-personal .shipcashbox-report-list--fixed {
+  margin-top: 2px !important;
+}
+
+body.shipcashbox-body.shipcashbox-session-personal .shipcashbox-report-card {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  box-sizing: border-box !important;
+  display: grid !important;
+  gap: 4px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  padding: 11px 12px !important;
+  border: 1px solid var(--cashbox-line-day) !important;
+  border-radius: 15px !important;
+  background: rgba(249, 251, 249, 0.76) !important;
+  color: var(--cashbox-text-day) !important;
+  font: inherit !important;
+  text-align: left !important;
+  box-shadow: 0 10px 22px rgba(18, 41, 54, 0.07) !important;
+}
+
+body.shipcashbox-body.shipcashbox-session-personal button.shipcashbox-report-card {
+  cursor: pointer !important;
+}
+
+body.shipcashbox-body.shipcashbox-session-personal .shipcashbox-report-card__main {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  display: grid !important;
+  gap: 4px !important;
+  min-width: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: inherit !important;
+  cursor: pointer !important;
+  font: inherit !important;
+  text-align: left !important;
+}
+
+body.shipcashbox-body.shipcashbox-session-personal .shipcashbox-report-card strong {
+  overflow: hidden !important;
+  color: var(--cashbox-text-day) !important;
+  font-size: 0.98rem !important;
+  font-weight: 920 !important;
+  letter-spacing: -0.018em !important;
+  line-height: 1.12 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+body.shipcashbox-body.shipcashbox-session-personal .shipcashbox-report-card small,
+body.shipcashbox-body.shipcashbox-session-personal .shipcashbox-report-card > span:not(.shipcashbox-report-card__chip):not(.shipcashbox-report-card__actions),
+body.shipcashbox-body.shipcashbox-session-personal .shipcashbox-report-card__main > span:not(.shipcashbox-report-card__chip) {
+  overflow: hidden !important;
+  color: var(--cashbox-muted-day) !important;
+  font-size: 0.74rem !important;
+  font-weight: 760 !important;
+  line-height: 1.22 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+body.shipcashbox-body.shipcashbox-session-personal .shipcashbox-report-card__chip {
+  justify-self: start !important;
+  padding: 3px 8px !important;
+  border-radius: 999px !important;
+  background: rgba(179, 150, 94, 0.14) !important;
+  color: rgba(16, 36, 58, 0.72) !important;
+  font-size: 0.58rem !important;
+  font-weight: 950 !important;
+  letter-spacing: 0.08em !important;
+  line-height: 1 !important;
+  text-transform: uppercase !important;
+}
+
+body.shipcashbox-body.shipcashbox-session-personal .shipcashbox-report-card__actions {
+  display: inline-flex !important;
+  gap: 7px !important;
+  justify-self: end !important;
+  margin-top: -2px !important;
+}
+
+body.shipcashbox-body.shipcashbox-session-personal .shipcashbox-report-card__icon {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  display: grid !important;
+  width: 28px !important;
+  height: 28px !important;
+  place-items: center !important;
+  border: 1px solid rgba(78, 106, 121, 0.18) !important;
+  border-radius: 999px !important;
+  background: rgba(249, 251, 249, 0.82) !important;
+  color: rgba(16, 36, 58, 0.74) !important;
+  cursor: pointer !important;
+  font: inherit !important;
+  font-size: 0.78rem !important;
+  font-weight: 950 !important;
+  line-height: 1 !important;
+  box-shadow: 0 8px 16px rgba(18, 41, 54, 0.07) !important;
+}
+
+body.shipcashbox-body.shipcashbox-session-personal .shipcashbox-record-state--active-report {
+  border-color: rgba(62, 125, 99, 0.28) !important;
+  background: linear-gradient(135deg, rgba(239, 249, 244, 0.96), rgba(249, 251, 249, 0.86)) !important;
+  box-shadow: 0 14px 28px rgba(36, 83, 64, 0.11) !important;
+}
+
+body.shipcashbox-body.shipcashbox-session-personal .shipcashbox-record-state--other-report {
+  border-color: rgba(179, 150, 94, 0.20) !important;
+  background: rgba(244, 248, 247, 0.70) !important;
+  box-shadow: 0 8px 18px rgba(18, 41, 54, 0.05) !important;
+}
+
+body.shipcashbox-body.shipcashbox-session-personal .shipcashbox-record-state--unlinked {
+  border-style: dashed !important;
+  border-color: rgba(78, 106, 121, 0.22) !important;
+  background: rgba(236, 242, 240, 0.62) !important;
+  box-shadow: none !important;
+}
+
+body.shipcashbox-body.shipcashbox-session-personal .shipcashbox-record-state--closed-report {
+  border-color: rgba(78, 106, 121, 0.15) !important;
+  background: rgba(232, 237, 236, 0.52) !important;
+  box-shadow: none !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body.shipcashbox-session-personal .shipcashbox-report-card {
+  border-color: var(--cashbox-line-night) !important;
+  background: rgba(17, 27, 32, 0.76) !important;
+  color: var(--cashbox-text-night) !important;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body.shipcashbox-session-personal .shipcashbox-report-card strong {
+  color: var(--cashbox-text-night) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body.shipcashbox-session-personal .shipcashbox-report-card small,
+body.navdesk-theme-night.shipcashbox-body.shipcashbox-session-personal .shipcashbox-report-card > span:not(.shipcashbox-report-card__chip):not(.shipcashbox-report-card__actions),
+body.navdesk-theme-night.shipcashbox-body.shipcashbox-session-personal .shipcashbox-report-card__main > span:not(.shipcashbox-report-card__chip) {
+  color: var(--cashbox-muted-night) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body.shipcashbox-session-personal .shipcashbox-report-card__chip {
+  background: rgba(226, 189, 118, 0.12) !important;
+  color: rgba(248, 232, 199, 0.76) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body.shipcashbox-session-personal .shipcashbox-report-card__icon {
+  border-color: rgba(248, 232, 199, 0.14) !important;
+  background: rgba(17, 27, 32, 0.72) !important;
+  color: rgba(248, 232, 199, 0.78) !important;
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.18) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body.shipcashbox-session-personal .shipcashbox-record-state--active-report {
+  border-color: rgba(112, 186, 145, 0.24) !important;
+  background: linear-gradient(135deg, rgba(19, 42, 36, 0.86), rgba(17, 27, 32, 0.72)) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body.shipcashbox-session-personal .shipcashbox-record-state--other-report {
+  background: rgba(17, 27, 32, 0.58) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body.shipcashbox-session-personal .shipcashbox-record-state--unlinked,
+body.navdesk-theme-night.shipcashbox-body.shipcashbox-session-personal .shipcashbox-record-state--closed-report {
+  background: rgba(17, 27, 32, 0.46) !important;
+  box-shadow: none !important;
+}
+
+body.shipcashbox-body.shipcashbox-session-personal .shipcashbox-submitted-record__attach {
+  position: absolute !important;
+  top: 8px !important;
+  right: 9px !important;
+  z-index: 4 !important;
+  min-height: 28px !important;
+  padding: 5px 9px !important;
+  border: 1px solid rgba(62, 125, 99, 0.24) !important;
+  border-radius: 999px !important;
+  background: rgba(239, 249, 244, 0.96) !important;
+  color: rgba(32, 83, 64, 0.92) !important;
+  cursor: pointer !important;
+  font: inherit !important;
+  font-size: 0.62rem !important;
+  font-weight: 950 !important;
+  letter-spacing: 0.06em !important;
+  line-height: 1 !important;
+  text-transform: uppercase !important;
+  box-shadow: 0 8px 18px rgba(36, 83, 64, 0.12) !important;
+}
+
+body.shipcashbox-body.shipcashbox-session-personal .shipcashbox-submitted-record__attach:focus-visible {
+  outline: 2px solid rgba(62, 125, 99, 0.28) !important;
+  outline-offset: 2px !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body.shipcashbox-session-personal .shipcashbox-submitted-record__attach {
+  border-color: rgba(112, 186, 145, 0.26) !important;
+  background: rgba(19, 42, 36, 0.96) !important;
+  color: rgba(218, 247, 229, 0.92) !important;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22) !important;
+}
+
+/* Sprint Layout B final bounded active-screen geometry contract. */
+html:has(body.shipcashbox-body:not(.shipcashbox-viewer-guest)),
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) {
+  overflow: hidden !important;
+  scrollbar-gutter: auto !important;
+  scrollbar-width: none !important;
+}
+
+html:has(body.shipcashbox-body:not(.shipcashbox-viewer-guest))::-webkit-scrollbar,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest)::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) {
+  --cashbox-work-gutter: clamp(6px, 2.1vw, 10px);
+  --cashbox-work-width: 100%;
+  --cashbox-active-gap: clamp(6px, 1.8vw, 8px);
+  min-height: var(--cashbox-vvh, 100svh) !important;
+  overflow-x: hidden !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .site-shell {
+  box-sizing: border-box !important;
+  display: grid !important;
+  grid-template-rows: minmax(0, 1fr) !important;
+  gap: var(--cashbox-active-gap) !important;
+  width: min(100%, var(--cashbox-work-width)) !important;
+  max-width: var(--cashbox-work-width) !important;
+  min-width: 0 !important;
+  min-height: var(--cashbox-vvh, 100svh) !important;
+  height: var(--cashbox-vvh, 100svh) !important;
+  max-height: var(--cashbox-vvh, 100svh) !important;
+  margin: 0 auto !important;
+  padding: max(6px, env(safe-area-inset-top)) var(--cashbox-work-gutter) max(7px, env(safe-area-inset-bottom)) !important;
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-appbar {
+  display: none !important;
+  grid-template-columns: auto minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  align-self: start !important;
+  min-width: 0 !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-appbar__actions {
+  display: contents !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #cashboxWorkspaceCashMenuButton {
+  grid-column: 1 !important;
+  justify-self: start !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-appbar__brand {
+  grid-column: 2 !important;
+  justify-self: center !important;
+  min-width: 0 !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #cashboxAppMenuButton {
+  grid-column: 3 !important;
+  justify-self: end !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-mode-chip,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #cashboxMobileMasthead > .shipcashbox-mode-chip,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #cashboxMobileMasthead > strong {
+  display: none !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-page {
+  display: grid !important;
+  grid-template-rows: auto minmax(0, 1fr) !important;
+  align-content: stretch !important;
+  align-items: stretch !important;
+  gap: var(--cashbox-active-gap) !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-workspace-section,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-workspace-card,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-shell,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-panel,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]),
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #participantView:not([hidden]) {
+  box-sizing: border-box !important;
+  display: grid !important;
+  grid-template-rows: minmax(0, 1fr) !important;
+  align-self: stretch !important;
+  justify-self: stretch !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-workspace-card {
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-appbar,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-mobile-masthead,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-card--ready-records,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-command-deck,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-personal-quiet {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-shell {
+  gap: 0 !important;
+}
+
+body.shipcashbox-body .shipcashbox-shell > [hidden],
+body.shipcashbox-body .shipcashbox-shell > .shipcashbox-panel[hidden],
+body.shipcashbox-body #guestView[hidden],
+body.shipcashbox-body #treasurerView[hidden],
+body.shipcashbox-body #participantView[hidden] {
+  display: none !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #cashboxMobileMasthead {
+  grid-row: 1 !important;
+  align-self: start !important;
+  display: grid !important;
+  grid-template-columns: minmax(58px, auto) minmax(0, 1fr) 42px !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-height: 48px !important;
+  height: 48px !important;
+  max-height: 48px !important;
+  margin: 0 !important;
+  padding: 6px !important;
+  border-radius: 16px !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #cashboxMobileCashMenuButton {
+  order: 1 !important;
+  justify-self: start !important;
+  min-width: 58px !important;
+  max-width: 68px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 0 8px !important;
+  font-size: 0.68rem !important;
+  letter-spacing: 0.01em !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #mobileMastheadTitle {
+  order: 2 !important;
+  justify-self: center !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-align: center !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  font-size: 0.78rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.14em !important;
+  line-height: 1 !important;
+  text-transform: uppercase !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #cashboxMobileMenuButton {
+  order: 3 !important;
+  justify-self: end !important;
+  width: 42px !important;
+  min-width: 42px !important;
+  max-width: 42px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 0 !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #cashboxMobileMenuButton > span:last-child {
+  display: none !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #cashboxMobileMenuButton .site-menu-button__icon {
+  margin: 0 !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-workspace-section {
+  grid-row: 2 !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]) .shipcashbox-stack--cashbox-home,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]) .shipcashbox-stack--journal {
+  display: grid !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]) .shipcashbox-stack--cashbox-home {
+  grid-template-rows: auto minmax(0, 1fr) !important;
+  align-content: stretch !important;
+  align-items: stretch !important;
+  gap: clamp(8px, 2vw, 10px) !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]) .shipcashbox-command-deck,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]) .shipcashbox-personal-quiet {
+  align-self: start !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  margin: 0 !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]) .shipcashbox-stack--journal {
+  grid-template-rows: minmax(0, 1fr) !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]) .shipcashbox-stack--journal .shipcashbox-card--notebook,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #participantView:not([hidden]) .shipcashbox-card--notebook {
+  align-self: stretch !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  padding: clamp(10px, 2.8vw, 13px) !important;
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]) .shipcashbox-card--notebook .shipcashbox-workhead,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #participantView:not([hidden]) .shipcashbox-card--notebook .shipcashbox-workhead,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]) .shipcashbox-card--notebook .shipcashbox-notebook-footer,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #participantView:not([hidden]) .shipcashbox-card--notebook .shipcashbox-notebook-footer {
+  flex: 0 0 auto !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]) .shipcashbox-notebook-shell,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #participantView:not([hidden]) .shipcashbox-notebook-shell {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+  overscroll-behavior: contain !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]) .shipcashbox-notebook-shell::-webkit-scrollbar,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #participantView:not([hidden]) .shipcashbox-notebook-shell::-webkit-scrollbar,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]) .shipcashbox-notebook-textarea::-webkit-scrollbar,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #participantView:not([hidden]) .shipcashbox-notebook-textarea::-webkit-scrollbar,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]) .shipcashbox-submitted-records__grid::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]) .shipcashbox-notebook-textarea,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #participantView:not([hidden]) .shipcashbox-notebook-textarea {
+  min-height: 100% !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow: hidden !important;
+  resize: none !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]) .shipcashbox-ready-layer + .shipcashbox-notebook-textarea {
+  min-height: clamp(132px, 28svh, 260px) !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]) .shipcashbox-stack--cashbox-home .shipcashbox-card--ready-records {
+  align-self: stretch !important;
+  display: grid !important;
+  grid-template-rows: minmax(0, 1fr) !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  block-size: 100% !important;
+  max-height: 100% !important;
+  padding: clamp(9px, 2.5vw, 12px) !important;
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]) .shipcashbox-stack--cashbox-home .shipcashbox-ready-records-flow {
+  display: grid !important;
+  grid-template-columns: minmax(118px, 0.44fr) minmax(0, 1fr) !important;
+  grid-template-rows: minmax(0, 1fr) !important;
+  align-content: stretch !important;
+  align-items: start !important;
+  gap: 8px !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  block-size: 100% !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]) .shipcashbox-stack--cashbox-home .shipcashbox-ready-records-flow__list,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]) .shipcashbox-stack--cashbox-home .shipcashbox-submitted-records--compact {
+  display: grid !important;
+  grid-template-rows: auto minmax(0, 1fr) !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  block-size: 100% !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]) .shipcashbox-stack--cashbox-home .shipcashbox-submitted-records--compact .shipcashbox-submitted-records__grid {
+  align-content: start !important;
+  align-items: start !important;
+  grid-auto-rows: max-content !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  scrollbar-width: none !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+@media (min-width: 861px) {
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) {
+    --cashbox-work-gutter: clamp(18px, 3vw, 40px);
+    --cashbox-work-width: min(1120px, calc(100vw - (var(--cashbox-work-gutter) * 2)));
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .site-shell {
+    padding-block: clamp(12px, 2dvh, 20px) max(20px, env(safe-area-inset-bottom)) !important;
+  }
+}
+
+  @media (max-width: 860px) {
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .shipcashbox-page {
+    gap: 6px !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) #cashboxMobileMasthead {
+    grid-template-columns: minmax(58px, 68px) minmax(0, 1fr) 42px !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) #cashboxMobileCashMenuButton {
+    min-width: 42px !important;
+    max-width: 68px !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]) .shipcashbox-stack--cashbox-home .shipcashbox-ready-records-flow {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: auto minmax(0, 1fr) !important;
+    align-content: stretch !important;
+    align-items: stretch !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]) .shipcashbox-command-deck,
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]) .shipcashbox-personal-quiet {
+    gap: 6px !important;
+    padding: 7px !important;
+    border-radius: 15px !important;
+    box-shadow: none !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]) .shipcashbox-command-deck__hero {
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    gap: 7px !important;
+    padding: 8px !important;
+    border-radius: 13px !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]) .shipcashbox-command-deck__hero strong {
+    margin: 2px 0 0 !important;
+    font-size: clamp(1.05rem, 5.4vw, 1.38rem) !important;
+    line-height: 0.96 !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]) .shipcashbox-command-deck__hero p,
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]) .shipcashbox-command-deck__hero span {
+    font-size: 0.56rem !important;
+    letter-spacing: 0.05em !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]) .shipcashbox-command-deck__primary {
+    min-width: 64px !important;
+    padding: 5px 6px !important;
+    border-radius: 11px !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]) .shipcashbox-command-deck__primary b {
+    font-size: 0.95rem !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]) .shipcashbox-command-deck__primary span {
+    display: block !important;
+    max-width: 58px !important;
+    margin-top: 3px !important;
+    font-size: 0.48rem !important;
+    letter-spacing: 0.04em !important;
+    line-height: 0.96 !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]) .shipcashbox-command-metrics {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 4px !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]) .shipcashbox-command-metrics button {
+    min-height: 38px !important;
+    padding: 5px 4px !important;
+    border-radius: 10px !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]) .shipcashbox-command-metrics span {
+    font-size: 0.5rem !important;
+    letter-spacing: 0.04em !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]) .shipcashbox-command-metrics strong {
+    font-size: 0.68rem !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]) .shipcashbox-personal-quiet__balance {
+    min-height: 0 !important;
+    padding: 7px 9px !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]) .shipcashbox-personal-quiet__stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 4px !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]) .shipcashbox-personal-quiet__stats > span,
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]) .shipcashbox-personal-quiet__stats > button {
+    min-height: 38px !important;
+    padding: 5px 4px !important;
+    border-radius: 10px !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]) .shipcashbox-ready-create-card {
+    min-height: 50px !important;
+    padding: 8px 10px !important;
+    border-radius: 15px !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]) .shipcashbox-stack--cashbox-home .shipcashbox-submitted-records--compact .shipcashbox-submitted-records__grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 430px) {
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) {
+    --cashbox-active-gap: 6px;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) .site-shell {
+    padding-inline: 5px !important;
+    padding-bottom: max(6px, env(safe-area-inset-bottom)) !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]) .shipcashbox-command-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 5px !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]) .shipcashbox-command-metrics button {
+    min-height: 40px !important;
+    justify-content: start !important;
+    text-align: left !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest) #treasurerView:not([hidden]) .shipcashbox-command-metrics span {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+}
+
+.shipcashbox-body .shipcashbox-card--crew-compact {
+  display: grid !important;
+  gap: 10px !important;
+  padding: clamp(10px, 2.4vw, 14px) !important;
+}
+
+.shipcashbox-body .shipcashbox-crew-compact {
+  display: grid !important;
+  gap: 10px !important;
+}
+
+.shipcashbox-body .shipcashbox-crew-compact__summary {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 6px !important;
+}
+
+.shipcashbox-body .shipcashbox-crew-compact__summary span {
+  display: grid !important;
+  gap: 3px !important;
+  min-height: 46px !important;
+  padding: 8px !important;
+  border: 1px solid rgba(36, 55, 72, 0.10) !important;
+  border-radius: 13px !important;
+  background: rgba(249, 251, 249, 0.62) !important;
+}
+
+.shipcashbox-body .shipcashbox-crew-compact__summary small {
+  color: var(--cashbox-muted-day) !important;
+  font-size: 0.58rem !important;
+  font-weight: 850 !important;
+  letter-spacing: 0.07em !important;
+  line-height: 1 !important;
+  text-transform: uppercase !important;
+}
+
+.shipcashbox-body .shipcashbox-crew-compact__summary strong {
+  color: var(--cashbox-text-day) !important;
+  font-size: 0.96rem !important;
+  line-height: 1 !important;
+}
+
+.shipcashbox-body .shipcashbox-crew-compact__divider {
+  height: 1px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  background: rgba(36, 55, 72, 0.12) !important;
+}
+
+.shipcashbox-body .shipcashbox-crew-compact__body {
+  display: grid !important;
+  gap: 8px !important;
+}
+
+.shipcashbox-body .shipcashbox-form__grid--compact {
+  grid-template-columns: minmax(0, 1.2fr) minmax(88px, 0.8fr) !important;
+  gap: 8px !important;
+}
+
+.shipcashbox-body .shipcashbox-participants--compact {
+  gap: 7px !important;
+}
+
+@media (max-width: 860px) {
+  .shipcashbox-body .shipcashbox-card--crew-compact {
+    gap: 8px !important;
+    padding: 9px !important;
+  }
+
+  .shipcashbox-body .shipcashbox-crew-compact__summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .shipcashbox-body .shipcashbox-crew-compact__summary span {
+    min-height: 40px !important;
+    padding: 6px !important;
+    border-radius: 11px !important;
+  }
+
+  .shipcashbox-body .shipcashbox-crew-compact__summary small {
+    font-size: 0.5rem !important;
+    letter-spacing: 0.04em !important;
+  }
+
+  .shipcashbox-body .shipcashbox-crew-compact__summary strong {
+    font-size: 0.78rem !important;
+  }
+
+  .shipcashbox-body .shipcashbox-form__grid--compact {
+    grid-template-columns: 1fr !important;
+    gap: 7px !important;
+  }
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-crew-compact__summary span {
+  border-color: rgba(226, 189, 118, 0.14) !important;
+  background: rgba(16, 25, 30, 0.62) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-crew-compact__summary small {
+  color: var(--cashbox-muted-night) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-crew-compact__summary strong {
+  color: var(--cashbox-text-night) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-crew-compact__divider {
+  background: rgba(226, 189, 118, 0.14) !important;
+}
+
+/* Ship Cashbox Records Screen Template v1.
+   Scope: only the records overview page. Do not apply this contract to the live journal editor. */
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) {
+  --records-screen-gap: clamp(7px, 1.4vw, 10px);
+  --records-screen-pad-x: clamp(6px, 1.8vw, 14px);
+  --records-masthead-h: 48px;
+  --records-summary-max: 188px;
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .site-shell {
+  display: grid !important;
+  grid-template-rows: minmax(0, 1fr) !important;
+  align-content: start !important;
+  align-items: stretch !important;
+  justify-content: stretch !important;
+  width: min(100%, var(--cashbox-work-width, 100%)) !important;
+  max-width: var(--cashbox-work-width, 100%) !important;
+  min-height: var(--cashbox-vvh, 100svh) !important;
+  height: var(--cashbox-vvh, 100svh) !important;
+  max-height: var(--cashbox-vvh, 100svh) !important;
+  margin: 0 auto !important;
+  padding: max(6px, env(safe-area-inset-top)) var(--records-screen-pad-x) max(7px, env(safe-area-inset-bottom)) !important;
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) #cashboxWorkspaceAppbar,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-appbar {
+  display: none !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-page {
+  display: grid !important;
+  grid-template-rows: var(--records-masthead-h) minmax(0, 1fr) !important;
+  align-content: start !important;
+  align-items: stretch !important;
+  gap: var(--records-screen-gap) !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) #cashboxMobileMasthead {
+  position: static !important;
+  grid-row: 1 !important;
+  display: grid !important;
+  grid-template-columns: minmax(60px, auto) minmax(0, 1fr) 42px !important;
+  align-items: center !important;
+  align-self: stretch !important;
+  gap: 8px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: var(--records-masthead-h) !important;
+  min-height: var(--records-masthead-h) !important;
+  max-height: var(--records-masthead-h) !important;
+  margin: 0 !important;
+  padding: 6px 8px !important;
+  border: 1px solid rgba(16, 36, 58, 0.10) !important;
+  border-radius: 16px !important;
+  background: rgba(249, 251, 249, 0.86) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) #cashboxMobileCashMenuButton {
+  justify-self: start !important;
+  width: auto !important;
+  min-width: 60px !important;
+  max-width: 74px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 0 9px !important;
+  border-radius: 13px !important;
+  font-size: 0.68rem !important;
+  font-weight: 850 !important;
+  letter-spacing: 0 !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) #mobileMastheadTitle {
+  justify-self: center !important;
+  min-width: 0 !important;
+  color: var(--cashbox-muted-day) !important;
+  overflow: hidden !important;
+  text-align: center !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  font-size: 0.78rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.16em !important;
+  line-height: 1 !important;
+  text-transform: uppercase !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) #cashboxMobileMenuButton {
+  justify-self: end !important;
+  width: 42px !important;
+  min-width: 42px !important;
+  max-width: 42px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 0 !important;
+  border-radius: 13px !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) #cashboxMobileMenuButton > span:last-child,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) #cashboxMobileMasthead > .shipcashbox-mode-chip,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) #cashboxMobileMasthead > strong {
+  display: none !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-workspace-section,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-workspace-card,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-shell,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-panel,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) #treasurerView:not([hidden]) {
+  box-sizing: border-box !important;
+  display: grid !important;
+  grid-template-rows: minmax(0, 1fr) !important;
+  align-content: start !important;
+  align-items: stretch !important;
+  justify-content: stretch !important;
+  align-self: stretch !important;
+  justify-self: stretch !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-stack--cashbox-home {
+  display: grid !important;
+  grid-template-rows: auto minmax(0, 1fr) !important;
+  align-content: start !important;
+  align-items: stretch !important;
+  gap: var(--records-screen-gap) !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-command-deck,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-personal-quiet {
+  align-self: start !important;
+  display: grid !important;
+  gap: 7px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-height: var(--records-summary-max) !important;
+  margin: 0 !important;
+  padding: 9px !important;
+  border: 1px solid var(--cashbox-line-day) !important;
+  border-radius: 17px !important;
+  background: rgba(249, 251, 249, 0.72) !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-command-deck__hero {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(72px, auto) !important;
+  align-items: stretch !important;
+  gap: 8px !important;
+  min-height: 74px !important;
+  padding: 9px 10px !important;
+  border-radius: 14px !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-command-deck__hero > div {
+  display: grid !important;
+  grid-template-rows: auto minmax(0, 1fr) auto !important;
+  align-content: center !important;
+  min-width: 0 !important;
+  row-gap: 3px !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-command-deck__hero p,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-command-deck__hero span {
+  display: block !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  font-size: 0.6rem !important;
+  letter-spacing: 0.06em !important;
+  line-height: 1 !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-command-deck__hero strong {
+  display: block !important;
+  align-self: center !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  font-size: clamp(1.45rem, 4.1vw, 2.45rem) !important;
+  line-height: 0.92 !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-command-deck__primary {
+  display: grid !important;
+  align-content: center !important;
+  justify-items: center !important;
+  min-width: 72px !important;
+  padding: 6px !important;
+  border-radius: 13px !important;
+  box-shadow: 0 7px 14px rgba(36, 55, 72, 0.08) !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-command-deck__primary b {
+  display: block !important;
+  margin: 0 !important;
+  color: var(--cashbox-text-day) !important;
+  font-size: 1.08rem !important;
+  line-height: 0.95 !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-command-deck__primary span {
+  display: block !important;
+  max-width: 72px !important;
+  margin: 3px 0 0 !important;
+  white-space: normal !important;
+  text-align: center !important;
+  font-size: 0.54rem !important;
+  line-height: 0.95 !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-command-metrics {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 6px !important;
+  min-width: 0 !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-command-metrics button {
+  display: grid !important;
+  align-content: center !important;
+  justify-content: start !important;
+  justify-items: start !important;
+  row-gap: 0 !important;
+  min-width: 0 !important;
+  min-height: 48px !important;
+  padding: 0 !important;
+  border-radius: 12px !important;
+  text-align: left !important;
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-command-metric--split {
+  grid-column: span 2 !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 0 !important;
+  min-height: 48px !important;
+  padding: 0 !important;
+  box-shadow: 0 7px 14px rgba(36, 55, 72, 0.08) !important;
+}
+
+/* Records metric typography contract: every visible cell uses the same inner grid. */
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-command-metric--split > span,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-command-metric-pair button {
+  display: grid !important;
+  grid-template-rows: min-content min-content !important;
+  align-content: center !important;
+  justify-items: start !important;
+  min-width: 0 !important;
+  min-height: 46px !important;
+  padding: 7px 9px !important;
+  row-gap: 4px !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-command-metric--split > span + span {
+  border-left: 1px solid var(--cashbox-line-day) !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-command-metric-pair {
+  grid-column: span 2 !important;
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  min-width: 0 !important;
+  min-height: 48px !important;
+  border: 1px solid var(--cashbox-line-day) !important;
+  border-radius: 12px !important;
+  background: rgba(255, 255, 255, 0.42) !important;
+  box-shadow: 0 7px 14px rgba(36, 55, 72, 0.08) !important;
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-command-metric-pair button {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-command-metric-pair button + button {
+  border-left: 1px solid var(--cashbox-line-day) !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-command-metrics span,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-command-metrics strong {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-command-metric-pair button > span,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-command-metric--split > span > span {
+  display: block !important;
+  margin: 0 !important;
+  min-height: 0 !important;
+  color: var(--cashbox-muted-day) !important;
+  font-size: 0.56rem !important;
+  font-weight: 850 !important;
+  letter-spacing: 0.045em !important;
+  line-height: 1 !important;
+  text-transform: uppercase !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-command-metrics strong {
+  display: block !important;
+  margin: 0 !important;
+  font-size: 0.82rem !important;
+  font-weight: 850 !important;
+  letter-spacing: -0.01em !important;
+  line-height: 0.98 !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-command-metric--split > span + span,
+body.navdesk-theme-night.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-command-metric-pair,
+body.navdesk-theme-night.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-command-metric-pair button + button {
+  border-color: var(--cashbox-line-night) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-command-metric-pair {
+  background: rgba(16, 25, 30, 0.42) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-command-metric--split,
+body.navdesk-theme-night.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-command-deck__primary,
+body.navdesk-theme-night.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-command-metric-pair {
+  box-shadow: 0 7px 14px rgba(0, 0, 0, 0.18) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-command-deck__primary b {
+  color: var(--cashbox-text-night) !important;
+}
+
+/* Personal records summary: keep the three metric cells stable inside the records screen. */
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-personal-quiet {
+  grid-template-columns: 1fr !important;
+  gap: 7px !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-personal-quiet__balance {
+  display: grid !important;
+  align-content: center !important;
+  min-height: 80px !important;
+  padding: 10px 11px !important;
+  border-radius: 14px !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-personal-quiet__balance span,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-personal-quiet__balance strong,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-personal-quiet__balance p {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-personal-quiet__stats {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 6px !important;
+  min-width: 0 !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-personal-quiet__stats > button {
+  display: grid !important;
+  grid-template-rows: min-content min-content !important;
+  align-content: center !important;
+  justify-items: start !important;
+  row-gap: 3px !important;
+  min-width: 0 !important;
+  min-height: 40px !important;
+  padding: 6px 7px !important;
+  border-radius: 11px !important;
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-personal-quiet__stats > button span,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-personal-quiet__stats > button strong {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-personal-quiet__stats > button span {
+  color: var(--cashbox-muted-day) !important;
+  font-size: 0.54rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.055em !important;
+  line-height: 1 !important;
+  text-transform: uppercase !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-personal-quiet__stats > button strong {
+  color: var(--cashbox-text-day) !important;
+  font-size: clamp(0.74rem, 3.2vw, 0.9rem) !important;
+  font-weight: 920 !important;
+  letter-spacing: -0.015em !important;
+  line-height: 0.98 !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-personal-quiet__stats > button span {
+  color: var(--cashbox-muted-night) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-personal-quiet__stats > button strong {
+  color: var(--cashbox-text-night) !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) [data-records-contract="ready-records"] {
+  display: grid !important;
+  grid-template-rows: minmax(0, 1fr) !important;
+  align-self: stretch !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  padding: 10px !important;
+  border: 1px solid var(--cashbox-line-day) !important;
+  border-radius: 18px !important;
+  background: rgba(239, 244, 239, 0.88) !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-ready-records-flow {
+  display: grid !important;
+  grid-template-columns: minmax(220px, 0.34fr) minmax(0, 1fr) !important;
+  grid-template-rows: minmax(0, 1fr) !important;
+  align-content: stretch !important;
+  align-items: stretch !important;
+  gap: 9px !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-ready-create-card {
+  align-self: stretch !important;
+  display: grid !important;
+  grid-template-columns: 22px minmax(0, 1fr) !important;
+  align-content: center !important;
+  align-items: center !important;
+  gap: 9px !important;
+  min-width: 0 !important;
+  min-height: 72px !important;
+  height: 100% !important;
+  max-height: none !important;
+  padding: 11px 12px !important;
+  border-radius: 16px !important;
+  background: rgba(247, 250, 247, 0.56) !important;
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-ready-create-card span {
+  display: block !important;
+  width: 22px !important;
+  height: auto !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--cashbox-muted-day) !important;
+  font-size: 1.65rem !important;
+  font-weight: 700 !important;
+  line-height: 0.8 !important;
+  text-align: center !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-ready-create-card strong {
+  display: block !important;
+  margin: 0 !important;
+  line-height: 1 !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-ready-records-flow__list {
+  display: grid !important;
+  grid-template-rows: auto minmax(0, 1fr) !important;
+  align-content: stretch !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-submitted-records--compact {
+  display: grid !important;
+  grid-template-rows: minmax(0, 1fr) !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-submitted-records__grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  align-content: start !important;
+  align-items: start !important;
+  gap: 8px !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  scrollbar-width: none !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-ready-records-flow__label {
+  margin: 0 0 7px !important;
+  color: rgba(91, 105, 121, 0.96) !important;
+  line-height: 1 !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-submitted-record__swipe .shipcashbox-submitted-record__button {
+  min-height: 48px !important;
+  padding: 8px 10px !important;
+  border-color: rgba(36, 55, 72, 0.13) !important;
+  background: rgba(245, 248, 245, 0.96) !important;
+  box-shadow: 0 5px 12px rgba(36, 55, 72, 0.075) !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-submitted-record__button > span:first-child {
+  display: grid !important;
+  align-content: center !important;
+  min-width: 0 !important;
+  row-gap: 3px !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-submitted-record__button strong,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-submitted-record__button small,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-submitted-record__sum {
+  display: block !important;
+  margin: 0 !important;
+  line-height: 1 !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-ready-create-card {
+  background: rgba(16, 25, 30, 0.56) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-submitted-record__swipe .shipcashbox-submitted-record__button {
+  background: rgba(20, 31, 36, 0.96) !important;
+  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.22) !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-submitted-records__grid::-webkit-scrollbar {
+  display: none !important;
+}
+
+@media (min-width: 861px) {
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) {
+    --records-screen-pad-x: clamp(18px, 3vw, 40px);
+    --cashbox-work-width: min(1120px, calc(100vw - (var(--records-screen-pad-x) * 2)));
+  }
+}
+
+@media (max-width: 860px) {
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) {
+    --records-screen-gap: 7px;
+    --records-summary-max: 244px;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-ready-records-flow {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: auto minmax(0, 1fr) !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-ready-create-card {
+    height: auto !important;
+    min-height: 52px !important;
+    max-height: 62px !important;
+    padding: 9px 11px !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-submitted-records__grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 430px) {
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) {
+    --records-screen-pad-x: 5px;
+    --records-screen-gap: 6px;
+    --records-summary-max: 238px;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) #cashboxMobileMasthead {
+    grid-template-columns: 60px minmax(0, 1fr) 42px !important;
+    padding-inline: 6px !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-command-deck,
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-personal-quiet {
+    padding: 7px !important;
+    border-radius: 16px !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-command-deck__hero {
+    min-height: 70px !important;
+    padding: 8px 9px !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-command-deck__hero strong {
+    font-size: clamp(1.18rem, 7vw, 1.55rem) !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-command-metrics {
+    grid-template-columns: 1fr !important;
+    gap: 5px !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-command-metrics button {
+    min-height: 48px !important;
+    padding: 0 !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-command-metric--split,
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-command-metric-pair {
+    grid-column: 1 / -1 !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-command-metric-pair {
+    min-height: 48px !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-command-metric-pair button {
+    min-height: 46px !important;
+    padding: 7px 9px !important;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) [data-records-contract="ready-records"] {
+    padding: 8px !important;
+    border-radius: 17px !important;
+  }
+}
+
+body.navdesk-theme-night.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) #cashboxMobileMasthead,
+body.navdesk-theme-night.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-command-deck,
+body.navdesk-theme-night.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-personal-quiet,
+body.navdesk-theme-night.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) [data-records-contract="ready-records"] {
+  border-color: var(--cashbox-line-night) !important;
+  background: rgba(16, 25, 30, 0.78) !important;
+}
+
+/* Records Screen Template v1 patch: inactive panels must not reserve grid rows. */
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) #guestView,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) #participantView[hidden] {
+  display: none !important;
+  grid-row: auto !important;
+  width: 0 !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-shell {
+  grid-template-rows: minmax(0, 1fr) !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) #treasurerView:not([hidden]) {
+  grid-row: 1 !important;
+  grid-column: 1 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+}
+
+/* Records Screen Template v1 patch: create action is a compact row; records list owns the free height. */
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-ready-records-flow {
+  grid-template-columns: 1fr !important;
+  grid-template-rows: auto minmax(0, 1fr) !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-ready-create-card {
+  display: inline-grid !important;
+  grid-template-columns: 22px max-content !important;
+  align-content: center !important;
+  align-items: center !important;
+  justify-content: center !important;
+  justify-items: center !important;
+  column-gap: 9px !important;
+  height: auto !important;
+  min-height: 54px !important;
+  max-height: 68px !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-ready-create-card span {
+  align-self: center !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  justify-self: end !important;
+  position: relative !important;
+  width: 22px !important;
+  height: 22px !important;
+  color: transparent !important;
+  font-size: 0 !important;
+  line-height: 1 !important;
+  transform: none !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-ready-create-card span::before,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-ready-create-card span::after {
+  content: "" !important;
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  width: 12px !important;
+  height: 2px !important;
+  border-radius: 999px !important;
+  background: var(--cashbox-muted-day) !important;
+  transform: translate(-50%, -50%) !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-ready-create-card span::after {
+  transform: translate(-50%, -50%) rotate(90deg) !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-ready-create-card strong {
+  align-self: center !important;
+  justify-self: start !important;
+  white-space: nowrap !important;
+  line-height: 1 !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-ready-create-card span::before,
+body.navdesk-theme-night.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) [data-records-contract="ready-records"]) .shipcashbox-ready-create-card span::after {
+  background: var(--cashbox-muted-night) !important;
+}
+/* Ship Cashbox chrome polish: close actions are glyphs, not round badges. */
+/* Ship Cashbox Clean Journal Template v2.
+   The textarea keeps its original id/classes for JS; only the surrounding layout is rebuilt. */
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) .shipcashbox-journal-screen) {
+  --journal-clean-gap: clamp(7px, 1.4vw, 10px);
+  --journal-clean-pad-x: clamp(6px, 1.8vw, 14px);
+  --journal-clean-masthead-h: 48px;
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) .shipcashbox-journal-screen) .site-shell {
+  display: grid !important;
+  grid-template-rows: minmax(0, 1fr) !important;
+  align-content: start !important;
+  align-items: stretch !important;
+  justify-content: stretch !important;
+  width: min(100%, var(--cashbox-work-width, 100%)) !important;
+  max-width: var(--cashbox-work-width, 100%) !important;
+  min-height: var(--cashbox-vvh, 100svh) !important;
+  height: var(--cashbox-vvh, 100svh) !important;
+  max-height: var(--cashbox-vvh, 100svh) !important;
+  margin: 0 auto !important;
+  padding: max(6px, env(safe-area-inset-top)) var(--journal-clean-pad-x) max(7px, env(safe-area-inset-bottom)) !important;
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) .shipcashbox-journal-screen) #cashboxWorkspaceAppbar,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) .shipcashbox-journal-screen) .shipcashbox-appbar {
+  display: none !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) .shipcashbox-journal-screen) .shipcashbox-page {
+  display: grid !important;
+  grid-template-rows: var(--journal-clean-masthead-h) minmax(0, 1fr) !important;
+  align-content: start !important;
+  align-items: stretch !important;
+  gap: var(--journal-clean-gap) !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) .shipcashbox-journal-screen) #cashboxMobileMasthead {
+  position: static !important;
+  grid-row: 1 !important;
+  display: grid !important;
+  grid-template-columns: minmax(60px, auto) minmax(0, 1fr) 42px !important;
+  align-items: center !important;
+  align-self: stretch !important;
+  gap: 8px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: var(--journal-clean-masthead-h) !important;
+  min-height: var(--journal-clean-masthead-h) !important;
+  max-height: var(--journal-clean-masthead-h) !important;
+  margin: 0 !important;
+  padding: 6px 8px !important;
+  border: 1px solid rgba(16, 36, 58, 0.10) !important;
+  border-radius: 16px !important;
+  background: rgba(249, 251, 249, 0.86) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) .shipcashbox-journal-screen) #cashboxMobileCashMenuButton {
+  justify-self: start !important;
+  width: auto !important;
+  min-width: 60px !important;
+  max-width: 74px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 0 9px !important;
+  border-radius: 13px !important;
+  font-size: 0.68rem !important;
+  font-weight: 850 !important;
+  letter-spacing: 0 !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) .shipcashbox-journal-screen) #mobileMastheadTitle {
+  justify-self: center !important;
+  min-width: 0 !important;
+  color: var(--cashbox-muted-day) !important;
+  overflow: hidden !important;
+  text-align: center !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  font-size: 0.78rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.16em !important;
+  line-height: 1 !important;
+  text-transform: uppercase !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) .shipcashbox-journal-screen) #cashboxMobileMenuButton {
+  justify-self: end !important;
+  width: 42px !important;
+  min-width: 42px !important;
+  max-width: 42px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 0 !important;
+  border-radius: 13px !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) .shipcashbox-journal-screen) #cashboxMobileMenuButton > span:last-child,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) .shipcashbox-journal-screen) #cashboxMobileMasthead > .shipcashbox-mode-chip,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) .shipcashbox-journal-screen) #cashboxMobileMasthead > strong {
+  display: none !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) .shipcashbox-journal-screen) .shipcashbox-workspace-section,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) .shipcashbox-journal-screen) .shipcashbox-workspace-card,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) .shipcashbox-journal-screen) .shipcashbox-shell,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) .shipcashbox-journal-screen) .shipcashbox-panel,
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) .shipcashbox-journal-screen) #treasurerView:not([hidden]) {
+  box-sizing: border-box !important;
+  display: grid !important;
+  grid-template-rows: minmax(0, 1fr) !important;
+  align-content: stretch !important;
+  align-items: stretch !important;
+  justify-content: stretch !important;
+  align-self: stretch !important;
+  justify-self: stretch !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) .shipcashbox-journal-screen) .shipcashbox-shell > [hidden],
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) .shipcashbox-journal-screen) .shipcashbox-shell > .shipcashbox-panel[hidden],
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) .shipcashbox-journal-screen) #guestView[hidden],
+body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) .shipcashbox-journal-screen) #participantView[hidden] {
+  display: none !important;
+  grid-row: auto !important;
+  width: 0 !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  max-height: 0 !important;
+  overflow: hidden !important;
+}
+
+.shipcashbox-body .shipcashbox-journal-screen {
+  display: grid !important;
+  grid-template-rows: auto minmax(0, 1fr) auto !important;
+  align-content: stretch !important;
+  align-items: stretch !important;
+  align-self: stretch !important;
+  gap: 9px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+}
+
+.shipcashbox-body .shipcashbox-journal-head {
+  display: flex !important;
+  align-items: center !important;
+  min-height: 26px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.shipcashbox-body .shipcashbox-journal-head .shipcashbox-work-title--ledger {
+  display: flex !important;
+  align-items: baseline !important;
+  justify-content: flex-start !important;
+  gap: 7px !important;
+  margin: 0 !important;
+  color: var(--cashbox-text-day) !important;
+  font-size: clamp(1.08rem, 4.9vw, 1.34rem) !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.03em !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+
+.shipcashbox-body .shipcashbox-journal-head .shipcashbox-work-title--ledger span {
+  color: var(--cashbox-accent) !important;
+  font-size: 0.86rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.08em !important;
+  line-height: 1 !important;
+}
+
+.shipcashbox-body .shipcashbox-journal-input-shell {
+  position: relative !important;
+  display: grid !important;
+  grid-template-rows: auto minmax(0, 1fr) !important;
+  align-content: stretch !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  border: 1px solid rgba(16, 36, 58, 0.10) !important;
+  border-radius: 16px !important;
+  background: rgba(247, 250, 247, 0.62) !important;
+  overflow: hidden !important;
+  scrollbar-width: none !important;
+}
+
+.shipcashbox-body .shipcashbox-journal-input-shell:focus-within {
+  border-color: rgba(16, 36, 58, 0.18) !important;
+  box-shadow: inset 0 0 0 1px rgba(16, 36, 58, 0.045) !important;
+}
+
+.shipcashbox-body .shipcashbox-journal-input-shell:has(.shipcashbox-ready-layer) {
+  grid-template-rows: auto auto minmax(0, 1fr) !important;
+}
+
+.shipcashbox-body .shipcashbox-journal-input-shell .shipcashbox-journal-sheet-meta {
+  position: relative !important;
+  z-index: 2 !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 10px !important;
+  min-height: 30px !important;
+  margin: 0 !important;
+  padding: 0 14px !important;
+  border-bottom: 1px solid rgba(16, 36, 58, 0.07) !important;
+  background: rgba(247, 250, 247, 0.76) !important;
+}
+
+.shipcashbox-body .shipcashbox-journal-input-shell .shipcashbox-journal-sheet-meta span,
+.shipcashbox-body .shipcashbox-journal-input-shell .shipcashbox-journal-sheet-meta strong {
+  display: block !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  font-size: 0.76rem !important;
+  line-height: 1 !important;
+}
+
+.shipcashbox-body .shipcashbox-journal-input-shell .shipcashbox-journal-sheet-meta span {
+  color: var(--cashbox-muted-day) !important;
+  font-weight: 850 !important;
+}
+
+.shipcashbox-body .shipcashbox-journal-input-shell .shipcashbox-journal-sheet-meta strong {
+  color: var(--cashbox-text-day) !important;
+  font-weight: 900 !important;
+}
+
+.shipcashbox-body .shipcashbox-journal-input-shell .shipcashbox-ready-layer {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  position: relative !important;
+  z-index: 2 !important;
+  display: block !important;
+  width: 100% !important;
+  max-height: 30svh !important;
+  margin: 0 !important;
+  padding: 14px 14px 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: rgba(71, 87, 105, 0.70) !important;
+  font: inherit !important;
+  text-align: left !important;
+  white-space: pre-wrap !important;
+  cursor: pointer !important;
+  overflow-y: auto !important;
+}
+
+.shipcashbox-body .shipcashbox-journal-input-shell .shipcashbox-ready-layer__text {
+  display: block !important;
+  margin: 0 !important;
+  color: inherit !important;
+  overflow-wrap: anywhere !important;
+  font-size: 1rem !important;
+  line-height: 1.45 !important;
+}
+
+.shipcashbox-body .shipcashbox-journal-input-shell .shipcashbox-journal-textarea {
+  display: block !important;
+  box-sizing: border-box !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  padding: 14px 14px 18px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  outline: none !important;
+  background: transparent !important;
+  caret-color: var(--cashbox-text-day) !important;
+  color: rgba(16, 36, 58, 0.68) !important;
+  font-size: 1rem !important;
+  line-height: 1.45 !important;
+  resize: none !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  box-shadow: none !important;
+  overscroll-behavior: contain !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+.shipcashbox-body .shipcashbox-journal-input-shell .shipcashbox-journal-textarea:focus,
+.shipcashbox-body .shipcashbox-journal-input-shell .shipcashbox-journal-textarea:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.shipcashbox-body .shipcashbox-journal-input-shell:has(.shipcashbox-ready-layer) .shipcashbox-journal-textarea {
+  padding-top: 8px !important;
+}
+
+.shipcashbox-body .shipcashbox-journal-screen .shipcashbox-journal-footer {
+  position: static !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 42px !important;
+  grid-template-areas:
+    "actions actions"
+    "status metric" !important;
+  align-items: center !important;
+  gap: 7px 9px !important;
+  min-height: 74px !important;
+  margin: 0 !important;
+  padding: 8px 10px !important;
+  border: 1px solid rgba(16, 36, 58, 0.10) !important;
+  border-radius: 16px !important;
+  background: rgba(247, 250, 247, 0.62) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.shipcashbox-body .shipcashbox-journal-screen .shipcashbox-journal-footer__actions {
+  grid-area: actions !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 42px !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+.shipcashbox-body .shipcashbox-journal-screen .shipcashbox-journal-submit {
+  display: grid !important;
+  align-content: center !important;
+  justify-content: center !important;
+  justify-items: center !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 42px !important;
+  padding: 7px 10px !important;
+  border-radius: 14px !important;
+  border-color: rgba(185, 150, 94, 0.24) !important;
+  background: rgba(245, 241, 232, 0.82) !important;
+  color: var(--cashbox-muted-day) !important;
+  box-shadow: 0 7px 14px rgba(36, 55, 72, 0.08) !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+}
+
+.shipcashbox-body .shipcashbox-journal-screen .shipcashbox-journal-attach {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  width: 42px !important;
+  min-width: 42px !important;
+  max-width: 42px !important;
+  height: 42px !important;
+  min-height: 42px !important;
+  max-height: 42px !important;
+  padding: 0 !important;
+  border: 1px solid rgba(16, 36, 58, 0.13) !important;
+  border-radius: 14px !important;
+  background: rgba(247, 250, 247, 0.72) !important;
+  box-shadow: 0 7px 14px rgba(36, 55, 72, 0.08) !important;
+  color: var(--cashbox-muted-day) !important;
+  font-size: 1.06rem !important;
+  line-height: 1 !important;
+  text-align: center !important;
+  overflow: hidden !important;
+}
+
+.shipcashbox-body .shipcashbox-journal-screen .shipcashbox-journal-attach__glyph {
+  display: block !important;
+  width: 1em !important;
+  height: 1em !important;
+  margin: 0 !important;
+  color: inherit !important;
+  font-size: 1em !important;
+  line-height: 1 !important;
+  transform: translateY(-0.02em) !important;
+}
+
+.shipcashbox-body .shipcashbox-line-assistant.is-disputed {
+  border-color: rgba(186, 70, 70, 0.28) !important;
+  background: rgba(255, 243, 240, 0.94) !important;
+  color: #9b2f2f !important;
+}
+
+.shipcashbox-body .shipcashbox-line-assistant.is-disputed .shipcashbox-line-assistant__eyebrow,
+.shipcashbox-body .shipcashbox-line-assistant.is-disputed .shipcashbox-line-assistant__copy strong {
+  color: #9b2f2f !important;
+}
+
+.shipcashbox-body .shipcashbox-line-assistant.is-disputed .shipcashbox-line-assistant__button {
+  border-color: rgba(186, 70, 70, 0.18) !important;
+  background: rgba(255, 255, 255, 0.72) !important;
+  color: #9b2f2f !important;
+  cursor: default !important;
+}
+
+.shipcashbox-body .shipcashbox-journal-screen .shipcashbox-journal-submit__label,
+.shipcashbox-body .shipcashbox-journal-screen .shipcashbox-journal-submit__total {
+  display: block !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  text-align: center !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  line-height: 1 !important;
+}
+
+.shipcashbox-body .shipcashbox-journal-screen .shipcashbox-journal-submit__label {
+  font-size: 0.82rem !important;
+  letter-spacing: 0.01em !important;
+}
+
+.shipcashbox-body .shipcashbox-journal-screen .shipcashbox-journal-submit__total {
+  margin-top: 5px !important;
+  color: var(--cashbox-accent) !important;
+  font-size: 0.6rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.09em !important;
+  text-transform: uppercase !important;
+}
+
+.shipcashbox-body .shipcashbox-journal-screen .shipcashbox-journal-footer__status {
+  grid-area: status !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  color: var(--cashbox-muted-day) !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  font-size: 0.72rem !important;
+  line-height: 1 !important;
+}
+
+.shipcashbox-body .shipcashbox-journal-screen .shipcashbox-journal-footer__metric {
+  grid-area: metric !important;
+  display: none !important;
+}
+
+@media (min-width: 861px) {
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) .shipcashbox-journal-screen) {
+    --journal-clean-pad-x: clamp(18px, 3vw, 40px);
+    --cashbox-work-width: min(1120px, calc(100vw - (var(--journal-clean-pad-x) * 2)));
+  }
+}
+
+@media (max-width: 430px) {
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) .shipcashbox-journal-screen) {
+    --journal-clean-pad-x: 5px;
+    --journal-clean-gap: 6px;
+  }
+
+  body.shipcashbox-body:not(.shipcashbox-viewer-guest):has(#treasurerView:not([hidden]) .shipcashbox-journal-screen) #cashboxMobileMasthead {
+    grid-template-columns: 60px minmax(0, 1fr) 42px !important;
+    padding-inline: 6px !important;
+  }
+
+  .shipcashbox-body .shipcashbox-journal-head .shipcashbox-work-title--ledger {
+    font-size: clamp(1.02rem, 4.7vw, 1.22rem) !important;
+  }
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-journal-input-shell,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-journal-screen .shipcashbox-journal-footer,
+body.navdesk-theme-night.shipcashbox-body:has(#treasurerView:not([hidden]) .shipcashbox-journal-screen) #cashboxMobileMasthead {
+  border-color: var(--cashbox-line-night) !important;
+  background: rgba(16, 25, 30, 0.78) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-journal-input-shell:focus-within {
+  border-color: rgba(226, 189, 118, 0.24) !important;
+  box-shadow: inset 0 0 0 1px rgba(226, 189, 118, 0.06) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-journal-head .shipcashbox-work-title--ledger,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-journal-input-shell .shipcashbox-journal-sheet-meta strong {
+  color: var(--cashbox-text-night) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-journal-screen .shipcashbox-journal-footer__status,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-journal-input-shell .shipcashbox-journal-sheet-meta span,
+body.navdesk-theme-night.shipcashbox-body:has(#treasurerView:not([hidden]) .shipcashbox-journal-screen) #mobileMastheadTitle {
+  color: var(--cashbox-muted-night) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-journal-input-shell .shipcashbox-journal-textarea {
+  background: transparent !important;
+  caret-color: var(--cashbox-text-night) !important;
+  color: rgba(248, 232, 199, 0.72) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-journal-input-shell .shipcashbox-ready-layer {
+  color: rgba(210, 218, 214, 0.62) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-journal-screen .shipcashbox-journal-submit,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-journal-screen .shipcashbox-journal-attach {
+  background: rgba(20, 31, 36, 0.92) !important;
+  box-shadow: 0 7px 14px rgba(0, 0, 0, 0.18) !important;
+}
+
+/* Workspace Window Template v1.
+   One contract for personal and group windows; content stays mode-specific in JS. */
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-modal__body {
+  display: grid !important;
+  align-content: start !important;
+  gap: 10px !important;
+  min-height: 0 !important;
+  padding: 0 1px max(4px, env(safe-area-inset-bottom)) !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  scrollbar-width: none !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-modal__body::-webkit-scrollbar {
+  display: none !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-stack {
+  display: grid !important;
+  gap: 10px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-window-menu {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 8px !important;
+  width: 100% !important;
+  margin: 0 !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-window-menu:not(.shipcashbox-window-menu--quick) {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)) !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-window-link {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  display: grid !important;
+  align-content: center !important;
+  justify-items: start !important;
+  gap: 5px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 64px !important;
+  margin: 0 !important;
+  padding: 13px 14px !important;
+  border: 1px solid rgba(16, 36, 58, 0.10) !important;
+  border-radius: 16px !important;
+  background: rgba(249, 251, 249, 0.88) !important;
+  color: var(--cashbox-text-day) !important;
+  box-shadow: 0 8px 18px rgba(16, 36, 58, 0.07) !important;
+  text-align: left !important;
+  font: inherit !important;
+  line-height: 1.1 !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-window-link strong {
+  display: block !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  color: inherit !important;
+  font-size: 0.94rem !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.01em !important;
+  line-height: 1.1 !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-window-link span {
+  display: block !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  color: var(--cashbox-muted-day) !important;
+  font-size: 0.76rem !important;
+  font-weight: 750 !important;
+  letter-spacing: 0 !important;
+  line-height: 1.25 !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-window-menu--quick,
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-workspace-return {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 7px !important;
+  margin: 0 0 2px !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-workspace-return {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-window-menu--quick .shipcashbox-window-link,
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-workspace-return .shipcashbox-window-link {
+  justify-items: center !important;
+  min-height: 42px !important;
+  padding: 8px 7px !important;
+  text-align: center !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-window-menu--quick .shipcashbox-window-link strong,
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-workspace-return .shipcashbox-window-link strong {
+  font-size: 0.74rem !important;
+  line-height: 1.06 !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-window-menu--quick .shipcashbox-window-link span,
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-workspace-return .shipcashbox-window-link span {
+  display: none !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-card--window {
+  display: grid !important;
+  gap: 10px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 13px !important;
+  border: 1px solid rgba(16, 36, 58, 0.10) !important;
+  border-radius: 18px !important;
+  background: rgba(249, 251, 249, 0.86) !important;
+  box-shadow: 0 8px 18px rgba(16, 36, 58, 0.06) !important;
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-card--window .shipcashbox-card__head {
+  display: grid !important;
+  gap: 4px !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-card--window .shipcashbox-card__head h2,
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-card--window .shipcashbox-card__head .section-heading__eyebrow {
+  margin: 0 !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-note,
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-empty,
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-guide p {
+  margin: 0 !important;
+  color: var(--cashbox-muted-day) !important;
+  font-size: 0.82rem !important;
+  font-weight: 750 !important;
+  line-height: 1.35 !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-guide {
+  display: grid !important;
+  gap: 6px !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-guide p {
+  padding: 8px 10px !important;
+  border: 1px solid rgba(16, 36, 58, 0.07) !important;
+  border-radius: 12px !important;
+  background: rgba(237, 245, 243, 0.46) !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-install {
+  display: grid !important;
+  gap: 8px !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 10px !important;
+  border: 1px solid rgba(16, 36, 58, 0.08) !important;
+  border-radius: 14px !important;
+  background: rgba(237, 245, 243, 0.56) !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-install > div {
+  display: grid !important;
+  gap: 5px !important;
+  min-width: 0 !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-install strong {
+  color: var(--cashbox-text-day) !important;
+  font-size: 0.9rem !important;
+  font-weight: 950 !important;
+  line-height: 1.08 !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-card--service-reset {
+  border-color: rgba(180, 147, 95, 0.16) !important;
+  background: rgba(226, 189, 118, 0.10) !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-card--documents {
+  display: grid !important;
+  gap: 8px !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-receipt-links {
+  display: grid !important;
+  gap: 5px !important;
+  margin: 0 !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-receipt-link-row {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-height: 38px !important;
+  padding: 6px 6px 6px 9px !important;
+  border: 1px solid rgba(16, 36, 58, 0.07) !important;
+  border-radius: 11px !important;
+  background: rgba(237, 245, 243, 0.46) !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-receipt-link {
+  min-width: 0 !important;
+  color: var(--cashbox-text-day) !important;
+  font-size: 0.76rem !important;
+  font-weight: 850 !important;
+  line-height: 1.08 !important;
+  text-decoration: none !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-receipt-link__text {
+  display: block !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-receipt-link__delete {
+  display: grid !important;
+  place-items: center !important;
+  width: 30px !important;
+  height: 30px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: rgba(16, 36, 58, 0.52) !important;
+  box-shadow: none !important;
+  font-size: 1rem !important;
+  font-weight: 950 !important;
+  line-height: 1 !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-metrics {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 122px), 1fr)) !important;
+  gap: 8px !important;
+  width: 100% !important;
+  margin: 0 !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-metric {
+  display: grid !important;
+  align-content: center !important;
+  gap: 5px !important;
+  min-width: 0 !important;
+  min-height: 70px !important;
+  margin: 0 !important;
+  padding: 10px 11px !important;
+  border: 1px solid rgba(16, 36, 58, 0.09) !important;
+  border-radius: 15px !important;
+  background: rgba(237, 245, 243, 0.72) !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-metric span,
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-metric strong {
+  display: block !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  line-height: 1.05 !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-metric span {
+  color: var(--cashbox-muted-day) !important;
+  font-size: 0.68rem !important;
+  font-weight: 850 !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-metric strong {
+  color: var(--cashbox-text-day) !important;
+  font-size: 1rem !important;
+  font-weight: 950 !important;
+  letter-spacing: -0.02em !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-form__grid--personal-settings {
+  grid-template-columns: minmax(0, 1fr) minmax(74px, 0.34fr) minmax(92px, 0.42fr) !important;
+  align-items: end !important;
+  gap: 8px !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-rotation-board {
+  display: grid !important;
+  gap: 10px !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-metrics--rotation {
+  margin-top: 8px !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-settlement-board {
+  display: grid !important;
+  gap: 10px !important;
+  width: 100% !important;
+  margin: 0 !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-settlement-summary {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 7px !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-settlement-summary article {
+  display: grid !important;
+  gap: 4px !important;
+  min-width: 0 !important;
+  min-height: 46px !important;
+  padding: 8px 9px !important;
+  border: 1px solid rgba(16, 36, 58, 0.08) !important;
+  border-radius: 12px !important;
+  background: rgba(237, 245, 243, 0.56) !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-settlement-summary span,
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-close-audit__head span,
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-close-audit__grid span {
+  color: var(--cashbox-muted-day) !important;
+  font-size: 0.62rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.07em !important;
+  line-height: 1.08 !important;
+  text-transform: uppercase !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-settlement-summary strong,
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-close-audit__grid strong {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  color: var(--cashbox-text-day) !important;
+  font-size: 0.92rem !important;
+  font-weight: 950 !important;
+  letter-spacing: -0.025em !important;
+  line-height: 1.02 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-settlement-flow {
+  display: grid !important;
+  gap: 6px !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-settlement-flow__row {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.05fr) minmax(112px, 0.5fr) !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-height: 42px !important;
+  padding: 7px 8px 7px 10px !important;
+  border: 1px solid rgba(16, 36, 58, 0.07) !important;
+  border-radius: 12px !important;
+  background: rgba(237, 245, 243, 0.42) !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-settlement-flow__people {
+  min-width: 0 !important;
+  gap: 4px !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-settlement-flow__people strong {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  color: var(--cashbox-text-day) !important;
+  font-size: 0.78rem !important;
+  font-weight: 900 !important;
+  line-height: 1.06 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-settlement-flow__people span {
+  color: var(--cashbox-muted-day) !important;
+  font-size: 0.72rem !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-settlement-flow__amount {
+  min-width: 0 !important;
+  padding: 7px 8px !important;
+  border-radius: 10px !important;
+  background: rgba(255, 255, 255, 0.46) !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-settlement-flow__amount b {
+  color: var(--cashbox-text-day) !important;
+  font-size: 0.78rem !important;
+  font-weight: 950 !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-close-audit {
+  display: grid !important;
+  gap: 8px !important;
+  padding: 10px !important;
+  border-radius: 14px !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-close-audit__head {
+  gap: 8px !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-close-audit__head strong {
+  color: var(--cashbox-text-day) !important;
+  font-size: 0.9rem !important;
+  font-weight: 950 !important;
+  line-height: 1.08 !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-close-audit__head b {
+  padding: 6px 9px !important;
+  border-radius: 999px !important;
+  font-size: 0.66rem !important;
+  font-weight: 950 !important;
+  line-height: 1 !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-close-audit__grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 6px !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-close-audit__grid article {
+  display: grid !important;
+  gap: 3px !important;
+  min-width: 0 !important;
+  padding: 7px 8px !important;
+  border-radius: 10px !important;
+  background: rgba(255, 255, 255, 0.42) !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-close-audit__warnings {
+  max-height: 72px !important;
+  margin: 0 !important;
+  padding: 0 2px 0 16px !important;
+  color: var(--cashbox-text-day) !important;
+  font-size: 0.76rem !important;
+  font-weight: 780 !important;
+  line-height: 1.28 !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-close-audit p {
+  margin: 0 !important;
+  color: var(--cashbox-muted-day) !important;
+  font-size: 0.74rem !important;
+  font-weight: 760 !important;
+  line-height: 1.28 !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-single-settlement,
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-rotation-card,
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-settlement-events {
+  display: grid !important;
+  gap: 9px !important;
+  padding: 10px !important;
+  border: 1px solid rgba(16, 36, 58, 0.08) !important;
+  border-radius: 14px !important;
+  background: rgba(237, 245, 243, 0.50) !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-single-settlement__head,
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-rotation-card__head {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(118px, 0.42fr) !important;
+  align-items: end !important;
+  gap: 9px !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-single-settlement__head > div,
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-rotation-card__head > div,
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-rotation-card > div {
+  min-width: 0 !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-single-settlement__head strong,
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-rotation-card strong,
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-settlement-events > strong {
+  color: var(--cashbox-text-day) !important;
+  font-size: 0.86rem !important;
+  font-weight: 950 !important;
+  line-height: 1.1 !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-single-settlement__head span,
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-rotation-card span {
+  color: var(--cashbox-muted-day) !important;
+  font-size: 0.72rem !important;
+  font-weight: 780 !important;
+  line-height: 1.24 !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-single-settlement__totals {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 6px !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-single-settlement__totals article,
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-single-settlement__line,
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-settlement-event {
+  min-width: 0 !important;
+  padding: 7px 8px !important;
+  border-radius: 11px !important;
+  background: rgba(255, 255, 255, 0.42) !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-single-settlement__actions {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-personal-report,
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-guide,
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-archive,
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-actions,
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-window-actions {
+  display: grid !important;
+  gap: 8px !important;
+  width: 100% !important;
+  margin: 0 !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-personal-report-row,
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-archive__row {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 10px !important;
+  min-height: 46px !important;
+  margin: 0 !important;
+  padding: 10px 11px !important;
+  border: 1px solid rgba(16, 36, 58, 0.08) !important;
+  border-radius: 14px !important;
+  background: rgba(237, 245, 243, 0.64) !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-trash-section {
+  display: grid !important;
+  gap: 8px !important;
+  width: 100% !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-trash-section__head {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  padding: 0 2px !important;
+  color: var(--cashbox-text-day) !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-trash-section__head strong {
+  font-size: 0.84rem !important;
+  font-weight: 950 !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-trash-section__head span {
+  color: var(--cashbox-muted-day) !important;
+  font-size: 0.74rem !important;
+  font-weight: 800 !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-trash-record {
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-height: 44px !important;
+  padding: 7px 8px 7px 10px !important;
+  border-radius: 12px !important;
+  background: rgba(237, 245, 243, 0.42) !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-trash-record__main {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: baseline !important;
+  gap: 4px 8px !important;
+  min-width: 0 !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-trash-record__main strong,
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-trash-record__main span,
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-trash-record__main small {
+  margin: 0 !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  line-height: 1.06 !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-trash-record__main strong {
+  color: var(--cashbox-text-day) !important;
+  font-size: 0.78rem !important;
+  font-weight: 950 !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-trash-record__main span {
+  color: var(--cashbox-accent) !important;
+  font-size: 0.74rem !important;
+  font-weight: 950 !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-trash-record__main small {
+  grid-column: 1 / -1 !important;
+  color: var(--cashbox-muted-day) !important;
+  font-size: 0.66rem !important;
+  font-weight: 760 !important;
+  letter-spacing: -0.01em !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-trash-record__actions {
+  display: inline-grid !important;
+  grid-auto-flow: column !important;
+  align-items: center !important;
+  justify-content: end !important;
+  gap: 2px !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-trash-record__restore {
+  display: grid !important;
+  place-items: center !important;
+  width: 30px !important;
+  height: 30px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--cashbox-accent) !important;
+  box-shadow: none !important;
+  font: inherit !important;
+  font-size: 1.08rem !important;
+  font-weight: 950 !important;
+  line-height: 1 !important;
+  cursor: pointer !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-trash-log {
+  gap: 10px !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-trash-log__summary,
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-trash-log__entry {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-trash-log__summary {
+  padding: 8px 10px !important;
+  border-radius: 12px !important;
+  background: rgba(27, 55, 88, 0.06) !important;
+  color: var(--cashbox-text-day) !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-trash-log__summary span,
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-trash-log__entry span {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  font-size: 0.76rem !important;
+  font-weight: 800 !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-trash-log__summary strong,
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-trash-log__entry strong {
+  color: var(--cashbox-accent) !important;
+  font-size: 0.78rem !important;
+  font-weight: 950 !important;
+  white-space: nowrap !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-trash-log__raw {
+  max-height: 160px !important;
+  margin: 0 !important;
+  padding: 10px !important;
+  overflow: auto !important;
+  border: 1px solid rgba(16, 36, 58, 0.08) !important;
+  border-radius: 12px !important;
+  background: rgba(255, 255, 255, 0.48) !important;
+  color: var(--cashbox-text-day) !important;
+  font: 800 0.76rem/1.35 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+  white-space: pre-wrap !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-trash-log__entries {
+  display: grid !important;
+  gap: 5px !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-trash-log__entry {
+  padding: 6px 8px !important;
+  border-radius: 10px !important;
+  background: rgba(237, 245, 243, 0.48) !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-trash-session {
+  min-height: 44px !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-trash-record__restore:focus-visible {
+  outline: 2px solid rgba(27, 55, 88, 0.24) !important;
+  outline-offset: 2px !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-personal-report-row span,
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-personal-report-row strong {
+  min-width: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  line-height: 1.1 !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-personal-report-row span {
+  color: var(--cashbox-text-day) !important;
+  font-size: 0.84rem !important;
+  font-weight: 800 !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-personal-report-row strong {
+  color: var(--cashbox-accent) !important;
+  font-size: 0.88rem !important;
+  font-weight: 950 !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-actions .btn,
+body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-window-actions .btn {
+  width: 100% !important;
+  min-height: 42px !important;
+}
+
+@media (max-width: 430px) {
+  body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-window-menu:not(.shipcashbox-window-menu--quick) {
+    grid-template-columns: 1fr !important;
+  }
+
+  body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-settlement-summary,
+  body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-close-audit__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-settlement-flow__row {
+    grid-template-columns: 1fr !important;
+    align-items: stretch !important;
+  }
+
+  body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-form__grid--personal-settings {
+    grid-template-columns: 1fr !important;
+  }
+
+  body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-single-settlement__head,
+  body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-rotation-card__head,
+  body.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-single-settlement__actions {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-window-link,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-card--window {
+  border-color: rgba(226, 189, 118, 0.14) !important;
+  background: rgba(16, 25, 30, 0.86) !important;
+  color: var(--cashbox-text-night) !important;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.20) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-window-link span,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-note,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-empty,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-guide p,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-metric span {
+  color: var(--cashbox-muted-night) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-guide p,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-install {
+  border-color: rgba(226, 189, 118, 0.12) !important;
+  background: rgba(226, 189, 118, 0.055) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-install strong {
+  color: var(--cashbox-text-night) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-card--service-reset {
+  border-color: rgba(226, 189, 118, 0.16) !important;
+  background: rgba(226, 189, 118, 0.075) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-receipt-link-row {
+  border-color: rgba(226, 189, 118, 0.12) !important;
+  background: rgba(226, 189, 118, 0.055) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-receipt-link {
+  color: var(--cashbox-text-night) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-receipt-link__delete {
+  color: var(--cashbox-muted-night) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-metric,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-personal-report-row,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-archive__row {
+  border-color: rgba(226, 189, 118, 0.12) !important;
+  background: rgba(226, 189, 118, 0.06) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-metric strong,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-personal-report-row span {
+  color: var(--cashbox-text-night) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-trash-section__head {
+  color: var(--cashbox-text-night) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-trash-section__head span {
+  color: var(--cashbox-muted-night) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-trash-record {
+  background: rgba(226, 189, 118, 0.045) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-single-settlement,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-rotation-card,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-settlement-events {
+  border-color: rgba(226, 189, 118, 0.12) !important;
+  background: rgba(226, 189, 118, 0.055) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-single-settlement__head strong,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-rotation-card strong,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-settlement-events > strong,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-single-settlement__totals strong,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-single-settlement__line strong,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-single-settlement__line b,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-settlement-event b,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-settlement-event strong {
+  color: var(--cashbox-text-night) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-single-settlement__head span,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-rotation-card span,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-single-settlement__totals span,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-single-settlement__line span,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-settlement-event span,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-single-settlement__empty {
+  color: var(--cashbox-muted-night) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-field span,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen label span {
+  color: var(--cashbox-muted-night) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen input,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen select,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen textarea {
+  border-color: rgba(226, 189, 118, 0.18) !important;
+  background: rgba(9, 18, 22, 0.72) !important;
+  color: var(--cashbox-text-night) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen input::placeholder,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen textarea::placeholder {
+  color: rgba(246, 232, 199, 0.46) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen select option {
+  background: #0b151a !important;
+  color: var(--cashbox-text-night) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-settlement-summary article,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-settlement-flow__row,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-close-audit {
+  border-color: rgba(226, 189, 118, 0.12) !important;
+  background: rgba(226, 189, 118, 0.055) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-close-audit--ready {
+  border-color: rgba(111, 184, 143, 0.20) !important;
+  background: rgba(111, 184, 143, 0.075) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-close-audit--warning {
+  border-color: rgba(226, 159, 102, 0.24) !important;
+  background: rgba(226, 159, 102, 0.075) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-settlement-summary strong,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-settlement-flow__people strong,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-settlement-flow__amount b,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-close-audit__head strong,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-close-audit__grid strong,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-close-audit__warnings {
+  color: var(--cashbox-text-night) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-settlement-summary span,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-settlement-board__list > strong,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-settlement-flow__people span,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-close-audit__head span,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-close-audit__grid span,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-close-audit p {
+  color: var(--cashbox-muted-night) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-close-audit__head b,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-close-audit__grid article,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-settlement-flow__amount,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-settlement-flow__more,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-settlement-flow__empty,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-line {
+  background: rgba(16, 25, 30, 0.38) !important;
+  color: var(--cashbox-text-night) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-line strong,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-line b {
+  color: var(--cashbox-text-night) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-line span,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-line small {
+  color: var(--cashbox-muted-night) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-single-settlement__totals article,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-single-settlement__line,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-settlement-event {
+  background: rgba(16, 25, 30, 0.38) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-trash-record__main strong {
+  color: var(--cashbox-text-night) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-trash-record__main small {
+  color: var(--cashbox-muted-night) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-trash-log__summary,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-trash-log__entry,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal--workscreen .shipcashbox-trash-log__raw {
+  background: rgba(226, 189, 118, 0.055) !important;
+  border-color: rgba(226, 189, 118, 0.12) !important;
+  color: var(--cashbox-text-night) !important;
+}
+
+/* Cashbox menu must share the same geometry as workspace windows, but without a duplicate title. */
+body.shipcashbox-body #workspaceModal[data-window="menu"] {
+  display: grid !important;
+  place-items: start center !important;
+  align-content: start !important;
+  justify-content: center !important;
+  padding: max(16px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom)) !important;
+}
+
+body.shipcashbox-body #workspaceModal[data-window="menu"] .shipcashbox-modal__card--workspace {
+  display: grid !important;
+  grid-template-rows: auto auto !important;
+  align-content: start !important;
+  align-self: start !important;
+  justify-self: center !important;
+  gap: 7px !important;
+  width: min(330px, calc(100vw - 28px), var(--cashbox-work-width, 100vw)) !important;
+  max-width: min(330px, calc(100vw - 28px), var(--cashbox-work-width, 100vw)) !important;
+  height: auto !important;
+  max-block-size: calc(var(--cashbox-vvh, 100svh) - 32px) !important;
+  min-height: 0 !important;
+  max-height: calc(var(--cashbox-vvh, 100svh) - 32px) !important;
+  padding: 14px !important;
+  border-radius: 18px !important;
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body #workspaceModal[data-window="menu"] .shipcashbox-modal__head {
+  min-height: 22px !important;
+  margin: 0 !important;
+  padding: 0 0 5px !important;
+  border-bottom: 1px solid rgba(16, 36, 58, 0.08) !important;
+}
+
+body.shipcashbox-body #workspaceModal[data-window="menu"] #workspaceModalTitle {
+  display: none !important;
+}
+
+body.shipcashbox-body #workspaceModal[data-window="menu"] #workspaceModalEyebrow {
+  margin: 0 !important;
+  color: var(--cashbox-muted-day) !important;
+  font-size: 0.62rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.16em !important;
+  line-height: 1 !important;
+  text-transform: uppercase !important;
+}
+
+body.shipcashbox-body #workspaceModal[data-window="menu"] .shipcashbox-modal__body {
+  display: grid !important;
+  align-content: start !important;
+  gap: 7px !important;
+  min-height: 0 !important;
+  height: auto !important;
+  padding: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  scrollbar-width: none !important;
+}
+
+body.shipcashbox-body #workspaceModal[data-window="menu"] .shipcashbox-modal__body::-webkit-scrollbar {
+  display: none !important;
+}
+
+body.shipcashbox-body #workspaceModal[data-window="menu"] .shipcashbox-window-menu {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  align-items: start !important;
+  gap: 7px !important;
+  width: 100% !important;
+  margin: 0 !important;
+}
+
+body.shipcashbox-body #workspaceModal[data-window="menu"] .shipcashbox-window-menu--quick {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  grid-auto-rows: 42px !important;
+  gap: 6px !important;
+  margin-bottom: 1px !important;
+}
+
+body.shipcashbox-body #workspaceModal[data-window="menu"] .shipcashbox-window-link {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  display: grid !important;
+  align-content: center !important;
+  justify-items: start !important;
+  gap: 5px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 56px !important;
+  margin: 0 !important;
+  padding: 9px 12px !important;
+  border: 1px solid rgba(16, 36, 58, 0.10) !important;
+  border-radius: 14px !important;
+  background: rgba(249, 251, 249, 0.88) !important;
+  color: var(--cashbox-text-day) !important;
+  box-shadow: 0 6px 14px rgba(16, 36, 58, 0.055) !important;
+  text-align: left !important;
+  font: inherit !important;
+  line-height: 1.1 !important;
+  overflow: hidden !important;
+}
+
+body.shipcashbox-body #workspaceModal[data-window="menu"] .shipcashbox-window-menu--quick .shipcashbox-window-link {
+  justify-items: center !important;
+  height: 42px !important;
+  min-height: 42px !important;
+  max-height: 42px !important;
+  padding: 6px 5px !important;
+  border-radius: 13px !important;
+  text-align: center !important;
+}
+
+body.shipcashbox-body #workspaceModal[data-window="menu"] .shipcashbox-window-link strong {
+  display: block !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  color: inherit !important;
+  font-size: 0.88rem !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.01em !important;
+  line-height: 1.1 !important;
+}
+
+body.shipcashbox-body #workspaceModal[data-window="menu"] .shipcashbox-window-menu--quick .shipcashbox-window-link strong {
+  font-size: 0.7rem !important;
+  line-height: 1.05 !important;
+  white-space: normal !important;
+}
+
+body.shipcashbox-body #workspaceModal[data-window="menu"] .shipcashbox-window-link span {
+  display: block !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  color: var(--cashbox-muted-day) !important;
+  font-size: 0.72rem !important;
+  font-weight: 750 !important;
+  line-height: 1.2 !important;
+}
+
+body.shipcashbox-body #workspaceModal[data-window="menu"] .shipcashbox-window-menu--quick .shipcashbox-window-link span {
+  display: none !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body #workspaceModal[data-window="menu"] .shipcashbox-modal__head {
+  border-bottom-color: rgba(226, 189, 118, 0.14) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body #workspaceModal[data-window="menu"] #workspaceModalEyebrow,
+body.navdesk-theme-night.shipcashbox-body #workspaceModal[data-window="menu"] .shipcashbox-window-link span {
+  color: var(--cashbox-muted-night) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body #workspaceModal[data-window="menu"] .shipcashbox-window-link {
+  border-color: rgba(226, 189, 118, 0.14) !important;
+  background: rgba(16, 25, 30, 0.86) !important;
+  color: var(--cashbox-text-night) !important;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.20) !important;
+}
+
+body.shipcashbox-body .shipcashbox-modal-x,
+body.shipcashbox-body #workspaceCloseButton.shipcashbox-modal-x,
+body.shipcashbox-body .shipcashbox-app-menu .management-modal__close,
+body.shipcashbox-body #toolAuthPromptModal .management-modal__close,
+body.shipcashbox-body #cashboxLanguageCloseButton.shipcashbox-language-modal__close {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  width: 32px !important;
+  min-width: 32px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  line-height: 1 !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-modal-x,
+body.navdesk-theme-night.shipcashbox-body #workspaceCloseButton.shipcashbox-modal-x,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-app-menu .management-modal__close,
+body.navdesk-theme-night.shipcashbox-body #toolAuthPromptModal .management-modal__close,
+body.navdesk-theme-night.shipcashbox-body #cashboxLanguageCloseButton.shipcashbox-language-modal__close {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Attachment compact sheet: final override after shared modal contracts. */
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #attachmentSheet.shipcashbox-attachment-sheet {
+  align-items: end !important;
+  padding: 14px var(--cashbox-work-gutter) max(14px, env(safe-area-inset-bottom)) !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #attachmentSheet.shipcashbox-attachment-sheet .shipcashbox-modal__card {
+  width: min(360px, var(--cashbox-work-width)) !important;
+  max-width: min(360px, var(--cashbox-work-width)) !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  margin: 0 auto !important;
+  padding: 10px !important;
+  border-radius: 22px !important;
+  overflow: visible !important;
+}
+
+/* Journal input examples and disputed amount marker. */
+body.shipcashbox-body .shipcashbox-journal-input-shell .shipcashbox-journal-textarea::placeholder {
+  color: rgba(71, 87, 105, 0.34) !important;
+  opacity: 1 !important;
+  font-weight: 650 !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-journal-input-shell .shipcashbox-journal-textarea::placeholder {
+  color: rgba(210, 218, 214, 0.28) !important;
+}
+
+body.shipcashbox-body .shipcashbox-journal-dispute {
+  position: absolute !important;
+  right: 10px !important;
+  bottom: 10px !important;
+  left: 10px !important;
+  z-index: 4 !important;
+  display: grid !important;
+  gap: 5px !important;
+  max-height: min(34svh, 190px) !important;
+  padding: 7px !important;
+  border: 1px solid rgba(186, 70, 70, 0.22) !important;
+  border-radius: 14px !important;
+  background: rgba(255, 243, 240, 0.95) !important;
+  box-shadow: 0 10px 22px rgba(126, 38, 38, 0.10) !important;
+  color: #9b2f2f !important;
+  overflow-y: auto !important;
+  pointer-events: none !important;
+}
+
+body.shipcashbox-body .shipcashbox-journal-dispute[hidden] {
+  display: none !important;
+}
+
+body.shipcashbox-body .shipcashbox-journal-dispute__item {
+  display: grid !important;
+  grid-template-columns: 24px minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 7px !important;
+  min-height: 30px !important;
+}
+
+body.shipcashbox-body .shipcashbox-journal-dispute__item strong {
+  display: grid !important;
+  place-items: center !important;
+  width: 24px !important;
+  height: 24px !important;
+  border-radius: 999px !important;
+  background: rgba(186, 70, 70, 0.12) !important;
+  color: #9b2f2f !important;
+  font-size: 0.9rem !important;
+  line-height: 1 !important;
+}
+
+body.shipcashbox-body .shipcashbox-journal-dispute__item em {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  color: #9b2f2f !important;
+  font-size: 0.72rem !important;
+  font-style: normal !important;
+  font-weight: 900 !important;
+  line-height: 1.05 !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-journal-dispute {
+  border-color: rgba(227, 116, 116, 0.24) !important;
+  background: rgba(64, 31, 31, 0.94) !important;
+  color: #ffb7a8 !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-journal-dispute__item strong,
+body.navdesk-theme-night.shipcashbox-body .shipcashbox-journal-dispute__item em {
+  color: #ffb7a8 !important;
+}
+
+/* Attachment compact sheet: polished action buttons, no placeholder glyphs. */
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #attachmentSheet.shipcashbox-attachment-sheet .shipcashbox-sheet-actions {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+  margin: 0 !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #attachmentSheet.shipcashbox-attachment-sheet .shipcashbox-attach-choice {
+  position: relative !important;
+  display: grid !important;
+  justify-items: center !important;
+  align-content: center !important;
+  gap: 8px !important;
+  min-height: 74px !important;
+  padding: 10px 6px 9px !important;
+  border: 1px solid rgba(16, 36, 58, 0.10) !important;
+  border-radius: 17px !important;
+  background: rgba(255, 255, 255, 0.74) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.74), 0 8px 18px rgba(16, 36, 58, 0.06) !important;
+  color: var(--cashbox-text-day) !important;
+  text-align: center !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #attachmentSheet.shipcashbox-attachment-sheet .shipcashbox-attach-choice__icon {
+  position: relative !important;
+  display: block !important;
+  width: 26px !important;
+  height: 26px !important;
+  color: var(--cashbox-text-day) !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #attachmentSheet.shipcashbox-attachment-sheet .shipcashbox-attach-choice strong {
+  display: block !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  color: var(--cashbox-muted-day) !important;
+  font-size: 0.66rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.055em !important;
+  line-height: 1 !important;
+  text-transform: uppercase !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #attachmentSheet.shipcashbox-attachment-sheet .shipcashbox-attach-choice--gallery .shipcashbox-attach-choice__icon::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 4px 3px 5px !important;
+  border: 2px solid currentColor !important;
+  border-radius: 4px !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #attachmentSheet.shipcashbox-attachment-sheet .shipcashbox-attach-choice--gallery .shipcashbox-attach-choice__icon::after {
+  content: "" !important;
+  position: absolute !important;
+  left: 7px !important;
+  right: 7px !important;
+  bottom: 8px !important;
+  height: 8px !important;
+  border-right: 2px solid currentColor !important;
+  border-bottom: 2px solid currentColor !important;
+  transform: skewX(-22deg) rotate(-45deg) !important;
+  transform-origin: center !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #attachmentSheet.shipcashbox-attachment-sheet .shipcashbox-attach-choice--camera .shipcashbox-attach-choice__icon::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 7px 3px 5px !important;
+  border: 2px solid currentColor !important;
+  border-radius: 6px !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #attachmentSheet.shipcashbox-attachment-sheet .shipcashbox-attach-choice--camera .shipcashbox-attach-choice__icon::after {
+  content: "" !important;
+  position: absolute !important;
+  left: 10px !important;
+  top: 10px !important;
+  width: 6px !important;
+  height: 6px !important;
+  border: 2px solid currentColor !important;
+  border-radius: 999px !important;
+  box-shadow: 6px -6px 0 -4px currentColor !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #attachmentSheet.shipcashbox-attachment-sheet .shipcashbox-attach-choice--documents .shipcashbox-attach-choice__icon::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 3px 6px 3px 5px !important;
+  border: 2px solid currentColor !important;
+  border-radius: 4px !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #attachmentSheet.shipcashbox-attachment-sheet .shipcashbox-attach-choice--documents .shipcashbox-attach-choice__icon::after {
+  content: "" !important;
+  position: absolute !important;
+  left: 10px !important;
+  right: 9px !important;
+  top: 9px !important;
+  height: 2px !important;
+  background: currentColor !important;
+  box-shadow: 0 5px 0 currentColor, 0 10px 0 currentColor !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body:not(.shipcashbox-viewer-guest) #attachmentSheet.shipcashbox-attachment-sheet .shipcashbox-attach-choice {
+  border-color: rgba(226, 189, 118, 0.14) !important;
+  background: rgba(16, 25, 30, 0.74) !important;
+  color: var(--cashbox-text-night) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 8px 18px rgba(0, 0, 0, 0.18) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body:not(.shipcashbox-viewer-guest) #attachmentSheet.shipcashbox-attachment-sheet .shipcashbox-attach-choice strong {
+  color: var(--cashbox-muted-night) !important;
+}
+
+/* Attachment image buttons: the SVG is the button, no inner cards. */
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #attachmentSheet.shipcashbox-attachment-sheet .shipcashbox-sheet-actions {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 5px !important;
+  align-items: end !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #attachmentSheet.shipcashbox-attachment-sheet .shipcashbox-attach-choice {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  display: grid !important;
+  place-items: center !important;
+  min-height: 86px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #attachmentSheet.shipcashbox-attachment-sheet .shipcashbox-attach-choice img {
+  display: block !important;
+  width: min(104px, 100%) !important;
+  height: auto !important;
+  max-height: 86px !important;
+  object-fit: contain !important;
+  transform: translateY(0) !important;
+  filter: none !important;
+  transition: transform 140ms ease, filter 140ms ease !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #attachmentSheet.shipcashbox-attachment-sheet .shipcashbox-attach-choice:active img {
+  transform: translateY(1px) scale(0.985) !important;
+}
+
+body.shipcashbox-body:not(.shipcashbox-viewer-guest) #attachmentSheet.shipcashbox-attachment-sheet .shipcashbox-attach-choice:focus-visible img {
+  filter: drop-shadow(0 0 0 rgba(0, 0, 0, 0)) drop-shadow(0 0 0.4rem rgba(226, 189, 118, 0.50)) !important;
+}
+
+body.navdesk-theme-night.shipcashbox-body:not(.shipcashbox-viewer-guest) #attachmentSheet.shipcashbox-attachment-sheet .shipcashbox-attach-choice {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }

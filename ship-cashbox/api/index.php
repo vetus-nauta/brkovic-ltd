@@ -12,7 +12,7 @@ session_set_cookie_params([
 ]);
 session_start();
 
-const APP_VERSION = '2026.06.04-ship-cashbox-storage-01';
+const APP_VERSION = '2026.06.07-ship-cashbox-personal-reports-scope-01';
 const AUTH_BASE = 'https://brkovic.ltd/api';
 const STORAGE_DIR = __DIR__ . '/../storage';
 const SESSIONS_DIR = STORAGE_DIR . '/sessions';
@@ -1113,6 +1113,13 @@ function write_index(array $index): void {
     write_json_file(INDEX_FILE, array_merge($existing, $index));
 }
 
+function normalize_accounting_state(string $state, string $kind = 'note'): string {
+    if (in_array($state, ['free', 'report', 'disputed', 'excluded'], true)) {
+        return $state;
+    }
+    return $kind === 'note' ? 'free' : 'report';
+}
+
 function normalize_entry(array $entry, int $lineIndex = 0): array {
     $kind = in_array($entry['entry_kind'] ?? '', ['contribution', 'expense', 'note'], true) ? $entry['entry_kind'] : 'note';
     $amount = isset($entry['amount']) ? (float) $entry['amount'] : 0.0;
@@ -1131,9 +1138,84 @@ function normalize_entry(array $entry, int $lineIndex = 0): array {
         'note' => trim((string) ($entry['note'] ?? '')),
         'amount' => money_round($amount),
         'entry_kind' => $kind,
+        'report_id' => trim((string) ($entry['report_id'] ?? '')) ?: null,
+        'accounting_state' => normalize_accounting_state((string) ($entry['accounting_state'] ?? ''), $kind),
         'created_at' => (string) ($entry['created_at'] ?? now_iso()),
         'updated_at' => (string) ($entry['updated_at'] ?? now_iso()),
     ];
+}
+
+function normalize_personal_report_status(string $status): string {
+    return in_array($status, ['active', 'fixed', 'deleted'], true) ? $status : 'active';
+}
+
+function normalize_personal_report(array $report, int $index = 0): array {
+    $createdAt = (string) ($report['created_at'] ?? $report['opened_at'] ?? now_iso());
+    $status = normalize_personal_report_status((string) ($report['status'] ?? 'active'));
+    $openingBalance = money_round((float) money_input($report['opening_balance'] ?? $report['incoming_balance'] ?? 0));
+    $incomeTotal = money_round((float) ($report['income_total'] ?? $report['total_income'] ?? 0));
+    $expenseTotal = money_round(abs((float) ($report['expense_total'] ?? $report['total_expenses'] ?? 0)));
+    $currentBalance = array_key_exists('current_balance', $report)
+        ? money_round((float) money_input($report['current_balance']))
+        : money_round($openingBalance + $incomeTotal - $expenseTotal);
+
+    return [
+        'id' => trim((string) ($report['id'] ?? '')) ?: rand_id('report'),
+        'report_index' => $index,
+        'title' => trim((string) ($report['title'] ?? '')) ?: 'Личный отчет',
+        'status' => $status,
+        'currency' => trim((string) ($report['currency'] ?? '')) ?: null,
+        'opening_balance' => $openingBalance,
+        'incoming_balance' => $openingBalance,
+        'income_total' => $incomeTotal,
+        'expense_total' => $expenseTotal,
+        'current_balance' => $currentBalance,
+        'record_count' => max(0, (int) ($report['record_count'] ?? 0)),
+        'entry_count' => max(0, (int) ($report['entry_count'] ?? 0)),
+        'period_start' => trim((string) ($report['period_start'] ?? $report['opened_at'] ?? $createdAt)) ?: $createdAt,
+        'period_end' => trim((string) ($report['period_end'] ?? $report['closed_at'] ?? '')) ?: null,
+        'opened_at' => trim((string) ($report['opened_at'] ?? $report['period_start'] ?? $createdAt)) ?: $createdAt,
+        'closed_at' => $status === 'fixed' ? (trim((string) ($report['closed_at'] ?? $report['period_end'] ?? '')) ?: now_iso()) : null,
+        'fixed_at' => $status === 'fixed' ? (trim((string) ($report['fixed_at'] ?? $report['closed_at'] ?? $report['period_end'] ?? '')) ?: now_iso()) : null,
+        'deleted_at' => $status === 'deleted' ? (trim((string) ($report['deleted_at'] ?? '')) ?: now_iso()) : null,
+        'carryover_from_report_id' => trim((string) ($report['carryover_from_report_id'] ?? '')) ?: null,
+        'opening_balance_source' => in_array(($report['opening_balance_source'] ?? ''), ['manual', 'carryover'], true) ? (string) $report['opening_balance_source'] : 'manual',
+        'created_at' => $createdAt,
+        'updated_at' => (string) ($report['updated_at'] ?? $createdAt),
+    ];
+}
+
+function normalize_personal_reports(array $reports, string $sessionCurrency = 'EUR'): array {
+    $normalized = [];
+    $seen = [];
+    foreach ($reports as $index => $report) {
+        if (!is_array($report)) {
+            continue;
+        }
+        $item = normalize_personal_report($report, count($normalized));
+        if (isset($seen[$item['id']])) {
+            $item['id'] = rand_id('report');
+        }
+        $item['currency'] = $item['currency'] ?: $sessionCurrency;
+        $seen[$item['id']] = true;
+        $normalized[] = $item;
+    }
+    return $normalized;
+}
+
+function active_personal_report_id(array $session, array $reports): ?string {
+    $requested = trim((string) ($session['active_personal_report_id'] ?? ''));
+    foreach ($reports as $report) {
+        if (($report['id'] ?? '') === $requested && ($report['status'] ?? '') === 'active') {
+            return $requested;
+        }
+    }
+    foreach ($reports as $report) {
+        if (($report['status'] ?? '') === 'active') {
+            return (string) $report['id'];
+        }
+    }
+    return null;
 }
 
 function normalize_participant(array $participant, bool $treasurerFallback = false): array {
@@ -1176,6 +1258,8 @@ function normalize_participant(array $participant, bool $treasurerFallback = fal
         'role' => $role,
         'active' => array_key_exists('active', $participant) ? (bool) $participant['active'] : true,
         'email' => clean_email($participant['email'] ?? ''),
+        'account_email' => clean_email($participant['account_email'] ?? ''),
+        'account_claimed_at' => $participant['account_claimed_at'] ?? null,
         'included_in_split' => array_key_exists('included_in_split', $participant) ? bool_value($participant['included_in_split'], true) : true,
         'cashbox_contribution' => array_key_exists('cashbox_contribution', $participant) ? max(0, money_input($participant['cashbox_contribution'])) : 0.0,
         'authorized_at' => $participant['authorized_at'] ?? ($role === 'treasurer' ? now_iso() : null),
@@ -1462,7 +1546,12 @@ function delete_cashbox_attachment(array $payload): array {
     return build_treasurer_payload(save_session($session));
 }
 
-function parse_notebook(string $text): array {
+function parse_notebook(string $text, string $mode = 'group', array $context = []): array {
+    $mode = $mode === 'personal' ? 'personal' : 'group';
+    $reportId = trim((string) ($context['report_id'] ?? ''));
+    $recordScope = in_array(($context['record_scope'] ?? ''), ['free', 'report', 'excluded'], true)
+        ? (string) $context['record_scope']
+        : ($reportId !== '' ? 'report' : 'free');
     $lines = preg_split('/\r\n|\n|\r/', str_replace("\r", '', $text)) ?: [];
     $entries = [];
 
@@ -1473,38 +1562,85 @@ function parse_notebook(string $text): array {
         }
         $parsedRaw = trim((string) preg_replace('/^\s*[✓✔]\s*/u', '', $raw));
 
-        $match = [];
-        $pattern = '/^\s*(?<sign>[+-])?\s*(?<currency>€)?\s*(?<amount>\d+(?:[.,]\d+)?)\s*(?<note>.*)$/u';
-        if (!preg_match($pattern, $parsedRaw, $match)) {
+        $segments = array_values(array_filter(array_map('trim', preg_split('/\s*,\s*/u', $parsedRaw) ?: [$parsedRaw])));
+        $signedPattern = '/^(?<sign>[+-])(?:€ ?)?(?<amount>\d+(?:[.,]\d+)?)\s*(?<note>.*)$/u';
+        $malformedSignedPattern = '/^[+-]\s{2,}(?:€\s*)?(?<amount>\d+(?:[.,]\d+)?)\s*(?<note>.*)$/u';
+        $invalidNumberPattern = '/^(?=.*\d)(?![+-](?: ?)(?:€ ?)?\d)(.*?)(?<amount>\d+(?:[.,]\d+)?)(.*)$/u';
+        $unsignedPattern = '/^(?:€ ?)?(?<amount>\d+(?:[.,]\d+)?)\s*(?<note>.*)$/u';
+        foreach ($segments as $segmentIndex => $segment) {
+            $segment = preg_replace('/^([+-]) ([0-9])/', '$1$2', $segment);
+            $segment = preg_replace('/^([+-]) (€ ?[0-9])/', '$1$2', $segment);
+            $match = [];
+            if (preg_match($malformedSignedPattern, $segment, $match)) {
+                $amount = (float) str_replace(',', '.', (string) ($match['amount'] ?? '0'));
+                $note = trim((string) ($match['note'] ?? ''));
+                $entries[] = normalize_entry([
+                    'raw_text' => $segment,
+                    'note' => $note !== '' ? $note : $segment,
+                    'amount' => 0,
+                    'entry_kind' => 'note',
+                    'accounting_state' => 'disputed',
+                ], ($index * 100) + $segmentIndex);
+                continue;
+            }
+
+            if (preg_match($signedPattern, $segment, $match)) {
+                $amount = (float) str_replace(',', '.', (string) ($match['amount'] ?? '0'));
+                $sign = (string) ($match['sign'] ?? '');
+                $note = trim((string) ($match['note'] ?? ''));
+                $kind = $sign === '+' ? 'contribution' : 'expense';
+                $entryReportId = $recordScope === 'report' && $reportId !== '' ? $reportId : null;
+
+                $entries[] = normalize_entry([
+                    'raw_text' => $segment,
+                    'note' => $note !== '' ? $note : $segment,
+                    'amount' => $kind === 'contribution' ? $amount : -$amount,
+                    'entry_kind' => $kind,
+                    'report_id' => $entryReportId,
+                    'accounting_state' => $recordScope,
+                ], ($index * 100) + $segmentIndex);
+                continue;
+            }
+
+            if (preg_match($invalidNumberPattern, $segment, $match)) {
+                $amount = (float) str_replace(',', '.', (string) ($match['amount'] ?? '0'));
+                $entries[] = normalize_entry([
+                    'raw_text' => $segment,
+                    'note' => $segment,
+                    'amount' => 0,
+                    'entry_kind' => 'note',
+                    'accounting_state' => 'disputed',
+                ], ($index * 100) + $segmentIndex);
+                continue;
+            }
+
+            if (!preg_match($unsignedPattern, $segment, $match)) {
+                $entries[] = normalize_entry([
+                    'raw_text' => $segment,
+                    'note' => $segment,
+                    'entry_kind' => 'note',
+                    'accounting_state' => 'free',
+                ], $index);
+                continue;
+            }
+
+            $amount = (float) str_replace(',', '.', (string) ($match['amount'] ?? '0'));
+            $note = trim((string) ($match['note'] ?? ''));
             $entries[] = normalize_entry([
-                'raw_text' => $raw,
-                'note' => $raw,
+                'raw_text' => $segment,
+                'note' => $note !== '' ? $note : $segment,
+                'amount' => 0,
                 'entry_kind' => 'note',
-            ], $index);
-            continue;
+                'accounting_state' => 'disputed',
+            ], ($index * 100) + $segmentIndex);
         }
-
-        $amount = (float) str_replace(',', '.', (string) ($match['amount'] ?? '0'));
-        $sign = (string) ($match['sign'] ?? '');
-        $note = trim((string) ($match['note'] ?? ''));
-        $kind = $sign === '+' ? 'contribution' : 'expense';
-        if ($sign === '' && (($match['currency'] ?? '') === '€')) {
-            $kind = 'expense';
-        }
-
-        $entries[] = normalize_entry([
-            'raw_text' => $parsedRaw,
-            'note' => $note !== '' ? $note : $parsedRaw,
-            'amount' => $kind === 'contribution' ? $amount : -$amount,
-            'entry_kind' => $kind,
-        ], $index);
     }
 
     return $entries;
 }
 
-function parse_notebook_preserving_entries(string $text, array $existingEntries = []): array {
-    $parsed = parse_notebook($text);
+function parse_notebook_preserving_entries(string $text, array $existingEntries = [], string $mode = 'group', array $context = []): array {
+    $parsed = parse_notebook($text, $mode, $context);
     $existingByKey = [];
     foreach ($existingEntries as $entry) {
         if (!is_array($entry)) {
@@ -1532,15 +1668,35 @@ function parse_notebook_preserving_entries(string $text, array $existingEntries 
         }
         $entry['id'] = (string) ($existing['id'] ?? $entry['id']);
         $entry['created_at'] = (string) ($existing['created_at'] ?? $entry['created_at']);
+        if (($entry['report_id'] ?? null) === null && trim((string) ($existing['report_id'] ?? '')) !== '') {
+            $entry['report_id'] = trim((string) $existing['report_id']);
+        }
+        if (!in_array(($context['record_scope'] ?? ''), ['free', 'report', 'excluded'], true)) {
+            $entry['accounting_state'] = normalize_accounting_state((string) ($existing['accounting_state'] ?? $entry['accounting_state'] ?? ''), (string) ($entry['entry_kind'] ?? 'note'));
+        }
     }
     unset($entry);
 
     return $parsed;
 }
 
+function notebook_context_from_payload(array $payload): array {
+    $reportId = trim((string) ($payload['report_id'] ?? ''));
+    $recordScope = in_array(($payload['record_scope'] ?? ''), ['free', 'report', 'excluded'], true)
+        ? (string) $payload['record_scope']
+        : ($reportId !== '' ? 'report' : 'free');
+    return [
+        'report_id' => $reportId,
+        'record_scope' => $recordScope,
+    ];
+}
+
 function notebook_entries_total(array $entries): float {
     $total = 0.0;
     foreach ($entries as $entry) {
+        if (in_array(($entry['accounting_state'] ?? ''), ['disputed', 'excluded'], true)) {
+            continue;
+        }
         if (($entry['entry_kind'] ?? '') === 'expense') {
             $total += abs((float) ($entry['amount'] ?? 0));
         }
@@ -1548,7 +1704,7 @@ function notebook_entries_total(array $entries): float {
     return money_round($total);
 }
 
-function create_notebook_batch(string $text, string $source = 'manual'): ?array {
+function create_notebook_batch(string $text, string $source = 'manual', string $mode = 'group', array $context = []): ?array {
     $rawText = trim(str_replace("\r", '', $text));
     if ($rawText === '') {
         return null;
@@ -1556,9 +1712,11 @@ function create_notebook_batch(string $text, string $source = 'manual'): ?array 
     return normalize_notebook_batch([
         'id' => rand_id('batch'),
         'raw_text' => $rawText,
-        'entries' => parse_notebook($rawText),
+        'entries' => parse_notebook($rawText, $mode, $context),
         'submitted_at' => now_iso(),
         'source' => $source,
+        'report_id' => trim((string) ($context['report_id'] ?? '')) ?: null,
+        'record_scope' => in_array(($context['record_scope'] ?? ''), ['free', 'report', 'excluded'], true) ? (string) $context['record_scope'] : 'free',
     ]);
 }
 
@@ -1579,6 +1737,8 @@ function normalize_notebook_batch(array $batch, int $index = 0): array {
         'entries' => $entries,
         'total_expenses' => notebook_entries_total($entries),
         'submitted_at' => (string) ($batch['submitted_at'] ?? now_iso()),
+        'report_id' => trim((string) ($batch['report_id'] ?? '')) ?: null,
+        'record_scope' => in_array(($batch['record_scope'] ?? ''), ['free', 'report', 'excluded'], true) ? (string) $batch['record_scope'] : 'free',
         'source' => in_array(($batch['source'] ?? ''), ['manual', 'scheduled'], true) ? (string) $batch['source'] : 'manual',
     ];
 }
@@ -1600,6 +1760,40 @@ function normalize_notebook_trash_item(array $item, int $index = 0): array {
     ];
 }
 
+function restore_notebook_trash_item_for_participant(array &$participant, string $trashId): ?array {
+    $trashId = trim($trashId);
+    if ($trashId === '') {
+        return null;
+    }
+
+    $restored = null;
+    $remainingTrash = [];
+    foreach (($participant['notebook_trash'] ?? []) as $index => $item) {
+        if (!is_array($item)) {
+            continue;
+        }
+        $normalized = normalize_notebook_trash_item($item, $index);
+        $batchId = (string) ($normalized['batch']['id'] ?? '');
+        if ($restored === null && ($normalized['id'] === $trashId || $batchId === $trashId)) {
+            $restored = $normalized;
+            continue;
+        }
+        $remainingTrash[] = $normalized;
+    }
+
+    if ($restored === null) {
+        return null;
+    }
+
+    $participant['notebook_batches'] = array_values(array_filter($participant['notebook_batches'] ?? [], 'is_array'));
+    $participant['notebook_batches'][] = $restored['batch'];
+    $participant['notebook_trash'] = $remainingTrash;
+    $participant['last_synced_at'] = now_iso();
+    $participant['last_sync_source'] = 'trash-restore';
+
+    return $restored;
+}
+
 function participant_all_entries(array $participant): array {
     $entries = [];
     foreach (($participant['notebook_batches'] ?? []) as $batch) {
@@ -1609,6 +1803,197 @@ function participant_all_entries(array $participant): array {
         $entries = array_merge($entries, array_values(array_filter($batch['entries'] ?? [], 'is_array')));
     }
     return array_merge($entries, array_values(array_filter($participant['entries'] ?? [], 'is_array')));
+}
+
+function personal_report_zero_totals(string $currency = 'EUR'): array {
+    return [
+        'currency' => $currency,
+        'opening_balance' => 0.0,
+        'incoming_balance' => 0.0,
+        'income_total' => 0.0,
+        'expense_total' => 0.0,
+        'current_balance' => 0.0,
+        'record_count' => 0,
+        'entry_count' => 0,
+        'entries' => [],
+    ];
+}
+
+function personal_report_apply_entry(array &$target, array $entry, ?array $batch = null, ?array $participant = null): void {
+    $kind = (string) ($entry['entry_kind'] ?? 'note');
+    if (!in_array($kind, ['contribution', 'expense'], true)) {
+        return;
+    }
+    if (in_array(($entry['accounting_state'] ?? ''), ['disputed', 'excluded'], true)) {
+        return;
+    }
+
+    $amount = abs((float) ($entry['amount'] ?? 0));
+    if ($amount <= 0.009) {
+        return;
+    }
+    if ($kind === 'contribution') {
+        $target['income_total'] = money_round((float) ($target['income_total'] ?? 0) + $amount);
+    } else {
+        $target['expense_total'] = money_round((float) ($target['expense_total'] ?? 0) + $amount);
+    }
+    $target['entry_count'] = (int) ($target['entry_count'] ?? 0) + 1;
+    $target['entries'][] = [
+        'id' => (string) ($entry['id'] ?? ''),
+        'batch_id' => $batch ? (string) ($batch['id'] ?? '') : null,
+        'participant_id' => $participant ? (string) ($participant['id'] ?? '') : null,
+        'raw_text' => trim((string) ($entry['raw_text'] ?? '')),
+        'note' => trim((string) ($entry['note'] ?? '')),
+        'amount' => money_round((float) ($entry['amount'] ?? 0)),
+        'entry_kind' => $kind,
+        'report_id' => trim((string) ($entry['report_id'] ?? $batch['report_id'] ?? '')) ?: null,
+        'accounting_state' => (string) ($entry['accounting_state'] ?? ''),
+        'created_at' => (string) ($entry['created_at'] ?? ''),
+        'updated_at' => (string) ($entry['updated_at'] ?? ''),
+    ];
+}
+
+function personal_report_finalize_totals(array $target): array {
+    $opening = money_round((float) ($target['opening_balance'] ?? $target['incoming_balance'] ?? 0));
+    $income = money_round((float) ($target['income_total'] ?? 0));
+    $expenses = money_round(abs((float) ($target['expense_total'] ?? 0)));
+    $target['opening_balance'] = $opening;
+    $target['incoming_balance'] = $opening;
+    $target['income_total'] = $income;
+    $target['expense_total'] = $expenses;
+    $target['current_balance'] = money_round($opening + $income - $expenses);
+    $target['record_count'] = max(0, (int) ($target['record_count'] ?? 0));
+    $target['entry_count'] = max(0, (int) ($target['entry_count'] ?? 0));
+    $target['entries'] = array_values(array_filter($target['entries'] ?? [], 'is_array'));
+    return $target;
+}
+
+function compute_personal_report_summary(array $session): array {
+    $currency = trim((string) ($session['currency'] ?? 'EUR')) ?: 'EUR';
+    $zero = personal_report_zero_totals($currency);
+    if (normalized_session_mode($session) !== 'personal') {
+        return [
+            'active_report_id' => null,
+            'active_report' => null,
+            'active_report_totals' => $zero,
+            'reports' => [],
+            'active_reports' => [],
+            'fixed_reports' => [],
+            'unlinked' => $zero,
+        ];
+    }
+
+    $reports = [];
+    foreach (($session['personal_reports'] ?? []) as $report) {
+        if (!is_array($report)) {
+            continue;
+        }
+        $id = trim((string) ($report['id'] ?? ''));
+        if ($id === '') {
+            continue;
+        }
+        $reports[$id] = array_merge($report, [
+            'income_total' => 0.0,
+            'expense_total' => 0.0,
+            'current_balance' => money_round((float) ($report['opening_balance'] ?? 0)),
+            'record_count' => 0,
+            'entry_count' => 0,
+            'entries' => [],
+        ]);
+    }
+
+    $unlinked = personal_report_zero_totals($currency);
+    foreach (($session['participants'] ?? []) as $participant) {
+        if (!is_array($participant)) {
+            continue;
+        }
+        foreach (($participant['notebook_batches'] ?? []) as $batch) {
+            if (!is_array($batch)) {
+                continue;
+            }
+            $batchReportId = trim((string) ($batch['report_id'] ?? ''));
+            $batchScope = (string) ($batch['record_scope'] ?? 'free');
+            $countedReportBatch = false;
+            $countedUnlinkedBatch = false;
+
+            if ($batchScope === 'report' && $batchReportId !== '' && isset($reports[$batchReportId])) {
+                $reports[$batchReportId]['record_count'] = (int) ($reports[$batchReportId]['record_count'] ?? 0) + 1;
+                $countedReportBatch = true;
+            } else {
+                $unlinked['record_count'] = (int) ($unlinked['record_count'] ?? 0) + 1;
+                $countedUnlinkedBatch = true;
+            }
+
+            foreach (($batch['entries'] ?? []) as $entry) {
+                if (!is_array($entry)) {
+                    continue;
+                }
+                $entryReportId = trim((string) ($entry['report_id'] ?? $batchReportId));
+                $entryState = (string) ($entry['accounting_state'] ?? '');
+                $isReportEntry = $entryReportId !== ''
+                    && isset($reports[$entryReportId])
+                    && ($entryState === 'report' || $batchScope === 'report');
+                if ($isReportEntry) {
+                    if (!$countedReportBatch) {
+                        $reports[$entryReportId]['record_count'] = (int) ($reports[$entryReportId]['record_count'] ?? 0) + 1;
+                        $countedReportBatch = true;
+                    }
+                    personal_report_apply_entry($reports[$entryReportId], $entry, $batch, $participant);
+                    continue;
+                }
+                if (!$countedUnlinkedBatch && $batchScope !== 'report') {
+                    $unlinked['record_count'] = (int) ($unlinked['record_count'] ?? 0) + 1;
+                    $countedUnlinkedBatch = true;
+                }
+                personal_report_apply_entry($unlinked, $entry, $batch, $participant);
+            }
+        }
+
+        $draftHasFinancialEntry = false;
+        foreach (($participant['entries'] ?? []) as $entry) {
+            if (!is_array($entry)) {
+                continue;
+            }
+            $entryReportId = trim((string) ($entry['report_id'] ?? ''));
+            $entryState = (string) ($entry['accounting_state'] ?? '');
+            $isReportEntry = $entryReportId !== '' && isset($reports[$entryReportId]) && $entryState === 'report';
+            if ($isReportEntry) {
+                personal_report_apply_entry($reports[$entryReportId], $entry, null, $participant);
+                continue;
+            }
+            $before = (int) ($unlinked['entry_count'] ?? 0);
+            personal_report_apply_entry($unlinked, $entry, null, $participant);
+            if ((int) ($unlinked['entry_count'] ?? 0) > $before) {
+                $draftHasFinancialEntry = true;
+            }
+        }
+        if ($draftHasFinancialEntry && trim((string) ($participant['notebook_text'] ?? '')) !== '') {
+            $unlinked['record_count'] = (int) ($unlinked['record_count'] ?? 0) + 1;
+        }
+    }
+
+    $finalReports = [];
+    foreach ($reports as $report) {
+        $finalReports[] = personal_report_finalize_totals($report);
+    }
+    $activeReportId = active_personal_report_id($session, $finalReports);
+    $activeReport = null;
+    foreach ($finalReports as $report) {
+        if (($report['id'] ?? '') === $activeReportId) {
+            $activeReport = $report;
+            break;
+        }
+    }
+
+    return [
+        'active_report_id' => $activeReportId,
+        'active_report' => $activeReport,
+        'active_report_totals' => $activeReport ? personal_report_finalize_totals($activeReport) : $zero,
+        'reports' => $finalReports,
+        'active_reports' => array_values(array_filter($finalReports, static fn(array $report): bool => ($report['status'] ?? '') === 'active')),
+        'fixed_reports' => array_values(array_filter($finalReports, static fn(array $report): bool => ($report['status'] ?? '') === 'fixed')),
+        'unlinked' => personal_report_finalize_totals($unlinked),
+    ];
 }
 
 function normalized_treasurer_expense_mode(array $session): string {
@@ -1720,6 +2105,9 @@ function compute_totals(array $session): array {
         }
         $contributions = max(0, money_input($participant['cashbox_contribution'] ?? 0));
         foreach (participant_all_entries($participant) as $entry) {
+            if (in_array(($entry['accounting_state'] ?? ''), ['disputed', 'excluded'], true)) {
+                continue;
+            }
             if (($entry['entry_kind'] ?? '') === 'contribution') {
                 $contributions += abs((float) ($entry['amount'] ?? 0));
             }
@@ -1746,6 +2134,10 @@ function compute_totals(array $session): array {
         $cashboxExpenses = 0.0;
         $notes = [];
         foreach (participant_all_entries($participant) as $entry) {
+            if (in_array(($entry['accounting_state'] ?? ''), ['disputed', 'excluded'], true)) {
+                $notes[] = $entry;
+                continue;
+            }
             $kind = $entry['entry_kind'] ?? 'note';
             if ($kind === 'contribution') {
                 $contributions += abs((float) ($entry['amount'] ?? 0));
@@ -1876,6 +2268,11 @@ function default_session(string $ownerEmail = '', string $mode = 'group'): array
         'currency' => 'EUR',
         'owner_email' => $ownerEmail,
         'treasurer_expense_mode' => $mode === 'personal' ? 'cashbox' : 'auto',
+        'schema_version' => 2,
+        'cashbox_series_id' => $mode === 'personal' ? rand_id('cashbox-series') : null,
+        'carryover_from_report_id' => null,
+        'opening_balance_source' => 'manual',
+        'personal_reports' => [],
         'status' => 'active',
         'created_at' => $createdAt,
         'updated_at' => $createdAt,
@@ -1949,6 +2346,7 @@ function normalize_session(array $session): array {
     foreach ($participants as &$participant) {
         $participant['role'] = $participant['id'] === $treasurerId ? 'treasurer' : 'participant';
     }
+    unset($batch);
     unset($participant);
 
     $treasurerPeriods = normalize_treasurer_periods($session, $treasurerId);
@@ -1964,16 +2362,31 @@ function normalize_session(array $session): array {
         }
     }
 
+    $sessionMode = normalized_session_mode($session);
+    $currency = trim((string) ($session['currency'] ?? 'EUR')) ?: 'EUR';
+    $personalReports = $sessionMode === 'personal'
+        ? normalize_personal_reports(array_values(array_filter($session['personal_reports'] ?? [], 'is_array')), $currency)
+        : [];
+    $activePersonalReportId = $sessionMode === 'personal' ? active_personal_report_id($session, $personalReports) : null;
+
     return [
         'id' => (string) ($session['id'] ?? rand_id('cashbox')),
         'title' => trim((string) ($session['title'] ?? 'Ship Cashbox')) ?: 'Ship Cashbox',
-        'session_mode' => normalized_session_mode($session),
-        'currency' => trim((string) ($session['currency'] ?? 'EUR')) ?: 'EUR',
+        'session_mode' => $sessionMode,
+        'currency' => $currency,
         'treasurer_expense_mode' => normalized_treasurer_expense_mode($session),
+        'schema_version' => max(1, (int) ($session['schema_version'] ?? 1)),
+        'cashbox_series_id' => trim((string) ($session['cashbox_series_id'] ?? '')) ?: ($sessionMode === 'personal' ? (string) ($session['id'] ?? rand_id('cashbox-series')) : null),
+        'carryover_from_report_id' => trim((string) ($session['carryover_from_report_id'] ?? '')) ?: null,
+        'opening_balance_source' => in_array(($session['opening_balance_source'] ?? ''), ['manual', 'carryover'], true) ? (string) $session['opening_balance_source'] : 'manual',
+        'active_personal_report_id' => $activePersonalReportId,
+        'personal_reports' => $personalReports,
         'status' => in_array($session['status'] ?? '', ['active', 'closed', 'deleted'], true) ? $session['status'] : 'active',
         'created_at' => (string) ($session['created_at'] ?? now_iso()),
         'updated_at' => (string) ($session['updated_at'] ?? now_iso()),
         'closed_at' => $session['closed_at'] ?? null,
+        'deleted_at' => $session['deleted_at'] ?? null,
+        'purge_after' => $session['purge_after'] ?? null,
         'owner_email' => clean_email($session['owner_email'] ?? ''),
         'treasurer_participant_id' => $treasurerId,
         'treasurer_periods' => $treasurerPeriods,
@@ -2181,8 +2594,15 @@ function build_treasurer_payload(?array $session, ?string $archiveMode = null): 
     }
 
     foreach (list_sessions() as $item) {
-        if (($item['status'] ?? '') !== 'closed') {
+        $itemStatus = (string) ($item['status'] ?? '');
+        if (!in_array($itemStatus, ['closed', 'deleted'], true)) {
             continue;
+        }
+        if ($itemStatus === 'deleted') {
+            $purgeAfter = strtotime((string) ($item['purge_after'] ?? '')) ?: 0;
+            if ($purgeAfter > 0 && $purgeAfter < time()) {
+                continue;
+            }
         }
         $itemMode = normalized_session_mode($item);
         if ($archiveMode !== null && $itemMode !== $archiveMode) {
@@ -2193,8 +2613,11 @@ function build_treasurer_payload(?array $session, ?string $archiveMode = null): 
             'id' => $item['id'],
             'title' => $item['title'],
             'session_mode' => $itemMode,
+            'status' => $itemStatus,
             'currency' => $item['currency'],
             'closed_at' => $item['closed_at'],
+            'deleted_at' => $item['deleted_at'] ?? null,
+            'purge_after' => $item['purge_after'] ?? null,
             'participants' => $itemTotals['participant_count'],
             'cashbox_balance' => $itemTotals['cashbox_balance'],
             'exports' => $item['exports'],
@@ -2210,6 +2633,7 @@ function build_treasurer_payload(?array $session, ?string $archiveMode = null): 
     }
 
     $totals = compute_totals($session);
+    $personalReportSummary = compute_personal_report_summary($session);
     $settlementLines = $totals['settlement_mode'] === 'cashbox'
         ? build_cashbox_settlement_lines($totals['participants'], (string) $session['treasurer_participant_id'])
         : build_direct_settlement_lines($totals['participants'], 'direct_balance');
@@ -2223,6 +2647,12 @@ function build_treasurer_payload(?array $session, ?string $archiveMode = null): 
             'treasurer_expense_mode' => normalized_treasurer_expense_mode($session),
             'treasurer_expense_mode_resolved' => $totals['treasurer_expense_mode_resolved'],
             'status' => $session['status'],
+            'cashbox_series_id' => $session['cashbox_series_id'] ?? null,
+            'carryover_from_report_id' => $session['carryover_from_report_id'] ?? null,
+            'opening_balance_source' => $session['opening_balance_source'] ?? 'manual',
+            'active_personal_report_id' => $personalReportSummary['active_report_id'] ?? ($session['active_personal_report_id'] ?? null),
+            'personal_reports' => $personalReportSummary['reports'] ?? ($session['personal_reports'] ?? []),
+            'personal_report_summary' => $personalReportSummary,
             'created_at' => $session['created_at'],
             'updated_at' => $session['updated_at'],
             'closed_at' => $session['closed_at'],
@@ -2497,6 +2927,292 @@ function save_session_meta(array $payload): array {
     return save_session($session);
 }
 
+function start_personal_report(array $payload): array {
+    $sessionId = trim((string) ($payload['id'] ?? $payload['session_id'] ?? ''));
+    if ($sessionId !== '') {
+        $session = require_current_active_owner_session($sessionId, 'personal');
+    } else {
+        $session = find_active_session_for_owner(current_auth_email(), 'personal');
+        if (!$session || ($session['status'] ?? '') !== 'active') {
+            fail('Активный личный журнал не найден', 404);
+        }
+        require_session_owner($session);
+    }
+    if (normalized_session_mode($session) !== 'personal') {
+        fail('Отчет можно начать только в личном журнале', 409);
+    }
+
+    $now = now_iso();
+    $title = trim((string) ($payload['title'] ?? ''));
+    $periodStart = trim((string) ($payload['period_start'] ?? $payload['opened_at'] ?? '')) ?: $now;
+    $report = normalize_personal_report([
+        'id' => rand_id('report'),
+        'title' => $title !== '' ? $title : 'Личный отчет',
+        'status' => 'active',
+        'currency' => $session['currency'] ?? 'EUR',
+        'opening_balance' => money_input($payload['opening_balance'] ?? $payload['incoming_balance'] ?? 0),
+        'opening_balance_source' => in_array(($payload['opening_balance_source'] ?? ''), ['manual', 'carryover'], true)
+            ? (string) $payload['opening_balance_source']
+            : 'manual',
+        'period_start' => $periodStart,
+        'opened_at' => $periodStart,
+        'created_at' => $now,
+        'updated_at' => $now,
+        'carryover_from_report_id' => trim((string) ($payload['carryover_from_report_id'] ?? '')) ?: null,
+    ]);
+
+    $reports = array_values(array_filter($session['personal_reports'] ?? [], 'is_array'));
+    $reports[] = $report;
+    $session['personal_reports'] = $reports;
+    $session['active_personal_report_id'] = $report['id'];
+    $session['opening_balance_source'] = $report['opening_balance_source'];
+    if ($report['carryover_from_report_id']) {
+        $session['carryover_from_report_id'] = $report['carryover_from_report_id'];
+    }
+
+    if (bool_value($payload['dry_run'] ?? false, false)) {
+        return normalize_session($session);
+    }
+    return save_session($session);
+}
+
+function select_personal_report(array $payload): array {
+    $sessionId = trim((string) ($payload['id'] ?? $payload['session_id'] ?? ''));
+    $reportId = trim((string) ($payload['report_id'] ?? $payload['id_report'] ?? ''));
+    if ($reportId === '') {
+        fail('Не указан отчет', 422);
+    }
+    if ($sessionId !== '') {
+        $session = require_current_active_owner_session($sessionId, 'personal');
+    } else {
+        $session = find_active_session_for_owner(current_auth_email(), 'personal');
+        if (!$session || ($session['status'] ?? '') !== 'active') {
+            fail('Активный личный журнал не найден', 404);
+        }
+        require_session_owner($session);
+    }
+    if (normalized_session_mode($session) !== 'personal') {
+        fail('Отчет можно выбрать только в личном журнале', 409);
+    }
+
+    $found = null;
+    foreach (($session['personal_reports'] ?? []) as $report) {
+        if (!is_array($report)) {
+            continue;
+        }
+        if (($report['id'] ?? '') === $reportId) {
+            $found = normalize_personal_report($report);
+            break;
+        }
+    }
+    if (!$found || ($found['status'] ?? '') !== 'active') {
+        fail('Активный отчет не найден', 404);
+    }
+
+    $session['active_personal_report_id'] = $reportId;
+    if (bool_value($payload['dry_run'] ?? false, false)) {
+        return normalize_session($session);
+    }
+    return save_session($session);
+}
+
+function attach_personal_record_to_report(array $payload): array {
+    $sessionId = trim((string) ($payload['id'] ?? $payload['session_id'] ?? ''));
+    $batchId = trim((string) ($payload['batch_id'] ?? ''));
+    if ($batchId === '') {
+        fail('Не указана запись', 422);
+    }
+    if ($sessionId !== '') {
+        $session = require_current_active_owner_session($sessionId, 'personal');
+    } else {
+        $session = find_active_session_for_owner(current_auth_email(), 'personal');
+        if (!$session || ($session['status'] ?? '') !== 'active') {
+            fail('Активный личный журнал не найден', 404);
+        }
+        require_session_owner($session);
+    }
+    if (normalized_session_mode($session) !== 'personal') {
+        fail('Запись можно подключить только в личном журнале', 409);
+    }
+
+    $reportId = trim((string) ($payload['report_id'] ?? $session['active_personal_report_id'] ?? ''));
+    if ($reportId === '') {
+        fail('Сначала начните или выберите отчет', 409);
+    }
+    $reportFound = false;
+    foreach (($session['personal_reports'] ?? []) as $report) {
+        if (!is_array($report)) {
+            continue;
+        }
+        if (($report['id'] ?? '') === $reportId && normalize_personal_report_status((string) ($report['status'] ?? 'active')) === 'active') {
+            $reportFound = true;
+            break;
+        }
+    }
+    if (!$reportFound) {
+        fail('Активный отчет не найден', 404);
+    }
+
+    $attached = false;
+    foreach ($session['participants'] as &$participant) {
+        if (($participant['id'] ?? '') !== ($session['treasurer_participant_id'] ?? '')) {
+            continue;
+        }
+        foreach (($participant['notebook_batches'] ?? []) as &$batch) {
+            if (!is_array($batch) || ($batch['id'] ?? '') !== $batchId) {
+                continue;
+            }
+            $batch['report_id'] = $reportId;
+            $batch['record_scope'] = 'report';
+            $entries = [];
+            foreach (($batch['entries'] ?? []) as $entryIndex => $entry) {
+                if (!is_array($entry)) {
+                    continue;
+                }
+                $entry = normalize_entry($entry, $entryIndex);
+                $entry['report_id'] = $reportId;
+                if (!in_array(($entry['accounting_state'] ?? ''), ['disputed', 'excluded'], true) && in_array(($entry['entry_kind'] ?? ''), ['contribution', 'expense'], true)) {
+                    $entry['accounting_state'] = 'report';
+                }
+                $entries[] = $entry;
+            }
+            $batch['entries'] = $entries;
+            $batch = normalize_notebook_batch($batch);
+            $attached = true;
+            break 2;
+        }
+    }
+    unset($batch);
+    unset($participant);
+
+    if (!$attached) {
+        fail('Запись не найдена', 404);
+    }
+    $session['active_personal_report_id'] = $reportId;
+    if (bool_value($payload['dry_run'] ?? false, false)) {
+        return normalize_session($session);
+    }
+    return save_session($session);
+}
+
+function fix_personal_report(array $payload): array {
+    $sessionId = trim((string) ($payload['id'] ?? $payload['session_id'] ?? ''));
+    if ($sessionId !== '') {
+        $session = require_current_active_owner_session($sessionId, 'personal');
+    } else {
+        $session = find_active_session_for_owner(current_auth_email(), 'personal');
+        if (!$session || ($session['status'] ?? '') !== 'active') {
+            fail('Активный личный журнал не найден', 404);
+        }
+        require_session_owner($session);
+    }
+    if (normalized_session_mode($session) !== 'personal') {
+        fail('Отчет можно закрепить только в личном журнале', 409);
+    }
+    $reportId = trim((string) ($payload['report_id'] ?? $session['active_personal_report_id'] ?? ''));
+    if ($reportId === '') {
+        fail('Сначала начните или выберите отчет', 409);
+    }
+
+    $summary = compute_personal_report_summary($session);
+    $reportTotals = null;
+    foreach (($summary['reports'] ?? []) as $item) {
+        if (is_array($item) && ($item['id'] ?? '') === $reportId) {
+            $reportTotals = $item;
+            break;
+        }
+    }
+    if (!$reportTotals || (int) ($reportTotals['record_count'] ?? 0) <= 0 && (int) ($reportTotals['entry_count'] ?? 0) <= 0) {
+        fail('Пустой отчет нельзя закрепить', 409);
+    }
+
+    $now = now_iso();
+    $fixed = false;
+    $nextActiveReportId = null;
+    foreach (($session['personal_reports'] ?? []) as &$report) {
+        if (!is_array($report)) {
+            continue;
+        }
+        if (($report['id'] ?? '') === $reportId) {
+            $report = normalize_personal_report(array_merge($report, [
+                'status' => 'fixed',
+                'period_end' => trim((string) ($payload['period_end'] ?? $payload['closed_at'] ?? '')) ?: $now,
+                'closed_at' => trim((string) ($payload['closed_at'] ?? '')) ?: $now,
+                'fixed_at' => $now,
+                'updated_at' => $now,
+            ]));
+            $fixed = true;
+            continue;
+        }
+        if ($nextActiveReportId === null && normalize_personal_report_status((string) ($report['status'] ?? 'active')) === 'active') {
+            $nextActiveReportId = (string) ($report['id'] ?? '');
+        }
+    }
+    unset($report);
+    if (!$fixed) {
+        fail('Активный отчет не найден', 404);
+    }
+
+    $session['active_personal_report_id'] = $nextActiveReportId ?: null;
+    if ($reportId) {
+        $session['carryover_from_report_id'] = $reportId;
+    }
+    if (bool_value($payload['dry_run'] ?? false, false)) {
+        return normalize_session($session);
+    }
+    return save_session($session);
+}
+
+function restore_personal_report(array $payload): array {
+    $sessionId = trim((string) ($payload['id'] ?? $payload['session_id'] ?? ''));
+    if ($sessionId !== '') {
+        $session = require_current_active_owner_session($sessionId, 'personal');
+    } else {
+        $session = find_active_session_for_owner(current_auth_email(), 'personal');
+        if (!$session || ($session['status'] ?? '') !== 'active') {
+            fail('Активный личный журнал не найден', 404);
+        }
+        require_session_owner($session);
+    }
+    if (normalized_session_mode($session) !== 'personal') {
+        fail('Отчет можно вернуть только в личном журнале', 409);
+    }
+    $reportId = trim((string) ($payload['report_id'] ?? ''));
+    if ($reportId === '') {
+        fail('Не указан отчет', 422);
+    }
+
+    $restored = false;
+    $now = now_iso();
+    foreach (($session['personal_reports'] ?? []) as &$report) {
+        if (!is_array($report) || ($report['id'] ?? '') !== $reportId) {
+            continue;
+        }
+        if (normalize_personal_report_status((string) ($report['status'] ?? 'active')) !== 'fixed') {
+            fail('Закрепленный отчет не найден', 404);
+        }
+        $report = normalize_personal_report(array_merge($report, [
+            'status' => 'active',
+            'period_end' => null,
+            'closed_at' => null,
+            'fixed_at' => null,
+            'updated_at' => $now,
+        ]));
+        $restored = true;
+        break;
+    }
+    unset($report);
+    if (!$restored) {
+        fail('Закрепленный отчет не найден', 404);
+    }
+
+    $session['active_personal_report_id'] = $reportId;
+    if (bool_value($payload['dry_run'] ?? false, false)) {
+        return normalize_session($session);
+    }
+    return save_session($session);
+}
+
 function save_notebook_text(string $token, string $text, string $source = 'manual', bool $submit = false): array {
     $session = find_session_by_token($token);
     if (!$session) {
@@ -2507,6 +3223,7 @@ function save_notebook_text(string $token, string $text, string $source = 'manua
     }
 
     $source = in_array($source, ['manual', 'scheduled'], true) ? $source : 'manual';
+    $mode = normalized_session_mode($session);
     $text = str_replace("\r", '', $text);
     $incomingHash = notebook_hash($text);
 
@@ -2515,7 +3232,7 @@ function save_notebook_text(string $token, string $text, string $source = 'manua
             continue;
         }
         if ($submit) {
-            $batch = create_notebook_batch($text, $source);
+            $batch = create_notebook_batch($text, $source, $mode);
             if (!$batch) {
                 fail('Сначала внесите строки расходов', 422);
             }
@@ -2542,7 +3259,7 @@ function save_notebook_text(string $token, string $text, string $source = 'manua
         }
         $participant['notebook_text'] = $text;
         $participant['notebook_hash'] = $incomingHash;
-        $participant['entries'] = parse_notebook($participant['notebook_text']);
+        $participant['entries'] = parse_notebook($participant['notebook_text'], $mode);
         $participant['joined_at'] = $participant['joined_at'] ?: now_iso();
         $participant['authorized_at'] = $participant['authorized_at'] ?? now_iso();
         $participant['last_synced_at'] = now_iso();
@@ -2565,6 +3282,7 @@ function restore_notebook_batch_by_token(string $token, string $batchId): array 
     if (!$session || ($session['status'] ?? '') !== 'active') {
         fail('Активная касса не найдена', 404);
     }
+    $mode = normalized_session_mode($session);
 
     foreach ($session['participants'] as &$participant) {
         if (($participant['invite_token'] ?? '') !== $token) {
@@ -2588,7 +3306,7 @@ function restore_notebook_batch_by_token(string $token, string $batchId): array 
         $currentText = str_replace("\r", '', (string) ($participant['notebook_text'] ?? ''));
         $participant['notebook_text'] = trim($currentText) === '' ? $restoredText : trim($currentText) . "\n" . $restoredText;
         $participant['notebook_hash'] = notebook_hash($participant['notebook_text']);
-        $participant['entries'] = parse_notebook($participant['notebook_text']);
+        $participant['entries'] = parse_notebook($participant['notebook_text'], $mode);
         $participant['notebook_batches'] = $remaining;
         $participant['last_synced_at'] = now_iso();
         $participant['last_sync_source'] = 'manual';
@@ -2654,6 +3372,36 @@ function trash_notebook_batch_by_token(string $token, string $batchId): array {
     return $payload;
 }
 
+function restore_notebook_trash_by_token(string $token, string $trashId): array {
+    $session = find_session_by_token($token);
+    if (!$session || ($session['status'] ?? '') !== 'active') {
+        fail('Активная касса не найдена', 404);
+    }
+
+    $restored = null;
+    foreach ($session['participants'] as &$participant) {
+        if (($participant['invite_token'] ?? '') !== $token) {
+            continue;
+        }
+        $restored = restore_notebook_trash_item_for_participant($participant, $trashId);
+        break;
+    }
+    unset($participant);
+
+    if (!$restored) {
+        fail('Запись в корзине не найдена', 404);
+    }
+
+    $saved = save_session($session);
+    $participant = find_participant_by_token($saved, $token);
+    if (!$participant) {
+        fail('Участник не найден', 404);
+    }
+    $payload = build_participant_payload($saved, $participant);
+    $payload['sync_result'] = 'trash-restored';
+    return $payload;
+}
+
 function authorize_participant_view(array $session, string $token): array {
     $changed = false;
     foreach ($session['participants'] as &$participant) {
@@ -2712,13 +3460,15 @@ function save_treasurer_notebook(array $payload): array {
 
     $treasurerId = (string) ($session['treasurer_participant_id'] ?? '');
     $submit = bool_value($payload['submit'] ?? false, false);
+    $mode = normalized_session_mode($session);
+    $notebookContext = notebook_context_from_payload($payload);
     foreach ($session['participants'] as &$participant) {
         if (($participant['id'] ?? '') !== $treasurerId) {
             continue;
         }
         $text = str_replace("\r", '', (string) ($payload['notebook_text'] ?? ''));
         if ($submit) {
-            $batch = create_notebook_batch($text, 'manual');
+            $batch = create_notebook_batch($text, 'manual', $mode, $notebookContext);
             if (!$batch) {
                 fail('Сначала внесите строки расходов', 422);
             }
@@ -2729,7 +3479,7 @@ function save_treasurer_notebook(array $payload): array {
             $participant['notebook_text'] = $text;
         }
         $participant['notebook_hash'] = notebook_hash($participant['notebook_text']);
-        $participant['entries'] = parse_notebook_preserving_entries($participant['notebook_text'], $participant['entries'] ?? []);
+        $participant['entries'] = parse_notebook_preserving_entries($participant['notebook_text'], $participant['entries'] ?? [], $mode, $notebookContext);
         $participant['last_synced_at'] = now_iso();
         $participant['last_sync_source'] = 'manual';
     }
@@ -2744,6 +3494,7 @@ function restore_treasurer_notebook_batch(array $payload): array {
         fail('Активная касса не найдена', 404);
     }
     require_session_owner($session);
+    $mode = normalized_session_mode($session);
     $batchId = trim((string) ($payload['batch_id'] ?? ''));
     if ($batchId === '') {
         fail('Нужен id записи', 422);
@@ -2772,7 +3523,7 @@ function restore_treasurer_notebook_batch(array $payload): array {
         $currentText = str_replace("\r", '', (string) ($participant['notebook_text'] ?? ''));
         $participant['notebook_text'] = trim($currentText) === '' ? $restoredText : trim($currentText) . "\n" . $restoredText;
         $participant['notebook_hash'] = notebook_hash($participant['notebook_text']);
-        $participant['entries'] = parse_notebook_preserving_entries($participant['notebook_text'], $participant['entries'] ?? []);
+        $participant['entries'] = parse_notebook_preserving_entries($participant['notebook_text'], $participant['entries'] ?? [], $mode);
         $participant['notebook_batches'] = $remaining;
         $participant['last_synced_at'] = now_iso();
         $participant['last_sync_source'] = 'manual';
@@ -2830,6 +3581,38 @@ function trash_treasurer_notebook_batch(array $payload): array {
     return save_session($session);
 }
 
+function restore_notebook_trash_by_owner(array $payload): array {
+    $session = find_session((string) ($payload['id'] ?? $payload['session_id'] ?? ''));
+    if (!$session || ($session['status'] ?? '') !== 'active') {
+        fail('Активная касса не найдена', 404);
+    }
+    require_session_owner($session);
+
+    $trashId = trim((string) ($payload['trash_id'] ?? $payload['batch_id'] ?? ''));
+    if ($trashId === '') {
+        fail('Нужен id записи в корзине', 422);
+    }
+
+    $participantId = trim((string) ($payload['participant_id'] ?? ''));
+    $restored = null;
+    foreach ($session['participants'] as &$participant) {
+        if ($participantId !== '' && (string) ($participant['id'] ?? '') !== $participantId) {
+            continue;
+        }
+        $restored = restore_notebook_trash_item_for_participant($participant, $trashId);
+        if ($restored) {
+            break;
+        }
+    }
+    unset($participant);
+
+    if (!$restored) {
+        fail('Запись в корзине не найдена', 404);
+    }
+
+    return save_session($session);
+}
+
 function create_new_session(array $payload = []): array {
     $ownerEmail = current_auth_email();
     $mode = in_array(($payload['mode'] ?? $payload['session_mode'] ?? ''), ['group', 'personal'], true)
@@ -2854,6 +3637,226 @@ function create_new_session(array $payload = []): array {
     $saved = save_session($session);
     write_index(['active_session_id' => $saved['id']]);
     return $saved;
+}
+
+function account_profile_payload(): array {
+    $profile = current_auth_profile();
+    return [
+        'authenticated' => authenticated(),
+        'email' => current_auth_email(),
+        'display_name' => trim((string) ($profile['displayName'] ?? '')),
+        'local' => is_local_request() || has_local_auth_cookie(),
+    ];
+}
+
+function participant_matches_account(array $participant, string $accountEmail): bool {
+    $accountEmail = clean_email($accountEmail);
+    if ($accountEmail === '') {
+        return false;
+    }
+    $participantEmail = clean_email($participant['email'] ?? '');
+    $linkedEmail = clean_email($participant['account_email'] ?? '');
+    return $participantEmail === $accountEmail || $linkedEmail === $accountEmail;
+}
+
+function workspace_summary(array $session, string $relation, ?array $participant = null): array {
+    $mode = normalized_session_mode($session);
+    return [
+        'id' => (string) ($session['id'] ?? ''),
+        'title' => trim((string) ($session['title'] ?? 'Ship Cashbox')) ?: 'Ship Cashbox',
+        'session_mode' => $mode,
+        'status' => (string) ($session['status'] ?? 'active'),
+        'currency' => trim((string) ($session['currency'] ?? 'EUR')) ?: 'EUR',
+        'relation' => $relation,
+        'role' => $participant ? (string) ($participant['role'] ?? 'participant') : ($relation === 'owned' ? 'owner' : 'member'),
+        'participant_id' => $participant ? (string) ($participant['id'] ?? '') : '',
+        'owner_email' => session_owner_email($session),
+        'created_at' => (string) ($session['created_at'] ?? ''),
+        'updated_at' => (string) ($session['updated_at'] ?? ''),
+        'closed_at' => $session['closed_at'] ?? null,
+        'open_action' => $relation === 'owned' ? 'open-workspace:owner' : 'open-workspace:membership',
+    ];
+}
+
+function account_workspaces_payload(): array {
+    $account = account_profile_payload();
+    $email = clean_email($account['email'] ?? '');
+    $owned = [];
+    $memberships = [];
+
+    foreach (list_sessions() as $session) {
+        $ownerEmail = session_owner_email($session);
+        $isOwned = $ownerEmail !== '' && $ownerEmail === $email;
+        $isLegacyOwned = $ownerEmail === '' && $email !== '' && (bool) ($account['local'] ?? false);
+        if ($isOwned || $isLegacyOwned) {
+            $owned[] = workspace_summary($session, 'owned');
+            continue;
+        }
+
+        foreach (($session['participants'] ?? []) as $participant) {
+            if (!participant_matches_account($participant, $email)) {
+                continue;
+            }
+            $memberships[] = workspace_summary($session, 'membership', $participant);
+        }
+    }
+
+    $activeOwned = array_values(array_filter($owned, static fn(array $item): bool => ($item['status'] ?? '') === 'active'));
+    $activeMemberships = array_values(array_filter($memberships, static fn(array $item): bool => ($item['status'] ?? '') === 'active'));
+
+    return [
+        'account' => $account,
+        'workspaces' => [
+            'owned' => $owned,
+            'owned_active' => $activeOwned,
+            'memberships' => $memberships,
+            'membership_active' => $activeMemberships,
+        ],
+        'connectors' => [
+            'list' => 'account-workspaces',
+            'open_owner' => 'open-workspace',
+            'open_membership' => 'open-workspace',
+            'invite_preview' => 'account-invite-preview',
+            'create_parallel_owner_workspace' => 'create-account-workspace',
+        ],
+        'capabilities' => [
+            'parallel_owner_workspaces' => true,
+            'membership_context' => true,
+            'invite_claim_preview' => true,
+            'invite_claim_binding' => false,
+            'legacy_boot_unchanged' => true,
+        ],
+    ];
+}
+
+function find_account_participant_in_session(array $session, string $accountEmail, string $participantId = '', string $token = ''): ?array {
+    foreach (($session['participants'] ?? []) as $participant) {
+        $matchesTarget = true;
+        if ($participantId !== '') {
+            $matchesTarget = (string) ($participant['id'] ?? '') === $participantId;
+        } elseif ($token !== '') {
+            $matchesTarget = (string) ($participant['invite_token'] ?? '') === $token;
+        }
+        if (!$matchesTarget || !participant_matches_account($participant, $accountEmail)) {
+            continue;
+        }
+        return $participant;
+    }
+    return null;
+}
+
+function account_open_workspace(array $payload): array {
+    $email = current_auth_email();
+    $sessionId = trim((string) ($payload['session_id'] ?? $payload['id'] ?? ''));
+    $kind = trim((string) ($payload['kind'] ?? $payload['relation'] ?? $payload['viewer'] ?? ''));
+    $participantId = trim((string) ($payload['participant_id'] ?? ''));
+    $token = trim((string) ($payload['token'] ?? $payload['invite_token'] ?? ''));
+
+    if ($sessionId === '') {
+        fail('Нужен id workspace', 422);
+    }
+    $session = find_session($sessionId);
+    if (!$session) {
+        fail('Workspace не найден', 404);
+    }
+
+    if ($kind === '' && owns_session($session, $email)) {
+        $kind = 'owner';
+    }
+
+    if (in_array($kind, ['owner', 'owned', 'treasurer'], true)) {
+        require_session_owner($session);
+        return build_treasurer_payload($session, normalized_session_mode($session)) + [
+            'context' => [
+                'kind' => 'owner',
+                'workspace' => workspace_summary($session, 'owned'),
+            ],
+        ];
+    }
+
+    $participant = find_account_participant_in_session($session, $email, $participantId, $token);
+    if (!$participant) {
+        fail('Membership не найден для текущего аккаунта', 403);
+    }
+
+    return build_participant_payload($session, $participant) + [
+        'context' => [
+            'kind' => 'membership',
+            'workspace' => workspace_summary($session, 'membership', $participant),
+        ],
+    ];
+}
+
+function account_invite_preview(array $payload): array {
+    $code = preg_replace('/\D+/', '', (string) ($payload['code'] ?? $_GET['code'] ?? '')) ?? '';
+    $token = trim((string) ($payload['token'] ?? $_GET['token'] ?? ''));
+    $session = null;
+    $participant = null;
+
+    if ($code !== '') {
+        if (!preg_match('/^\d{6}$/', $code)) {
+            fail('Введите 6 цифр кода приглашения', 422);
+        }
+        $session = find_session_by_invite_code($code);
+        $participant = $session ? find_participant_by_invite_code($session, $code) : null;
+    } elseif ($token !== '') {
+        $session = find_session_by_token($token);
+        $participant = $session ? find_participant_by_token($session, $token) : null;
+    } else {
+        fail('Нужен код или token приглашения', 422);
+    }
+
+    if (!$session || !$participant) {
+        fail('Приглашение не найдено или устарело', 404);
+    }
+
+    return [
+        'account' => account_profile_payload(),
+        'binding' => [
+            'will_bind' => false,
+            'route' => 'account-invite-preview',
+            'next_route' => 'account-claim-invite',
+        ],
+        'workspace' => workspace_summary($session, 'membership', $participant),
+        'participant' => [
+            'id' => (string) ($participant['id'] ?? ''),
+            'display_name' => trim((string) ($participant['display_name'] ?? '')),
+            'role' => (string) ($participant['role'] ?? 'participant'),
+            'email' => clean_email($participant['email'] ?? ''),
+            'account_email' => clean_email($participant['account_email'] ?? ''),
+            'authorized_at' => $participant['authorized_at'] ?? null,
+            'account_claimed_at' => $participant['account_claimed_at'] ?? null,
+        ],
+    ];
+}
+
+function create_account_workspace(array $payload): array {
+    $ownerEmail = current_auth_email();
+    $mode = in_array(($payload['mode'] ?? $payload['session_mode'] ?? ''), ['group', 'personal'], true)
+        ? (string) ($payload['mode'] ?? $payload['session_mode'])
+        : 'group';
+    $session = default_session($ownerEmail, $mode);
+    if (trim((string) ($payload['title'] ?? '')) !== '') {
+        $session['title'] = trim((string) $payload['title']);
+    }
+    if (trim((string) ($payload['currency'] ?? '')) !== '') {
+        $session['currency'] = trim((string) $payload['currency']);
+    }
+    if ($mode === 'personal') {
+        $session['treasurer_expense_mode'] = 'cashbox';
+        $session['participants'][0]['cashbox_contribution'] = max(0, money_input($payload['opening_balance'] ?? 0));
+        $session['participants'][0]['display_name'] = trim((string) ($payload['display_name'] ?? '')) ?: 'Personal journal';
+    }
+
+    $saved = save_session($session);
+    write_index(['account_last_workspace_id' => $saved['id']]);
+    return build_treasurer_payload($saved, $mode) + [
+        'context' => [
+            'kind' => 'owner',
+            'workspace' => workspace_summary($saved, 'owned'),
+            'parallel_owner_workspace' => true,
+        ],
+    ];
 }
 
 function encoded_mail_subject(string $subject): string {
@@ -3615,8 +4618,14 @@ function confirm_settlement(array $payload): array {
 
 function reopen_session(string $id): array {
     $session = find_session($id);
-    if (!$session || ($session['status'] ?? '') !== 'closed') {
+    if (!$session || !in_array(($session['status'] ?? ''), ['closed', 'deleted'], true)) {
         fail('Закрытая касса не найдена', 404);
+    }
+    if (($session['status'] ?? '') === 'deleted') {
+        $purgeAfter = strtotime((string) ($session['purge_after'] ?? '')) ?: 0;
+        if ($purgeAfter > 0 && $purgeAfter < time()) {
+            fail('Срок хранения карточки в корзине истек', 410);
+        }
     }
     require_session_owner($session);
 
@@ -3627,6 +4636,8 @@ function reopen_session(string $id): array {
 
     $session['status'] = 'active';
     $session['closed_at'] = null;
+    $session['deleted_at'] = null;
+    $session['purge_after'] = null;
     $session['settlement'] = null;
     $saved = save_session($session);
     write_index(['active_session_id' => $saved['id']]);
@@ -3635,14 +4646,14 @@ function reopen_session(string $id): array {
 
 function delete_archived_session(string $id): array {
     $session = find_session($id);
-    if (!$session || ($session['status'] ?? '') !== 'closed') {
+    if (!$session || !in_array(($session['status'] ?? ''), ['closed', 'deleted'], true)) {
         fail('Закрытая касса не найдена', 404);
     }
     require_session_owner($session);
 
     $session['status'] = 'deleted';
     $session['deleted_at'] = now_iso();
-    $session['purge_after'] = gmdate('c', time() + 10 * 24 * 60 * 60);
+    $session['purge_after'] = gmdate('c', time() + 60 * 24 * 60 * 60);
     return save_session($session);
 }
 
@@ -3751,6 +4762,16 @@ if ($action === 'participant-trash-batch') {
     respond(trash_notebook_batch_by_token($token, $batchId) + ['version' => APP_VERSION]);
 }
 
+if ($action === 'participant-restore-trash-batch') {
+    $payload = input_json();
+    $token = trim((string) ($payload['token'] ?? ''));
+    $trashId = trim((string) ($payload['trash_id'] ?? $payload['batch_id'] ?? ''));
+    if ($token === '' || $trashId === '') {
+        fail('Нужен invite token и id записи в корзине', 422);
+    }
+    respond(restore_notebook_trash_by_token($token, $trashId) + ['version' => APP_VERSION]);
+}
+
 if ($action === 'verify-invite-code') {
     $payload = input_json();
     respond(authorize_participant_by_code((string) ($payload['code'] ?? '')) + ['version' => APP_VERSION]);
@@ -3760,6 +4781,26 @@ require_auth();
 
 if ($action === 'storage-health') {
     respond(['storage' => ship_cashbox_storage_health(), 'version' => APP_VERSION]);
+}
+
+if (in_array($action, ['account-workspaces', 'list-my-workspaces'], true)) {
+    respond(account_workspaces_payload() + ['version' => APP_VERSION]);
+}
+
+if (in_array($action, ['account-invite-preview', 'claim-invite-preview'], true)) {
+    respond(account_invite_preview(input_json()) + ['version' => APP_VERSION]);
+}
+
+if (in_array($action, ['open-workspace', 'open-membership'], true)) {
+    $payload = input_json();
+    if ($action === 'open-membership' && trim((string) ($payload['kind'] ?? '')) === '') {
+        $payload['kind'] = 'membership';
+    }
+    respond(account_open_workspace($payload) + ['version' => APP_VERSION]);
+}
+
+if ($action === 'create-account-workspace') {
+    respond(create_account_workspace(input_json()) + ['version' => APP_VERSION]);
 }
 
 if ($action === 'migrate-storage') {
@@ -3801,6 +4842,26 @@ if ($action === 'save-session') {
     respond(build_treasurer_payload(save_session_meta(input_json())) + ['version' => APP_VERSION]);
 }
 
+if ($action === 'start-personal-report') {
+    respond(build_treasurer_payload(start_personal_report(input_json())) + ['version' => APP_VERSION]);
+}
+
+if ($action === 'select-personal-report') {
+    respond(build_treasurer_payload(select_personal_report(input_json())) + ['version' => APP_VERSION]);
+}
+
+if ($action === 'attach-personal-record') {
+    respond(build_treasurer_payload(attach_personal_record_to_report(input_json())) + ['version' => APP_VERSION]);
+}
+
+if ($action === 'fix-personal-report') {
+    respond(build_treasurer_payload(fix_personal_report(input_json())) + ['version' => APP_VERSION]);
+}
+
+if ($action === 'restore-personal-report') {
+    respond(build_treasurer_payload(restore_personal_report(input_json())) + ['version' => APP_VERSION]);
+}
+
 if ($action === 'send-invite') {
     respond(build_treasurer_payload(send_participant_invite(input_json())) + ['version' => APP_VERSION]);
 }
@@ -3815,6 +4876,10 @@ if ($action === 'restore-treasurer-batch') {
 
 if ($action === 'trash-treasurer-batch') {
     respond(build_treasurer_payload(trash_treasurer_notebook_batch(input_json())) + ['version' => APP_VERSION]);
+}
+
+if ($action === 'restore-trash-batch') {
+    respond(build_treasurer_payload(restore_notebook_trash_by_owner(input_json())) + ['version' => APP_VERSION]);
 }
 
 if ($action === 'confirm-settlement') {
@@ -3835,8 +4900,14 @@ if ($action === 'archive-session') {
         fail('Нужен id архива', 422);
     }
     $session = find_session($id);
-    if (!$session || ($session['status'] ?? '') !== 'closed') {
+    if (!$session || !in_array(($session['status'] ?? ''), ['closed', 'deleted'], true)) {
         fail('Закрытая касса не найдена', 404);
+    }
+    if (($session['status'] ?? '') === 'deleted') {
+        $purgeAfter = strtotime((string) ($session['purge_after'] ?? '')) ?: 0;
+        if ($purgeAfter > 0 && $purgeAfter < time()) {
+            fail('Срок хранения карточки в корзине истек', 410);
+        }
     }
     require_session_owner($session);
     respond(build_treasurer_payload($session) + ['version' => APP_VERSION]);
